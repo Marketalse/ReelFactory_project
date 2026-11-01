@@ -15,6 +15,7 @@ from urllib.parse import unquote, urlparse, parse_qs
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import reels_api  # noqa: E402
 import settings_api  # noqa: E402
+import backup_api  # noqa: E402
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 TASKS = os.path.join(HERE, "tasks.json")
@@ -110,6 +111,8 @@ class H(SimpleHTTPRequestHandler):
             return self.send_json(200, settings_api.version())
         if self.path.startswith("/api/health"):
             return self.send_json(200, settings_api.health())
+        if self.path.startswith("/api/backup"):
+            return self.send_json(200, backup_api.status())
         if self.path.startswith("/api/root"):
             return self.send_json(200, {"root": os.path.realpath(reels_api.ROOT)})
         if self.path.startswith("/api/reels"):
@@ -176,6 +179,10 @@ class H(SimpleHTTPRequestHandler):
                 ok, msg = settings_api.save_key(body.get("key"))
             elif action == "test":
                 ok, msg = settings_api.test_key()
+            elif action == "backup":
+                ok, msg = backup_api.run(reels_api.ROOT, body.get("target") or None)
+            elif action == "backup_auto":
+                ok, msg = backup_api.set_auto(body.get("on", True))
             elif action == "update":
                 ok, msg, restart = settings_api.update(reels_api.busy())
                 self.send_json(200 if ok else 409, {"ok": ok, "message": msg, "restart": restart})
@@ -254,10 +261,24 @@ def restart_self(delay=1.0):
 
 SERVER = None
 
+
+def daily_backup():
+    """Once a day while the dashboard runs: back up results and comments (Settings → Backup). Never stops the server."""
+    time.sleep(60)
+    while True:
+        try:
+            if backup_api.due() and backup_api.targets():
+                ok, msg = backup_api.run(reels_api.ROOT)
+                print("backup:", msg, flush=True)
+        except Exception as e:          # noqa: BLE001
+            print("backup skipped:", e, flush=True)
+        time.sleep(3600)
+
 if __name__ == "__main__":
     if not os.path.exists(TASKS):
         sys.exit(f"missing {TASKS}")
     print(f"Reel Factory dashboard: http://127.0.0.1:{PORT}  (Ctrl+C to stop)")
     ThreadingHTTPServer.allow_reuse_address = True
     SERVER = ThreadingHTTPServer(("127.0.0.1", PORT), H)
+    threading.Thread(target=daily_backup, daemon=True).start()
     SERVER.serve_forever()
