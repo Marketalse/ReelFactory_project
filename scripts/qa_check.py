@@ -62,6 +62,39 @@ def screen_texts(project):
     return out
 
 
+def render_matches_plan(project, video, max_points=10):
+    """Pixel check: the rendered video must show the captions that HyperFrames' own snapshot of the plan shows.
+    Returns (checked, missing_times). Catches renders that silently drop a layer."""
+    caps = os.path.join(project, "compositions", "caps.html")
+    if not os.path.exists(caps):
+        return 0, []
+    groups = [(float(a), float(b)) for a, b in re.findall(r'class="clip caps-g" data-start="([0-9.]+)" data-duration="([0-9.]+)"',
+                                                          open(caps, encoding="utf-8").read()) if float(b) >= 0.4]
+    if not groups:
+        return 0, []
+    step = max(1, len(groups) // max_points)
+    times = [round(round((s + d / 2) * 30) / 30, 4) for s, d in groups[::step]][:max_points]   # exact video frames
+    hf = ["npx", "--yes", f"hyperframes@{cfg.PROJECT.get('tools', {}).get('hyperframes', '0.8.226')}"]
+    r = subprocess.run(hf + ["snapshot", "--at", ",".join(str(t) for t in times)], cwd=project, capture_output=True, text=True, timeout=900)
+    pngs = [(p, t) for p, t in re.findall(r"(\S+frame-\d+-at-([0-9.]+)s\.png)", r.stdout + r.stderr) if float(t) in times]
+
+    def strip(src, y, seek=None):
+        args = ["ffmpeg", "-v", "error"] + (["-ss", seek] if seek else []) + ["-i", src, "-vf",
+                f"scale=1080:1920,crop=1080:170:0:{y},scale=270:-2,format=gray", "-frames:v", "1", "-f", "rawvideo", "-"]
+        return subprocess.run(args, capture_output=True).stdout
+
+    def diff(a, b):
+        return sum(abs(x - y) for x, y in zip(a, b)) / max(1, len(a))
+    missing = []
+    for path, t in pngs:
+        seek = f"{(round(float(t) * 30) + 0.5) / 30:.4f}"
+        cap = diff(strip(path, 1100), strip(video, 1100, seek))      # caption band
+        bg = diff(strip(path, 1320), strip(video, 1320, seek))       # band below: background only (motion, compression)
+        if cap > bg + 12:
+            missing.append(float(t))
+    return len(pngs), missing
+
+
 def run(job, video, final=False, project=None):
     err, warn, m = [], [], {}
     tl = json.load(open(os.path.join(job, "timeline.json"), encoding="utf-8"))
@@ -104,6 +137,15 @@ def run(job, video, final=False, project=None):
     if cap_words != expected:
         missing = len(expected) - len(cap_words)
         err.append(f"captions don't match the speech ({len(cap_words)} caption words vs {len(expected)} spoken; {missing:+d})")
+
+    # the rendered pixels must show the captions the plan has (renders can silently drop a layer)
+    w = subprocess.run(["ffprobe", "-v", "error", "-select_streams", "v:0", "-show_entries", "stream=width", "-of", "csv=p=0", video],
+                       capture_output=True, text=True).stdout.strip()
+    checked, missing = render_matches_plan(project, video) if w in ("1080", "540") else (0, [])
+    m["captions_checked_in_pixels"], m["captions_missing_in_pixels"] = checked, len(missing)
+    if missing:
+        err.append(f"captions missing in the rendered video at {', '.join(f'{t:.1f}s' for t in missing[:6])} "
+                   f"({len(missing)} of {checked} checked)")
 
     # numbers on screen must have been said; no placeholder text
     said = set(spoken_numbers(edl["words"]))

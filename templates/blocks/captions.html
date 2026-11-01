@@ -14,15 +14,16 @@
 const tl = gsap.timeline({ paused: true });
 // Each group shows while its words are spoken; each word brightens on its own time; keywords turn lime and pop.
 document.querySelectorAll(".__ID__-g").forEach((g) => {
+  // HyperFrames shows/hides each timed group (.clip) itself; only its child pill is animated (never visibility on a .clip)
   const s = parseFloat(g.dataset.start), e = s + parseFloat(g.dataset.duration);
-  tl.fromTo(g, { opacity: 0, y: 26, scale: 0.92 }, { opacity: 1, y: 0, scale: 1, duration: 0.12, ease: "back.out(2)" }, s);
+  const pill = g.querySelector(".__ID__-pill");
+  tl.fromTo(pill, { opacity: 0, y: 26, scale: 0.92 }, { opacity: 1, y: 0, scale: 1, duration: 0.12, ease: "back.out(2)" }, s);
   g.querySelectorAll(".__ID__-w").forEach((w) => {
     const t = parseFloat(w.dataset.t);
     tl.fromTo(w, { opacity: 0.68 }, { opacity: 1, duration: 0.06 }, Math.max(s, t));
     if (w.classList.contains("__ID__-kw")) tl.fromTo(w, { scale: 1 }, { scale: 1.14, duration: 0.12, ease: "power2.out", yoyo: true, repeat: 1 }, Math.max(s, t));
   });
-  tl.to(g, { opacity: 0, duration: 0.08, ease: "power2.in" }, e - 0.08);
-  tl.set(g, { opacity: 0, visibility: "hidden" }, e);
+  tl.fromTo(pill, { opacity: 1 }, { opacity: 0, duration: 0.08, ease: "power2.in", immediateRender: false }, e - 0.08);
 });
 window.__timelines["__ID__"] = tl;
 </script>
