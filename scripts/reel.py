@@ -2,35 +2,41 @@
 """Reel Factory one-command pipeline (SHAK-292). Stdlib only (runs on any python3).
 
   python3 scripts/reel.py <raw_clip | jobs/<job_dir>> [--slug name] [--select A|B|C|auto] [--stop-after STAGE]
-                          [--budget 2.08] [--width 540] [--every 3] [--effort low|medium|high] [--force STAGE,...]
-                          [--asr-model medium|large-v3] [--start S --end E]
+                          [--budget 1.00] [--width 540] [--every 3] [--effort low|medium|high] [--force STAGE,...]
+                          [--asr-model large-v3-turbo]
+
+Models, prices, caps and the ASR model come from config/project.json; brand from config/brand.json;
+story length from config/rules.json. Every run is also written to <job>/run.log.
 
 Stages (each caches its output file in the job folder; re-runs skip finished stages unless --force):
   ingest      raw clip -> proxy.mp4, audio16k.wav (scripts/ingest.sh; skipped for an existing job)
   transcribe  hyperframes whisper -> transcript_asr.json (word timestamps, local, $0)
   fix         Claude Haiku 5.5 corrects word TEXT only, never timestamps -> transcript.json
-  selects     Claude Opus 5 proposes 3 stories from the transcript; GATE 1: stops unless --select given / already chosen in job.json
+  selects     story model (config models.selects) proposes 3 stories from the transcript; GATE 1: stops unless --select given / already chosen in job.json
   keyframes   <=40 resized stills of the CHOSEN range only (scripts/keyframes.py) -> keyframes/, keyframes.json
   shotlog     Claude Sonnet 5.5, ONE batched call over the stills -> shot_log.json (face box, eyes, energy, usable moments)
-  plan        Claude Opus 5 Director -> scene_plan.json (every beat names a real media source)
+  plan        Director (config models.director; one retry with models.director_fallback) -> scene_plan.json (every beat names a real media source)
   validate    deterministic rules (no LLM); one automatic repair call if it fails -> validation.json
   report      pipeline_report.md with measured tokens, cost, time per stage
 
 Money: every paid call is logged to <job>/cost.json from the provider's own usage.cost; a call is refused when
-spent + worst-case estimate would exceed --budget (default $2.08 = $50/month / 24 reels). The job total is
-appended to dashboard/expenses.json at the end. Only text and resized stills leave the Mac, never audio/video.
+spent + worst-case estimate would exceed --budget (default: config budget_usd.per_reel_stop), or when this
+month's ledger total would pass budget_usd.monthly_stop. The job total is appended to dashboard/expenses.json. Only text and resized stills leave the Mac, never audio/video.
 """
 import argparse, base64, glob, json, os, re, subprocess, sys, time, urllib.request, urllib.error
 
-ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-FFDIR = os.path.expanduser("~/.hermes/tools/ffmpeg-9.0.1-darwin-arm64")
-FF = os.path.join(FFDIR, "ffmpeg")
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from lib import config as cfg   # noqa: E402  (all settings live in config/*.json)
+
+ROOT = cfg.ROOT
+FF, FFDIR = cfg.find_ffmpeg()
 ENV = dict(os.environ, PATH=os.environ.get("PATH", "") + ":" + FFDIR)
-MODELS = json.load(open(os.path.join(ROOT, "model", "models.json")))["roles"]
-M_FIX = "anthropic/claude-haiku-5.5"
-M_VIS = "anthropic/claude-sonnet-5.5"
-M_DIR = "anthropic/claude-opus-5"
-PRICE = {M_FIX: (0.1, 0.5), M_VIS: (2.0, 10.0), M_DIR: (5.0, 25.0)}   # $/MTok in/out (provider catalogue 2026-11-01)
+M_FIX = cfg.MODELS["transcript_fix"]
+M_VIS = cfg.MODELS["vision"]
+M_SEL = cfg.MODELS["selects"]
+M_DIR = cfg.MODELS["director"]
+M_DIR_FALLBACK = cfg.MODELS.get("director_fallback")
+LEN_MIN, LEN_MAX = cfg.RULES["reel_length_s"]["min"], cfg.RULES["reel_length_s"]["max"]
 STAGES = ["ingest", "transcribe", "fix", "selects", "keyframes", "shotlog", "plan", "validate", "report"]
 
 class Stop(Exception):
@@ -45,8 +51,17 @@ def jsave(p, d):
     json.dump(d, open(p, "w"), indent=1, ensure_ascii=False)
 
 def nous():
-    a = json.load(open(os.path.expanduser("~/.hermes/auth.json")))["providers"]["nous"]
-    return a["inference_base_url"], a["agent_key"]
+    return cfg.auth()
+
+
+class Tee:
+    """Copy everything printed during a run into <job>/run.log, so a stop is never unexplained."""
+    def __init__(self, path, out):
+        self.f = open(path, "a", encoding="utf-8"); self.out = out
+    def write(self, s):
+        self.out.write(s); self.f.write(s); self.f.flush()
+    def flush(self):
+        self.out.flush(); self.f.flush()
 
 class Ctx:
     def __init__(self, job, a):
@@ -62,11 +77,18 @@ class Ctx:
         chars = sum(len(p.get("text", "")) for p in content if p["type"] == "text")
         imgs = sum(1 for p in content if p["type"] == "image_url")
         est_in = est_in_tokens or int(chars / 2.6 + imgs * (self.a.img_tok))
-        pin, pout = PRICE[model]
+        pin, pout = cfg.price(model)
         worst = est_in * pin / 1e6 + max_tokens * pout / 1e6
         if self.spent() + worst > self.a.budget:
             raise Stop(f"BUDGET GUARD: {stage} worst case ${worst:.3f} + spent ${self.spent():.3f} > budget ${self.a.budget:.2f}. "
                        f"Raise --budget only with Hesham's approval.")
+        month = cfg.month_spent() + (self.spent() - self.cost.get("logged", 0.0))
+        if month + worst > cfg.BUDGET["monthly_stop"]:
+            raise Stop(f"MONTHLY CAP: this month ${month:.2f} + worst case ${worst:.3f} > ${cfg.BUDGET['monthly_stop']:.2f}. "
+                       f"Change budget_usd.monthly_stop in config/project.json only with Hesham's approval.")
+        if self.spent() + worst > cfg.BUDGET["per_reel_warn"] and not getattr(self, "_warned", False):
+            self._warned = True
+            print(f"   WARNING: this job may pass the ${cfg.BUDGET['per_reel_warn']:.2f} per-reel warning level")
         base, key = nous()
         body = {"model": model, "max_tokens": max_tokens, "reasoning": {"effort": effort},
                 "messages": [{"role": "user", "content": content}]}
@@ -186,7 +208,7 @@ def st_shotlog(c):
     if len(log) != man["count"]: raise Stop(f"shot log returned {len(log)} rows for {man['count']} frames")
     jsave(out, log); return f"{len(log)} rows"
 
-SELECTS_PROMPT = """You are the story editor of an Iraqi short-form (Reels) channel run by Hesham, a marketer-entrepreneur in Erbil. From this transcript of ONE raw take, propose exactly 3 candidate stories, each a continuous source range of 18-45 seconds that could stand alone as a reel. Each must start on a strong spoken hook taken from the speaker's OWN words, hold one idea, and end on a natural close. Prefer ranges that begin/end at pauses. Do not invent content.
+SELECTS_PROMPT = """You are the story editor of an Iraqi short-form (Reels) channel run by Hesham, a marketer-entrepreneur in Erbil. From this transcript of ONE raw take, propose exactly 3 candidate stories, each a continuous source range of {lmin}-{lmax} seconds that could stand alone as a reel. Each must start on a strong spoken hook taken from the speaker's OWN words, hold one idea, and end on a natural close. Prefer ranges that begin/end at pauses. Do not invent content.
 Return ONLY JSON: {{"selects":[{{"id":"A","range":[start_s,end_s],"label":"<=12 words English","hook_line":"verbatim Arabic from transcript","why":"<=25 words","score":1-10}},...]}} sorted best first.
 Take length: {dur:.1f}s.
 TRANSCRIPT (time_start-time_end text):
@@ -207,7 +229,7 @@ def st_selects(c):
     sp = os.path.join(c.job, "selects.json")
     if not os.path.exists(sp):
         dur = proxy_duration(c.job)
-        res = parse_json(c.llm("selects", M_DIR, [{"type": "text", "text": SELECTS_PROMPT.format(dur=dur, lines=lines)}], 3000, c.a.effort))
+        res = parse_json(c.llm("selects", M_SEL, [{"type": "text", "text": SELECTS_PROMPT.format(dur=dur, lines=lines, lmin=LEN_MIN, lmax=LEN_MAX)}], 3000, c.a.effort))
         jsave(sp, res)
     sel = jload(sp)["selects"]
     pick = c.a.select; from_job = None
@@ -228,8 +250,9 @@ def st_selects(c):
     jsave(os.path.join(c.job, "chosen_select.json"), dict(s, picked_by=by))
     return f"select {s['id']} {s['range']}"
 
-BRAND = {"bg": "#242834", "accent_lime": "#B6FF00", "secondary_violet": "#7D53FF", "negative_coral": "#FF6B4A (loss/warning only)", "font": "Readex Pro",
-         "canvas": "1080x1920 30fps"}
+_C = cfg.BRAND["colors"]
+BRAND = {"bg": _C["bg"], "accent_lime": _C["accent"], "secondary_violet": _C["secondary"],
+         "negative_coral": _C["negative"] + " (loss/warning only)", "font": cfg.BRAND["font"]["family"], "canvas": "1080x1920 30fps"}
 MOVES = """1 word-pop captions (1-3 words, pop on spoken word; keyword turns lime) [every beat has these]
 2 mixed-weight words (Readex wght 200<->700)
 3 text-behind-subject (big word/number behind head; needs matte, status NOT proven yet -> avoid unless essential)
@@ -350,6 +373,14 @@ def st_validate(c):
         for k in ("job_id", "select", "select_range", "total_duration", "director"): fixed[k] = plan[k]
         jsave(os.path.join(c.job, "scene_plan_attempt1.json"), plan); jsave(os.path.join(c.job, "scene_plan.json"), fixed)
         plan = fixed; repaired = True; err, warn = validate_plan(plan, words, man)
+        if err and M_DIR_FALLBACK and M_DIR_FALLBACK != M_DIR:
+            print(f"   still failing -> one repair with the fallback Director {M_DIR_FALLBACK}")
+            txt = c.llm("repair_fallback", M_DIR_FALLBACK, [{"type": "text", "text": "Fix this reel scene plan JSON so it passes every validation error below. Change only what is needed; keep the same schema; return ONLY the full corrected JSON.\n\nERRORS:\n" + "\n".join(err) + "\n\nPLAN:\n" + json.dumps(plan, ensure_ascii=False)}], 9000, c.a.effort)
+            fixed = parse_json(txt)
+            for k in ("job_id", "select", "select_range", "total_duration"): fixed[k] = plan[k]
+            fixed["director"] = M_DIR_FALLBACK
+            jsave(os.path.join(c.job, "scene_plan_attempt2.json"), plan); jsave(os.path.join(c.job, "scene_plan.json"), fixed)
+            plan = fixed; err, warn = validate_plan(plan, words, man)
     jsave(os.path.join(c.job, "validation.json"), {"errors": err, "warnings": warn, "repaired": repaired})
     if err: raise Stop("validation FAILED after repair: " + "; ".join(err[:5]))
     return f"PASS ({len(warn)} warnings{', repaired once' if repaired else ''})"
@@ -374,9 +405,9 @@ FUNCS = {"ingest": st_ingest, "transcribe": st_transcribe, "fix": st_fix, "keyfr
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("input"); ap.add_argument("--slug"); ap.add_argument("--select"); ap.add_argument("--stop-after", choices=STAGES)
-    ap.add_argument("--budget", type=float, default=2.08); ap.add_argument("--width", type=int, default=540); ap.add_argument("--every", type=float, default=2.0)
+    ap.add_argument("--budget", type=float, default=cfg.BUDGET["per_reel_stop"]); ap.add_argument("--width", type=int, default=540); ap.add_argument("--every", type=float, default=2.0)
     ap.add_argument("--effort", default="low", choices=["low", "medium", "high"]); ap.add_argument("--force", default="")
-    ap.add_argument("--asr-model", default="medium"); ap.add_argument("--retranscribe", action="store_true")
+    ap.add_argument("--asr-model", default=cfg.PROJECT["asr"]["model"]); ap.add_argument("--retranscribe", action="store_true")
     ap.add_argument("--fresh-selects", action="store_true"); ap.add_argument("--no-repair", action="store_true")
     a = ap.parse_args()
     a.img_tok = {1080: 2800, 720: 1300, 540: 800, 384: 420}.get(a.width, 800)
@@ -387,6 +418,9 @@ def main():
         subprocess.run(["bash", os.path.join(ROOT, "scripts", "ingest.sh"), inp, a.slug], cwd=ROOT, env=ENV, check=True)
         inp = sorted(glob.glob(os.path.join(ROOT, "jobs", "*-" + a.slug)))[-1]
     job = os.path.abspath(inp)
+    if not os.path.isdir(job): sys.exit(f"not a job folder: {job}")
+    sys.stdout = Tee(os.path.join(job, "run.log"), sys.stdout)
+    print(f"\n===== run {time.strftime('%Y-%m-%d %H:%M:%S')} | {' '.join(sys.argv[1:])}")
     c = Ctx(job, a)
     force = set(filter(None, a.force.split(",")))
     for s in force:
@@ -405,6 +439,10 @@ def main():
             if a.stop_after == s: break
     except Stop as e:
         status = "stopped"; print("STOP:", e)
+    except Exception:
+        import traceback
+        status = "crashed"; print("CRASH (full error below, also in run.log):"); traceback.print_exc(file=sys.stdout)
+        raise
     finally:
         # ledger: log only NEW spend of this run
         logged = c.cost.get("logged", 0.0); new = c.spent() - logged

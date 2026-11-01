@@ -35,7 +35,7 @@ def main():
     d = load()
     d["rows"].append({"date": date.today().isoformat(), "video": video, "category": category,
                       "amount": round(value, 4), "note": note})
-    d["rows"] = d["rows"][-200:]
+    # never delete rows: totals must stay correct (archive old rows by setting "archived": true instead)
     save(d)
     print(f"ok: {video} | {category} | {value:.4f}")
     print(f"total: {sum(r['amount'] for r in d['rows']):.4f}")
