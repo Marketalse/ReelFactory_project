@@ -3,18 +3,36 @@
 cd "$(dirname "$0")" || exit 1
 HERE="$(pwd -P)"
 echo "Reel Factory: $HERE"
-if [ -d .git ]; then
-  git pull --quiet 2>/dev/null && echo "Updated to the latest version." || echo "Couldn't check for updates (offline?). Using this version."
+UPDATED=""
+if git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+  BEFORE="$(git rev-parse HEAD 2>/dev/null)"
+  if git pull --quiet 2>/dev/null; then
+    if [ "$BEFORE" != "$(git rev-parse HEAD 2>/dev/null)" ]; then UPDATED=1; echo "Updated to the latest version."; else echo "Already up to date."; fi
+  else
+    echo "Couldn't check for updates (offline?). Using this version."
+  fi
 else
   echo "Note: this copy isn't linked to GitHub (a ZIP download?), so it never updates. Use your cloned project folder instead."
 fi
 RUNNING="$(curl -s --max-time 2 http://127.0.0.1:8765/api/root 2>/dev/null | python3 -c 'import sys,json; print(json.load(sys.stdin)["root"])' 2>/dev/null)"
-if [ -n "$RUNNING" ] && [ "$RUNNING" != "$HERE" ]; then
-  echo "Another copy was running from $RUNNING. Switching to this one."
-  lsof -ti tcp:8765 -sTCP:LISTEN | xargs kill 2>/dev/null; sleep 1
-  RUNNING=""
+UP="$(curl -s --max-time 2 -o /dev/null -w '%{http_code}' http://127.0.0.1:8765/api/reels 2>/dev/null)"
+RESTART=""
+if [ "$UP" = "200" ]; then
+  if [ -z "$RUNNING" ]; then RESTART="An older dashboard is running. Restarting it with the new version."
+  elif [ "$RUNNING" != "$HERE" ]; then RESTART="Another copy was running from $RUNNING. Switching to this one."
+  elif [ -n "$UPDATED" ]; then RESTART="Restarting the dashboard with the update."
+  fi
 fi
-if [ -z "$RUNNING" ] && ! curl -s --max-time 2 -o /dev/null http://127.0.0.1:8765/api/reels; then
+if [ -n "$RESTART" ]; then
+  if curl -s --max-time 2 http://127.0.0.1:8765/api/reels | grep -q '"busy": \[\]'; then
+    echo "$RESTART"
+    lsof -ti tcp:8765 -sTCP:LISTEN | xargs kill 2>/dev/null; sleep 1
+    UP=""
+  else
+    echo "A reel is being made right now, so the dashboard keeps running. Double-click again when it's finished to load the update."
+  fi
+fi
+if [ "$UP" != "200" ]; then
   nohup python3 dashboard/serve.py > dashboard/server.log 2>&1 &
   sleep 1.5
 fi
