@@ -1,6 +1,6 @@
 {
  "project": "Reel Factory",
- "version": 6,
+ "version": 7,
  "owners": [
   "Hesham",
   "Claude",
@@ -286,7 +286,7 @@
   {
    "id": "T19",
    "phase": "P1",
-   "title": "On the Mac: pull, run the offline tests, and check transcription with large-v3-turbo",
+   "title": "On the Mac: pull, run the tests, and do the first real transcription (whisper large-v3)",
    "owner": "Hermes",
    "status": "todo",
    "depends": [
@@ -294,8 +294,8 @@
     "T17",
     "T18"
    ],
-   "done_when": "Tests pass on the Mac, and one run on the existing IMG_0020 job reaches the story options (Gate 1) with run.log as evidence",
-   "notes": "cd ~/Desktop/ReelFactory_project && git pull && python3 -m unittest discover tests  |  then: python3 scripts/reel.py jobs/<the IMG_0020 job folder> --force transcribe,fix,selects  (spends about $0.03; stops at Gate 1). Main risk to check: does 'npx hyperframes transcribe -m large-v3-turbo' accept that model name? If not, write the exact error in notes and set blocked.",
+   "done_when": "Tests pass on the Mac and the IMG_0020 job stops at Gate 0 with transcript_review.txt written",
+   "notes": "cd ~/Desktop/ReelFactory_project && git pull && python3 -m unittest discover tests  |  mkdir -p inbox/img0020/clips && cp <path to your original IMG_0020.MOV> inbox/img0020/clips/   (COPY it: ingest moves the file into assets/raw/)  |  python3 scripts/reel.py inbox/img0020 --slug img0020   (first run downloads the whisper large-v3 model, ~3 GB, once). Expected: STOP at GATE 0. Spend about $0.002. Put run.log in evidence.",
    "evidence": "",
    "updated": "2026-11-01"
   },
@@ -389,14 +389,14 @@
    "phase": "P3",
    "title": "Ingest a folder of clips → one joined proxy + map to originals",
    "owner": "Claude",
-   "status": "todo",
+   "status": "review",
    "depends": [
     "T12",
     "T16"
    ],
    "done_when": "",
-   "notes": "",
-   "evidence": "",
+   "notes": "Folder of clips joined in filename order (+clip_map.json); logos copied with SVG cleaning; refs/brief copied. Tested with 2 clips.",
+   "evidence": "scripts/ingest_folder.py; branch p3-pipeline; e2e rehearsal in the cloud (2 test clips -> Gate 0 -> Gate 1 -> draft -> Gate 2), 27 offline tests",
    "updated": "2026-11-01"
   },
   {
@@ -404,13 +404,13 @@
    "phase": "P3",
    "title": "Transcription large-v3-turbo + Gate 0 transcript_review.txt",
    "owner": "Claude",
-   "status": "todo",
+   "status": "review",
    "depends": [
     "T26"
    ],
    "done_when": "",
-   "notes": "",
-   "evidence": "",
+   "notes": "Model corrected to whisper large-v3 (HyperFrames has no large-v3-turbo). Words invented over silence dropped. Gate 0 file works both ways (same words keep timings; added words share the line time); error rate recorded.",
+   "evidence": "scripts/lib/transcript.py; branch p3-pipeline; e2e rehearsal in the cloud (2 test clips -> Gate 0 -> Gate 1 -> draft -> Gate 2), 27 offline tests",
    "updated": "2026-11-01"
   },
   {
@@ -423,7 +423,7 @@
     "T27"
    ],
    "done_when": "",
-   "notes": "",
+   "notes": "Story options use Sonnet; a take already <= 95 s is used whole (no cost). Script-critic scores wait for the committee approval (T14).",
    "evidence": "",
    "updated": "2026-11-01"
   },
@@ -432,13 +432,13 @@
    "phase": "P3",
    "title": "edl.py: cut pauses/fillers/retakes, re-time words",
    "owner": "Claude",
-   "status": "todo",
+   "status": "review",
    "depends": [
     "T27"
    ],
    "done_when": "",
-   "notes": "",
-   "evidence": "",
+   "notes": "Pauses > 0.35 s, filler sounds, false starts (same 3 words restarted within 6 s) removed; words re-timed. Test take: 48.0 s -> 43.8 s.",
+   "evidence": "scripts/lib/edl.py; branch p3-pipeline; e2e rehearsal in the cloud (2 test clips -> Gate 0 -> Gate 1 -> draft -> Gate 2), 27 offline tests",
    "updated": "2026-11-01"
   },
   {
@@ -446,14 +446,14 @@
    "phase": "P3",
    "title": "Director (Haiku → Sonnet fallback): moments cued to spoken words",
    "owner": "Claude",
-   "status": "todo",
+   "status": "review",
    "depends": [
     "T20",
     "T29"
    ],
    "done_when": "",
-   "notes": "",
-   "evidence": "",
+   "notes": "Director anchors each block to a spoken word number; code resolves times and checks every rule with named errors; Haiku repair then Sonnet repair, else stop. Verified the repair loop in the rehearsal.",
+   "evidence": "scripts/lib/director.py; branch p3-pipeline; e2e rehearsal in the cloud (2 test clips -> Gate 0 -> Gate 1 -> draft -> Gate 2), 27 offline tests",
    "updated": "2026-11-01"
   },
   {
@@ -461,14 +461,14 @@
    "phase": "P3",
    "title": "compile.py: plan → HyperFrames project from blocks only",
    "owner": "Claude",
-   "status": "todo",
+   "status": "review",
    "depends": [
     "T22",
     "T30"
    ],
    "done_when": "",
-   "notes": "",
-   "evidence": "",
+   "notes": "Approved blocks only; alternating zoom on jump cuts; punch-ins; face moves down under split; captions pause under full-screen cards; logos copied.",
+   "evidence": "scripts/compile.py; branch p3-pipeline; e2e rehearsal in the cloud (2 test clips -> Gate 0 -> Gate 1 -> draft -> Gate 2), 27 offline tests",
    "updated": "2026-11-01"
   },
   {
@@ -476,14 +476,14 @@
    "phase": "P3",
    "title": "render.py: draft 540p + edit package + final per platform",
    "owner": "Claude",
-   "status": "todo",
+   "status": "review",
    "depends": [
     "T31",
     "T06"
    ],
    "done_when": "",
-   "notes": "",
-   "evidence": "",
+   "notes": "Draft: check -> contact sheet -> 540p draft -> edit package (clean_cut.mp4, captions_ar.srt, hyperframes/). Final: one file per platform, versioned, duration checked; refuses until handles are set (T07). Missing: graphics alpha layer + fcpxml (T51).",
+   "evidence": "scripts/render.py; branch p3-pipeline; e2e rehearsal in the cloud (2 test clips -> Gate 0 -> Gate 1 -> draft -> Gate 2), 27 offline tests",
    "updated": "2026-11-01"
   },
   {
@@ -491,27 +491,27 @@
    "phase": "P3",
    "title": "run.log + job.json status written by code; resume without paying twice",
    "owner": "Claude",
-   "status": "todo",
+   "status": "review",
    "depends": [
     "T26"
    ],
    "done_when": "",
-   "notes": "",
-   "evidence": "",
+   "notes": "job.json status written after each stage; run.log for every run; crash and stop reasons recorded.",
+   "evidence": "branch p3-pipeline; e2e rehearsal in the cloud (2 test clips -> Gate 0 -> Gate 1 -> draft -> Gate 2), 27 offline tests",
    "updated": "2026-11-01"
   },
   {
    "id": "T34",
    "phase": "P3",
-   "title": "First full reel from IMG_0020 on the Mac",
+   "title": "First real reel from IMG_0020: Gate 0 -> Gate 1 -> draft",
    "owner": "Hermes",
    "status": "todo",
    "depends": [
-    "T32",
+    "T19",
     "T25"
    ],
-   "done_when": "draft + edit package in the job folder",
-   "notes": "",
+   "done_when": "review/draft_540p.mp4, report.md and edit_package/ exist for the IMG_0020 job",
+   "notes": "Hesham does Gate 0 (fix words) and Gate 1 (--select). Then: python3 scripts/reel.py jobs/<date>-img0020 . Spend about $0.05-0.15.",
    "evidence": "",
    "updated": "2026-11-01"
   },
@@ -740,6 +740,20 @@
    "notes": "Imported by Hesham: 60 files incl. reel.py, ingest.sh, keyframes.py, cost model, fonts, lessons, archive.",
    "evidence": "commit c130081 on main",
    "updated": "2026-11-01"
+  },
+  {
+   "id": "T51",
+   "phase": "P3",
+   "title": "Edit package: graphics layer with transparency + timeline.fcpxml",
+   "owner": "Claude",
+   "status": "todo",
+   "depends": [
+    "T32"
+   ],
+   "done_when": "graphics_alpha.mov lines up with clean_cut.mp4 in DaVinci/Final Cut via timeline.fcpxml",
+   "notes": "Needs Hesham's editor answer (T06).",
+   "evidence": "",
+   "updated": "2026-11-01"
   }
  ],
  "log": [
@@ -790,6 +804,12 @@
    "who": "Claude",
    "task": "T20-T22",
    "change": "registry, base template, 7 block files, builder, sample renderer, 6 new tests → review; T24 ready for Hermes"
+  },
+  {
+   "time": "2026-11-01T18:30",
+   "who": "Claude",
+   "task": "T26-T33",
+   "change": "P3 pipeline built and rehearsed end to end in the cloud; → review. T19/T34 updated for the first real run."
   }
  ]
 }

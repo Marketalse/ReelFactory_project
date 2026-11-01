@@ -34,9 +34,10 @@
     "_pending": "warn 0.45 proposed (T14)"
   },
   "asr": {
-    "engine": "hyperframes transcribe (whisper)",
-    "model": "large-v3-turbo",
-    "language": "ar"
+    "engine": "whisper",
+    "model": "large-v3",
+    "language": "ar",
+    "_note": "hyperframes transcribe accepts tiny/base/small/medium/large-v3 (not large-v3-turbo; checked 2026-11-01, v0.8.226)"
   },
   "gates": {
     "transcript_review": true,

@@ -23,7 +23,8 @@ inbox/<slug>/assets/  logos (SVG/PNG), screenshots
 inbox/<slug>/refs/    optional reference videos
 inbox/<slug>/brief.md optional notes (template: templates/inbox_brief.md)
 ```
-Run today (one clip): `python3 scripts/reel.py <clip.MOV> --slug <name>` — see `SOP.md` for which stages work yet.
+Run: `python3 scripts/reel.py inbox/<slug> --slug <slug>` — the run stops at each gate and tells you the next command (see `SOP.md`).
 Offline checks (no spend): `python3 -m unittest discover tests`
+Block look samples (no spend): `python3 scripts/block_samples.py --video jobs/<job>/proxy.mp4`
 
 Video never goes into git; it stays on the Mac.

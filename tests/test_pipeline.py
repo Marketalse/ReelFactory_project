@@ -65,50 +65,6 @@ class BudgetGuardTests(unittest.TestCase):
             self.assertIn("MONTHLY CAP", str(e.exception))
 
 
-class ValidatorTests(unittest.TestCase):
-    def setUp(self):
-        self.words = [{"text": "كلمة", "start": i * 0.5, "end": i * 0.5 + 0.4} for i in range(200)]  # no digits: digits count as spoken numbers
-        self.kf = {"frames": [{"file": "keyframes/kf_000.jpg", "t": 0.3}]}
-
-    def beat(self, i, t0, t1, move=None, layout="face_full", caption="word_pop"):
-        return {"id": f"b{i}", "t_in": t0, "t_out": t1, "src_in": t0, "src_out": t1, "layout": layout, "move": move,
-                "media": {"type": "proxy_cut", "crop": {"scale": 1.0 + 0.1 * (i % 2)}},
-                "caption": {"style": caption, "keyword_word_indices": []}}
-
-    def good_plan(self):
-        beats = [self.beat(0, 0, 3, move=15, caption="two_tone")]
-        t = 3.0
-        i = 1
-        while t < 42 - 3:
-            beats.append(self.beat(i, t, t + 3, move=7)); t += 3; i += 1
-        beats.append(self.beat(i, t, 42, layout="cta"))
-        return {"select_range": [0, 42], "beats": beats, "cta": {"handle": ""}}
-
-    def test_good_plan_passes(self):
-        err, _ = reel.validate_plan(self.good_plan(), self.words, self.kf)
-        self.assertEqual(err, [])
-
-    def test_long_hold_fails(self):
-        p = self.good_plan()
-        p["beats"][1]["t_out"] = p["beats"][2]["t_out"]; del p["beats"][2]
-        p["beats"][1]["src_out"] = p["beats"][1]["t_out"]
-        p["beats"][1]["media"]["crop"]["scale"] = p["beats"][0]["media"]["crop"]["scale"]
-        p["beats"][1]["move"] = 15
-        err, _ = reel.validate_plan(p, self.words, self.kf)
-        self.assertTrue(any("no visual change" in e for e in err), err)
-
-    def test_counter_allowed_when_number_is_spoken(self):
-        p = self.good_plan(); p["counter"] = {"value": 300}
-        self.words[10]["text"] = "300"
-        err, _ = reel.validate_plan(p, self.words, self.kf)
-        self.assertNotIn("counter used but no number is spoken in range", err)
-
-    def test_counter_without_spoken_number_fails(self):
-        p = self.good_plan(); p["counter"] = {"value": 300}
-        err, _ = reel.validate_plan(p, self.words, self.kf)
-        self.assertIn("counter used but no number is spoken in range", err)
-
-
 class RunLogTests(unittest.TestCase):
     def test_tee_writes_log(self):
         with tempfile.TemporaryDirectory() as d:

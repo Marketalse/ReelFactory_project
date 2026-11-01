@@ -165,7 +165,9 @@ def build_project(out_dir, *, duration, face_cuts, scenes, video_src, audio=None
         d = s["t_out"] - s["t_in"]
         text = stamp(s["block"], s["id"], d, s.get("groups_html", ""))
         open(os.path.join(out_dir, "compositions", s["id"] + ".html"), "w", encoding="utf-8").write(text)
-        vals = html.escape(json.dumps(s.get("values", {}), ensure_ascii=False), quote=True)
+        full = {k: v.get("default", "") for k, v in spec["inputs"].items() if v.get("type") != "generated"}
+        full.update(s.get("values", {}))
+        vals = html.escape(json.dumps(full, ensure_ascii=False), quote=True)
         kind = spec.get("track_kind", "graphics")
         hosts.append(f'  <div id="{s["id"]}" class="clip" data-composition-id="{s["id"]}" '
                      f'data-composition-src="compositions/{s["id"]}.html" data-start="{_num(s["t_in"])}" '
