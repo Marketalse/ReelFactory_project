@@ -1,0 +1,32 @@
+# Media and heavy files stay on the Mac, never in git
+*.mov
+*.MOV
+*.mp4
+*.m4a
+*.wav
+*.mp3
+*.png
+*.jpg
+*.jpeg
+!templates/**/*.png
+!style/**/*.png
+inbox/*
+!inbox/.gitkeep
+jobs/*
+!jobs/.gitkeep
+library/*
+!library/.gitkeep
+references/own/*
+!references/own/.gitkeep
+assets/raw/
+# Tooling, caches, secrets
+node_modules/
+__pycache__/
+*.pyc
+.venv*/
+.DS_Store
+.env
+*.key
+auth.json
+dashboard/.backups/
+dashboard/expenses.json

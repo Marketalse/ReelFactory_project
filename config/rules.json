@@ -1,0 +1,20 @@
+{
+  "_note": "Rhythm and validator limits. The validator and the Director prompt both read this file.",
+  "reel_length_s": { "min": 40, "max": 90 },
+  "hook": { "max_s": 3.0, "visible_at_0": true },
+  "max_still_hold_s": 3.5,
+  "min_beat_s": 0.8,
+  "chapter_card_every_s": [15, 20],
+  "cut": { "remove_pauses_over_s": 0.35, "retakes": "last_take_wins" },
+  "moments": {
+    "flash":      { "max_per_reel": 2, "only_on": "payoff or spoken number" },
+    "punch_in":   { "min_gap_s": 3 },
+    "name_tag":   { "min_gap_s": 5 },
+    "text_card":  { "min_gap_s": 10 },
+    "logo_card":  { "requires": "file in job assets/" },
+    "counter":    { "requires": "number actually spoken" }
+  },
+  "sfx": { "pop_min_gap_s": 3 },
+  "captions": { "max_words": 3, "safe_zone_px": { "top": 120, "bottom": 280, "left": 120, "right": 120 } },
+  "cta": { "last_beat_only": true, "handle_on_cta_only": true }
+}
