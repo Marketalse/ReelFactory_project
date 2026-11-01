@@ -64,3 +64,8 @@ One line per decision. Newest at the bottom. If a later decision changes an earl
 - Hesham: "keep my video clean since I'm not creating greedy commercial video, I'm focusing on attracting people attention then I would change my strategy."
 - `config/brand.json → cta.enabled = false`: no end card, no follow ask, no handle, no comment keyword. The reel ends on his face with captions to the last word. The AI editor is told so and may place moments up to the end.
 - To bring it back: set `cta.enabled` to true (wording in the same block). Covered by tests/test_p3.py (CleanEndingTests + DirectorTests with it on).
+
+## 2026-11-01 · Music is added when posting; the factory adds sound effects
+- Hesham mostly uses trending Instagram music, added in the app when posting (sometimes CapCut music). Trending tracks can't be baked into the file (rights + they change weekly).
+- So: finals carry his voice + sound effects only (`audio.music.enabled` false). He picks the trending track in Instagram/TikTok. The CapCut package keeps voice, graphics and sound on separate tracks for reels where he wants CapCut music.
+- Next: learn SFX style and pace from his 11 best reels (references/own/best_reels.md), then build a small licence-safe SFX set (T23). An optional licensed music bed may come later, per reel.
