@@ -6,9 +6,14 @@
     "secondary": "#7D53FF",
     "negative": "#FF6B4A",
     "text": "#FFFFFF",
-    "surface": "#2E3342"
+    "surface": "#2E3342",
+    "muted": "#CDD2E0"
   },
-  "font": { "family": "Readex Pro", "file": "style/fonts/ReadexPro[HEXP,wght].ttf", "license": "SIL OFL 1.1" },
+  "font": {
+    "family": "Readex Pro",
+    "file": "style/fonts/ReadexPro[HEXP,wght].ttf",
+    "license": "SIL OFL 1.1"
+  },
   "digits": "western",
   "handles": {
     "instagram": "CONFIRM (proposed @hesham_alshakarchi)",
@@ -17,12 +22,22 @@
   "captions": {
     "max_words_on_screen": 3,
     "position": "lower_middle",
-    "safe_zone_px": { "top": 120, "bottom": 280 },
-    "keyword": { "color": "accent", "weight": 700, "pop_scale": 1.12 },
+    "safe_zone_px": {
+      "top": 120,
+      "bottom": 280
+    },
+    "keyword": {
+      "color": "accent",
+      "weight": 700,
+      "pop_scale": 1.12
+    },
     "base_weight": 500,
     "min_size_px": 64
   },
-  "length_s": { "min": 40, "max": 90 },
+  "length_s": {
+    "min": 40,
+    "max": 90
+  },
   "cta": {
     "default_type": "follow",
     "show_handle": "cta_card_only",
@@ -39,12 +54,21 @@
     "comment_keyword": {
       "used_only_when": "the reel offers something to send by DM",
       "set_per_job": true,
-      "example": { "word": "متجر", "line": "علقلي متجر", "promise": "وأرسل لك كيف تثبت خدمة زبائن احترافية لمتجرك" }
+      "example": {
+        "word": "متجر",
+        "line": "علقلي متجر",
+        "promise": "وأرسل لك كيف تثبت خدمة زبائن احترافية لمتجرك"
+      }
     }
   },
   "audio": {
     "voice_target_lufs": -14,
-    "music": { "enabled": true, "level_under_voice_db": -20, "duck_while_speaking": true, "source": "CONFIRM licensed library" },
+    "music": {
+      "enabled": true,
+      "level_under_voice_db": -20,
+      "duck_while_speaking": true,
+      "source": "CONFIRM licensed library"
+    },
     "sfx": {
       "enabled": true,
       "source": "CONFIRM licensed library",
@@ -53,6 +77,9 @@
       "ding": "spoken number / counter"
     }
   },
-  "references": { "main": "references/ref5_B_counters.mp4", "layout": "references/ref3_B_split.mp4" },
+  "references": {
+    "main": "references/ref5_B_counters.mp4",
+    "layout": "references/ref3_B_split.mp4"
+  },
   "never_show": "CONFIRM — see Inputs sheet B10"
 }

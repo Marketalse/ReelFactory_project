@@ -1,0 +1,38 @@
+<html data-composition-variables='[{"id":"value","type":"string","label":"Number as spoken (Western digits)","default":"300","maxLength":12},{"id":"label","type":"string","label":"Label","default":"طلب ضاع بدون رد","maxLength":40}]'>
+<template>
+<style>
+#root{position:absolute;inset:0;pointer-events:none}
+#__ID__-panel{position:absolute;left:0;right:0;top:0;height:960px;background:var(--surface);border-bottom:8px solid var(--lime);transform-origin:50% 0%}
+#__ID__-box{position:absolute;left:60px;right:60px;top:250px;height:600px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:26px;text-align:center;font-family:var(--font)}
+#__ID__-value{color:var(--lime);font-size:230px;font-weight:700;line-height:1;direction:ltr;font-variant-numeric:tabular-nums}
+#__ID__-value:empty{display:none}
+#__ID__-label{color:var(--text);font-size:70px;font-weight:600;line-height:1.2;direction:rtl}
+</style>
+<div id="root" data-composition-id="__ID__" data-width="1080" data-height="1920" data-layout-allow-overlap>
+  <div id="__ID__-panel" class="clip" data-start="0" data-duration="__DUR__"></div>
+  <div id="__ID__-box" class="clip" data-start="0" data-duration="__DUR__">
+    <div id="__ID__-value" data-var-text="value"></div>
+    <div id="__ID__-label" data-var-text="label">.</div>
+  </div>
+</div>
+<script>
+const tl = gsap.timeline({ paused: true });
+const D = __DUR__;
+const vEl = document.querySelector("#__ID__-value");
+const raw = (window.__hyperframes.getVariables().value || "").trim();
+const m = raw.match(/^([^0-9]*)([0-9][0-9,]*\.?[0-9]*)(.*)$/);   // count up only a plain spoken number
+tl.fromTo("#__ID__-panel", { scaleY: 0 }, { scaleY: 1, duration: 0.35, ease: "power3.out" }, 0);
+tl.fromTo("#__ID__-value", { scale: 0.6, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.4, ease: "back.out(2)" }, 0.2);
+if (m) {
+  const target = parseFloat(m[2].replace(/,/g, "")), dec = (m[2].split(".")[1] || "").length, comma = m[2].includes(",");
+  const c = { v: 0 };
+  const fmt = (n) => { let s = n.toFixed(dec); if (comma) s = Number(s).toLocaleString("en-US", { minimumFractionDigits: dec, maximumFractionDigits: dec }); return m[1] + s + m[3]; };
+  tl.fromTo(c, { v: 0 }, { v: target, duration: Math.min(0.9, D * 0.4), ease: "power2.out", onUpdate: () => { vEl.textContent = fmt(c.v); } }, 0.2);
+}
+tl.fromTo("#__ID__-label", { y: 30, opacity: 0 }, { y: 0, opacity: 1, duration: 0.35, ease: "power2.out" }, 0.4);
+tl.to("#__ID__-box", { opacity: 0, duration: 0.18 }, D - 0.3);
+tl.to("#__ID__-panel", { scaleY: 0, duration: 0.28, ease: "power3.in" }, D - 0.3);
+window.__timelines["__ID__"] = tl;
+</script>
+</template>
+</html>

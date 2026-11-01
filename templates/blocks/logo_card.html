@@ -1,0 +1,32 @@
+<html data-composition-variables='[{"id":"logo_a","type":"string","label":"Logo A file","default":"assets/logos/sample_a.svg"},{"id":"name_a","type":"string","label":"Name A","default":"Instagram","maxLength":18},{"id":"joiner","type":"enum","label":"Joiner","default":"vs","options":[{"value":"","label":"one logo"},{"value":"vs","label":"vs"},{"value":"+","label":"+"}]},{"id":"logo_b","type":"string","label":"Logo B file","default":"assets/logos/sample_b.svg"},{"id":"name_b","type":"string","label":"Name B","default":"TikTok","maxLength":18}]'>
+<template>
+<style>
+#root{position:absolute;inset:0;pointer-events:none}
+#__ID__-card{position:absolute;left:70px;right:70px;top:230px;height:470px;border-radius:44px;background:rgba(36,40,52,.86);border:2px solid rgba(255,255,255,.12);box-shadow:0 30px 80px rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;gap:56px;direction:ltr;font-family:var(--font)}
+.__ID__-item{display:flex;flex-direction:column;align-items:center;gap:22px}
+.__ID__-item img{width:210px;height:210px;object-fit:contain;border-radius:36px}
+.__ID__-name{color:var(--text);font-size:46px;font-weight:600;max-width:330px;text-align:center}
+#__ID__-join{color:var(--lime);font-size:84px;font-weight:700}
+.__ID__-solo #__ID__-join,.__ID__-solo #__ID__-b{display:none}
+</style>
+<div id="root" data-composition-id="__ID__" data-width="1080" data-height="1920">
+  <div id="__ID__-card" class="clip" data-start="0" data-duration="__DUR__">
+    <div id="__ID__-a" class="__ID__-item"><img id="__ID__-ia" data-var-src="logo_a" src="assets/logos/sample_a.svg" alt=""><div class="__ID__-name" data-var-text="name_a">.</div></div>
+    <div id="__ID__-join" data-var-text="joiner"></div>
+    <div id="__ID__-b" class="__ID__-item"><img id="__ID__-ib" data-var-src="logo_b" src="assets/logos/sample_b.svg" alt=""><div class="__ID__-name" data-var-text="name_b">.</div></div>
+  </div>
+</div>
+<script>
+const tl = gsap.timeline({ paused: true });
+const D = __DUR__;
+const v = window.__hyperframes.getVariables();
+if (!v.joiner || !v.logo_b) document.querySelector("#__ID__-card").classList.add("__ID__-solo");
+tl.fromTo("#__ID__-card", { y: -40, opacity: 0, scale: 0.92 }, { y: 0, opacity: 1, scale: 1, duration: 0.4, ease: "back.out(1.7)" }, 0);
+tl.fromTo("#__ID__-a", { scale: 0.4, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.35, ease: "back.out(2.2)" }, 0.15);
+tl.fromTo("#__ID__-join", { scale: 0, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.25, ease: "back.out(3)" }, 0.35);
+tl.fromTo("#__ID__-b", { scale: 0.4, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.35, ease: "back.out(2.2)" }, 0.45);
+tl.to("#__ID__-card", { opacity: 0, duration: 0.25, ease: "power2.in" }, D - 0.28);
+window.__timelines["__ID__"] = tl;
+</script>
+</template>
+</html>

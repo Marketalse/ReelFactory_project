@@ -1,0 +1,32 @@
+<html data-composition-variables='[{"id":"line","type":"string","label":"CTA line","default":"إذا عجبك المحتوى تابعني","maxLength":40},{"id":"promise","type":"string","label":"Reason / promise","default":"كل يوم شي جديد بالتسويق والبزنس","maxLength":48},{"id":"keyword","type":"string","label":"Comment keyword (optional)","default":"","maxLength":14},{"id":"handle","type":"string","label":"Handle","default":"@hesham_alshakarchi","maxLength":30}]'>
+<template>
+<style>
+#root{position:absolute;inset:0;pointer-events:none}
+#__ID__-scrim{position:absolute;left:0;right:0;bottom:0;height:1180px;background:linear-gradient(0deg,rgba(20,22,30,.94) 0%,rgba(20,22,30,.82) 45%,rgba(20,22,30,0) 100%)}
+#__ID__-box{position:absolute;left:60px;right:60px;top:880px;height:430px;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:24px;text-align:center;font-family:var(--font)}
+#__ID__-line{color:var(--text);font-size:76px;font-weight:700;line-height:1.15;direction:rtl}
+#__ID__-kw{background:var(--lime);color:var(--bg);font-size:72px;font-weight:700;padding:6px 40px;border-radius:22px;direction:rtl}
+#__ID__-kw:empty{display:none}
+#__ID__-promise{color:var(--muted);font-size:46px;font-weight:400;line-height:1.3;direction:rtl}
+#__ID__-handle{background:var(--violet);color:var(--text);font-size:44px;font-weight:600;padding:12px 36px;border-radius:999px;direction:ltr}
+</style>
+<div id="root" data-composition-id="__ID__" data-width="1080" data-height="1920">
+  <div id="__ID__-scrim" class="clip" data-start="0" data-duration="__DUR__"></div>
+  <div id="__ID__-box" class="clip" data-start="0" data-duration="__DUR__">
+    <div id="__ID__-line" data-var-text="line">.</div>
+    <div id="__ID__-kw" data-var-text="keyword"></div>
+    <div id="__ID__-promise" data-var-text="promise"></div>
+    <div id="__ID__-handle" data-var-text="handle">.</div>
+  </div>
+</div>
+<script>
+const tl = gsap.timeline({ paused: true });
+tl.fromTo("#__ID__-scrim", { opacity: 0 }, { opacity: 1, duration: 0.35, ease: "power2.out" }, 0);
+tl.fromTo("#__ID__-line", { y: 50, opacity: 0 }, { y: 0, opacity: 1, duration: 0.4, ease: "back.out(1.6)" }, 0.1);
+tl.fromTo("#__ID__-kw", { scale: 0.5, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.35, ease: "back.out(2.4)" }, 0.35);
+tl.fromTo("#__ID__-promise", { y: 24, opacity: 0 }, { y: 0, opacity: 1, duration: 0.35, ease: "power2.out" }, 0.5);
+tl.fromTo("#__ID__-handle", { scale: 0.6, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.35, ease: "back.out(2)" }, 0.7);
+window.__timelines["__ID__"] = tl;
+</script>
+</template>
+</html>
