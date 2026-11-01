@@ -1,0 +1,70 @@
+{
+  "id": "2026-10-31-v0-first-reel",
+  "status": "awaiting_footage",
+  "project": "Reel Factory",
+  "scene_plan": "scene_plan.json",
+  "language": "ar",
+  "inputs": [
+    {
+      "path": "~/Desktop/Reel-Factory/inbox/IMG_0011.MOV",
+      "duration": 318.445,
+      "fps": 60,
+      "resolution": "3840x2160",
+      "rotation": 90,
+      "audio": true,
+      "probed": true,
+      "duration": null,
+      "fps": null,
+      "resolution": null,
+      "rotation": null,
+      "audio": null,
+      "probed": false
+    }
+  ],
+  "plan": {
+    "length_s": 36,
+    "hook": "",
+    "hook_options": [],
+    "scenes": [
+      { "id": "hook",         "start": 0,   "end": 2.5, "purpose": "hook",    "visual": "word_pop_caption" },
+      { "id": "problem",      "start": 2.5, "end": 8,   "purpose": "problem", "visual": "talking_head" },
+      { "id": "counter_hero", "start": 8,   "end": 12,  "purpose": "proof",   "visual": "counter" },
+      { "id": "value",        "start": 12,  "end": 26,  "purpose": "value",   "visual": "talking_head" },
+      { "id": "payoff",       "start": 26,  "end": 32,  "purpose": "payoff",  "visual": "talking_head" },
+      { "id": "cta_card",     "start": 32,  "end": 36,  "purpose": "cta",     "visual": "cta_card" }
+    ],
+    "caption_style": "word_pop",
+    "transitions": [{ "type": "whip_blur", "at_s": 12.0, "duration_s": 0.4 }],
+    "music_mood": "upbeat-minimal, ducked under voice",
+    "sfx": ["tick_rise@8.0", "whoosh@12.0", "soft_hit@32.0"],
+    "cta": "علقلي متجر",
+    "cover_frame_s": 0.5,
+    "candidates_rejected": []
+  },
+  "registry": {
+    "searched": false,
+    "note": "Slot names are placeholders until confirmed with npx hyperframes catalog. Need 3 candidates per slot (AGENTS.md section 3).",
+    "slots": {
+      "word_pop_caption": { "candidates": [], "chosen": null },
+      "counter":          { "candidates": [], "chosen": null },
+      "whip_blur":        { "candidates": [], "chosen": null },
+      "cta_card":         { "candidates": [], "chosen": null }
+    }
+  },
+  "rules": [
+    "Readex Pro only",
+    "Arabic RTL legible: rtl container, English and numerals in ltr spans",
+    "Exactly one FX (whip blur at 12.0 s); cuts and punch-ins don't count as FX",
+    "Handle only on the CTA card",
+    "Spend: draft renders max 3; one high-quality render after approval"
+  ],
+  "attempts": [],
+  "preview_url": "",
+  "output": "",
+  "feedback": "",
+  "notes": [
+    "Use the inbox clip path directly.",
+    "CTA uses the user's requested line: \"علقلي متجر\".",
+    "Awaiting footage status is now the first checkpoint."
+  ]
+}

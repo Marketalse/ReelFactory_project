@@ -1,0 +1,79 @@
+{
+  "project": "Reel Factory",
+  "version": 1,
+  "goal": "V0 thin vertical slice",
+  "source": "templates/library.json",
+  "status": "ready_to_build",
+  "build_order": [
+    "word_pop_caption",
+    "counter",
+    "fx_whip_blur",
+    "cta_card"
+  ],
+  "slots": [
+    {
+      "id": "word_pop_caption",
+      "phase": "V0",
+      "status": "planned",
+      "purpose": "Replace the static caption card with a kinetic, readable hook line.",
+      "required_inputs": ["hook", "keyword", "supporting line"],
+      "rules": [
+        "Use Readex Pro.",
+        "Keep Arabic RTL legible.",
+        "Highlight only the keyword or key phrase in lime.",
+        "Keep the line short enough to read on a phone screen."
+      ]
+    },
+    {
+      "id": "counter",
+      "phase": "V0",
+      "status": "planned",
+      "purpose": "Show the key number cleanly and make the number the visual hero.",
+      "required_inputs": ["number", "label", "trend"],
+      "rules": [
+        "Use a large number.",
+        "Use lime for the key number or highlight state.",
+        "Keep contrast high on the dark background.",
+        "Avoid clutter around the counter."
+      ]
+    },
+    {
+      "id": "fx_whip_blur",
+      "phase": "V0",
+      "status": "planned",
+      "purpose": "Prove one motion transition so the reel does not feel static.",
+      "required_inputs": ["source clip"],
+      "rules": [
+        "Use exactly one FX in V0.",
+        "Prefer whip-blur or light-leak.",
+        "Do not stack multiple FX in the same beat.",
+        "The FX must support the story, not distract from it."
+      ]
+    },
+    {
+      "id": "cta_card",
+      "phase": "V0",
+      "status": "planned",
+      "purpose": "End the reel with a clean call to action and the handle only on the CTA card.",
+      "required_inputs": ["cta words", "handle"],
+      "rules": [
+        "No persistent footer.",
+        "Handle appears only on the final CTA card.",
+        "Keep the CTA short and direct.",
+        "Make the final card read cleanly in under 2 seconds."
+      ]
+    }
+  ],
+  "acceptance_criteria": [
+    "One 30-45 second reel can be produced from a hand-written JSON scene plan.",
+    "The reel uses the current brand kit and Readex Pro.",
+    "The reel contains the four V0 slots above.",
+    "The reel shows one FX only.",
+    "The look is ready for Hesham to approve or request fixes."
+  ],
+  "dependencies": {
+    "local_llm": "qwen3:8b",
+    "vision_qa": "approved_later",
+    "telegram": "removed"
+  }
+}

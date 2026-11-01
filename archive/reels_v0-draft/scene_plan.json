@@ -1,0 +1,121 @@
+{
+  "id": "v0-first-reel-scene-plan",
+  "status": "draft",
+  "project": "Reel Factory",
+  "source": "templates/v0_manifest.json",
+  "job": "reels/v0-draft/job.json",
+  "duration_s": 36,
+  "clip": {
+    "path": "~/Desktop/Reel-Factory/inbox/IMG_0011.MOV",
+    "duration_s": 318.445,
+    "resolution": "3840x2160",
+    "fps": 60,
+    "rotation": 90,
+    "audio": true
+  },
+  "observed_clip_notes": [
+    "Single continuous talking-head segment.",
+    "No scene changes or cutaways in the first 35 seconds.",
+    "A brief glitch/mesh overlay appears near the start and can be used as the reel's attention hook.",
+    "Expressive hand gestures appear throughout and support a cut-down reel.",
+    "Suitable for a 30-45 second vertical reel after trimming the best speaking section."
+  ],
+  "scenes": [
+    {
+      "id": "hook_word_pop",
+      "start_s": 0,
+      "end_s": 2.5,
+      "slot": "word_pop_caption",
+      "purpose": "Open with the hook and one highlighted word.",
+      "inputs": {
+        "hook": "",
+        "keyword": "",
+        "supporting_line": ""
+      },
+      "notes": [
+        "Use the glitch/mesh moment as the visual hook.",
+        "Use Readex Pro",
+        "Keep Arabic RTL legible",
+        "Highlight only the keyword in lime"
+      ]
+    },
+    {
+      "id": "counter_beat",
+      "start_s": 2.5,
+      "end_s": 11,
+      "slot": "counter",
+      "purpose": "Show the main number as the visual hero.",
+      "inputs": {
+        "number": "",
+        "label": "",
+        "trend": ""
+      },
+      "notes": [
+        "Make the number large",
+        "Keep contrast high",
+        "Let the motion breathe"
+      ]
+    },
+    {
+      "id": "transition_fx",
+      "start_s": 11,
+      "end_s": 11.4,
+      "slot": "fx_whip_blur",
+      "purpose": "Add one motion transition to prove the reel is not static.",
+      "inputs": {
+        "source_clip": ""
+      },
+      "notes": [
+        "Only one FX in V0",
+        "Use whip-blur",
+        "Do not stack extra effects"
+      ]
+    },
+    {
+      "id": "value_section",
+      "start_s": 11.4,
+      "end_s": 31,
+      "slot": "talking_head",
+      "purpose": "Keep the speaker on-screen while the value and explanation land.",
+      "inputs": {
+        "spoken_value": ""
+      },
+      "notes": [
+        "Use jump cuts only if needed for pace",
+        "Keep captions on every spoken phrase",
+        "Use the speaker's hand-gesture peaks as cut points"
+      ]
+    },
+    {
+      "id": "cta_end_card",
+      "start_s": 31,
+      "end_s": 36,
+      "slot": "cta_card",
+      "purpose": "End cleanly with a CTA and the handle only on the final card.",
+      "inputs": {
+        "cta_words": "علقلي متجر",
+        "handle": ""
+      },
+      "notes": [
+        "No persistent footer",
+        "Keep the CTA short",
+        "Handle only appears on the final card"
+      ]
+    }
+  ],
+  "acceptance": [
+    "One 30-45 second reel can be assembled from this plan.",
+    "All four V0 slots appear exactly once.",
+    "One FX only is used.",
+    "The reel is ready for review or fixes."
+  ],
+  "next_required_inputs": [
+    "hook line",
+    "highlight keyword",
+    "supporting line",
+    "counter number",
+    "counter label",
+    "counter trend",
+    "handle"
+  ]
+}

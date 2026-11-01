@@ -1,0 +1,118 @@
+{
+  "project": "Reel Factory",
+  "version": 3,
+  "purpose": "Reusable template and asset library so assets and brand kits can be swapped without rebuilding the project.",
+  "current_state": {
+    "local_llm": "qwen3:8b",
+    "vision_qa": {
+      "status": "approved_later",
+      "notes": "Keep it in the plan; useful for frame-level QA before review."
+    },
+    "telegram_workflow": {
+      "status": "removed",
+      "notes": "Footage goes directly into HyperFrames; no Telegram intake workflow."
+    },
+    "spend_cap": {
+      "status": "pending",
+      "rule": "Keep it as low as possible while preserving best quality."
+    }
+  },
+  "brand_kits": [
+    {
+      "id": "current",
+      "name": "Reel Factory current kit",
+      "status": "active",
+      "colors": {
+        "bg": "#242834",
+        "accent": "#B6FF00",
+        "secondary": "#7D53FF",
+        "negative": "#FF6B4A"
+      },
+      "font": "Readex Pro",
+      "rules": [
+        "Use lime only for keyword highlights, key numbers, CTA pills, and flash beats.",
+        "Use violet for fills, cards, icons, and secondary UI.",
+        "Use coral only for losses, warnings, and strikethroughs.",
+        "Flash beats are limited to 1-2 per reel and must be full-screen payoff moments."
+      ]
+    }
+  ],
+  "template_slots": [
+    {
+      "id": "word_pop_caption",
+      "phase": "V0",
+      "status": "planned",
+      "inputs": ["hook", "keyword", "supporting line"],
+      "notes": "Replaces the static caption card."
+    },
+    {
+      "id": "counter",
+      "phase": "V0",
+      "status": "planned",
+      "inputs": ["number", "label", "trend"],
+      "notes": "Paired with lime flash beats."
+    },
+    {
+      "id": "cta_card",
+      "phase": "V0",
+      "status": "planned",
+      "inputs": ["cta words", "handle"],
+      "notes": "Final card only; no persistent footer."
+    },
+    {
+      "id": "fx_whip_blur",
+      "phase": "V0",
+      "status": "planned",
+      "inputs": ["source clip"],
+      "notes": "One FX to prove transitions work."
+    },
+    {
+      "id": "text_behind_subject",
+      "phase": "P0",
+      "status": "approved_later",
+      "inputs": ["clip", "matte", "caption"],
+      "notes": "MediaPipe matte spike for the text-behind-subject test."
+    },
+    {
+      "id": "compare_slider",
+      "phase": "P1",
+      "status": "planned",
+      "inputs": ["before", "after", "divider label"],
+      "notes": "Reusable compare layout for before/after stories."
+    }
+  ],
+  "asset_packs": [
+    {
+      "id": "light_leaks",
+      "status": "planned",
+      "license": "to be checked",
+      "items": []
+    },
+    {
+      "id": "3d_icons_emoji",
+      "status": "planned",
+      "license": "to be checked",
+      "items": []
+    },
+    {
+      "id": "3d_objects",
+      "status": "planned",
+      "license": "to be checked",
+      "items": []
+    },
+    {
+      "id": "tagged_broll",
+      "status": "planned",
+      "license": "to be checked",
+      "items": []
+    }
+  ],
+  "editorial_rules": [
+    "Keep the JSON editable so assets and brand kits can be changed later.",
+    "Keep the task map active; nothing is stopped unless the user explicitly removes it.",
+    "Keep Telegram out of the workflow.",
+    "Keep spend minimal while preserving quality.",
+    "Treat Vision QA as approved later-stage work, not a blocker.",
+    "Use this library as the source of truth for V0 template slots, asset packs, and brand-kit values."
+  ]
+}

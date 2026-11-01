@@ -1,0 +1,51 @@
+{
+  "_status": "Four-colour kit + flash beat APPROVED 2026-10-29. All colours measured (WCAG) and recorded. 'approved': false items still need V0 confirmation before render lock.",
+  "colors": {
+    "bg":          {"hex": "#242834", "role": "background / dark surface",        "approved": true},
+    "accent":      {"hex": "#B6FF00", "role": "keyword highlight, key numbers, CTA pill, progress fill", "approved": true},
+    "secondary":   {"hex": "#7D53FF", "role": "cards, icons, bar fills, secondary UI", "approved": true},
+    "negative":    {"hex": "#FF6B4A", "role": "losses, strikethroughs, warnings ONLY (trap 2 fix)", "approved": false}
+  },
+  "derived_text_surface": {
+    "text":       {"hex": "#FFFFFF", "role": "body text on bg", "approved": false},
+    "surface":    {"hex": "#2E3342", "role": "card surface, slightly lighter than bg", "approved": false}
+  },
+  "contrast_records": {
+    "lime_on_bg":      12.11,
+    "white_on_bg":     14.70,
+    "purple_on_bg":    3.19,
+    "white_on_purple": 4.61,
+    "coral_on_bg":      5.20,
+    "rules": [
+      "Accent text ON bg is 12.1:1 - safe for all sizes.",
+      "Negative #FF6B4A text never goes on bg (5.2:1 OK only for <=24px); use as fill or strikethrough.",
+      "Purple never as small text on bg (3.19:1 fails); purple is a fill/shape colour.",
+      "Lime is the 'bad/warning' escape from dark-only look ONLY in flash beats (1-2/reel)."
+    ]
+  },
+  "flash_beat": {
+    "rule": "1-2 per reel maximum. Full screen lime (#B6FF00), big dark number, payoff moment (frame 2 of the reel).",
+    "purpose": "thumb-stop, signature, spoken-word highlight; separates the brand from dark 'crypto/trading' looks.",
+    "limits": "at most 2 per reel; never full-lime for the whole reel."
+  },
+  "traps_and_fixes_recorded": {
+    "trap1_flat_dark": "60 s of near-black feels flat and blends with app dark UI.",
+    "fix1": "1-2 lime flash beats per reel (full screen + big dark number) - see flash_beat above.",
+    "trap2_no_bad_state": "Palette had no 'bad' signal - a $275->$0 price swap or warning could not be shown.",
+    "fix2": "negative #FF6B4A (approved) for losses/strikethroughs/warnings only.",
+    "trap3_crypto_drift": "Dark + neon lime reads as crypto/trading channels.",
+    "fix3": "Face frame kept large; lime only on spoken words; card animations bouncy, not corporate.",
+    "gap_gen_alpha": "Gen Alpha prefers brighter, louder, faster (Roblox/MrBeast-style).",
+    "fix3b": "reduce card swaps to 2-3 s; keep palette to three colours plus coral."
+  },
+  "font": {
+    "family": "Readex Pro",
+    "source": "https://fonts.google.com/specimen/Readex+Pro",
+    "file": "style/fonts/ReadexPro[HEXP,wght].ttf",
+    "license": "SIL OFL 1.1",
+    "axes": {"wght": [160, 700], "HEXP": [0, 100]},
+    "verified": "Arabic block glyphs 73; Western digits and $ , . % : present"
+  },
+  "handle": "@hesham_alshakarchi (proposed; confirm) - only on CTA card, no persistent footer",
+  "cta_words": "TBD (confirm)"
+}

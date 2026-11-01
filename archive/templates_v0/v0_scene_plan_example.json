@@ -1,0 +1,80 @@
+{
+  "project": "Reel Factory",
+  "version": 1,
+  "purpose": "Example scene plan for the V0 reel.",
+  "source": "templates/v0_manifest.json",
+  "duration_s": 36,
+  "scenes": [
+    {
+      "id": "hook_word_pop",
+      "start_s": 0,
+      "end_s": 4,
+      "slot": "word_pop_caption",
+      "purpose": "Open with the main hook and keyword highlight.",
+      "notes": [
+        "Use Readex Pro",
+        "Keep the phrase short",
+        "Highlight only the keyword in lime"
+      ],
+      "inputs": {
+        "hook": "",
+        "keyword": "",
+        "supporting_line": ""
+      }
+    },
+    {
+      "id": "counter_beat",
+      "start_s": 4,
+      "end_s": 13,
+      "slot": "counter",
+      "purpose": "Show the main number as the visual hero.",
+      "notes": [
+        "Make the number large",
+        "Keep contrast high",
+        "Let the motion breathe"
+      ],
+      "inputs": {
+        "number": "",
+        "label": "",
+        "trend": ""
+      }
+    },
+    {
+      "id": "transition_fx",
+      "start_s": 13,
+      "end_s": 18,
+      "slot": "fx_whip_blur",
+      "purpose": "Add one motion transition to prove the reel is not static.",
+      "notes": [
+        "Only one FX in V0",
+        "Use whip-blur or light-leak",
+        "Do not stack extra effects"
+      ],
+      "inputs": {
+        "source_clip": ""
+      }
+    },
+    {
+      "id": "cta_end_card",
+      "start_s": 30,
+      "end_s": 36,
+      "slot": "cta_card",
+      "purpose": "End cleanly with a CTA and the handle only on the final card.",
+      "notes": [
+        "No persistent footer",
+        "Keep the CTA short",
+        "Handle only appears on the final card"
+      ],
+      "inputs": {
+        "cta_words": "",
+        "handle": ""
+      }
+    }
+  ],
+  "acceptance": [
+    "One 30-45 second reel can be assembled from this plan.",
+    "All four V0 slots appear exactly once.",
+    "One FX only is used.",
+    "The reel is ready for review or fixes."
+  ]
+}

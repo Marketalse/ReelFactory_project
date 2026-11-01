@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Reel Factory · expense dashboard</title>
+<style>
+  :root{
+    --bg:#242834; --card:#2E3342; --ink:#FFFFFF; --acc:#B6FF00; --sec:#7D53FF; --neg:#FF6B4A; --line:#3A404F;
+  }
+  *{box-sizing:border-box}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;color:var(--ink);margin:0;background:var(--bg);-webkit-font-smoothing:antialiased}
+  header{display:flex;align-items:center;gap:12px;padding:18px 24px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+  header h1{font-size:18px;letter-spacing:.3px}
+  header .sub{color:#9AA4B5;font-size:12px}
+  nav{display:flex;gap:8px;margin:14px 24px 0 flex-wrap:wrap}
+  nav a{display:inline-block;padding:8px 14px;border:1px solid var(--line);border-radius:8px;color:#D7DDF0;text-decoration:none;font-size:13px}
+  nav a:hover{border-color:var(--sec)}
+  main{max-width:980px;margin:0 auto;padding:18px 24px 60px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px;margin:14px 0}
+  .card h2{font-size:15px;margin:0 0 12px;color:#D7DDF0}
+  .total{display:flex;gap:18px;flex-wrap:wrap}
+  .total .big{flex:1 1 200px;font-size:24px;font-weight:600}
+  .total .sub{color:#9AA4B5;font-size:11px;text-transform:uppercase;letter-spacing:1px}
+  .bar{background:#3A404F;border-radius:4px;height:10px;width:100%;overflow:hidden}
+  .bar i{display:block;height:100%;border-radius:4px}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th{text-align:left;padding:10px 12px;color:#9AA4B5;font-size:11px;text-transform:uppercase;letter-spacing:.5px}
+  td{padding:10px 12px;border-bottom:1px solid #2A2F3C}
+  tr:hover td{background:#343B4A}
+  .pos{color:var(--acc)} .neg{color:var(--neg)}
+  .note{color:#9AA4B5;font-size:12px;margin-top:8px}
+  .empty{color:#9AA4B5;padding:24px;text-align:center}
+  .footer{margin-top:24px;font-size:11px;color:#5C6573}
+</style>
+</head>
+<body>
+<header>
+  <h1>Reel Factory · expense dashboard</h1>
+  <span class="sub">budget tracker · built locally, no accounts, no external services</span>
+</header>
+<nav>
+  <a href="#total">Totals</a><a href="#table">Ledger</a><a href="#budget">Budget</a>
+</nav>
+<main>
+  <section id="total" class="card">
+    <h2>Running total</h2>
+    <div class="total">
+      <div><div class="sub">Total logged</div><div class="big" id="total">$0.00</div></div>
+      <div><div class="sub">This month</div><div class="big" id="thisMonth">$0.00</div></div>
+      <div><div class="sub">Avg / video</div><div class="big" id="avgPerVideo">$0.00</div></div>
+    </div>
+  </section>
+
+  <section id="table" class="card">
+    <h2>Ledger</h2>
+    <table>
+      <thead><tr><th>Date</th><th>Video</th><th>Category</th><th>Amount</th><th>Note</th></tr></thead>
+      <tbody></tbody>
+    </table>
+    <p class="note">Add rows with <code>python3 add_expense.py --video &lt;slug&gt; --category &lt;cat&gt; --amount &lt;x.xx&gt; --note &lt;text&gt;</code></p>
+  </section>
+
+  <section id="budget" class="card">
+    <h2>Budget outlook</h2>
+    <p class="note">Average so far is <b id="avgGap">$0.00</b> per video. Budget cards: <b id="planText">12 videos = $0.00 · 24 videos = $0.00</b>.</p>
+    <div class="total">
+      <div><div class="sub">Budget for 12 videos</div><div class="big" id="budget12">$0.00</div></div>
+      <div><div class="sub">Budget for 24 videos</div><div class="big" id="budget24">$0.00</div></div>
+    </div>
+    <p class="note">At month end, take the average from here and set the real monthly budget. Typical reel cost is far below template design cost - check the ratio.</p>
+  </section>
+</main>
+<footer class="footer">Reel Factory · local dashboard · no data leaves this Mac</footer>
+<script>
+const CATS = ["LLM API","Template design","Subscription","Asset","Tooling","Infrastructure","Other"];
+const CATCOL = { "LLM API":"#B6FF00", "Template design":"#7D53FF", "Subscription":"#FF6B4A", "Asset":"#2E3342", "Tooling":"#5C6573", "Infrastructure":"#5C6573", "Other":"#5C6573" };
+const $ = id => document.getElementById(id);
+const fmt = n => "$" + Number(n||0).toFixed(2);
+
+async function load() {
+  try { rows = await (await fetch("expenses.json")).json(); } catch(e) { rows = []; }
+  draw();
+}
+let rows = [];
+const draw = () => {
+  const t = rows.reduce((s,r)=>s+Number(r.amount||0),0);
+  $("total").textContent = fmt(t);
+
+  const now = new Date();
+  const yr = now.getFullYear(), mo = now.getMonth()+1;
+  const thisMonth = rows.filter(r=>r.date && Number(r.date.slice(0,4))===yr && Number(r.date.slice(5,7))===mo)
+                         .reduce((s,r)=>s+Number(r.amount||0),0);
+  $("thisMonth").textContent = fmt(thisMonth);
+
+  const v = new Set(rows.map(r=>r.video||"")).size || 1;
+  $("avgPerVideo").textContent = fmt(t/v);
+
+  const table = document.querySelector("table tbody");
+  table.innerHTML = rows.slice().reverse().map(r=>`
+    <tr><td>${r.date||""}</td><td>${r.video||""}</td><td>${CATS[r.category]||r.category}</td>
+    <td class="${Number(r.amount||0)>=0?"pos":"neg"}">${fmt(r.amount)}</td><td>${r.note||""}</td></tr>`).join("") || '<tr class="empty"><td colspan="5">No rows yet</td></tr>';
+  if(!rows.length) table.innerHTML = '<tr class="empty"><td colspan="5">No rows yet</td></tr>';
+
+  const splits = {};
+  rows.forEach(r=>{ const k=CATS[r.category]||r.category; splits[k]=(splits[k]||0)+Number(r.amount||0); });
+  const bar = document.querySelector(".bar");
+  if(bar) {
+    const maxV = Math.max(1, ...Object.values(splits));
+    bar.innerHTML = Object.entries(splits).map(([k,v])=>`<i style="width:${(v/maxV)*100}%;background:${CATCOL[k]||"#5C6573"}" title="${k}: ${fmt(v)}"></i>`).join("");
+  }
+
+  const avg = t/v || 0;
+  $("avgGap").textContent = fmt(avg);
+  $("budget12").textContent = fmt(avg*12);
+  $("budget24").textContent = fmt(avg*24);
+};
+load();
+</script>
+</body>
+</html>

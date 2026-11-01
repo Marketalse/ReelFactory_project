@@ -1,0 +1,88 @@
+{
+ "version": 2,
+ "updated": "2026-11-01",
+ "decision": "Hesham, SHAK-289 (quality too low, SOP not completing)",
+ "route": {
+  "provider": "nous",
+  "base_url": "https://inference-api.nousresearch.com/v1",
+  "note": "Existing Hermes Nous login. No Anthropic key in ~/.hermes/.env. Never write keys here."
+ },
+ "roles": {
+  "planning_llm": {
+   "model": "ollama/qwen3:8b",
+   "where": "local",
+   "status": "working",
+   "changed": false
+  },
+  "vision_shot_log": {
+   "model": "anthropic/claude-sonnet-5.5",
+   "fallback": "ollama/qwen3-vl:4b",
+   "where": "cloud",
+   "input": "sampled stills only, never raw video",
+   "status": "verified_call_2026-11-01",
+   "measured_cost_per_frame_usd": 0.0062,
+   "method": "scripts/keyframes.py: <=40 resized keyframes (540w), one batched call, reasoning effort low; measured $0.0558 per 60 s clip"
+  },
+  "vision_qa": {
+   "model": "anthropic/claude-sonnet-5.5",
+   "fallback": "ollama/qwen3-vl:4b",
+   "where": "cloud",
+   "input": "8 stills per pass after lint",
+   "status": "verified_call_2026-11-01"
+  },
+  "asr_engine": {
+   "model": "whisper.cpp ggml-medium via hyperframes transcribe",
+   "where": "local",
+   "status": "working",
+   "changed": false,
+   "why": "Claude models cannot take audio (API 404) and return no word timestamps; timestamps must come from an ASR engine"
+  },
+  "arabic_transcript_correction": {
+   "model": "anthropic/claude-haiku-5.5",
+   "alt": "anthropic/claude-haiku-4.5",
+   "where": "cloud",
+   "input": "text transcript only (no audio)",
+   "status": "ids_verified_text_call_ok"
+  },
+  "other_transcript_correction": {
+   "model": "anthropic/claude-haiku-5.5",
+   "where": "cloud",
+   "input": "text transcript only",
+   "status": "ids_verified_text_call_ok"
+  },
+  "director": {
+   "model": "anthropic/claude-opus-5",
+   "where": "cloud",
+   "calls_per_pass": 1,
+   "status": "id_verified_text_call_ok",
+   "price_usd_per_mtok": {
+    "input": 5,
+    "output": 25,
+    "source": "measured from provider usage.cost, 2026-11-01; long-prompt tier NOT verified"
+   }
+  },
+  "renderer": {
+   "model": "HyperFrames",
+   "where": "local",
+   "status": "working",
+   "changed": false
+  },
+  "text_behind_matte": {
+   "model": "MediaPipe selfie segmentation (rembg fallback)",
+   "where": "local",
+   "status": "installed_not_proven",
+   "changed": false
+  }
+ },
+ "budget": {
+  "approved_by": "Hesham, SHAK-291 chat",
+  "monthly_band_usd": [
+   23,
+   50
+  ],
+  "monthly_cap_usd": 50,
+  "reels_per_month": 24,
+  "per_job_stop_usd": 2.08,
+  "derivation": "cap/24"
+ }
+}
