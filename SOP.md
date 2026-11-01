@@ -1,6 +1,6 @@
 # Reel Factory — SOP (steps, in order)
 
-**Day to day (autopilot): see `HOW_TO.md`.** Hesham drops clips, clicks Make reel, then comments or approves the draft on the dashboard. Gates 0 and 1 below run automatically unless switched back on in `config/project.json → gates`.
+**Day to day (autopilot): see `HOW_TO.md`.** Hesham uploads the video on the dashboard's home page (`dashboard/make.html`), clicks Make my reel, then comments or approves the draft on the dashboard. Gates 0 and 1 below run automatically unless switched back on in `config/project.json → gates`.
 
 This file describes what the code does **today**, and marks what's still being built with its task number on the dashboard. When a stage is built, its line moves from "coming" to "works", in the same commit as the code.
 

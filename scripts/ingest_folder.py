@@ -17,7 +17,7 @@ import argparse, datetime, json, os, re, shutil, subprocess, sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from lib import config as cfg   # noqa: E402
 
-VIDEO = (".mov", ".mp4", ".m4v")
+VIDEO = (".mov", ".mp4", ".m4v", ".avi", ".webm", ".mkv")
 
 
 def sh(cmd, **k):

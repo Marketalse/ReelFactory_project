@@ -5,7 +5,7 @@ Turns Hesham's raw talking-head clips into reviewable Instagram/TikTok reels (40
 ## Where things are
 | What | File |
 |---|---|
-| Tasks, progress, spend (visual) | `python3 dashboard/serve.py` → http://127.0.0.1:8765 |
+| Make a reel (upload page) + tasks, progress, spend | `python3 dashboard/serve.py` → http://127.0.0.1:8765 (home = upload page, `index.html` = reels, tasks, spend) |
 | **How to make a reel (3 steps, no Terminal)** | `HOW_TO.md` + double-click `Reel Factory.command` |
 | Rules for agents | `AGENTS.md` |
 | Steps, in order (what works today) | `SOP.md` |
