@@ -121,5 +121,22 @@ class ProgressTests(ApiTest):
         self.assertFalse(self.api._handles_set())
 
 
+class SpendTests(ApiTest):
+    def test_spend_by_step_model_and_projection(self):
+        from datetime import date
+        m = date.today().isoformat()[:7]
+        for job, calls in ((m + "-01-a", [{"stage": "fix", "model": "anthropic/claude-haiku-5.5", "cost": 0.01},
+                                           {"stage": "plan", "model": "anthropic/claude-haiku-5.5", "cost": 0.02}]),
+                           (m + "-02-b", [{"stage": "repair", "model": "anthropic/claude-sonnet-5.5", "cost": 0.05}])):
+            d = os.path.join(self.root, "jobs", job); os.makedirs(d)
+            json.dump({"calls": calls}, open(os.path.join(d, "cost.json"), "w"))
+        s = self.api.spend()
+        self.assertAlmostEqual(s["total"], 0.08); self.assertEqual(s["reels"], 2); self.assertAlmostEqual(s["per_reel"], 0.04)
+        steps = {x["name"]: x["amount"] for x in s["by_step"]}
+        self.assertEqual(steps["Repairing the plan"], 0.05); self.assertEqual(steps["Planning the edit"], 0.02)
+        self.assertEqual({x["name"] for x in s["by_model"]}, {"claude-haiku-5.5", "claude-sonnet-5.5"})
+        self.assertGreaterEqual(s["projection"], 0.08)
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -1,4 +1,6 @@
-# Reel Factory — Rules for agents (Hermes, Claude, any other)
+# Reel Factory — Rules for agents (Claude, Hermes, any other)
+
+Reel Factory runs on its own (own Nous key, own tools, auto-start). No agent is needed to make a reel. Agents only help with development tasks from the board.
 
 Short on purpose. If this file and another file disagree, this file and `DECISIONS.md` win; tell Hesham about the conflict.
 

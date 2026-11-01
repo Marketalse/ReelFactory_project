@@ -122,6 +122,8 @@ class H(SimpleHTTPRequestHandler):
             return self.send_file(p, ctype)
         if self.path.startswith("/api/tasks"):
             return self.send_json(200, load(TASKS, {"tasks": [], "version": 0}))
+        if self.path.startswith("/api/spend"):
+            return self.send_json(200, reels_api.spend())
         if self.path.startswith("/api/expenses"):
             return self.send_json(200, load(EXPENSES, {"rows": []}))
         if self.path in ("/", ""):

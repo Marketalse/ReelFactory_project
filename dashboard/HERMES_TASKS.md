@@ -1,5 +1,7 @@
 # How Hermes works with the task board
 
+> Optional. Since v2 Reel Factory makes reels without Hermes (own key, own ffmpeg, auto-start). Hermes may still take **development** tasks assigned to it on the board, nothing else.
+
 Give Hermes this file at the start of every session. `dashboard/tasks.json` is the **only** task list. Hermes never creates status, index, queue or board files of any other kind.
 
 ## Each session

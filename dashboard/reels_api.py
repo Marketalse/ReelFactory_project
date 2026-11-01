@@ -1,6 +1,6 @@
 """Reels API for the dashboard: list reels, start one, stream the draft, send comments, approve.
 Runs scripts/reel.py in the background (one at a time) and never through a shell. Local only."""
-import json, os, re, subprocess, sys, threading, time
+import glob, json, os, re, subprocess, sys, threading, time
 
 ROOT = os.environ.get("RF_ROOT") or os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 JOBS, INBOX = os.path.join(ROOT, "jobs"), os.path.join(ROOT, "inbox")
@@ -456,3 +456,35 @@ def _handles_set():
     b = _j(os.path.join(ROOT, "config", "brand.json"), {}) or {}
     h = b.get("handles") or {}
     return bool(h) and all(isinstance(v, str) and v.startswith("@") and "CONFIRM" not in v for v in h.values())
+
+
+STAGE_WORDS = {"fix": "Fixing transcript words", "selects": "Choosing the story", "plan": "Planning the edit",
+               "repair": "Repairing the plan", "shotlog": "Looking at the video", "committee": "Quality review"}
+
+
+def spend(month=None):
+    """This month's AI cost by step and by model (from jobs/*/cost.json), plus a month-end projection."""
+    import calendar
+    from datetime import date
+    today = date.today(); month = month or today.isoformat()[:7]
+    by_step, by_model, reels, total = {}, {}, set(), 0.0
+    for p in glob.glob(os.path.join(ROOT, "jobs", month + "-*", "cost.json")):
+        try:
+            calls = json.load(open(p, encoding="utf-8")).get("calls") or []
+        except (OSError, ValueError):
+            continue
+        for c in calls:
+            amt = float(c.get("cost") or 0); total += amt
+            st = str(c.get("stage", "?")).split(":")[0]
+            step = STAGE_WORDS.get(st, st)
+            by_step[step] = by_step.get(step, 0) + amt
+            m = str(c.get("model", "?")).split("/")[-1]
+            by_model[m] = by_model.get(m, 0) + amt
+        if calls:
+            reels.add(os.path.basename(os.path.dirname(p)))
+    days = calendar.monthrange(int(month[:4]), int(month[5:7]))[1]
+    elapsed = today.day if month == today.isoformat()[:7] else days
+    rnd = lambda d: [{"name": k, "amount": round(v, 4)} for k, v in sorted(d.items(), key=lambda x: -x[1])]
+    return {"month": month, "total": round(total, 4), "reels": len(reels),
+            "per_reel": round(total / len(reels), 4) if reels else 0.0,
+            "projection": round(total / max(1, elapsed) * days, 2), "by_step": rnd(by_step), "by_model": rnd(by_model)}

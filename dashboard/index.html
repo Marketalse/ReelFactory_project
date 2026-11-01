@@ -258,10 +258,18 @@ async function renderSpend(){
   const month=rows.filter(r=>(r.date||'').startsWith(m)), tot=month.reduce((a,r)=>a+(+r.amount||0),0);
   const all=rows.reduce((a,r)=>a+(+r.amount||0),0);
   const per={}; month.forEach(r=>per[r.video]=(per[r.video]||0)+(+r.amount||0));
+  let sp=null; try{sp=await (await fetch('/api/spend',{cache:'no-store'})).json()}catch(_){}
+  const brk=(title,list)=>`<div class="card"><div class="label">${title}</div><table>${(list||[]).map(x=>`<tr><td>${esc(x.name)}</td><td style="text-align:right">$${(+x.amount).toFixed(4)}</td></tr>`).join('')||'<tr><td>No AI calls this month yet</td></tr>'}</table></div>`;
+  const extra = sp ? `<div class="summary">
+    <div class="card"><div class="label">Average per reel</div><div class="big">$${(+sp.per_reel).toFixed(2)}</div><div class="label">${sp.reels} reel(s) this month</div></div>
+    <div class="card"><div class="label">Month-end estimate</div><div class="big">$${(+sp.projection).toFixed(2)}</div><div class="label">at this month's pace (cap $${MONTHLY_CAP})</div></div></div>
+    <div class="summary">${brk('By step (this month)',sp.by_step)}${brk('By AI model (this month)',sp.by_model)}</div>
+    <p class="label" style="margin:4px 2px 12px">Compare with your Nous portal (portal.nousresearch.com → Billing). Small differences are normal.</p>` : '';
   $('#v-spend').innerHTML=`<div class="summary">
     <div class="card"><div class="label">This month</div><div class="big">$${tot.toFixed(2)}</div><div class="bar"><i style="width:${Math.min(100,100*tot/MONTHLY_CAP)}%;background:${tot>MONTHLY_CAP*.8?'var(--coral)':'var(--lime)'}"></i></div><div class="label" style="margin-top:6px">of $${MONTHLY_CAP} cap</div></div>
     <div class="card"><div class="label">All time</div><div class="big">$${all.toFixed(2)}</div></div>
     <div class="card"><div class="label">Jobs this month</div><div class="big">${Object.keys(per).length}</div></div></div>
+    ${extra}
     <div class="card"><table><tr><th>Date</th><th>Job / video</th><th>Category</th><th>Amount</th><th>Note</th></tr>
     ${rows.slice().reverse().map(r=>`<tr><td>${esc(r.date)}</td><td>${esc(r.video)}</td><td>${esc(r.category)}</td><td>$${(+r.amount||0).toFixed(4)}</td><td style="color:var(--muted)">${esc(r.note)}</td></tr>`).join('')||'<tr><td colspan=5>No spend recorded (expenses.json not found or empty)</td></tr>'}</table></div>`;
 }
