@@ -38,3 +38,7 @@ dashboard/.runs/
 *.webm
 *.mkv
 *.m4v
+# style references: text is kept, media stays local
+!library/style_refs/
+library/style_refs/**/*.webp
+library/style_refs/**/*.mov
