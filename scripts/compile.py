@@ -36,7 +36,7 @@ def compile_job(job, platform="instagram", final=False, out=None, layer="full"):
     cap_words = [words[i] for i in keep]
     cap_kw = [k for k, i in enumerate(keep) if i in kw]
     scenes.append({"id": "caps", "block": "captions", "t_in": 0.0, "t_out": tl["duration"], "values": {},
-                   "groups_html": hfbuild.caption_groups(cap_words, cap_kw, "caps")})
+                   "groups_html": hfbuild.caption_groups(cap_words, cap_kw, "caps", stops=[a for a, _ in tl["caption_gaps"]])})
     cuts = director.face_cuts(tl, edl["segments"])
     # logos used by this reel
     src_logos = os.path.join(job, "assets")
