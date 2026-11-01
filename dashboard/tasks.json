@@ -1,6 +1,6 @@
 {
  "project": "Reel Factory",
- "version": 3,
+ "version": 4,
  "owners": [
   "Hesham",
   "Claude",
@@ -245,7 +245,8 @@
    "owner": "Claude",
    "status": "todo",
    "depends": [
-    "T15"
+    "T15",
+    "T50"
    ],
    "done_when": "reel.py reads config/; no hard-coded models/prices",
    "notes": "",
@@ -259,7 +260,8 @@
    "owner": "Claude",
    "status": "todo",
    "depends": [
-    "T15"
+    "T15",
+    "T50"
    ],
    "done_when": "archive/ holds them; grep 'telegram' finds nothing active",
    "notes": "",
@@ -273,7 +275,8 @@
    "owner": "Claude",
    "status": "todo",
    "depends": [
-    "T15"
+    "T15",
+    "T50"
    ],
    "done_when": "One rulebook, no contradictions",
    "notes": "",
@@ -724,6 +727,20 @@
    "notes": "",
    "evidence": "",
    "updated": "2026-11-01"
+  },
+  {
+   "id": "T50",
+   "phase": "P1",
+   "title": "Import existing code from the Mac (scripts/import_from_old.sh), commit, push",
+   "owner": "Hermes",
+   "status": "todo",
+   "depends": [
+    "T04"
+   ],
+   "done_when": "reel.py, keyframes.py, ingest.sh, cost model, fonts, lessons and old docs (in archive/) are in the repo on GitHub",
+   "notes": "On the Mac: git clone https://github.com/Marketalse/ReelFactory_project.git ~/Desktop/ReelFactory_project ; cd ~/Desktop/ReelFactory_project ; git checkout restructure-p1 ; bash scripts/import_from_old.sh ~/Desktop/Reel-Factory ; git status ; git add -A ; git commit -m 'Import existing code' ; git push. Old folder is only read, never changed.",
+   "evidence": "",
+   "updated": "2026-11-01"
   }
  ],
  "log": [
@@ -756,6 +773,12 @@
    "who": "Claude",
    "task": "T15",
    "change": "pushed to branch restructure-p1 → review"
+  },
+  {
+   "time": "2026-11-01T14:00",
+   "who": "Claude",
+   "task": "T50",
+   "change": "created: import script ready, assigned to Hermes"
   }
  ]
 }
