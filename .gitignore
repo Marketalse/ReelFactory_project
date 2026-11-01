@@ -18,6 +18,7 @@ library/*
 !library/.gitkeep
 references/own/*
 !references/own/.gitkeep
+!references/own/*.md
 assets/raw/
 # Tooling, caches, secrets
 node_modules/
