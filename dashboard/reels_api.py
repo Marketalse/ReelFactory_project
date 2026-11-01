@@ -310,6 +310,12 @@ def _last_run(log):
 
 
 def _stop_text(lines):
+    crash = next((k for k in range(len(lines) - 1, -1, -1) if lines[k].startswith("CRASH")), None)
+    if crash is not None:                     # a crash: the useful line is the error at the end of the traceback
+        err = [l.strip() for l in lines[crash + 1:] if l.strip() and not l.startswith((" ", "Traceback", "TOTAL", "====="))]
+        err = [l for l in err if re.match(r"^[A-Za-z_.]+(Error|Exception|Exit)\b|^\w+:", l)] or err
+        if err:
+            return "crash: " + err[-1][:300]
     for l in reversed(lines):
         if l.startswith(("STOP:", "CRASH", "RENDER STOPPED", "FAILED", "INGEST FAILED")) or l.startswith("ingest failed"):
             return l.replace("STOP:", "").strip()

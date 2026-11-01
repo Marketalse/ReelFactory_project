@@ -1,6 +1,6 @@
 {
  "project": "Reel Factory",
- "version": 12,
+ "version": 13,
  "owners": [
   "Hesham",
   "Claude",
@@ -960,6 +960,18 @@
    "evidence": "",
    "notes": "",
    "updated": "2026-11-01"
+  },
+  {
+   "id": "T68",
+   "phase": "P3",
+   "title": "Fix: face pieces shorter than 0.3 s stopped the reel (compile refused the plan)",
+   "owner": "Claude",
+   "status": "review",
+   "depends": [],
+   "done_when": "The smuggling reel passes compile on the Mac",
+   "evidence": "branch fix-short-cuts: director.absorb_short + tests/test_cuts.py; crash messages show the real error on the page",
+   "notes": "Found on the first real reel (smuggling).",
+   "updated": "2026-11-01"
   }
  ],
  "log": [
@@ -1160,6 +1172,12 @@
    "who": "Claude",
    "task": "T07",
    "change": "handles set → review"
+  },
+  {
+   "time": "2026-11-01T23:30",
+   "who": "Claude",
+   "task": "T68",
+   "change": "created and fixed → review"
   }
  ]
 }

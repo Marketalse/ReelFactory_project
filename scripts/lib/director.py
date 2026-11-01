@@ -235,9 +235,37 @@ def face_cuts(timeline, segments):
             p["t_out"] = f["t_out"]
         else:
             merged.append(f)
+    merged = absorb_short(merged)
     for i, f in enumerate(merged):
         f["id"] = f"seg{i}"
     return merged
+
+
+MIN_CUT = 0.3     # the renderer refuses shorter face pieces; slivers come from a zoom/card starting just after a cut
+
+
+def absorb_short(cuts, min_d=MIN_CUT):
+    """Fold pieces shorter than min_d into a neighbour. Prefer the neighbour that continues the same
+    footage (then nothing visible changes but the zoom); otherwise the previous piece runs on, or the
+    next piece starts earlier (a sliver of under 0.3 s, too short to notice)."""
+    cuts = [dict(c) for c in cuts]
+    dur = lambda c: c["t_out"] - c["t_in"]
+    cont = lambda a, b: abs(a["src_in"] + dur(a) - b["src_in"]) < 0.02      # b continues a's footage
+    while len(cuts) > 1:
+        i = next((k for k, c in enumerate(cuts) if dur(c) < min_d - 1e-6), None)
+        if i is None:
+            break
+        f = cuts[i]; p = cuts[i - 1] if i > 0 else None; n = cuts[i + 1] if i + 1 < len(cuts) else None
+        if p and cont(p, f):
+            p["t_out"] = f["t_out"]
+        elif n and cont(f, n):
+            n["t_in"], n["src_in"] = f["t_in"], f["src_in"]
+        elif p:
+            p["t_out"] = f["t_out"]
+        else:
+            n["src_in"] = round(n["src_in"] - dur(f), 3); n["t_in"] = f["t_in"]
+        del cuts[i]
+    return cuts
 
 
 def longest_still(timeline, cuts):
