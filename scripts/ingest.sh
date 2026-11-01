@@ -28,7 +28,7 @@ command -v ffmpeg >/dev/null || die "ffmpeg missing"
 command -v ffprobe >/dev/null || die "ffprobe missing"
 command -v node >/dev/null || die "node missing"
 
-mkdir -p "$JOB" assets/raw
+mkdir -p "$JOB" "$(dirname "$RAW")"
 
 # 1. Move raw into place (never overwrite, never delete)
 if [ -e "$RAW" ]; then
