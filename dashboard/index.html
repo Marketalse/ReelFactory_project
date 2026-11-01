@@ -44,6 +44,20 @@ select,input,textarea{background:var(--panel2);color:var(--text);border:1px soli
 .chip .t{font-size:13px}
 .chip .m{font-size:11px;color:var(--muted);margin-top:2px;display:flex;gap:8px}
 .chip.waiting{opacity:.55}
+/* plan table */
+.ptable{margin-bottom:14px}
+.ptable .phead{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+.ptable h3{font-size:15px}.ptable .goal{color:var(--muted);font-size:12px;margin-top:2px}
+.tscroll{overflow-x:auto;margin-top:10px}
+.ptable table{width:100%;border-collapse:collapse;min-width:900px}
+.ptable th{text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.4px;color:var(--muted);padding:6px 8px;border-bottom:1px solid var(--line)}
+.ptable td{padding:8px;border-bottom:1px solid var(--line);vertical-align:top}
+.ptable tr.waiting td{opacity:.6}
+.ptable a{color:var(--text);text-decoration:none;font-weight:600}.ptable a:hover{color:var(--lime)}
+.ptable select{width:auto;padding:3px 6px;font-size:12px}
+.ptable .tmono{font-family:ui-monospace,Menlo,monospace;font-size:12px;white-space:nowrap}.ptable .tsmall{font-size:12px;max-width:260px}.ptable .tnw{white-space:nowrap}
+.dep{display:inline-block;font:11px ui-monospace,Menlo,monospace;padding:1px 6px;border-radius:5px;background:var(--panel2);color:var(--review)}
+.dep.ok{color:var(--done)}
 /* board */
 .board{display:grid;grid-template-columns:repeat(5,minmax(220px,1fr));gap:12px;overflow-x:auto}
 .col{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:10px;min-height:200px}
@@ -86,6 +100,7 @@ th{color:var(--muted);font-weight:500}
   <span class="pill" id="ver">—</span>
   <nav>
     <button data-v="reels" class="on">Reels</button>
+    <button data-v="table">Plan table</button>
     <button data-v="map">Plan map</button>
     <button data-v="board">Task board</button>
     <button data-v="spend">Spend</button>
@@ -106,6 +121,7 @@ th{color:var(--muted);font-weight:500}
     <button class="btn" id="reload">Reload</button>
   </div>
   <section id="v-reels"></section>
+  <section id="v-table" class="hidden"></section>
   <section id="v-map" class="hidden"></section>
   <section id="v-board" class="hidden"><div class="board" id="board"></div></section>
   <section id="v-spend" class="hidden"></section>
@@ -205,6 +221,25 @@ function renderMap(){
       <div class="label">${d}/${all.length} done</div>${stackBar(all)}</div>
       <div class="chips">${mine.map(chip).join('')||'<span style="color:var(--muted)">No tasks match the filter</span>'}</div></div>`}).join('');
 }
+function renderTable(){
+  const list=shown(), sel=s=>`<select class="tstatus" aria-label="Status">${(D.statuses||Object.keys(NAMES)).map(x=>`<option value="${x}"${x===s?' selected':''}>${NAMES[x]||x}</option>`).join('')}</select>`;
+  $('#v-table').innerHTML=(D.phases||[]).slice().reverse().map(p=>{
+    const rows=list.filter(t=>t.phase===p.id); if(!rows.length) return '';
+    const all=D.tasks.filter(t=>t.phase===p.id), d=all.filter(t=>t.status==='done').length;
+    return `<div class="card ptable"><div class="phead"><div><h3>${esc(p.id+' · '+p.name)}</h3><div class="goal">${esc(p.goal)}</div></div><div class="label">${d}/${all.length} done</div></div>${stackBar(all)}
+    <div class="tscroll"><table><tr><th>ID</th><th>Task</th><th>Owner</th><th>Status</th><th>Waits on</th><th>Done when</th><th>Evidence / notes</th><th>Updated</th></tr>
+    ${rows.map(t=>{const w=waiting(t);return `<tr data-id="${t.id}" class="${w?'waiting':''}"><td class="tmono">${t.id}</td>
+      <td><a href="#" class="topen">${esc(t.title)}</a></td><td class="own-${esc(t.owner)}">${esc(t.owner)}</td>
+      <td class="tnw"><span class="dot" style="background:${COLORS[t.status]}"></span> ${sel(t.status)}</td>
+      <td>${(t.depends||[]).map(x=>{const y=byId(x);return `<span class="dep${y&&y.status==='done'?' ok':''}">${esc(x)}</span>`}).join(' ')||'—'}</td>
+      <td class="tsmall">${esc(t.done_when||'')}</td><td class="tsmall">${esc(t.evidence||'')}${t.evidence&&t.notes?'<br>':''}<span style="color:var(--muted)">${esc(t.notes||'')}</span></td>
+      <td class="tsmall tmono">${esc(t.updated||'')}</td></tr>`}).join('')}</table></div></div>`}).join('')||'<div class="card">No tasks match the filter</div>';
+  document.querySelectorAll('#v-table tr[data-id]').forEach(tr=>{
+    const t=byId(tr.dataset.id);
+    tr.querySelector('.topen').onclick=e=>{e.preventDefault();openEdit(t.id)};
+    tr.querySelector('.tstatus').onchange=e=>{const v=e.target.value;logc(t,`status ${t.status} → ${v}`);t.status=v;t.updated=now().slice(0,10);persist(t.id+' → '+(NAMES[v]||v))};
+  });
+}
 function renderBoard(){
   const list=shown();
   $('#board').innerHTML=Object.keys(NAMES).map(s=>{const c=list.filter(t=>t.status===s);
@@ -282,11 +317,11 @@ function renderReels(){
 }
 function render(){
   summary();
-  ['reels','map','board','spend','log'].forEach(v=>$('#v-'+v).classList.toggle('hidden',v!==view));
-  $('.filters').classList.toggle('hidden',view!=='map'&&view!=='board');
+  ['reels','table','map','board','spend','log'].forEach(v=>$('#v-'+v).classList.toggle('hidden',v!==view));
+  $('.filters').classList.toggle('hidden',!['map','board','table'].includes(view));
   $('#summary').classList.toggle('hidden',view==='reels');
   if(view==='reels'){renderReels();return}
-  if(view==='map')renderMap(); if(view==='board')renderBoard(); if(view==='spend')renderSpend(); if(view==='log')renderLog();
+  if(view==='table')renderTable(); if(view==='map')renderMap(); if(view==='board')renderBoard(); if(view==='spend')renderSpend(); if(view==='log')renderLog();
   document.querySelectorAll('.chip').forEach(c=>{c.onclick=()=>openEdit(c.dataset.id);c.ondragstart=e=>e.dataTransfer.setData('text',c.dataset.id)});
 }
 function logc(t,change){(D.log=D.log||[]).push({time:now(),who:'Hesham',task:t.id,change})}

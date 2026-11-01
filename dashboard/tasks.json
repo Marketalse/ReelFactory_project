@@ -1,6 +1,6 @@
 {
  "project": "Reel Factory",
- "version": 9,
+ "version": 10,
  "owners": [
   "Hesham",
   "Claude",
@@ -53,6 +53,11 @@
    "id": "P7",
    "name": "Later",
    "goal": "B-roll, more effects, calibration"
+  },
+  {
+   "id": "P8",
+   "name": "Independent + smarter",
+   "goal": "Runs on its own Nous key without Hermes, spend governed in the Nous portal, cheaper where quality allows, learns from Hesham's comments"
   }
  ],
  "tasks": [
@@ -121,11 +126,11 @@
    "phase": "P0",
    "title": "Answer: which editor (CapCut / DaVinci / Premiere / Final Cut)",
    "owner": "Hesham",
-   "status": "todo",
+   "status": "review",
    "depends": [],
    "done_when": "",
-   "notes": "",
-   "evidence": "",
+   "notes": "Answered: CapCut (HyperFrames app for bigger edits).",
+   "evidence": "DECISIONS.md 2026-11-01: editor = CapCut",
    "updated": "2026-11-01"
   },
   {
@@ -136,7 +141,7 @@
    "status": "todo",
    "depends": [],
    "done_when": "",
-   "notes": "",
+   "notes": "Needed before Approve: the final CTA card shows them. Send them to Claude in chat.",
    "evidence": "",
    "updated": "2026-11-01"
   },
@@ -220,7 +225,7 @@
    "status": "todo",
    "depends": [],
    "done_when": "",
-   "notes": "",
+   "notes": "After T60 (models chosen), so committee costs use the final prices.",
    "evidence": "",
    "updated": "2026-11-01"
   },
@@ -288,15 +293,15 @@
    "phase": "P1",
    "title": "On the Mac: pull, run the tests, and do the first real transcription (whisper large-v3)",
    "owner": "Hermes",
-   "status": "todo",
+   "status": "review",
    "depends": [
     "T16",
     "T17",
     "T18"
    ],
    "done_when": "Tests pass on the Mac and the IMG_0020 job stops at Gate 0 with transcript_review.txt written",
-   "notes": "cd ~/Desktop/ReelFactory_project && git pull && python3 -m unittest discover tests  |  mkdir -p inbox/img0020/clips && cp <path to your original IMG_0020.MOV> inbox/img0020/clips/   (COPY it: ingest moves the file into assets/raw/)  |  python3 scripts/reel.py inbox/img0020 --slug img0020   (first run downloads the whisper large-v3 model, ~3 GB, once). Expected: STOP at GATE 0. Spend about $0.002. Put run.log in evidence.",
-   "evidence": "",
+   "notes": "large-v3 ran locally on the Mac.",
+   "evidence": "Mac run: transcription of the smuggling reel finished (stopped later at the word-fix step, a key problem)",
    "updated": "2026-11-01"
   },
   {
@@ -402,14 +407,14 @@
   {
    "id": "T27",
    "phase": "P3",
-   "title": "Transcription large-v3-turbo + Gate 0 transcript_review.txt",
+   "title": "Transcription whisper large-v3 (local) + Gate 0 (now automatic)",
    "owner": "Claude",
    "status": "review",
    "depends": [
     "T26"
    ],
    "done_when": "",
-   "notes": "Model corrected to whisper large-v3 (HyperFrames has no large-v3-turbo). Words invented over silence dropped. Gate 0 file works both ways (same words keep timings; added words share the line time); error rate recorded.",
+   "notes": "large-v3-turbo is not offered by hyperframes transcribe; large-v3 used. Gate 0 runs automatically (autopilot).",
    "evidence": "scripts/lib/transcript.py; branch p3-pipeline; e2e rehearsal in the cloud (2 test clips -> Gate 0 -> Gate 1 -> draft -> Gate 2), 27 offline tests",
    "updated": "2026-11-01"
   },
@@ -503,15 +508,15 @@
   {
    "id": "T34",
    "phase": "P3",
-   "title": "First real reel from IMG_0020: Gate 0 -> Gate 1 -> draft",
-   "owner": "Hermes",
-   "status": "todo",
+   "title": "First real reel on the Mac via the upload page (job: smuggling)",
+   "owner": "Hesham",
+   "status": "in_progress",
    "depends": [
     "T19",
     "T25"
    ],
-   "done_when": "review/draft_540p.mp4, report.md and edit_package/ exist for the IMG_0020 job",
-   "notes": "Now just: double-click Reel Factory.command → Make reel (or continue test001 with 'Try again'), then comment/approve on the Reels page.",
+   "done_when": "Draft plays on the upload page; Hesham comments or approves",
+   "notes": "Transcription worked on the Mac. Stopped at word fixing with HTTP 401 (key); key topped up and Try again clicked.",
    "evidence": "",
    "updated": "2026-11-01"
   },
@@ -744,15 +749,15 @@
   {
    "id": "T51",
    "phase": "P3",
-   "title": "Edit package: graphics layer with transparency + timeline.fcpxml",
+   "title": "Edit package for CapCut: 1_video.mp4 + transparent 2_graphics.mov + captions_ar.srt",
    "owner": "Claude",
-   "status": "todo",
+   "status": "review",
    "depends": [
     "T32"
    ],
    "done_when": "graphics_alpha.mov lines up with clean_cut.mp4 in DaVinci/Final Cut via timeline.fcpxml",
-   "notes": "Needs Hesham's editor answer (T06).",
-   "evidence": "",
+   "notes": "No .fcpxml: CapCut has no supported import format (DECISIONS).",
+   "evidence": "PR #8 capcut-layers (merged); rehearsal: both layers 43.8 s",
    "updated": "2026-11-01"
   },
   {
@@ -765,6 +770,199 @@
    "done_when": "Hesham makes a reel without Terminal: drop clips, click, comment or approve",
    "evidence": "branch autopilot: dashboard/reels_api.py, Reels page, Reel Factory.command, 34 tests, API + browser tested with a fake project",
    "notes": "Word fixes via comments 'old => new'. One reel runs at a time. Media served only from jobs/ drafts and finals.",
+   "updated": "2026-11-01"
+  },
+  {
+   "id": "T67",
+   "phase": "P3",
+   "title": "Upload page: drop video, live step progress, review, download (dashboard home)",
+   "owner": "Claude",
+   "status": "review",
+   "depends": [],
+   "done_when": "Hesham makes a reel without Finder or Terminal",
+   "evidence": "PR #9 upload-page + PR #10 launcher restart (merged); 44 tests; browser-tested with a fake pipeline",
+   "notes": "Demo mode when opened without the server.",
+   "updated": "2026-11-01"
+  },
+  {
+   "id": "T53",
+   "phase": "P8",
+   "title": "Own Nous API key for Reel Factory (~/.reelfactory/nous_api_key), Hermes login only as fallback",
+   "owner": "Claude",
+   "status": "review",
+   "depends": [],
+   "done_when": "Reels run with the project's own key",
+   "evidence": "PR #11 own-api-key; tests/test_auth.py",
+   "notes": "Key never in git; order: RF_API_KEY → own key file → Hermes.",
+   "updated": "2026-11-01"
+  },
+  {
+   "id": "T54",
+   "phase": "P8",
+   "title": "Save the new key on the Mac (HOW_TO → Your API key) and finish one reel on it",
+   "owner": "Hesham",
+   "status": "todo",
+   "depends": [
+    "T53"
+   ],
+   "done_when": "A reel passes the word-fix step using the own key",
+   "evidence": "",
+   "notes": "One Terminal command; the key is never pasted in chat.",
+   "updated": "2026-11-01"
+  },
+  {
+   "id": "T55",
+   "phase": "P8",
+   "title": "Remove the Hermes fallback; clear message on the upload page if the key file is missing",
+   "owner": "Claude",
+   "status": "todo",
+   "depends": [
+    "T54"
+   ],
+   "done_when": "No code reads ~/.hermes; missing key = plain message with the fix",
+   "evidence": "",
+   "notes": "Makes Reel Factory fully independent of Hermes.",
+   "updated": "2026-11-01"
+  },
+  {
+   "id": "T56",
+   "phase": "P8",
+   "title": "Nous portal: name the key 'Reel Factory' and set a monthly limit (suggest $20) if the portal offers one",
+   "owner": "Hesham",
+   "status": "todo",
+   "depends": [
+    "T54"
+   ],
+   "done_when": "Portal shows the key with its limit",
+   "evidence": "",
+   "notes": "Second safety net on top of Reel Factory's own caps ($1/reel, $50/month).",
+   "updated": "2026-11-01"
+  },
+  {
+   "id": "T57",
+   "phase": "P8",
+   "title": "Provider errors handled smartly: 401/402 → 'key or credit' message; 429/5xx → wait and retry once, then stop",
+   "owner": "Claude",
+   "status": "todo",
+   "depends": [
+    "T55"
+   ],
+   "done_when": "Each error shows a plain-language fix on the upload page; retry tested with a fake server",
+   "evidence": "",
+   "notes": "Smarter execution: no lost runs from a brief provider hiccup.",
+   "updated": "2026-11-01"
+  },
+  {
+   "id": "T58",
+   "phase": "P8",
+   "title": "Model catalogue refresh: script reads the Nous model list + prices into config/project.json",
+   "owner": "Claude",
+   "status": "todo",
+   "depends": [
+    "T55"
+   ],
+   "done_when": "One command updates prices; cost estimates match the portal",
+   "evidence": "",
+   "notes": "Prices in config are from 2026-11-01.",
+   "updated": "2026-11-01"
+  },
+  {
+   "id": "T59",
+   "phase": "P8",
+   "title": "Cheaper-model bake-off on the real transcript: word fix, story pick, director — current vs 2 cheaper Nous models",
+   "owner": "Claude",
+   "status": "todo",
+   "depends": [
+    "T54",
+    "T58"
+   ],
+   "done_when": "Side-by-side report: quality notes + cost per step",
+   "evidence": "",
+   "notes": "Costs cents. Only uses footage Hesham already recorded.",
+   "updated": "2026-11-01"
+  },
+  {
+   "id": "T60",
+   "phase": "P8",
+   "title": "Pick the model for each step from the bake-off (written in DECISIONS.md)",
+   "owner": "Hesham",
+   "status": "todo",
+   "depends": [
+    "T59"
+   ],
+   "done_when": "DECISIONS.md lists the chosen model per step",
+   "evidence": "",
+   "notes": "Rule: never a cheaper model if quality drops.",
+   "updated": "2026-11-01"
+  },
+  {
+   "id": "T61",
+   "phase": "P8",
+   "title": "Cut tokens: shorter prompts, cache the fixed parts (glossary, block catalogue) where the route supports it",
+   "owner": "Claude",
+   "status": "todo",
+   "depends": [
+    "T60"
+   ],
+   "done_when": "Same output with fewer tokens per reel (measured in cost.json)",
+   "evidence": "",
+   "notes": "",
+   "updated": "2026-11-01"
+  },
+  {
+   "id": "T62",
+   "phase": "P8",
+   "title": "Spend page: cost per step and per model, this month vs portal, projection to month end",
+   "owner": "Claude",
+   "status": "todo",
+   "depends": [
+    "T55"
+   ],
+   "done_when": "Spend page answers 'where does the money go?'",
+   "evidence": "",
+   "notes": "",
+   "updated": "2026-11-01"
+  },
+  {
+   "id": "T63",
+   "phase": "P8",
+   "title": "Learning loop: after each approved reel, turn Hesham's comments into ≤3 lessons and feed them to the Director",
+   "owner": "Claude",
+   "status": "todo",
+   "depends": [
+    "T34"
+   ],
+   "done_when": "Next draft avoids last reel's fixed issues; lessons.md grows",
+   "evidence": "",
+   "notes": ".reel-agent/lessons.md; newest feedback wins.",
+   "updated": "2026-11-01"
+  },
+  {
+   "id": "T64",
+   "phase": "P8",
+   "title": "Notifications open the dashboard (not Script Editor) when clicked",
+   "owner": "Claude",
+   "status": "todo",
+   "depends": [
+    "T55"
+   ],
+   "done_when": "Clicking 'Draft ready' opens the reel page",
+   "evidence": "",
+   "notes": "",
+   "updated": "2026-11-01"
+  },
+  {
+   "id": "T65",
+   "phase": "P8",
+   "title": "Hermes role: optional helper for development tasks only; update AGENTS.md, README, HERMES_TASKS.md",
+   "owner": "Claude",
+   "status": "todo",
+   "depends": [
+    "T55"
+   ],
+   "done_when": "Docs say reels never depend on Hermes",
+   "evidence": "",
+   "notes": "",
    "updated": "2026-11-01"
   }
  ],
@@ -834,6 +1032,114 @@
    "who": "Claude",
    "task": "T52",
    "change": "autopilot + Reels page built and tested → review"
+  },
+  {
+   "time": "2026-11-01T22:00",
+   "who": "Claude",
+   "task": "T06",
+   "change": "refreshed: status, evidence, notes"
+  },
+  {
+   "time": "2026-11-01T22:00",
+   "who": "Claude",
+   "task": "T27",
+   "change": "refreshed: title, notes"
+  },
+  {
+   "time": "2026-11-01T22:00",
+   "who": "Claude",
+   "task": "T51",
+   "change": "refreshed: status, title, evidence, notes"
+  },
+  {
+   "time": "2026-11-01T22:00",
+   "who": "Claude",
+   "task": "T34",
+   "change": "refreshed: owner, status, title, notes, done_when"
+  },
+  {
+   "time": "2026-11-01T22:00",
+   "who": "Claude",
+   "task": "T19",
+   "change": "refreshed: status, evidence, notes"
+  },
+  {
+   "time": "2026-11-01T22:00",
+   "who": "Claude",
+   "task": "T53",
+   "change": "created, assigned to Claude"
+  },
+  {
+   "time": "2026-11-01T22:00",
+   "who": "Claude",
+   "task": "T54",
+   "change": "created, assigned to Hesham"
+  },
+  {
+   "time": "2026-11-01T22:00",
+   "who": "Claude",
+   "task": "T55",
+   "change": "created, assigned to Claude"
+  },
+  {
+   "time": "2026-11-01T22:00",
+   "who": "Claude",
+   "task": "T56",
+   "change": "created, assigned to Hesham"
+  },
+  {
+   "time": "2026-11-01T22:00",
+   "who": "Claude",
+   "task": "T57",
+   "change": "created, assigned to Claude"
+  },
+  {
+   "time": "2026-11-01T22:00",
+   "who": "Claude",
+   "task": "T58",
+   "change": "created, assigned to Claude"
+  },
+  {
+   "time": "2026-11-01T22:00",
+   "who": "Claude",
+   "task": "T59",
+   "change": "created, assigned to Claude"
+  },
+  {
+   "time": "2026-11-01T22:00",
+   "who": "Claude",
+   "task": "T60",
+   "change": "created, assigned to Hesham"
+  },
+  {
+   "time": "2026-11-01T22:00",
+   "who": "Claude",
+   "task": "T61",
+   "change": "created, assigned to Claude"
+  },
+  {
+   "time": "2026-11-01T22:00",
+   "who": "Claude",
+   "task": "T62",
+   "change": "created, assigned to Claude"
+  },
+  {
+   "time": "2026-11-01T22:00",
+   "who": "Claude",
+   "task": "T63",
+   "change": "created, assigned to Claude"
+  },
+  {
+   "time": "2026-11-01T22:00",
+   "who": "Claude",
+   "task": "T64",
+   "change": "created, assigned to Claude"
+  },
+  {
+   "time": "2026-11-01T22:00",
+   "who": "Claude",
+   "task": "T65",
+   "change": "created, assigned to Claude"
   }
  ]
 }
