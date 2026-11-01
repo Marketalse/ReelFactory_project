@@ -109,6 +109,13 @@ class ProgressTests(ApiTest):
         p = self.api.progress("yy")
         self.assertEqual(p["state"], "stopped"); self.assertIn("ingest failed", p["message"])
 
+    def test_crash_shows_the_actual_error(self):
+        self.job("2026-11-01-dd", "planned", [self.RUN, "plan        ok   3.0s", "CRASH (full error below, also in run.log):",
+                                             "Traceback (most recent call last):", '  File "reel.py", line 9, in <module>',
+                                             "KeyError: 'segments'", "TOTAL this job $0.02 | wall 9s"])
+        p = self.api.progress("dd")
+        self.assertEqual(p["state"], "stopped"); self.assertEqual(p["message"], "crash: KeyError: 'segments'")
+
     def test_unset_handles_are_reported(self):
         json.dump({"handles": {"instagram": "CONFIRM (proposed)", "tiktok": "CONFIRM"}}, open(os.path.join(self.root, "config", "brand.json"), "w"))
         self.assertFalse(self.api._handles_set())
