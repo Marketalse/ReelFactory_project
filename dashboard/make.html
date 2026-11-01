@@ -1,0 +1,721 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Reel Factory</title>
+<!--
+  Reel Factory: "Make a reel" page. One file, no build step, no internet needed (no CDN).
+  Served by dashboard/serve.py at http://127.0.0.1:8765/  (open dashboard/make.html directly = demo mode).
+
+  ============================== HOW THE PAGE TALKS TO THE BACKEND ==============================
+  All server calls go through ONE object, `RealBackend` (bottom of this file). To plug in another
+  backend (a cloud renderer, an FFmpeg/GPU worker, a webhook relay), write an object with the same
+  methods and set `backend = YourBackend` in boot(). `DemoBackend` is a complete working example
+  that fakes everything in the browser.
+
+    status()                         -> {reels:[...], inbox:[...], busy:[...]}            GET  /api/reels
+    upload(slug, session, file, opts, onProgress(sentBytes))                              POST /api/upload
+        raw file bytes as the body; headers X-Slug, X-Kind ("clip" | "logo"), X-Name (URI-encoded),
+        X-Session (random id from this page), X-Order (1, 2, ... = order the takes are joined in).
+        Answers {ok, message}. 409 + message = show it to the user as is (it is written for him).
+    saveNotes(slug, session, text)   -> {ok, message}                                     POST /api/reels/notes
+    start(slug)                      -> {ok, message}                                     POST /api/reels/start
+    watch(ref, onUpdate)             -> stop()   live progress, ref = reel folder name or job id
+        Server-Sent Events from               GET /api/events?ref=...   (one JSON object per second)
+        falls back to polling                 GET /api/progress?ref=...
+    fix(job, text) / approve(job) / resume(job) / reveal(job)                             POST /api/reels/<action>
+    mediaUrl(job, path)              -> URL of a draft/final/CapCut file                  GET  /media/<job>/<path>
+
+  PROGRESS OBJECT (what onUpdate receives; build the same shape from your own webhooks):
+    {
+      state:   "running" | "ready" | "final" | "stopped" | "paused" | "missing",
+      mode:    "draft" | "fix" | "final",
+      job:     "2026-11-01-store-tips",          // null until the job folder exists
+      percent: 0..100,  eta: seconds left,  message: "Listening to your words",
+      steps: [{key, label, detail, state: "done"|"active"|"waiting", fraction: 0..1, elapsed, expected, note}],
+      draft:   "2026-11-01-store-tips/review/draft_540p.mp4",  draft_mtime,
+      finals:  ["reel_v1_instagram.mp4", "reel_v1_tiktok.mp4"],  package: ["1_video.mp4", ...],
+      handles_set: true|false,  feedback: [{time, fix}]
+    }
+  A webhook backend only has to keep that object up to date per job and push it to the page
+  (SSE, WebSocket or polling all work: the page only needs watch() to call onUpdate).
+  ================================================================================================
+-->
+<style>
+/* Layout: one calm column; the form turns into a live tracker after "Make my reel". Brand palette, dark by design. */
+:root{
+  --bg:#1c1f29; --panel:#242834; --panel2:#2e3342; --panel3:#363c4e; --line:#3d4457;
+  --text:#f2f4f8; --muted:#a9b0c2; --dim:#7d859b;
+  --lime:#B6FF00; --violet:#7D53FF; --violet-t:#b39dff; --coral:#FF6B4A; --amber:#ffb020;
+  --ink:#14161d;
+  --font:-apple-system,BlinkMacSystemFont,"Segoe UI","Readex Pro",Roboto,"Noto Sans Arabic",sans-serif;
+  --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--text);font:15px/1.5 var(--font);-webkit-font-smoothing:antialiased}
+button,input,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--lime);outline-offset:2px}
+[hidden]{display:none!important}
+
+header{display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding:16px max(20px,env(safe-area-inset-left)) 16px max(20px,env(safe-area-inset-right));border-bottom:1px solid var(--line)}
+.brand{font-weight:700;font-size:18px;letter-spacing:-.2px}
+.brand b{color:var(--lime);font-weight:700}
+.conn{display:inline-flex;align-items:center;gap:7px;font-size:12.5px;color:var(--muted);background:var(--panel2);padding:4px 10px;border-radius:99px}
+.conn i{width:8px;height:8px;border-radius:50%;background:var(--dim)}
+.conn.on i{background:var(--lime)} .conn.demo i{background:var(--amber)}
+header a{margin-left:auto;color:var(--muted);text-decoration:none;font-size:14px}
+header a:hover{color:var(--text)}
+
+main{max-width:880px;margin:0 auto;padding:28px max(20px,env(safe-area-inset-left)) 80px max(20px,env(safe-area-inset-right));display:grid;gap:18px}
+h1{font-size:clamp(26px,4vw,34px);line-height:1.15;margin:0;letter-spacing:-.5px;text-wrap:balance}
+.lede{color:var(--muted);margin:6px 0 0;max-width:60ch}
+.demo-note{background:#3a3120;border:1px solid #6b5420;color:#ffe2a6;border-radius:10px;padding:10px 14px;font-size:14px}
+
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:20px}
+.card h2{font-size:16px;margin:0 0 4px;display:flex;align-items:center;gap:8px}
+.card .sub{color:var(--muted);font-size:14px;margin:0 0 14px}
+.stepno{display:inline-grid;place-items:center;width:22px;height:22px;border-radius:50%;background:var(--panel3);font-size:12px;font-weight:700;color:var(--lime)}
+
+/* continue list */
+.continue{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.continue .lbl{font-size:13px;color:var(--muted);margin-right:4px}
+.rchip{display:inline-flex;align-items:center;gap:8px;background:var(--panel);border:1px solid var(--line);border-radius:99px;padding:6px 12px;font-size:13.5px;cursor:pointer}
+.rchip:hover{border-color:var(--muted)}
+.rchip i{width:8px;height:8px;border-radius:50%}
+
+/* drop zone */
+.drop{position:relative;border:2px dashed var(--line);border-radius:12px;padding:34px 20px;text-align:center;cursor:pointer;transition:border-color .15s,background .15s}
+.drop:hover{border-color:var(--muted)}
+.drop.over{border-color:var(--lime);background:color-mix(in srgb,var(--lime) 7%,transparent)}
+.drop .icon{width:46px;height:46px;margin:0 auto 10px;border-radius:12px;background:var(--panel2);display:grid;place-items:center}
+.drop strong{display:block;font-size:16px}
+.drop span{color:var(--muted);font-size:14px}
+.drop.compact{padding:14px;display:flex;align-items:center;justify-content:center;gap:10px;text-align:left}
+.drop.compact .icon{margin:0;width:34px;height:34px}
+.drop.compact strong{font-size:14px;display:inline}
+.formats{font-size:12.5px;color:var(--dim);margin-top:8px}
+
+.files{display:grid;gap:10px;margin-bottom:12px}
+.file{display:grid;grid-template-columns:auto 64px 1fr auto;gap:12px;align-items:center;background:var(--panel2);border-radius:10px;padding:10px 12px}
+.file .ord{font:600 12px var(--mono);color:var(--dim);width:18px;text-align:center}
+.thumb{width:64px;height:84px;border-radius:7px;background:var(--panel3) center/cover no-repeat;display:grid;place-items:center;color:var(--dim);font-size:11px;text-align:center;overflow:hidden}
+.file .name{font-weight:600;font-size:14.5px;word-break:break-all}
+.file .meta{color:var(--muted);font-size:13px;margin-top:2px;font-variant-numeric:tabular-nums}
+.file .mini{height:4px;background:var(--panel3);border-radius:4px;margin-top:8px;overflow:hidden}
+.file .mini i{display:block;height:100%;width:0;background:var(--lime);transition:width .3s}
+.file .acts{display:flex;gap:4px}
+.ib{background:transparent;border:1px solid transparent;border-radius:8px;width:32px;height:32px;display:grid;place-items:center;cursor:pointer;color:var(--muted)}
+.ib:hover{background:var(--panel3);color:var(--text)}
+.ib:disabled{opacity:.3;cursor:default;background:transparent}
+
+/* extras */
+.extras{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.slot{position:relative;background:var(--panel2);border-radius:12px;padding:14px;min-width:0;display:grid;gap:8px;align-content:start}
+.slot.wide{grid-column:1/-1}
+.slot .head{display:flex;align-items:center;gap:8px;font-weight:600;font-size:14.5px}
+.slot .head .opt{font-weight:400;color:var(--dim);font-size:12.5px}
+.slot.off{opacity:.65}
+.badge{font:600 11px/1 var(--font);padding:4px 7px;border-radius:99px;background:var(--panel3);color:var(--muted);margin-left:auto}
+.badge.auto{color:var(--lime)}
+.slot p{margin:0;color:var(--muted);font-size:13.5px}
+input[type=text],textarea{width:100%;background:var(--bg);border:1px solid var(--line);border-radius:9px;padding:9px 11px;outline:none}
+input[type=text]:focus,textarea:focus{border-color:var(--violet)}
+textarea{min-height:84px;resize:vertical}
+.hint{font-size:12.5px;color:var(--dim)}
+.hint code{font-family:var(--mono);color:var(--muted)}
+.pick{display:flex;align-items:center;gap:10px;border:1px dashed var(--line);border-radius:9px;padding:9px 11px;cursor:pointer;background:var(--bg)}
+.pick:hover{border-color:var(--muted)}
+.pick img{width:36px;height:36px;object-fit:contain;background:#fff1;border-radius:6px}
+.pick .t{flex:1;min-width:0;font-size:13.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* tooltip */
+.tip{position:static;width:18px;height:18px;border-radius:50%;border:1px solid var(--line);background:transparent;color:var(--muted);font-size:11px;font-weight:700;cursor:help;display:inline-grid;place-items:center;padding:0}
+.tip::after{content:attr(data-tip);position:absolute;left:8px;right:8px;bottom:calc(100% - 4px);background:var(--ink);color:var(--text);border:1px solid var(--line);border-radius:8px;padding:8px 10px;font:400 13px/1.45 var(--font);text-align:left;opacity:0;pointer-events:none;transition:opacity .12s;z-index:20;box-shadow:0 8px 24px #0006}
+.tip:hover::after,.tip:focus-visible::after{opacity:1}
+
+/* buttons */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border-radius:10px;padding:11px 18px;border:1px solid var(--line);background:var(--panel2);cursor:pointer;font-weight:600;text-decoration:none;color:var(--text)}
+.btn:hover{filter:brightness(1.12)}
+.btn:disabled{opacity:.45;cursor:not-allowed;filter:none}
+.btn.primary{background:var(--lime);border-color:var(--lime);color:var(--ink)}
+.btn.violet{background:var(--violet);border-color:var(--violet);color:#fff}
+.btn.big{padding:15px 26px;font-size:16.5px;border-radius:12px}
+.btn.ghost{background:transparent}
+.go{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.go .cost{color:var(--muted);font-size:13.5px}
+
+/* tracker */
+.overall{display:grid;gap:10px}
+.ohead{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
+.pct{font-size:40px;font-weight:700;letter-spacing:-1px;font-variant-numeric:tabular-nums;line-height:1}
+.omsg{font-size:16px;font-weight:600}
+.eta{margin-left:auto;color:var(--muted);font-variant-numeric:tabular-nums;font-size:14px}
+.bar{height:12px;background:var(--panel2);border-radius:99px;overflow:hidden}
+.bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--violet),var(--lime));border-radius:99px;transition:width .9s ease}
+.bar.stopped i{background:var(--coral)}
+.steps{list-style:none;margin:6px 0 0;padding:0;display:grid}
+.step{display:grid;grid-template-columns:30px 1fr auto;gap:12px;padding:12px 0;border-top:1px solid var(--line);align-items:start}
+.step:first-child{border-top:0}
+.sicon{width:26px;height:26px;border-radius:50%;display:grid;place-items:center;font-size:12px;font-weight:700;background:var(--panel2);color:var(--dim)}
+.step.done .sicon{background:color-mix(in srgb,var(--lime) 18%,var(--panel2));color:var(--lime)}
+.step.active .sicon{background:var(--violet);color:#fff}
+.step.failed .sicon{background:var(--coral);color:var(--ink)}
+.step .sl{font-weight:600}
+.step.waiting .sl{color:var(--muted)}
+.step .sd{font-size:13.5px;color:var(--muted)}
+.step .sbar{height:4px;background:var(--panel2);border-radius:4px;overflow:hidden;margin-top:8px}
+.step .sbar i{display:block;height:100%;background:var(--violet);transition:width .9s ease}
+.step .st{font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap;padding-top:3px}
+.step.active .st{color:var(--violet-t)}
+@keyframes spin{to{transform:rotate(360deg)}}
+.spin{width:12px;height:12px;border:2px solid #fff6;border-top-color:#fff;border-radius:50%;animation:spin .8s linear infinite}
+
+/* result */
+.result{display:grid;grid-template-columns:minmax(0,300px) 1fr;gap:22px;align-items:start}
+.player{background:#000;border-radius:12px;overflow:hidden;aspect-ratio:9/16;max-width:100%}
+.player video{width:100%;height:100%;display:block;background:#000}
+.rside{display:grid;gap:14px;min-width:0}
+.done-head{display:flex;align-items:center;gap:10px}
+.done-head .ok{width:34px;height:34px;border-radius:50%;background:var(--lime);color:var(--ink);display:grid;place-items:center;font-weight:800}
+.done-head h2{margin:0;font-size:20px}
+.row{display:flex;gap:10px;flex-wrap:wrap}
+.warn{background:#3a2a1a;border:1px solid #6b4a20;color:#ffd9a6;border-radius:10px;padding:10px 12px;font-size:13.5px}
+.err{background:#3a2620;border:1px solid var(--coral);color:#ffd8cf;border-radius:12px;padding:14px 16px}
+.err code{display:block;margin-top:8px;font:12.5px/1.5 var(--mono);white-space:pre-wrap;word-break:break-word;color:#ffe9e3;background:#0003;border-radius:7px;padding:8px 10px}
+.dl{display:grid;gap:8px}
+.dl a{display:flex;align-items:center;gap:10px;justify-content:space-between}
+.small{font-size:13px;color:var(--muted)}
+.history{font-size:13px;color:var(--muted);display:grid;gap:4px}
+.history div{background:var(--panel2);border-radius:8px;padding:6px 10px}
+
+/* toasts */
+#toasts{position:fixed;right:max(16px,env(safe-area-inset-right));bottom:max(16px,env(safe-area-inset-bottom));display:grid;gap:10px;z-index:50;width:min(380px,calc(100vw - 32px))}
+.toast{display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:start;background:var(--panel);border:1px solid var(--line);border-left:4px solid var(--violet);border-radius:10px;padding:12px 12px 12px 14px;box-shadow:0 10px 30px #0007;animation:tin .2s ease}
+.toast.error{border-left-color:var(--coral)} .toast.ok{border-left-color:var(--lime)}
+.toast b{display:block;font-size:14px}
+.toast p{margin:2px 0 0;font-size:13.5px;color:var(--muted)}
+.toast .x{background:none;border:0;color:var(--dim);cursor:pointer;font-size:18px;line-height:1}
+@keyframes tin{from{opacity:0;transform:translateY(8px)}}
+
+@media (max-width:680px){
+  .extras{grid-template-columns:1fr}
+  .result{grid-template-columns:1fr}
+  .player{max-width:320px;margin:0 auto;width:100%}
+  .file{grid-template-columns:52px 1fr auto}
+  .file .ord{display:none}
+  .thumb{width:52px;height:68px}
+  .pct{font-size:32px}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<header>
+  <div class="brand">Reel <b>Factory</b></div>
+  <span class="conn" id="conn"><i></i><span>Connecting…</span></span>
+  <a href="index.html">All reels &amp; tasks →</a>
+</header>
+
+<main>
+  <div id="demoNote" class="demo-note" hidden><b>Demo mode.</b> The dashboard server isn't running, so nothing is really processed. To make real reels, double-click <b>Reel Factory.command</b> in your project folder.</div>
+
+  <div class="continue" id="continue" hidden></div>
+
+  <!-- ============================ COMPOSE ============================ -->
+  <section id="compose" class="card-stack" style="display:grid;gap:18px">
+    <div>
+      <h1>Make a new reel</h1>
+      <p class="lede">Add your video, click one button, and come back to a finished draft. You only need to watch it and approve.</p>
+    </div>
+
+    <div class="card">
+      <h2><span class="stepno">1</span>Upload your video</h2>
+      <p class="sub">Several takes are fine. They're joined from top to bottom, and your original files stay where they are.</p>
+      <div class="files" id="files"></div>
+      <div class="drop" id="drop" tabindex="0" role="button" aria-label="Upload video: drop files here or press Enter to choose">
+        <div class="icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--lime)"><path d="M12 16V4"/><path d="m6 10 6-6 6 6"/><path d="M4 20h16"/></svg></div>
+        <div><strong id="dropTitle">Drop your video here</strong><span id="dropSub">or click to choose from your Mac</span>
+        <div class="formats" id="dropFormats">MP4, MOV, AVI or WebM · up to 20 GB each</div></div>
+      </div>
+      <input type="file" id="fileIn" accept=".mp4,.mov,.avi,.webm,.m4v,.mkv,video/*" multiple hidden>
+    </div>
+
+    <div class="card">
+      <h2><span class="stepno">2</span>Extras <span style="font-weight:400;color:var(--dim);font-size:14px">optional</span></h2>
+      <p class="sub">Leave these empty if you like: everything has a sensible default.</p>
+      <div class="extras">
+        <div class="slot">
+          <div class="head">Reel name <button class="tip" type="button" data-tip="A short name so you can find this reel later, e.g. “Store tips”. It becomes the folder name.">?</button></div>
+          <input type="text" id="reelName" placeholder="e.g. Store tips" maxlength="40" autocomplete="off">
+          <div class="hint">Saved as <code id="slugPreview">—</code></div>
+        </div>
+        <div class="slot">
+          <div class="head">Logo <span class="opt">SVG or PNG</span> <button class="tip" type="button" data-tip="If you mention a brand or app in the video, its logo can pop up on screen while you talk about it. Only logos you add here are ever used.">?</button></div>
+          <label class="pick" id="logoPick" for="logoIn">
+            <img id="logoImg" alt="" hidden>
+            <span class="t" id="logoName">Choose a logo…</span>
+            <button class="ib" type="button" id="logoClear" aria-label="Remove logo" hidden>✕</button>
+          </label>
+          <input type="file" id="logoIn" accept=".svg,.png,image/svg+xml,image/png" hidden>
+        </div>
+        <div class="slot wide">
+          <div class="head">Notes for the editor <button class="tip" type="button" data-tip="Tell it what matters, in Arabic or English, like you'd brief a human editor. E.g. “Main point: reply to customers fast. Ask people to comment ‘store’.”">?</button></div>
+          <textarea id="notes" dir="auto" maxlength="4000" placeholder="e.g. The key message is… / Put the hook on the first sentence / Ask viewers to comment “store”"></textarea>
+        </div>
+        <div class="slot">
+          <div class="head">Subtitles <span class="badge auto">Automatic</span> <button class="tip" type="button" data-tip="Captions are written from your own voice, word by word, in your spelling. You don't need to upload a subtitle file. Wrong word? Fix it when you review the draft.">?</button></div>
+          <p>Made from your voice. No file needed.</p>
+        </div>
+        <div class="slot off">
+          <div class="head">Background music <span class="badge">Coming soon</span> <button class="tip" type="button" data-tip="Automatic music and sound effects are being built. For now, add music in CapCut after you approve. The CapCut files are made for you.">?</button></div>
+          <p>For now, add music in CapCut after you approve.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="go">
+      <button class="btn primary big" id="makeBtn" type="button">Make my reel</button>
+      <span class="cost">Usually ready in 10–20 minutes · about $0.05–0.15</span>
+    </div>
+  </section>
+
+  <!-- ============================ TRACK ============================ -->
+  <section id="track" hidden style="display:grid;gap:18px">
+    <div class="row" style="align-items:center;justify-content:space-between">
+      <div>
+        <h1 id="trackTitle">Making your reel</h1>
+        <p class="lede" id="trackLede">You can close this tab. You'll get a Mac notification when the draft is ready.</p>
+      </div>
+      <button class="btn ghost" id="newBtn" type="button">+ New reel</button>
+    </div>
+
+    <div class="card overall" id="overall">
+      <div class="ohead">
+        <span class="pct" id="pct">0%</span>
+        <span class="omsg" id="omsg">Starting…</span>
+        <span class="eta" id="eta"></span>
+      </div>
+      <div class="bar" id="bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" aria-label="Overall progress"><i></i></div>
+      <ol class="steps" id="steps"></ol>
+    </div>
+
+    <div class="card" id="result" hidden></div>
+  </section>
+</main>
+
+<div id="toasts" role="status" aria-live="polite"></div>
+
+<script>
+"use strict";
+/* ---------------------------------------------------------------- helpers */
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const VIDEO_EXT = ["mp4","mov","avi","webm","m4v","mkv"];
+const LOGO_EXT = ["svg","png"];
+const MAX_CLIP = 20 * 1024 ** 3, MAX_LOGO = 50 * 1024 ** 2;
+const ext = n => (n.split(".").pop() || "").toLowerCase();
+function size(b){ const u=["B","KB","MB","GB"]; let i=0; while(b>=1024&&i<3){b/=1024;i++} return (i>1?b.toFixed(1):Math.round(b))+" "+u[i]; }
+function clock(s){ s=Math.round(s); const m=Math.floor(s/60), r=s%60; return m+":"+String(r).padStart(2,"0"); }
+function etaText(s){ if(!s||s<=0) return ""; if(s<50) return "under a minute left"; const m=Math.round(s/60); return "about "+m+" min left"; }
+function slugify(t){ return (t||"").toLowerCase().normalize("NFKD").replace(/[̀-ͯ]/g,"").replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,"").slice(0,40); }
+function rid(){ const a=new Uint8Array(12); crypto.getRandomValues(a); return Array.from(a,b=>(b%36).toString(36)).join(""); }
+const store = { get(k){ try{return localStorage.getItem(k)}catch(e){return null} }, set(k,v){ try{v==null?localStorage.removeItem(k):localStorage.setItem(k,v)}catch(e){} } };
+
+function toast(title, text, kind="info", ms=7000){
+  const el=document.createElement("div"); el.className="toast "+(kind==="error"?"error":kind==="ok"?"ok":"");
+  el.innerHTML=`<span aria-hidden="true">${kind==="error"?"⚠️":kind==="ok"?"✅":"ℹ️"}</span><div><b>${esc(title)}</b>${text?`<p>${esc(text)}</p>`:""}</div><button class="x" aria-label="Dismiss">×</button>`;
+  el.querySelector(".x").onclick=()=>el.remove();
+  $("#toasts").appendChild(el); if(ms) setTimeout(()=>el.remove(), ms);
+}
+
+/* ---------------------------------------------------------------- state */
+const S = { files: [], logo: null, session: rid(), slug: "", busy: false, uploadFrac: 0, uploadEta: 0, tracking: null, stopWatch: null, last: null, known: new Set() };
+let backend = null;
+
+/* ---------------------------------------------------------------- file list */
+function addFiles(list){
+  for(const f of list){
+    const e = ext(f.name);
+    if(!VIDEO_EXT.includes(e)){ toast(`“${f.name}” can't be used`, "Use an MP4, MOV, AVI or WebM video. From iPhone: AirDrop the video to your Mac, then drop it here.", "error"); continue; }
+    if(f.size > MAX_CLIP){ toast(`“${f.name}” is too big`, "Each video can be up to 20 GB. Trim it on your phone first, or split it into takes.", "error"); continue; }
+    if(f.size === 0){ toast(`“${f.name}” is empty`, "This file has no content. Export it again and drop the new copy.", "error"); continue; }
+    if(S.files.some(x=>x.file.name===f.name && x.file.size===f.size)){ toast("Already added", `“${f.name}” is already in the list.`); continue; }
+    const item = { id: rid(), file: f, thumb: null, duration: null, sent: 0, state: "ready" };
+    S.files.push(item); probe(item);
+  }
+  if(!$("#reelName").value && S.files.length) updateSlug();
+  renderFiles();
+}
+function probe(item){
+  const v=document.createElement("video"); v.muted=true; v.preload="metadata"; v.playsInline=true;
+  const url=URL.createObjectURL(item.file); v.src=url; item.url=url;
+  const fail=setTimeout(()=>{ item.thumb=item.thumb||"none"; renderFiles(); }, 5000);
+  v.onloadedmetadata=()=>{ item.duration=v.duration; v.currentTime=Math.min(1, (v.duration||2)/3); renderFiles(); };
+  v.onseeked=()=>{ try{ const c=document.createElement("canvas"); c.width=128; c.height=Math.round(128*v.videoHeight/v.videoWidth)||168; c.getContext("2d").drawImage(v,0,0,c.width,c.height); item.thumb=c.toDataURL("image/jpeg",.7); }catch(e){ item.thumb="none"; } clearTimeout(fail); renderFiles(); };
+  v.onerror=()=>{ clearTimeout(fail); item.thumb="none"; item.playable=false; renderFiles(); };
+}
+function renderFiles(){
+  const box=$("#files"); const n=S.files.length;
+  box.innerHTML = S.files.map((f,i)=>`
+    <div class="file" data-id="${f.id}">
+      <span class="ord">${i+1}</span>
+      <div class="thumb" style="${f.thumb&&f.thumb!=="none"?`background-image:url(${f.thumb})`:""}">${f.thumb==="none"?"No preview":(f.thumb?"":"…")}</div>
+      <div style="min-width:0">
+        <div class="name">${esc(f.file.name)}</div>
+        <div class="meta">${size(f.file.size)}${f.duration?` · ${clock(f.duration)}`:""}${f.thumb==="none"?" · preview not available in the browser, it will still work":""}${f.state==="done"?" · uploaded ✓":f.state==="error"?" · upload failed":""}</div>
+        ${f.state==="uploading"||f.state==="done"?`<div class="mini"><i style="width:${Math.round(100*f.sent/f.file.size)}%"></i></div>`:""}
+      </div>
+      <div class="acts">
+        <button class="ib" data-act="up" ${i===0||S.busy?"disabled":""} aria-label="Move up">↑</button>
+        <button class="ib" data-act="down" ${i===n-1||S.busy?"disabled":""} aria-label="Move down">↓</button>
+        <button class="ib" data-act="rm" ${S.busy?"disabled":""} aria-label="Remove ${esc(f.file.name)}">✕</button>
+      </div>
+    </div>`).join("");
+  const drop=$("#drop"); drop.classList.toggle("compact", n>0);
+  $("#dropTitle").textContent = n ? "Add another take" : "Drop your video here";
+  $("#dropSub").textContent = n ? "" : "or click to choose from your Mac";
+  $("#dropFormats").hidden = n>0;
+}
+$("#files").addEventListener("click", e=>{
+  const b=e.target.closest("button[data-act]"); if(!b||S.busy) return;
+  const i=S.files.findIndex(f=>f.id===b.closest(".file").dataset.id);
+  if(b.dataset.act==="rm"){ URL.revokeObjectURL(S.files[i].url); S.files.splice(i,1); }
+  if(b.dataset.act==="up"&&i>0) [S.files[i-1],S.files[i]]=[S.files[i],S.files[i-1]];
+  if(b.dataset.act==="down"&&i<S.files.length-1) [S.files[i+1],S.files[i]]=[S.files[i],S.files[i+1]];
+  renderFiles();
+});
+const drop=$("#drop"), fileIn=$("#fileIn");
+drop.onclick=()=>!S.busy&&fileIn.click();
+drop.onkeydown=e=>{ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); drop.click(); } };
+fileIn.onchange=()=>{ addFiles(fileIn.files); fileIn.value=""; };
+["dragenter","dragover"].forEach(t=>drop.addEventListener(t,e=>{e.preventDefault(); drop.classList.add("over");}));
+["dragleave","drop"].forEach(t=>drop.addEventListener(t,e=>{e.preventDefault(); drop.classList.remove("over");}));
+drop.addEventListener("drop", e=>{ if(!S.busy) addFiles(e.dataTransfer.files); });
+window.addEventListener("dragover", e=>e.preventDefault());
+window.addEventListener("drop", e=>{ e.preventDefault(); if(!$("#compose").hidden && !S.busy && e.dataTransfer.files.length) addFiles(e.dataTransfer.files); });
+
+/* ---------------------------------------------------------------- logo + name */
+$("#logoIn").onchange=()=>{
+  const f=$("#logoIn").files[0]; $("#logoIn").value=""; if(!f) return;
+  if(!LOGO_EXT.includes(ext(f.name))){ toast("That logo file can't be used", "Use an SVG or PNG file. Ask your designer for the logo as SVG, or export it as PNG with a transparent background.", "error"); return; }
+  if(f.size>MAX_LOGO){ toast("Logo file is too big", "Keep logos under 50 MB. A normal logo is under 1 MB.", "error"); return; }
+  S.logo=f; $("#logoImg").src=URL.createObjectURL(f); $("#logoImg").hidden=false; $("#logoName").textContent=f.name; $("#logoClear").hidden=false;
+};
+$("#logoClear").onclick=e=>{ e.preventDefault(); S.logo=null; $("#logoImg").hidden=true; $("#logoName").textContent="Choose a logo…"; $("#logoClear").hidden=true; };
+function updateSlug(){
+  let base=slugify($("#reelName").value) || (S.files[0] ? slugify(S.files[0].file.name.replace(/\.[^.]+$/,"")) : "");
+  if(!base || base.length<2){ const d=new Date(); base="reel-"+String(d.getMonth()+1).padStart(2,"0")+String(d.getDate()).padStart(2,"0")+"-"+String(d.getHours()).padStart(2,"0")+String(d.getMinutes()).padStart(2,"0"); }
+  if(!/^[a-z0-9]/.test(base)) base="r-"+base;
+  let s=base, k=2; while(S.known.has(s)) s=(base.slice(0,37)+"-"+k++);
+  S.slug=s; $("#slugPreview").textContent=s;
+}
+$("#reelName").oninput=updateSlug;
+
+/* ---------------------------------------------------------------- make */
+$("#makeBtn").onclick=async ()=>{
+  if(S.busy) return;
+  if(!S.files.length){ toast("Add your video first", "Drop your video into the box in step 1, or click it to choose a file.", "error"); drop.focus(); return; }
+  if(S.files.some(f=>!f.duration && f.thumb!=="none")){ toast("Still reading your video…", "Give it a second, then click again."); return; }
+  updateSlug();
+  S.busy=true; renderFiles(); $("#makeBtn").disabled=true;
+  window.onbeforeunload = ()=> "Your video is still uploading. Leave anyway?";
+  showTrack(S.slug, true);
+  const total = S.files.reduce((a,f)=>a+f.file.size,0) + (S.logo?S.logo.size:0);
+  let doneBytes=0; const t0=performance.now();
+  const onBytes = cur => { S.uploadFrac=(doneBytes+cur)/total; const sp=(doneBytes+cur)/Math.max(.1,(performance.now()-t0)/1000); S.uploadEta=(total-doneBytes-cur)/Math.max(1,sp); drawUpload(); };
+  try{
+    const ok=await backend.check(S.slug, S.session); if(!ok.ok) throw new Error(ok.message);
+    for(let i=0;i<S.files.length;i++){
+      const f=S.files[i]; f.state="uploading";
+      await backend.upload(S.slug, S.session, f.file, {kind:"clip", order:i+1}, sent=>{ f.sent=sent; onBytes(sent); });
+      f.state="done"; f.sent=f.file.size; doneBytes+=f.file.size;
+    }
+    if(S.logo){ await backend.upload(S.slug, S.session, S.logo, {kind:"logo"}, onBytes); doneBytes+=S.logo.size; }
+    const notes=$("#notes").value.trim();
+    if(notes){ const r=await backend.saveNotes(S.slug, S.session, notes); if(!r.ok) throw new Error(r.message); }
+    S.uploadFrac=1; drawUpload();
+    const r=await backend.start(S.slug);
+    if(!r.ok) throw new Error(r.message);
+    window.onbeforeunload=null;
+    toast("Upload finished", "Your reel is being made. You can close this tab if you like.", "ok");
+    watch(S.slug);
+  }catch(err){
+    window.onbeforeunload=null; S.busy=false; S.files.forEach(f=>{ if(f.state!=="done") f.state="ready"; });
+    const m=String(err.message||err);
+    if(/already used|already exists|choose another name/i.test(m)){
+      S.known.add(S.slug); backToCompose(); updateSlug();
+      toast("That reel name is taken", `Nothing was lost. We picked “${S.slug}” instead: click Make my reel again.`, "error", 12000);
+    } else if(/busy|one reel at a time/i.test(m)){
+      backToCompose(); toast("Another reel is being made", "Only one reel is made at a time. Wait until it finishes (see the list at the top), then click Make my reel again.", "error", 12000);
+    } else {
+      backToCompose(); toast("Upload didn't finish", (m.startsWith("network")? "The connection to the dashboard was lost. Check that Reel Factory.command is still running, then click Make my reel again." : m), "error", 15000);
+    }
+    renderFiles(); $("#makeBtn").disabled=false;
+  }
+};
+
+/* ---------------------------------------------------------------- tracker */
+function showTrack(ref, uploading){
+  S.tracking=ref; store.set("rf.track", ref);
+  $("#compose").hidden=true; $("#track").hidden=false; $("#result").hidden=true; $("#result").innerHTML="";
+  $("#trackTitle").textContent = "Making your reel"; $("#trackLede").hidden=false;
+  $("#overall").hidden=false;
+  S.uploadFrac = uploading ? 0 : 1; S.last=null;
+  drawSteps(null, uploading);
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+function backToCompose(){
+  if(S.stopWatch) S.stopWatch(); S.stopWatch=null; S.tracking=null; store.set("rf.track", null);
+  $("#track").hidden=true; $("#compose").hidden=false; refreshContinue();
+}
+$("#newBtn").onclick=()=>{
+  if(S.busy && S.uploadFrac<1){ toast("Upload in progress", "Wait for the upload to finish before starting another reel."); return; }
+  S.files.forEach(f=>URL.revokeObjectURL(f.url)); S.files=[]; S.logo=null; S.session=rid(); S.busy=false;
+  $("#notes").value=""; $("#reelName").value=""; $("#logoClear").click(); $("#makeBtn").disabled=false;
+  renderFiles(); updateSlug(); backToCompose();
+};
+const UPLOAD_W = 0.08;   // share of the overall bar used by the upload
+function drawUpload(){ drawSteps(S.last, true); }
+function drawSteps(p, uploading){
+  const up = { key:"upload", label:"Uploading your files", detail: S.files.length? `${S.files.length} video${S.files.length>1?"s":""}${S.logo?" + logo":""}` : "Your files", state: S.uploadFrac>=1 || !uploading ? "done" : "active", fraction:S.uploadFrac };
+  const server = p && p.steps ? p.steps : [
+    {key:"prepare",label:"Preparing your video",detail:"Joining your takes and making a working copy",state:"waiting"},
+    {key:"listen",label:"Listening to your words",detail:"Writing down every word with its timing, then fixing spellings",state:"waiting"},
+    {key:"story",label:"Choosing the story and cutting",detail:"Picking the strongest part and removing pauses and false starts",state:"waiting"},
+    {key:"plan",label:"Planning captions and visuals",detail:"Placing captions, titles, cards and zooms on your words",state:"waiting"},
+    {key:"render",label:"Rendering and checking the draft",detail:"Making the draft video and checking every frame",state:"waiting"}];
+  const final = p && p.mode==="final";
+  const steps = final ? server : [up, ...server];
+  const stopped = p && (p.state==="stopped"||p.state==="paused");
+  if(stopped){ const a=steps.find(s=>s.state==="active")||steps.find(s=>s.state==="waiting"); if(a) a.state="failed"; }
+  $("#steps").innerHTML = steps.map((s,i)=>{
+    const n=i+1, st=s.state;
+    const icon = st==="done"?"✓": st==="active"?'<span class="spin"></span>': st==="failed"?"!": n;
+    let right = st==="done"?"Done": st==="failed"?"Stopped": st==="active"? (s.key==="upload"? Math.round(100*s.fraction)+"%" : (s.elapsed!=null? clock(s.elapsed) : "")) : (s.expected? "~"+Math.max(1,Math.round(s.expected/60))+" min" : "");
+    const over = st==="active" && s.expected && s.elapsed > s.expected*1.3;
+    return `<li class="step ${st}"><span class="sicon">${icon}</span><div><div class="sl">${n}. ${esc(s.label)}</div><div class="sd">${esc(s.note? s.detail+" · "+s.note : s.detail)}${over?" · taking a bit longer than usual":""}</div>${st==="active"?`<div class="sbar"><i style="width:${Math.round(100*(s.fraction||0))}%"></i></div>`:""}</div><span class="st">${right}</span></li>`;
+  }).join("");
+  let pct, eta, msg;
+  if(final){ pct=p.percent||0; eta=p.eta; msg=p.message; }
+  else if(uploading && S.uploadFrac<1){ pct=100*UPLOAD_W*S.uploadFrac; eta=S.uploadEta + 900; msg="Uploading your files"; }
+  else { pct=100*UPLOAD_W + (1-UPLOAD_W)*(p?p.percent||0:0); eta=p?p.eta:0; msg=p?p.message||"Starting…":"Starting…"; }
+  if(p && (p.state==="ready"||p.state==="final")) { pct=100; msg=p.message; eta=0; }
+  if(stopped){ msg = p.state==="paused" ? "Interrupted" : "Stopped"; }
+  pct=Math.max(0,Math.min(100,pct));
+  $("#pct").textContent=Math.floor(pct)+"%";
+  $("#omsg").textContent=msg||"";
+  $("#eta").textContent= stopped? "" : etaText(eta);
+  const bar=$("#bar"); bar.querySelector("i").style.width=pct+"%"; bar.setAttribute("aria-valuenow", Math.floor(pct)); bar.classList.toggle("stopped", !!stopped);
+}
+
+function watch(ref){
+  if(S.stopWatch) S.stopWatch();
+  S.tracking=ref; store.set("rf.track", ref); S.seenRunning=false;
+  S.stopWatch = backend.watch(ref, p=>{
+    S.last=p;
+    if(p.state==="missing"){ toast("Couldn't find that reel", "It may have been renamed or moved. Start a new one.", "error"); backToCompose(); return; }
+    if(p.job && p.job!==S.tracking){ S.tracking=p.job; store.set("rf.track", p.job); }
+    const uploading = S.busy && S.uploadFrac<1;
+    drawSteps(p, uploading);
+    if(p.state!=="running"){ S.busy=false; showResult(p); refreshContinue(); }
+    else if(!S.seenRunning){ S.seenRunning=true; refreshContinue(); }
+    else { $("#trackTitle").textContent = p.mode==="final" ? "Making your final videos" : p.mode==="fix" ? "Making a new draft with your changes" : "Making your reel"; $("#result").hidden=true; }
+  });
+}
+
+/* ---------------------------------------------------------------- results */
+function showResult(p){
+  const R=$("#result"); R.hidden=false; $("#trackLede").hidden=true;
+  const job=p.job;
+  if(p.state==="ready"){
+    $("#trackTitle").textContent="Your draft is ready"; $("#overall").hidden=true;
+    const src=backend.mediaUrl(job, "review/draft_540p.mp4")+(p.draft_mtime?"?v="+p.draft_mtime:"");
+    R.innerHTML=`<div class="result">
+      <div class="player"><video src="${src}" controls playsinline preload="metadata"></video></div>
+      <div class="rside">
+        <div class="done-head"><span class="ok">✓</span><h2>Watch it, then choose</h2></div>
+        <p class="small" style="margin:0">This is a quick preview (lower quality). Your final videos are made in high quality when you approve.</p>
+        <label for="fixText" style="font-weight:600">Want changes?</label>
+        <textarea id="fixText" dir="auto" placeholder="Tell it like you'd tell an editor: “hook shorter”, “remove the flash”, “bigger captions”. Wrong word? Write: wrong => right"></textarea>
+        <div class="row"><button class="btn violet" id="sendFix">Send changes</button></div>
+        <div style="border-top:1px solid var(--line);padding-top:14px;display:grid;gap:10px">
+          <b>Happy with it?</b>
+          ${p.handles_set?"":`<div class="warn">Your Instagram and TikTok handles aren't set yet, and the final videos need them on the last card. Send them to Claude once, then come back and approve.</div>`}
+          <div class="row"><button class="btn primary" id="approve" ${p.handles_set?"":"disabled"}>Approve &amp; make final videos</button></div>
+        </div>
+        ${p.feedback&&p.feedback.length?`<details><summary class="small">Your earlier comments (${p.feedback.length})</summary><div class="history" style="margin-top:6px">${p.feedback.map(f=>`<div>${esc(f.time)} · ${esc(f.fix)}</div>`).join("")}</div></details>`:""}
+      </div></div>`;
+    $("#sendFix").onclick=async ()=>{
+      const t=$("#fixText").value.trim(); if(!t){ toast("Write what to change first", "For example: “make the hook shorter”. Then click Send changes.", "error"); $("#fixText").focus(); return; }
+      const r=await backend.fix(job,t); if(!r.ok) return toast("Couldn't send your changes", r.message, "error");
+      toast("Changes sent", "A new draft is being made. It usually takes a few minutes.", "ok"); showTrack(job,false); watch(job);
+    };
+    const ap=$("#approve"); if(ap) ap.onclick=async ()=>{
+      ap.disabled=true; const r=await backend.approve(job); if(!r.ok){ ap.disabled=false; return toast("Couldn't approve", r.message, "error"); }
+      toast("Approved", "Making your high-quality videos now.", "ok"); showTrack(job,false); watch(job);
+    };
+  } else if(p.state==="final"){
+    $("#trackTitle").textContent="Your videos are ready"; $("#overall").hidden=true;
+    const finals=p.finals||[]; const ig=finals.find(f=>/instagram/.test(f))||finals[0];
+    const nice=f=>/instagram/.test(f)?"Instagram":/tiktok/.test(f)?"TikTok":f;
+    R.innerHTML=`<div class="result">
+      <div class="player">${ig?`<video src="${backend.mediaUrl(job,"final/"+ig)}" controls playsinline preload="metadata"></video>`:""}</div>
+      <div class="rside">
+        <div class="done-head"><span class="ok">✓</span><h2>Download and post</h2></div>
+        <div class="dl">${finals.map(f=>`<a class="btn primary" href="${backend.mediaUrl(job,"final/"+f)}" download="${esc(f)}"><span>Download processed video · ${nice(f)}</span><span aria-hidden="true">↓</span></a>`).join("")||'<p class="small">No final video found.</p>'}</div>
+        ${(p.package||[]).length?`<div style="border-top:1px solid var(--line);padding-top:14px;display:grid;gap:8px">
+          <b>Want to tweak it in CapCut?</b>
+          <p class="small" style="margin:0">Drag <b>1_video.mp4</b> onto the timeline and <b>2_graphics.mov</b> on the track above it. They line up by themselves.</p>
+          <div class="row">${p.package.map(f=>`<a class="btn" href="${backend.mediaUrl(job,"edit_package/"+f)}" download="${esc(f)}">${esc(f)}</a>`).join("")}</div>
+          <div class="row"><button class="btn ghost" id="reveal">Open in Finder</button></div></div>`:""}
+        <p class="small" style="margin:0">Nothing is posted for you. Post it yourself when you're ready.</p>
+        <div class="row"><button class="btn violet" id="another">Make another reel</button></div>
+      </div></div>`;
+    const rv=$("#reveal"); if(rv) rv.onclick=async ()=>{ const r=await backend.reveal(job); toast(r.ok?"Opened in Finder":"Couldn't open Finder", r.ok?"":r.message, r.ok?"ok":"error"); };
+    $("#another").onclick=()=>$("#newBtn").click();
+  } else {
+    $("#trackTitle").textContent = p.state==="paused" ? "This reel was interrupted" : "This reel stopped";
+    const hint = /handle/i.test(p.message||"") ? "Your Instagram and TikTok handles aren't set yet. Send them to Claude, then click Try again." :
+                 /budget|monthly|cap/i.test(p.message||"") ? "The spending limit was reached. Nothing more was spent. Tell Claude if you want to raise the limit." :
+                 "Click Try again: it continues where it stopped and never pays twice for finished steps. If it stops again, copy the message and send it to Claude.";
+    R.innerHTML=`<div class="err"><b>${p.state==="paused"?"Interrupted":"Stopped"}</b><p style="margin:4px 0 0">${esc(hint)}</p>${p.message?`<code id="stopMsg">${esc(p.message)}</code>`:""}</div>
+      <div class="row" style="margin-top:14px"><button class="btn primary" id="retry">Try again</button>${p.message?'<button class="btn" id="copyMsg">Copy message</button>':""}
+      ${p.draft?'<button class="btn ghost" id="seeDraft">See the last draft</button>':""}</div>`;
+    $("#retry").onclick=async ()=>{
+      const r = !p.job ? await backend.start(p.slug) : p.last_mode==="final" ? await backend.approve(p.job) : await backend.resume(p.job);
+      if(!r.ok) return toast("Couldn't start again", r.message, "error");
+      showTrack(p.job||p.slug,false); watch(p.job||p.slug);
+    };
+    const cp=$("#copyMsg"); if(cp) cp.onclick=()=>{ const t=p.message; (navigator.clipboard?navigator.clipboard.writeText(t):Promise.reject()).then(()=>toast("Copied","Paste it in your chat with Claude.","ok"),()=>{ const r=document.createRange(); r.selectNodeContents($("#stopMsg")); getSelection().removeAllRanges(); getSelection().addRange(r); toast("Message selected","Press ⌘C to copy it."); }); };
+    const sd=$("#seeDraft"); if(sd) sd.onclick=()=>showResult({...p, state:"ready"});
+  }
+}
+
+/* ---------------------------------------------------------------- continue list */
+const STATE_COLOR = {"running":"var(--violet)","ready to review":"var(--lime)","needs attention":"var(--coral)","final ready":"var(--muted)"};
+async function refreshContinue(){
+  let d; try{ d=await backend.status(); }catch(e){ return; }
+  S.known=new Set([...(d.reels||[]).map(r=>r.job.slice(11)), ...(d.inbox||[]).map(i=>i.slug)]);
+  if(!$("#compose").hidden) updateSlug();
+  const items=[];
+  for(const r of (d.reels||[]).slice(0,6)) items.push(`<button class="rchip" data-ref="${esc(r.job)}"><i style="background:${STATE_COLOR[r.state]||"var(--dim)"}"></i>${esc(r.job.slice(11))} · ${esc(r.state)}</button>`);
+  for(const i of (d.inbox||[]).filter(i=>i.clips>0).slice(0,4)) items.push(`<button class="rchip" data-slug="${esc(i.slug)}"><i style="background:var(--amber)"></i>${esc(i.slug)} · new footage, click to make</button>`);
+  const c=$("#continue"); c.hidden=!items.length; c.innerHTML=`<span class="lbl">Your reels:</span>`+items.join("");
+}
+$("#continue").addEventListener("click", async e=>{
+  const b=e.target.closest(".rchip"); if(!b) return;
+  if(S.busy && S.uploadFrac<1) return toast("Upload in progress","Wait for the upload to finish first.");
+  if(b.dataset.slug){ const r=await backend.start(b.dataset.slug); if(!r.ok) return toast("Couldn't start", r.message, "error"); showTrack(b.dataset.slug,false); watch(b.dataset.slug); return; }
+  showTrack(b.dataset.ref,false); watch(b.dataset.ref);
+});
+
+/* ================================================================ BACKENDS ================================================================ */
+/* Real backend: dashboard/serve.py + dashboard/reels_api.py (local, Python standard library). */
+const RealBackend = {
+  async status(){ const r=await fetch("/api/reels",{cache:"no-store"}); if(!r.ok) throw new Error("offline"); return r.json(); },
+  upload(slug, session, file, opts, onProgress){
+    return new Promise((resolve, reject)=>{
+      const x=new XMLHttpRequest(); x.open("POST","/api/upload");
+      x.setRequestHeader("X-Slug",slug); x.setRequestHeader("X-Kind",opts.kind); x.setRequestHeader("X-Session",session);
+      x.setRequestHeader("X-Name",encodeURIComponent(file.name)); if(opts.order) x.setRequestHeader("X-Order",String(opts.order));
+      x.upload.onprogress=e=>onProgress&&onProgress(e.loaded);
+      x.onload=()=>{ let j={}; try{j=JSON.parse(x.responseText)}catch(e){} (x.status===200&&j.ok)? resolve(j) : reject(new Error(j.message||("upload failed ("+x.status+")"))); };
+      x.onerror=()=>reject(new Error("network: the dashboard didn't answer"));
+      x.send(file);
+    });
+  },
+  async post(action, body){ try{ const r=await fetch("/api/reels/"+action,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)}); return await r.json(); }catch(e){ return {ok:false,message:"The dashboard didn't answer. Check that Reel Factory.command is running."}; } },
+  saveNotes(slug, session, text){ return this.post("notes",{slug,session,text}); },
+  check(slug, session){ return this.post("check",{slug,session}); },
+  start(slug){ return this.post("start",{slug}); },
+  fix(job,text){ return this.post("fix",{job,text}); },
+  approve(job){ return this.post("approve",{job}); },
+  resume(job){ return this.post("resume",{job}); },
+  reveal(job){ return this.post("reveal",{job}); },
+  mediaUrl(job, path){ return "/media/"+encodeURIComponent(job)+"/"+path.split("/").map(encodeURIComponent).join("/"); },
+  watch(ref, onUpdate){
+    // Server-Sent Events first (one update per second); polling if SSE isn't available or drops.
+    let es=null, timer=null, stopped=false, gotAny=false;
+    const poll=async ()=>{ if(stopped) return; try{ const r=await fetch("/api/progress?ref="+encodeURIComponent(ref),{cache:"no-store"}); const p=await r.json(); onUpdate(p); if(p.state!=="running") return; }catch(e){} timer=setTimeout(poll,2000); };
+    if(window.EventSource){
+      es=new EventSource("/api/events?ref="+encodeURIComponent(ref));
+      es.onmessage=e=>{ gotAny=true; const p=JSON.parse(e.data); onUpdate(p); if(p.state!=="running"){ es.close(); } };
+      es.onerror=()=>{ es.close(); if(!stopped && (!gotAny || (S.last&&S.last.state==="running"))) timer=setTimeout(poll,1500); };
+    } else poll();
+    return ()=>{ stopped=true; if(es) es.close(); clearTimeout(timer); };
+  },
+};
+
+/* Demo backend: fakes the whole pipeline in the browser (used when the page is opened without the server). */
+const DemoBackend = (()=>{
+  const jobs={}; let busy=null;
+  const today=new Date().toISOString().slice(0,10);
+  const PLAN=[["prepare",4],["listen",7],["story",3],["plan",5],["render",7]];
+  const LABEL={prepare:["Preparing your video","Joining your takes and making a working copy"],listen:["Listening to your words","Writing down every word with its timing, then fixing spellings"],story:["Choosing the story and cutting","Picking the strongest part and removing pauses and false starts"],plan:["Planning captions and visuals","Placing captions, titles, cards and zooms on your words"],render:["Rendering and checking the draft","Making the draft video and checking every frame"]};
+  const FIN=[["instagram","Rendering the Instagram video","High quality, with your Instagram handle",3],["tiktok","Rendering the TikTok video","High quality, with your TikTok handle",3],["capcut","Making the CapCut files","Your cut video and a see-through graphics layer",3]];
+  function snap(j){
+    const now=Date.now()/1000, el=now-j.t0;
+    const plan = j.mode==="final" ? FIN.map(f=>[f[0],f[3]]) : j.mode==="fix" ? PLAN.map(([k,s])=>[k,["plan","render"].includes(k)?s:0]) : PLAN;
+    let acc=0, total=plan.reduce((a,[,s])=>a+s,0), steps=[], cur=null;
+    for(const [k,s] of plan){
+      const meta = j.mode==="final" ? FIN.find(f=>f[0]===k) : [k,...LABEL[k]];
+      let st="waiting", fr=0; if(el>=acc+s) st="done"; else if(el>=acc){ st="active"; fr=(el-acc)/s; cur=cur||k; }
+      steps.push({key:k,label:meta[1],detail:meta[2],state:st,fraction:fr,elapsed:Math.max(0,Math.round(el-acc)),expected:s*40});
+      acc+=s;
+    }
+    const pct=Math.min(100,100*el/total), running=el<total;
+    if(!running && busy===j.job){ busy=null; j.status = j.mode==="final" ? "final" : "ready"; }
+    const p={ref:j.job, job:j.job, slug:j.slug, mode:j.mode, state: running?"running": j.status, percent:pct, eta:Math.max(0,(total-el)*40), message: steps.find(s=>s.state==="active")?.label||"", steps, handles_set:true, feedback:j.feedback, draft:j.job+"/review/draft_540p.mp4"};
+    if(p.state==="ready") p.message="Your draft is ready";
+    if(p.state==="final"){ p.message="Your videos are ready"; p.finals=["reel_v1_instagram.mp4","reel_v1_tiktok.mp4"]; p.package=["1_video.mp4","2_graphics.mov","captions_ar.srt"]; }
+    return p;
+  }
+  const wait=ms=>new Promise(r=>setTimeout(r,ms));
+  return {
+    async status(){ return {reels:Object.values(jobs).map(j=>({job:j.job,state:snap(j).state==="running"?"running":j.status==="final"?"final ready":"ready to review"})).reverse(), inbox:[], busy:busy?[busy]:[]}; },
+    async upload(slug, session, file, opts, onProgress){
+      if(busy) throw new Error("busy: one reel at a time");
+      const steps=20, dur=Math.min(2500, 300+file.size/4e7*1000);
+      for(let i=1;i<=steps;i++){ await wait(dur/steps); onProgress&&onProgress(file.size*i/steps); }
+      const id=today+"-"+slug; jobs[id]=jobs[id]||{job:id,slug,files:[],feedback:[],status:"new"}; jobs[id].files.push(file);
+      return {ok:true,message:file.name};
+    },
+    async saveNotes(){ return {ok:true}; },
+    async check(){ return busy?{ok:false,message:"busy: one reel at a time"}:{ok:true}; },
+    async start(slug){ const j=jobs[today+"-"+slug]; if(!j) return {ok:false,message:"this reel has no video yet: add your video first"}; if(busy) return {ok:false,message:"busy: one reel at a time"}; Object.assign(j,{t0:Date.now()/1000,mode:"draft"}); busy=j.job; return {ok:true}; },
+    async fix(job,text){ const j=jobs[job]; j.feedback.push({time:new Date().toLocaleString(),fix:text}); Object.assign(j,{t0:Date.now()/1000,mode:"fix"}); busy=job; return {ok:true}; },
+    async approve(job){ Object.assign(jobs[job],{t0:Date.now()/1000,mode:"final"}); busy=job; return {ok:true}; },
+    async resume(job){ return this.fix(job,"(try again)"); },
+    async reveal(){ return {ok:false,message:"Finder can't be opened in demo mode."}; },
+    mediaUrl(job){ const j=jobs[job]; const f=j&&j.files.find(f=>!/\.(avi|mkv)$/i.test(f.name)); if(!f) return ""; return (f._url=f._url||URL.createObjectURL(f)); },
+    watch(ref, onUpdate){
+      const id=jobs[ref]?ref:today+"-"+ref; let t=null;
+      const tick=()=>{ const j=jobs[id]; if(!j){ onUpdate({state:"missing"}); return; } const p=snap(j); onUpdate(p); if(p.state==="running") t=setTimeout(tick,500); };
+      tick(); return ()=>clearTimeout(t);
+    },
+  };
+})();
+
+/* ---------------------------------------------------------------- boot */
+async function boot(){
+  const live = location.protocol.startsWith("http") && await Promise.race([
+    fetch("/api/reels",{cache:"no-store"}).then(r=>r.ok).catch(()=>false), new Promise(r=>setTimeout(()=>r(false),2500))]);
+  backend = live ? RealBackend : DemoBackend;
+  const c=$("#conn"); c.className="conn "+(live?"on":"demo"); c.querySelector("span").textContent = live? "Connected" : "Demo mode";
+  $("#demoNote").hidden = live;
+  renderFiles(); updateSlug(); await refreshContinue();
+  const ref=store.get("rf.track");
+  if(live && ref){
+    // reopen the reel you were following, unless it's long finished
+    try{ const p=await (await fetch("/api/progress?ref="+encodeURIComponent(ref),{cache:"no-store"})).json();
+      if(["running","ready","stopped","paused"].includes(p.state)){ showTrack(ref,false); watch(ref); } else store.set("rf.track",null);
+    }catch(e){}
+  }
+}
+boot();
+</script>
+</body>
+</html>

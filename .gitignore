@@ -31,3 +31,10 @@ auth.json
 dashboard/.backups/
 dashboard/expenses.json
 dashboard/server.log
+
+# Upload page: background run output, other video types
+dashboard/.runs/
+*.avi
+*.webm
+*.mkv
+*.m4v

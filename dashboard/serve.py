@@ -10,7 +10,7 @@ Listens on 127.0.0.1 only: nothing is reachable from other machines.
 """
 import json, os, shutil, sys, time
 from http.server import ThreadingHTTPServer, SimpleHTTPRequestHandler
-from urllib.parse import unquote
+from urllib.parse import unquote, urlparse, parse_qs
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import reels_api  # noqa: E402
@@ -95,6 +95,13 @@ class H(SimpleHTTPRequestHandler):
                 self.wfile.write(chunk); left -= len(chunk)
 
     def do_GET(self):
+        q = {k: v[0] for k, v in parse_qs(urlparse(self.path).query).items()}
+        if self.path.startswith("/api/progress"):
+            return self.send_json(200, reels_api.progress(q.get("ref", "")))
+        if self.path.startswith("/api/events"):
+            return self.stream_progress(q.get("ref", ""))
+        if self.path.startswith("/api/root"):
+            return self.send_json(200, {"root": os.path.realpath(reels_api.ROOT)})
         if self.path.startswith("/api/reels"):
             return self.send_json(200, reels_api.list_reels())
         if self.path.startswith("/media/"):
@@ -108,10 +115,37 @@ class H(SimpleHTTPRequestHandler):
         if self.path.startswith("/api/expenses"):
             return self.send_json(200, load(EXPENSES, {"rows": []}))
         if self.path in ("/", ""):
-            self.path = "/index.html"
+            self.path = "/make.html"
         return super().do_GET()
 
+    def stream_progress(self, ref, every=1.0, limit=4 * 3600):
+        """Server-Sent Events: one progress object per second until the run ends (or the tab closes)."""
+        self.send_response(200)
+        self.send_header("Content-Type", "text/event-stream"); self.send_header("Cache-Control", "no-store")
+        self.send_header("Connection", "keep-alive"); self.end_headers()
+        t0 = time.time()
+        try:
+            while time.time() - t0 < limit:
+                p = reels_api.progress(ref)
+                self.wfile.write(b"data: " + json.dumps(p, ensure_ascii=False).encode() + b"\n\n"); self.wfile.flush()
+                if p.get("state") != "running":
+                    break
+                time.sleep(every)
+        except (BrokenPipeError, ConnectionResetError):
+            pass
+        self.close_connection = True
+
     def do_POST(self):
+        if self.path.startswith("/api/upload"):
+            h = self.headers
+            try:
+                n = int(h.get("Content-Length", 0)); order = int(h.get("X-Order", 0) or 0)
+            except ValueError:
+                return self.send_json(400, {"ok": False, "message": "bad upload headers"})
+            ok, msg = reels_api.upload(h.get("X-Slug"), h.get("X-Kind"), unquote(h.get("X-Name", "")), h.get("X-Session"), n, self.rfile, order)
+            if not ok:
+                self.close_connection = True               # the unread body must not be parsed as the next request
+            return self.send_json(200 if ok else 409, {"ok": ok, "message": msg})
         if self.path.startswith("/api/reels/"):
             try:
                 n = int(self.headers.get("Content-Length", 0))
@@ -121,7 +155,9 @@ class H(SimpleHTTPRequestHandler):
             action = self.path.split("/")[3].split("?")[0]
             fn = {"start": lambda: reels_api.start(body.get("slug")), "resume": lambda: reels_api.resume(body.get("job")),
                   "fix": lambda: reels_api.fix(body.get("job"), body.get("text")), "approve": lambda: reels_api.approve(body.get("job")),
-                  "reveal": lambda: reels_api.reveal(body.get("job"))}.get(action)
+                  "reveal": lambda: reels_api.reveal(body.get("job")),
+                  "check": lambda: reels_api.check_name(body.get("slug"), body.get("session")),
+                  "notes": lambda: reels_api.save_notes(body.get("slug"), body.get("session"), body.get("text"))}.get(action)
             if not fn:
                 return self.send_json(404, {"error": "unknown action"})
             ok, msg = fn()
