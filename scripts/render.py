@@ -20,6 +20,7 @@ class RenderError(Exception):
     pass
 
 
+ANSI = re.compile(r"\x1b\[[0-9;?]*[A-Za-z]")
 NOISE = re.compile(r"^\s*(npm (notice|warn|WARN)|npx: |\[?[0-9:.]+\]?\s*$|$)")
 ENV = dict(os.environ, NPM_CONFIG_UPDATE_NOTIFIER="false", NPM_CONFIG_FUND="false", NO_UPDATE_NOTIFIER="1")
 
@@ -31,7 +32,8 @@ def run(cmd, cwd, timeout=1800):
 
 def explain(out, err, limit=400):
     """The lines that say what went wrong, without npm's update notices."""
-    lines = [l.rstrip() for l in (err + "\n" + out).splitlines() if not NOISE.match(l)]
+    clean = ANSI.sub("", err + "\n" + out).replace("\r", "\n")
+    lines = [l.rstrip() for l in clean.splitlines() if not NOISE.match(l) and "npm notice" not in l and "npm warn" not in l.lower()]
     hits = [l for l in lines if re.search(r"error|fail|cannot|not found|missing|denied|ENOENT|killed|timed? ?out", l, re.I)]
     text = " | ".join((hits or lines)[-4:]).strip()
     return (text or "no error text (see review/render_error.log)")[-limit:]
@@ -163,7 +165,8 @@ def capcut_layers(job, platform="instagram"):
             os.remove(path)
         code, o, e = run(HF + ["render", "--format", fmt, "--quality", "high", "-o", path], project, 3600)
         if code or not os.path.exists(path):
-            raise RenderError(f"{name} failed: " + (e or o)[-300:])
+            open(os.path.join(pkg, "render_error.log"), "w", encoding="utf-8").write(f"{name}\nexit {code}\n--- stdout\n{o}\n--- stderr\n{e}\n")
+            raise RenderError(f"{name} failed: " + explain(o, e))
         verify(path, tl["duration"])
         out.append(path)
     open(os.path.join(pkg, "README.txt"), "w", encoding="utf-8").write(README)
@@ -183,7 +186,7 @@ def draft(job):
     r = subprocess.run(["ffmpeg", "-hide_banner", "-loglevel", "error", "-y", "-i", full, "-vf", "scale=540:-2",
                         "-c:v", "libx264", "-crf", "28", "-preset", "veryfast", "-c:a", "aac", "-b:a", "96k", small], capture_output=True, text=True)
     if r.returncode:
-        raise RenderError("draft downscale failed: " + r.stderr[-300:])
+        raise RenderError("draft downscale failed: " + explain(r.stdout, r.stderr))
     os.remove(full)
     if sheet and os.path.exists(sheet):
         shutil.copy(sheet, os.path.join(job, "review", "contact_sheet.jpg"))
