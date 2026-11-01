@@ -8,12 +8,13 @@ Every save makes a backup in dashboard/.backups/ (last 50 kept). A save is refus
 else (e.g. Hermes) changed the file since you loaded it, so nobody's edit is lost silently.
 Listens on 127.0.0.1 only: nothing is reachable from other machines.
 """
-import json, os, shutil, sys, time
+import json, os, shutil, sys, threading, time
 from http.server import ThreadingHTTPServer, SimpleHTTPRequestHandler
 from urllib.parse import unquote, urlparse, parse_qs
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import reels_api  # noqa: E402
+import settings_api  # noqa: E402
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 TASKS = os.path.join(HERE, "tasks.json")
@@ -105,6 +106,10 @@ class H(SimpleHTTPRequestHandler):
             return self.send_json(200, p)
         if self.path.startswith("/api/events"):
             return self.stream_progress(q.get("ref", ""), notify=q.get("notify") == "1")
+        if self.path.startswith("/api/version"):
+            return self.send_json(200, settings_api.version())
+        if self.path.startswith("/api/health"):
+            return self.send_json(200, settings_api.health())
         if self.path.startswith("/api/root"):
             return self.send_json(200, {"root": os.path.realpath(reels_api.ROOT)})
         if self.path.startswith("/api/reels"):
@@ -142,7 +147,35 @@ class H(SimpleHTTPRequestHandler):
             pass
         self.close_connection = True
 
+    def same_origin(self):
+        """Only this page may change settings (a website you visit can't post to the dashboard)."""
+        o = self.headers.get("Origin")
+        return o in (None, f"http://127.0.0.1:{PORT}", f"http://localhost:{PORT}")
+
     def do_POST(self):
+        if not self.same_origin():
+            self.close_connection = True
+            return self.send_json(403, {"ok": False, "message": "not allowed"})
+        if self.path.startswith("/api/settings/"):
+            try:
+                n = int(self.headers.get("Content-Length", 0))
+                body = json.loads(self.rfile.read(min(n, 4096)).decode("utf-8") or "{}")
+            except Exception:
+                return self.send_json(400, {"ok": False, "message": "bad request"})
+            action = self.path.split("/")[3].split("?")[0]
+            if action == "key":
+                ok, msg = settings_api.save_key(body.get("key"))
+            elif action == "test":
+                ok, msg = settings_api.test_key()
+            elif action == "update":
+                ok, msg, restart = settings_api.update(reels_api.busy())
+                self.send_json(200 if ok else 409, {"ok": ok, "message": msg, "restart": restart})
+                if restart:
+                    threading.Thread(target=restart_self, daemon=True).start()
+                return
+            else:
+                return self.send_json(404, {"ok": False, "message": "unknown action"})
+            return self.send_json(200 if ok else 400, {"ok": ok, "message": msg})
         if self.path.startswith("/api/upload"):
             h = self.headers
             try:
@@ -188,8 +221,22 @@ class H(SimpleHTTPRequestHandler):
         return self.send_json(200, {"ok": True, "version": d["version"]})
 
 
+def restart_self(delay=1.0):
+    """Start again with the new code (same command, same port). Under the auto-start agent launchd would also restart us."""
+    time.sleep(delay)
+    try:
+        SERVER.server_close()
+    except Exception:
+        pass
+    os.execv(sys.executable, [sys.executable, os.path.abspath(__file__)])
+
+
+SERVER = None
+
 if __name__ == "__main__":
     if not os.path.exists(TASKS):
         sys.exit(f"missing {TASKS}")
     print(f"Reel Factory dashboard: http://127.0.0.1:{PORT}  (Ctrl+C to stop)")
-    ThreadingHTTPServer(("127.0.0.1", PORT), H).serve_forever()
+    ThreadingHTTPServer.allow_reuse_address = True
+    SERVER = ThreadingHTTPServer(("127.0.0.1", PORT), H)
+    SERVER.serve_forever()

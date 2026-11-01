@@ -89,6 +89,47 @@ def render(project, out_path, quality):
     return out_path
 
 
+SOUND = cfg.PROJECT.get("sound", {})
+LUFS = float(SOUND.get("lufs", -14.0)); TRUE_PEAK = float(SOUND.get("true_peak", -1.5)); LRA = float(SOUND.get("lra", 9.0))
+VOICE = SOUND.get("voice_filter", "highpass=f=75,lowpass=f=15000,acompressor=threshold=-21dB:ratio=2.5:attack=15:release=200:makeup=2")
+
+
+def measure(path, pre=""):
+    """First loudnorm pass: the numbers the second pass needs."""
+    af = (pre + "," if pre else "") + f"loudnorm=I={LUFS}:TP={TRUE_PEAK}:LRA={LRA}:print_format=json"
+    r = subprocess.run(["ffmpeg", "-hide_banner", "-nostats", "-i", path, "-vn", "-af", af, "-f", "null", "-"],
+                       capture_output=True, text=True, env=ENV)
+    txt = r.stderr
+    try:
+        return json.loads(txt[txt.rindex("{"):txt.rindex("}") + 1])
+    except ValueError:
+        return None
+
+
+def even_sound(path):
+    """Voice clean-up + two-pass loudness to the social-media level (about -14 LUFS, peaks under -1.5 dB).
+    Re-encodes the audio only; the picture is copied untouched. No audio track = nothing to do."""
+    has_audio = subprocess.run(["ffprobe", "-v", "error", "-select_streams", "a", "-show_entries", "stream=index", "-of", "csv=p=0", path],
+                               capture_output=True, text=True, env=ENV).stdout.strip()
+    if not has_audio or not SOUND.get("enabled", True):
+        return None
+    m = measure(path, VOICE)
+    if not m or m.get("input_i") in (None, "-inf"):
+        return None
+    af = (f"{VOICE},loudnorm=I={LUFS}:TP={TRUE_PEAK}:LRA={LRA}:measured_I={m['input_i']}:measured_TP={m['input_tp']}"
+          f":measured_LRA={m['input_lra']}:measured_thresh={m['input_thresh']}:offset={m['target_offset']}:linear=true")
+    tmp = path + ".sound" + os.path.splitext(path)[1]
+    r = subprocess.run(["ffmpeg", "-hide_banner", "-loglevel", "error", "-y", "-i", path, "-map", "0", "-c:v", "copy",
+                        "-af", af, "-ar", "48000", "-c:a", "aac", "-b:a", "192k", "-movflags", "+faststart", tmp],
+                       capture_output=True, text=True, env=ENV)
+    if r.returncode or not os.path.exists(tmp):
+        if os.path.exists(tmp):
+            os.remove(tmp)
+        raise RenderError("sound levelling failed: " + explain(r.stdout, r.stderr))
+    os.replace(tmp, path)
+    return float(m["input_i"])
+
+
 def verify(path, expected):
     d = duration(path)
     if abs(d - expected) > 0.2:
@@ -168,6 +209,8 @@ def capcut_layers(job, platform="instagram"):
             open(os.path.join(pkg, "render_error.log"), "w", encoding="utf-8").write(f"{name}\nexit {code}\n--- stdout\n{o}\n--- stderr\n{e}\n")
             raise RenderError(f"{name} failed: " + explain(o, e))
         verify(path, tl["duration"])
+        if fmt == "mp4":
+            even_sound(path)
         out.append(path)
     open(os.path.join(pkg, "README.txt"), "w", encoding="utf-8").write(README)
     return out
@@ -181,10 +224,11 @@ def draft(job):
     os.makedirs(os.path.join(job, "review"), exist_ok=True)
     full = render(project, os.path.join(job, "review", "_draft_full.mp4"), "draft")
     verify(full, tl["duration"])
+    even_sound(full)
     qa = qa_check.run(job, full, final=False, project=project)
     small = os.path.join(job, "review", "draft_540p.mp4")
     r = subprocess.run(["ffmpeg", "-hide_banner", "-loglevel", "error", "-y", "-i", full, "-vf", "scale=540:-2",
-                        "-c:v", "libx264", "-crf", "28", "-preset", "veryfast", "-c:a", "aac", "-b:a", "96k", small], capture_output=True, text=True)
+                        "-c:v", "libx264", "-crf", "28", "-preset", "veryfast", "-c:a", "aac", "-b:a", "128k", small], capture_output=True, text=True)
     if r.returncode:
         raise RenderError("draft downscale failed: " + explain(r.stdout, r.stderr))
     os.remove(full)
@@ -214,6 +258,7 @@ def final(job, platforms):
             raise RenderError(f"{path} exists; never overwritten")
         render(project, path, "high")
         verify(path, tl["duration"])
+        even_sound(path)
         qa = qa_check.run(job, path, final=True, project=project)
         if qa["errors"]:
             bad = path.replace(".mp4", "_QA_FAILED.mp4"); os.rename(path, bad)

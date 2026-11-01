@@ -36,19 +36,46 @@ def price(model):
     return p["in"], p["out"]
 
 
-FFMPEG_DIRS = ["/opt/homebrew/bin", "/usr/local/bin", "~/.hermes/tools/ffmpeg-9.0.1-darwin-arm64"]
+HOME_DIR = os.path.expanduser("~/.reelfactory")
+TOOLS = os.path.join(HOME_DIR, "tools")            # Reel Factory's own copies of ffmpeg/ffprobe (no Hermes needed)
+FFMPEG_DIRS = [TOOLS, "/opt/homebrew/bin", "/usr/local/bin"]
+OLD_TOOLS = "~/.hermes/tools/ffmpeg-*"             # only read once, to copy ffmpeg into TOOLS
+
+
+def adopt_ffmpeg():
+    """One-time move away from Hermes: copy ffmpeg + ffprobe from the old Hermes tools folder into TOOLS.
+    Returns the TOOLS folder if it now holds ffmpeg, else None. Never changes the Hermes folder."""
+    if os.access(os.path.join(TOOLS, "ffmpeg"), os.X_OK):
+        return TOOLS
+    for d in sorted(glob.glob(os.path.expanduser(OLD_TOOLS)), reverse=True):
+        if os.access(os.path.join(d, "ffmpeg"), os.X_OK):
+            os.makedirs(TOOLS, exist_ok=True)
+            for name in ("ffmpeg", "ffprobe"):
+                src = os.path.join(d, name)
+                if os.path.exists(src):
+                    shutil.copy2(src, os.path.join(TOOLS, name))
+                    os.chmod(os.path.join(TOOLS, name), 0o755)
+            return TOOLS
+    return None
 
 
 def find_ffmpeg():
-    """ffmpeg on PATH first, then Homebrew and the old Hermes tools folder. Returns (ffmpeg_path, folder)."""
+    """ffmpeg on PATH, else Reel Factory's own tools folder or Homebrew (copied from Hermes once if needed).
+    Returns (ffmpeg_path, folder)."""
     p = shutil.which("ffmpeg")
     if p:
         return p, os.path.dirname(p)
-    for d in FFMPEG_DIRS + glob.glob(os.path.expanduser("~/.hermes/tools/ffmpeg-*")):
+    for d in FFMPEG_DIRS:
         d = os.path.expanduser(d)
         if os.access(os.path.join(d, "ffmpeg"), os.X_OK):
             return os.path.join(d, "ffmpeg"), d
-    raise SystemExit("ffmpeg not found: install it or put it on PATH")
+    try:
+        d = adopt_ffmpeg()
+    except OSError:
+        d = None
+    if d:
+        return os.path.join(d, "ffmpeg"), d
+    raise SystemExit("ffmpeg not found: install it (brew install ffmpeg) or put it in ~/.reelfactory/tools")
 
 
 def ffmpeg_on_path():
@@ -66,37 +93,35 @@ def ffmpeg_on_path():
 ffmpeg_on_path()
 
 
+def key_file():
+    return os.path.expanduser(PROJECT["route"].get("key_file") or os.path.join(HOME_DIR, "nous_api_key"))
+
+
+def _saved_key():
+    try:
+        with open(key_file(), encoding="utf-8") as f:
+            return f.read().strip()
+    except OSError:
+        return ""
+
+
 def auth():
     """(base_url, key) for the model route. The key never lives in the repo. Order:
-    1. env RF_API_KEY;  2. Reel Factory's own key file (route.key_file, one line);  3. Hermes' login (route.auth_file)."""
+    1. env RF_API_KEY;  2. Reel Factory's own key file (route.key_file, one line). Hermes is not used."""
     r = PROJECT["route"]
-    key = os.environ.get("RF_API_KEY", "").strip()
-    if not key and r.get("key_file"):
-        try:
-            with open(os.path.expanduser(r["key_file"]), encoding="utf-8") as f:
-                key = f.read().strip()
-        except OSError:
-            key = ""
-    if key:
-        return r["base_url"], key
-    path = os.path.expanduser(r["auth_file"])
-    try:
-        with open(path, encoding="utf-8") as f:
-            a = json.load(f)["providers"][r["provider"]]
-    except (OSError, KeyError, json.JSONDecodeError) as e:
-        raise SystemExit(f"No API key: save one in {r.get('key_file')} (see HOW_TO.md) or log in to Hermes ({path}: {e})")
-    return a.get("inference_base_url") or r["base_url"], a["agent_key"]
+    key = os.environ.get("RF_API_KEY", "").strip() or _saved_key()
+    if not key:
+        raise SystemExit("No API key saved yet: open Reel Factory, click Settings and paste your Nous key")
+    return r["base_url"], key
 
 
 def key_source():
     """Where the API key comes from, in words (for error messages). Never returns the key."""
-    r = PROJECT["route"]
     if os.environ.get("RF_API_KEY", "").strip():
         return "the RF_API_KEY setting"
-    kf = os.path.expanduser(r.get("key_file") or "")
-    if kf and os.path.isfile(kf) and open(kf, encoding="utf-8").read().strip():
-        return f"Reel Factory's own key ({r['key_file']})"
-    return f"your Hermes login ({r['auth_file']})"
+    if _saved_key():
+        return "Reel Factory's own key (Settings)"
+    return "no key saved (Settings)"
 
 
 def month_spent(month=None):

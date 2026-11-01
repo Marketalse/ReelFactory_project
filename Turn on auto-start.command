@@ -1,0 +1,34 @@
+#!/bin/bash
+# Double-click once: Reel Factory then starts by itself every time you log in to your Mac.
+# Afterwards just open http://127.0.0.1:8765 (bookmark it). Undo with "Turn off auto-start.command".
+cd "$(dirname "$0")" || exit 1
+HERE="$(pwd -P)"
+LABEL="com.reelfactory.dashboard"
+PLIST="$HOME/Library/LaunchAgents/$LABEL.plist"
+mkdir -p "$HOME/Library/LaunchAgents" "$HOME/.reelfactory"
+chmod +x scripts/autostart.sh
+esc() { printf '%s' "$1" | sed -e 's/&/\&amp;/g' -e 's/</\&lt;/g' -e 's/>/\&gt;/g'; }
+cat > "$PLIST" <<PL
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0"><dict>
+  <key>Label</key><string>$LABEL</string>
+  <key>ProgramArguments</key><array><string>/bin/bash</string><string>$(esc "$HERE/scripts/autostart.sh")</string></array>
+  <key>WorkingDirectory</key><string>$(esc "$HERE")</string>
+  <key>EnvironmentVariables</key><dict><key>PATH</key><string>$(esc "$PATH")</string></dict>
+  <key>RunAtLoad</key><true/>
+  <key>KeepAlive</key><dict><key>SuccessfulExit</key><false/></dict>
+  <key>StandardOutPath</key><string>$(esc "$HOME/.reelfactory/dashboard.log")</string>
+  <key>StandardErrorPath</key><string>$(esc "$HOME/.reelfactory/dashboard.log")</string>
+</dict></plist>
+PL
+# stop a dashboard started the old way (unless a reel is being made)
+if curl -s --max-time 2 http://127.0.0.1:8765/api/reels | grep -q '"busy": \[\]'; then
+  lsof -ti tcp:8765 -sTCP:LISTEN | xargs kill 2>/dev/null; sleep 1
+fi
+launchctl bootout "gui/$(id -u)/$LABEL" 2>/dev/null
+launchctl bootstrap "gui/$(id -u)" "$PLIST" && echo "Auto-start is ON." || { echo "Couldn't turn on auto-start. Send a screenshot of this window to Claude."; exit 1; }
+for i in 1 2 3 4 5 6 7 8 9 10; do curl -s --max-time 1 -o /dev/null http://127.0.0.1:8765/api/reels && break; sleep 1; done
+open http://127.0.0.1:8765/
+echo "Reel Factory now starts by itself when you log in. Bookmark the page that just opened (Cmd+D)."
+echo "You can close this window."

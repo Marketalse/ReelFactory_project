@@ -1,6 +1,6 @@
 {
  "project": "Reel Factory",
- "version": 13,
+ "version": 14,
  "owners": [
   "Hesham",
   "Claude",
@@ -971,6 +971,54 @@
    "done_when": "The smuggling reel passes compile on the Mac",
    "evidence": "branch fix-short-cuts: director.absorb_short + tests/test_cuts.py; crash messages show the real error on the page",
    "notes": "Found on the first real reel (smuggling).",
+   "updated": "2026-11-01"
+  },
+  {
+   "id": "T69",
+   "phase": "P8",
+   "title": "v2: Fully independent of Hermes (own key from Settings, own ffmpeg copy, health checks)",
+   "owner": "Claude",
+   "status": "review",
+   "depends": [],
+   "done_when": "Settings shows all ✅ on the Mac and a reel runs with no ~/.hermes files used",
+   "evidence": "branch v2: config.auth/adopt_ffmpeg, dashboard/settings_api.py, tests/test_auth.py, test_settings.py, test_ffmpeg_path.py",
+   "notes": "Built on branch v2; main (v1) untouched. Backup branch backup-v1-working.",
+   "updated": "2026-11-01"
+  },
+  {
+   "id": "T70",
+   "phase": "P8",
+   "title": "v2: Better sound (voice clean-up + -14 LUFS on every video)",
+   "owner": "Claude",
+   "status": "review",
+   "depends": [],
+   "done_when": "Next reel's QA shows loudness about -14 LUFS, no warning",
+   "evidence": "branch v2: render.even_sound, config/project.json sound, tests/test_sound.py",
+   "notes": "Built on branch v2; main (v1) untouched. Backup branch backup-v1-working.",
+   "updated": "2026-11-01"
+  },
+  {
+   "id": "T71",
+   "phase": "P8",
+   "title": "v2: Auto-start at login + one-click update in Settings",
+   "owner": "Claude",
+   "status": "review",
+   "depends": [],
+   "done_when": "Mac opens Reel Factory after login without the .command; Update button gets new versions",
+   "evidence": "branch v2: Turn on/off auto-start.command, scripts/autostart.sh, /api/settings/update (tested on a copy: pulled and restarted)",
+   "notes": "Built on branch v2; main (v1) untouched. Backup branch backup-v1-working.",
+   "updated": "2026-11-01"
+  },
+  {
+   "id": "T72",
+   "phase": "P8",
+   "title": "v2: Smarter edits (AI editor remembers taste + earlier comments)",
+   "owner": "Claude",
+   "status": "review",
+   "depends": [],
+   "done_when": "Second reel's plan follows a comment given on the first reel",
+   "evidence": "branch v2: director.taste, tests/test_taste.py",
+   "notes": "Built on branch v2; main (v1) untouched. Backup branch backup-v1-working.",
    "updated": "2026-11-01"
   }
  ],

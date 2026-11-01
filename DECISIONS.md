@@ -40,3 +40,12 @@ One line per decision. Newest at the bottom. If a later decision changes an earl
 | 2026-11-01 | `Reel Factory.command` says what it is doing, warns when the copy is a ZIP download (no updates), and if a dashboard from another copy of the project is running it stops that one and starts this one. | Claude | Hesham opened a ZIP copy in Downloads while the real copy's dashboard was running. |
 | 2026-11-01 | Reel Factory has **its own Nous API key** in `~/.reelfactory/nous_api_key` (outside the repo, file mode 600). Order: env `RF_API_KEY` → own key file → Hermes' login (`~/.hermes/auth.json`). | Hesham | Spend is separated from Hermes, and an expired Hermes login no longer stops reels (HTTP 401 on test run). |
 | 2026-11-01 | Plan **P8 Independent + smarter** (tasks T53–T65 on the board): Reel Factory runs on its own Nous key with no Hermes dependency; spend capped in the code and watched in the Nous portal; cheaper models only after a bake-off on real footage shows equal quality; comments become lessons. Hermes stays an optional helper for development tasks. The board gets a **Plan table** view. | Hesham (goal) + Claude (plan) | Fewer moving parts, lower cost without losing quality. |
+
+## 2026-11-01 · v2: independent of Hermes
+- The API key comes only from `RF_API_KEY` or `~/.reelfactory/nous_api_key` (saved from the page's **Settings**). The Hermes login is no longer read.
+- ffmpeg/ffprobe: PATH, then `~/.reelfactory/tools`, then Homebrew. If only the old Hermes copy exists it is copied once into `~/.reelfactory/tools` (the Hermes folder is never changed).
+- The dashboard refuses POSTs whose Origin isn't the dashboard itself, so other websites can't start, approve or change settings.
+
+## 2026-11-01 · v2: auto-start and one-click update
+- "Turn on auto-start.command" installs a LaunchAgent (com.reelfactory.dashboard) that runs scripts/autostart.sh at login (git pull --ff-only, then the dashboard). It records the Terminal PATH so node/npx/ffmpeg are found. "Turn off auto-start.command" removes it.
+- Settings → "Get the latest version" runs git pull --ff-only (refused while a reel is being made) and restarts the dashboard in place.

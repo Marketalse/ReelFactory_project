@@ -10,7 +10,7 @@ Plan JSON the Director returns:
   "cta": {"type": "follow" | "comment", "line": "...", "promise": "...", "keyword": ""}
 }
 """
-import json, os, re
+import glob, json, os, re
 
 from . import config as cfg
 from .hfbuild import REGISTRY, check_values, BuildError
@@ -80,7 +80,45 @@ Return ONLY JSON:
 "punch_ins":[{{"at_word":0,"scale":1.25}}],"cta":{{"type":"follow","line":"","promise":"","keyword":""}}}}"""
 
 
-def build_prompt(words, dur, brief="", logos=(), feedback=""):
+TASTE_MAX = 1800
+
+
+def taste(root=None, skip_job=None, limit=12):
+    """Hesham's standing preferences: the 'Hesham's taste' lessons plus his recent editing comments on earlier reels
+    (newest first, word fixes and plain retries left out). Short, so it costs little."""
+    root = root or cfg.ROOT
+    out = []
+    try:
+        txt = open(os.path.join(root, ".reel-agent", "lessons.md"), encoding="utf-8").read()
+        sec = txt.split("## Hesham's taste", 1)[1].split("\n## ", 1)[0]
+        out += [l.strip()[2:] for l in sec.splitlines() if l.strip().startswith("- ")]
+    except (OSError, IndexError):
+        pass
+    notes = []
+    for jp in glob.glob(os.path.join(root, "jobs", "*", "job.json")):
+        job = os.path.basename(os.path.dirname(jp))
+        if job == skip_job:
+            continue
+        try:
+            hist = json.load(open(jp, encoding="utf-8")).get("feedback_history") or []
+        except (OSError, ValueError):
+            continue
+        for h in hist:
+            for line in str(h.get("fix", "")).splitlines():
+                line = line.strip()
+                if line and "=>" not in line and not line.startswith("(") and len(line) > 3:
+                    notes.append((h.get("time", ""), line))
+    seen = set()
+    for _, line in sorted(notes, reverse=True):
+        if line.lower() not in seen:
+            seen.add(line.lower()); out.append(f"{line} (his comment on an earlier reel)")
+        if len(seen) >= limit:
+            break
+    text = "\n".join("- " + l for l in out)
+    return text[:TASTE_MAX]
+
+
+def build_prompt(words, dur, brief="", logos=(), feedback="", prefs=""):
     r = cfg.RULES
     c = cfg.BRAND["colors"]
     p = PROMPT.format(
@@ -89,6 +127,8 @@ def build_prompt(words, dur, brief="", logos=(), feedback=""):
         numbers=", ".join(spoken_numbers(words)) or "none", catalogue=catalogue(),
         flash_max=r["moments"]["flash"]["max_per_reel"], tc_gap=r["moments"]["text_card"]["min_gap_s"],
         chapter="-".join(str(x) for x in r["chapter_card_every_s"]), transcript=numbered_transcript(words))
+    if prefs:
+        p += ("\n\nHESHAM'S STANDING PREFERENCES (from his earlier comments; follow them unless his notes for this reel say otherwise):\n" + prefs)
     if feedback:
         p += f"\n\nHESHAM'S FEEDBACK ON THE LAST VERSION (apply it, change nothing else):\n{feedback}"
     return p

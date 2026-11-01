@@ -3,8 +3,7 @@
   "route": {
     "provider": "nous",
     "base_url": "https://inference-api.nousresearch.com/v1",
-    "key_file": "~/.reelfactory/nous_api_key",
-  "auth_file": "~/.hermes/auth.json"
+    "key_file": "~/.reelfactory/nous_api_key"
   },
   "models": {
     "transcript_fix": "anthropic/claude-haiku-5.5",
@@ -72,5 +71,13 @@
     "hyperframes": "0.8.226",
     "gsap": "3.15.0 (vendored in templates/vendor)",
     "_note": "Pinned so old reels re-render identically. Upgrade only between jobs."
+  },
+  "sound": {
+    "_note": "Every draft/final/CapCut video: light voice clean-up, then two-pass loudness to the social-media level.",
+    "enabled": true,
+    "lufs": -14.0,
+    "true_peak": -1.5,
+    "lra": 9.0,
+    "voice_filter": "highpass=f=75,lowpass=f=15000,acompressor=threshold=-21dB:ratio=2.5:attack=15:release=200:makeup=2"
   }
 }

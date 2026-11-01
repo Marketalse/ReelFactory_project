@@ -61,7 +61,7 @@ def explain_http(stage, code, body):
     src = cfg.key_source()
     if code in (401, 403):
         why = (f"the AI service refused the API key ({src}): it is wrong, expired or the account is out of credit. "
-               "Check credit at portal.nousresearch.com; to replace the key see HOW_TO.md, 'Your API key'. Then click Try again.")
+               "Check credit at portal.nousresearch.com; to replace the key, click Settings on the Reel Factory page. Then click Try again.")
     elif code == 402:
         why = "the AI service account is out of credit. Top up at portal.nousresearch.com, then click Try again."
     elif code == 404:
@@ -350,7 +350,7 @@ def st_plan(c):
     brief = open(os.path.join(c.job, "brief.md"), encoding="utf-8").read() if os.path.exists(os.path.join(c.job, "brief.md")) else ""
     job = jload(os.path.join(c.job, "job.json"), {})
     feedback = c.a.fix or ""
-    prompt = director.build_prompt(words, e["duration"], brief, job_logos(c), feedback)
+    prompt = director.build_prompt(words, e["duration"], brief, job_logos(c), feedback, director.taste())
     if feedback and os.path.exists(os.path.join(c.job, "scene_plan.json")):
         prompt += "\n\nPREVIOUS PLAN:\n" + json.dumps(jload(os.path.join(c.job, "scene_plan.json")), ensure_ascii=False)
     plan = parse_json(c.llm("plan", M_DIR, [{"type": "text", "text": prompt}], 6000, c.a.effort))
