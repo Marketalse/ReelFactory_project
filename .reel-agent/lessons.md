@@ -11,6 +11,10 @@ Read at the start of every job. Max ~150 lines. Format: one line, verb first, wi
 - Never edit iPhone HEVC/HDR/60 fps originals directly: tone-map + proxy to 1080x1920 30 fps H.264 via scripts/ingest.sh (run 2026-10-31, IMG_0011)
 - Never treat a 3 s text-only teaser as proof of a real reel: it only checks layout, not decode, sync, captions, or render time (run 2026-10-31, hf_flash)
 
+- Put ffmpeg's folder on PATH for every child tool; HyperFrames render failed "FFmpeg not found" when it lived only in ~/.hermes/tools (2026-11-01, job img-0061-2, PR #19).
+- Read review/render_error.log before guessing; npm update notices hid the real render error twice (2026-11-01, job img-0061-2).
+- Fold face pieces under 0.3 s into a neighbour; compile refused the plan "seg0: face cut shorter than 0.3 s" (2026-11-01, job smuggling, PR #15).
+
 ## Locked formats
 - Build from proxy footage, not the original HEVC/HDR source.
 - Ask for the story choice only when transcript-based selects are ready.
