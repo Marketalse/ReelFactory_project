@@ -18,7 +18,6 @@ Read at the start of every job. Max ~150 lines. Format: one line, verb first, wi
 
 ## Workflow boundaries
 - Keep progress updates in chat and local project files unless Hesham explicitly asks for Multica updates.
-- Keep Vision QA in the plan once Hesham approves it; do not drop it unless he says to remove it.
 - If Hesham asks to stop Multica use, do not create, update, or reopen Multica issues for Reel Factory; keep tracking in chat and local files only.
 
 ## Try next
@@ -30,4 +29,4 @@ Read at the start of every job. Max ~150 lines. Format: one line, verb first, wi
 - Added `awaiting_footage` as the first job-status checkpoint.
 
 ## Retired
-- Telegram intake and workflow automation.
+- Telegram intake and workflow automation (removed from the project 2026-11-01).

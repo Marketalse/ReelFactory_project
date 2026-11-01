@@ -5,7 +5,9 @@ Picks: scene-change frames + one frame at least every --every seconds (+ first/l
 caps at --cap (drops the most redundant first). Writes <job>/keyframes/kf_XXXX_<t>s.jpg and keyframes.json with an
 estimated Sonnet 5.5 cost (measured image tokens). Exit code 2 if the cap would be exceeded before trimming is possible."""
 import argparse, json, os, re, subprocess, sys
-FF = os.path.expanduser("~/.hermes/tools/ffmpeg-9.0.1-darwin-arm64/ffmpeg")
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from lib.config import find_ffmpeg   # noqa: E402
+FF = find_ffmpeg()[0]
 TOK = {1080: 2728, 720: 1233, 540: 737, 384: 387}   # measured input tokens/frame (Sonnet 5.5)
 IN_PER_TOK, OUT_PER_TOK = 2e-6, 10e-6
 

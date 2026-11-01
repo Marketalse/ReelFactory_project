@@ -1,6 +1,8 @@
 # Reel Factory — operating cost per reel (2026-11-01, SHAK-290)
 
-Calculator: `python3 cost_model.py` (edit the scenario dict to change assumptions). Prices from the provider catalogue on the Nous route ($/MTok in/out): Opus 5 5/25, Sonnet 5.5 2/10, Haiku 5.5 0.1/0.5. Only Claude calls cost money; whisper, HyperFrames, MediaPipe, qwen3:8b, Telegram are $0 marginal.
+> **Superseded in part (2026-11-01):** the Director is now Haiku 5.5 and story choice Sonnet 5.5 (see DECISIONS.md and config/project.json). The Opus figures below are kept for history; the committee cost is in docs/HIGGSFIELD_AND_COMMITTEE.md.
+
+Calculator: `python3 scripts/cost_model.py` (edit the scenario dict to change assumptions). Prices from the provider catalogue on the Nous route ($/MTok in/out): Opus 5 5/25, Sonnet 5.5 2/10, Haiku 5.5 0.1/0.5. Only Claude calls cost money; whisper, HyperFrames, MediaPipe, qwen3:8b are $0 marginal.
 
 ## Why Vision showed $11.16 for 60 s
 Measured: one full 1080x1920 frame to Sonnet 5.5 = ~2,730 input tokens ≈ **$0.0063**. A 60 s clip at 30 fps is 1,800 frames: 1,800 x $0.0063 = **$11.40** (your $11.16 ≈ 1,761 frames). So the number matches "every frame sent at full size". That is inferred from arithmetic; I could not find the screen where you saw it. Vision must never see every frame.
@@ -23,7 +25,7 @@ Image tokens scale with size (measured): 1080 wide 2,728 tok, 720 -> 1,233, 540 
 | Shot log (Sonnet 5.5) | $0.03 | $0.09 | $0.34 |
 | Director (Opus 5, incl. thinking tokens) | $0.16 (1 pass) | $0.77 (1+2 revisions) | $1.55 (1+2) |
 | QA stills (Sonnet 5.5, 8 per pass) | $0.03 | $0.11 | $0.21 |
-| Render / Telegram | $0 | $0 | $0 |
+| Render | $0 | $0 | $0 |
 | **Per reel** | **$0.23** | **$0.98** | **$2.09** |
 | 12 reels / month | $2.70 | $11.73 | $25.08 |
 | 24 reels / month | $5.39 | $23.46 | $50.15 |

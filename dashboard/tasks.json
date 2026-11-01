@@ -1,6 +1,6 @@
 {
  "project": "Reel Factory",
- "version": 4,
+ "version": 5,
  "owners": [
   "Hesham",
   "Claude",
@@ -243,14 +243,14 @@
    "phase": "P1",
    "title": "Move config into config/ (project, brand, rules, glossary)",
    "owner": "Claude",
-   "status": "todo",
+   "status": "review",
    "depends": [
     "T15",
     "T50"
    ],
    "done_when": "reel.py reads config/; no hard-coded models/prices",
-   "notes": "",
-   "evidence": "",
+   "notes": "reel.py + keyframes.py read config/*.json (models, prices, caps, ASR, brand, story length). Fixed crash: reel.py still loaded model/models.json, which moved to archive. Director = Haiku with Sonnet fallback; selects = Sonnet. Monthly cap enforced; run.log written. 12 offline tests pass.",
+   "evidence": "branch p1-config-docs: scripts/lib/config.py, scripts/reel.py, tests/test_pipeline.py",
    "updated": "2026-11-01"
   },
   {
@@ -258,14 +258,14 @@
    "phase": "P1",
    "title": "Archive the 8 status files, old plan, v0 files; remove Telegram everywhere",
    "owner": "Claude",
-   "status": "todo",
+   "status": "review",
    "depends": [
     "T15",
     "T50"
    ],
    "done_when": "archive/ holds them; grep 'telegram' finds nothing active",
-   "notes": "",
-   "evidence": "",
+   "notes": "Old files are in archive/ (T50). Telegram removed from active docs; remaining mentions only record the removal decision.",
+   "evidence": "branch p1-config-docs",
    "updated": "2026-11-01"
   },
   {
@@ -273,20 +273,20 @@
    "phase": "P1",
    "title": "Slim AGENTS.md (≤150 lines) + rewrite SOP.md to match the code",
    "owner": "Claude",
-   "status": "todo",
+   "status": "review",
    "depends": [
     "T15",
     "T50"
    ],
    "done_when": "One rulebook, no contradictions",
-   "notes": "",
-   "evidence": "",
+   "notes": "AGENTS.md ~70 lines, one rulebook. SOP.md marks each stage works/coming with its task number.",
+   "evidence": "AGENTS.md, SOP.md on branch p1-config-docs",
    "updated": "2026-11-01"
   },
   {
    "id": "T19",
    "phase": "P1",
-   "title": "Copy the cleaned repo onto the Mac (git clone) and confirm it runs --help",
+   "title": "On the Mac: pull, run the offline tests, and check transcription with large-v3-turbo",
    "owner": "Hermes",
    "status": "todo",
    "depends": [
@@ -294,8 +294,8 @@
     "T17",
     "T18"
    ],
-   "done_when": "Screenshot/log of reel.py --help on the Mac",
-   "notes": "",
+   "done_when": "Tests pass on the Mac, and one run on the existing IMG_0020 job reaches the story options (Gate 1) with run.log as evidence",
+   "notes": "cd ~/Desktop/ReelFactory_project && git pull && python3 -m unittest discover tests  |  then: python3 scripts/reel.py jobs/<the IMG_0020 job folder> --force transcribe,fix,selects  (spends about $0.03; stops at Gate 1). Main risk to check: does 'npx hyperframes transcribe -m large-v3-turbo' accept that model name? If not, write the exact error in notes and set blocked.",
    "evidence": "",
    "updated": "2026-11-01"
   },
@@ -578,12 +578,12 @@
    "phase": "P5",
    "title": "lib/llm.py: per-job + monthly cap guard, logs every call",
    "owner": "Claude",
-   "status": "todo",
+   "status": "in_progress",
    "depends": [
     "T16"
    ],
    "done_when": "",
-   "notes": "",
+   "notes": "Per-reel + monthly guard now in reel.py (Ctx.llm), tested. Moving it into lib/llm.py comes with the committee work.",
    "evidence": "",
    "updated": "2026-11-01"
   },
@@ -592,12 +592,12 @@
    "phase": "P5",
    "title": "Fix ledger: no 200-row deletion, correct categories, 'stopped' status",
    "owner": "Claude",
-   "status": "todo",
+   "status": "in_progress",
    "depends": [
     "T16"
    ],
    "done_when": "",
-   "notes": "",
+   "notes": "200-row deletion removed. Still to do: category names, mark partial runs as stopped.",
    "evidence": "",
    "updated": "2026-11-01"
   },
@@ -733,13 +733,13 @@
    "phase": "P1",
    "title": "Import existing code from the Mac (scripts/import_from_old.sh), commit, push",
    "owner": "Hermes",
-   "status": "todo",
+   "status": "review",
    "depends": [
     "T04"
    ],
    "done_when": "reel.py, keyframes.py, ingest.sh, cost model, fonts, lessons and old docs (in archive/) are in the repo on GitHub",
-   "notes": "On the Mac: git clone https://github.com/Marketalse/ReelFactory_project.git ~/Desktop/ReelFactory_project ; cd ~/Desktop/ReelFactory_project ; git checkout restructure-p1 ; bash scripts/import_from_old.sh ~/Desktop/Reel-Factory ; git status ; git add -A ; git commit -m 'Import existing code' ; git push. Old folder is only read, never changed.",
-   "evidence": "",
+   "notes": "Imported by Hesham: 60 files incl. reel.py, ingest.sh, keyframes.py, cost model, fonts, lessons, archive.",
+   "evidence": "commit c130081 on main",
    "updated": "2026-11-01"
   }
  ],
@@ -779,6 +779,12 @@
    "who": "Claude",
    "task": "T50",
    "change": "created: import script ready, assigned to Hermes"
+  },
+  {
+   "time": "2026-11-01T15:30",
+   "who": "Claude",
+   "task": "T16-T18",
+   "change": "config move, AGENTS.md, SOP.md, Telegram removal, tests → review on branch p1-config-docs"
   }
  ]
 }
