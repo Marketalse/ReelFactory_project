@@ -1,6 +1,6 @@
 """Shared settings for every Reel Factory script. Everything comes from config/*.json — no model names,
 prices, caps or paths are hard-coded in the scripts themselves. Standard library only."""
-import json, os, shutil
+import glob, json, os, shutil
 from datetime import date
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -36,15 +36,34 @@ def price(model):
     return p["in"], p["out"]
 
 
+FFMPEG_DIRS = ["/opt/homebrew/bin", "/usr/local/bin", "~/.hermes/tools/ffmpeg-9.0.1-darwin-arm64"]
+
+
 def find_ffmpeg():
-    """ffmpeg on PATH first, then the old Hermes tools folder. Returns (ffmpeg_path, folder)."""
+    """ffmpeg on PATH first, then Homebrew and the old Hermes tools folder. Returns (ffmpeg_path, folder)."""
     p = shutil.which("ffmpeg")
     if p:
         return p, os.path.dirname(p)
-    old = os.path.expanduser("~/.hermes/tools/ffmpeg-9.0.1-darwin-arm64")
-    if os.path.exists(os.path.join(old, "ffmpeg")):
-        return os.path.join(old, "ffmpeg"), old
+    for d in FFMPEG_DIRS + glob.glob(os.path.expanduser("~/.hermes/tools/ffmpeg-*")):
+        d = os.path.expanduser(d)
+        if os.access(os.path.join(d, "ffmpeg"), os.X_OK):
+            return os.path.join(d, "ffmpeg"), d
     raise SystemExit("ffmpeg not found: install it or put it on PATH")
+
+
+def ffmpeg_on_path():
+    """Put ffmpeg's folder on PATH for this process and every tool it starts (HyperFrames render needs it)."""
+    try:
+        _, d = find_ffmpeg()
+    except SystemExit:
+        return False
+    parts = os.environ.get("PATH", "").split(os.pathsep)
+    if d not in parts:
+        os.environ["PATH"] = os.pathsep.join([d] + [x for x in parts if x])
+    return True
+
+
+ffmpeg_on_path()
 
 
 def auth():
