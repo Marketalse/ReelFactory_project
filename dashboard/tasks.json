@@ -1,6 +1,6 @@
 {
  "project": "Reel Factory",
- "version": 18,
+ "version": 19,
  "owners": [
   "Hesham",
   "Claude",
@@ -1055,6 +1055,18 @@
    "done_when": "Hesham approves samples of the ones he wants",
    "evidence": "",
    "notes": "Prompts saved in docs/visual_prompts_for_later.md (2026-11-01). Start only when Hesham asks.",
+   "updated": "2026-11-01"
+  },
+  {
+   "id": "T76",
+   "phase": "P7",
+   "title": "Later: self-learning editor: track how each posted reel performs (manual or Instagram/TikTok API) and learn what editing works",
+   "owner": "Claude",
+   "status": "todo",
+   "depends": [],
+   "done_when": "Hesham agrees the plan; then: performance entered for 10+ reels and the first learned rules appear in lessons.md",
+   "evidence": "",
+   "notes": "Idea saved in docs/idea_self_learning.md (2026-11-01). Reminder set for 2026-11-08. Builds on T45, T36, T49.",
    "updated": "2026-11-01"
   }
  ],
