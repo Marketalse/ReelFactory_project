@@ -12,6 +12,10 @@ class ExplainTests(unittest.TestCase):
         msg = render.explain("rendering frames...\n", err)
         self.assertIn("Chrome not found", msg); self.assertNotIn("npm notice", msg)
 
+    def test_coloured_npm_notice_is_skipped(self):
+        msg = render.explain("", "Error: out of memory\n\x1b[37;40mnpm\x1b[0m \x1b[34;40mnotice\x1b[0m run npx\n")
+        self.assertEqual(msg, "Error: out of memory")
+
     def test_empty_output_points_to_the_log(self):
         self.assertIn("render_error.log", render.explain("", "npm notice run npx\n"))
 
