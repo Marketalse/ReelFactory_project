@@ -4,13 +4,13 @@
   python3 scripts/reel.py inbox/<slug> --slug <slug>        start a reel from an inbox folder (or one clip)
   python3 scripts/reel.py jobs/<job>                         continue (each stage is cached; nothing is paid twice)
   python3 scripts/reel.py jobs/<job> --select B              Gate 1: pick story B
-  python3 scripts/reel.py jobs/<job> --approve               Gate 2: render the finals (one per platform)
+  python3 scripts/reel.py jobs/<job> --approve               Gate 2: the final video + cover suggestion
   python3 scripts/reel.py jobs/<job> --fix "captions bigger, hook shorter"   Gate 2: re-plan with feedback
 
 Stages: ingest -> transcribe (local whisper) -> fix (Haiku) -> review [GATE 0: you fix words] -> selects (Sonnet)
 [GATE 1: you pick] -> edl (cut pauses/fillers/retakes) -> keyframes + shotlog (Sonnet) -> plan (Director, Haiku;
 Sonnet fallback repair) -> compile (templates only) -> draft (check, contact sheet, 540p draft, edit package)
-[GATE 2: you approve or send fixes] -> final (high quality, per platform).
+[GATE 2: you approve or send fixes] -> final (one high-quality video) -> cover suggestion.
 
 Models, prices, caps, ASR and gates come from config/*.json. Every run is written to <job>/run.log.
 Money: a paid call is refused when this job's spend + its worst case would pass --budget (default
@@ -506,7 +506,7 @@ def main():
     ap.add_argument("--force", default=""); ap.add_argument("--asr-model", default=None); ap.add_argument("--retranscribe", action="store_true")
     ap.add_argument("--fresh-selects", action="store_true"); ap.add_argument("--no-repair", action="store_true")
     ap.add_argument("--skip-review", action="store_true", help="skip Gate 0 for this reel")
-    ap.add_argument("--approve", action="store_true", help="Gate 2: render the final videos")
+    ap.add_argument("--approve", action="store_true", help="Gate 2: render the final video and the cover suggestion")
     ap.add_argument("--fix", help="Gate 2: re-plan with this feedback")
     a = ap.parse_args()
     a.img_tok = {1080: 2800, 720: 1300, 540: 800, 384: 420}.get(a.width, 800)

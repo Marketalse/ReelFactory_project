@@ -2,7 +2,7 @@
 """Check and render a compiled job. $0 (local).
 
     python3 scripts/render.py jobs/<job> --draft            check + contact sheet + review/draft_540p.mp4 + edit_package/
-    python3 scripts/render.py jobs/<job> --final            after Hesham's approval: final/reel_vN_<platform>.mp4 per platform
+    python3 scripts/render.py jobs/<job> --final            after Hesham's approval: final/reel_vN.mp4 + cover suggestion
 
 The HyperFrames CLI version is pinned in config/project.json -> tools.hyperframes.
 """
@@ -244,43 +244,41 @@ def draft(job):
     if sheet and os.path.exists(sheet):
         shutil.copy(sheet, os.path.join(job, "review", "contact_sheet.jpg"))
     pkg = edit_package(job, project)
-    cover = make_cover(job)
-    return {"cover": cover, "draft": small, "contact_sheet": os.path.join(job, "review", "contact_sheet.jpg") if sheet else None,
+    return {"draft": small, "contact_sheet": os.path.join(job, "review", "contact_sheet.jpg") if sheet else None,
             "edit_package": pkg, "check_warnings": warnings, "qa": qa}
 
 
-def final(job, platforms):
+def final(job, platforms=None):
+    """After Hesham's Approve: ONE high-quality video (final/reel_vN.mp4), then the cover suggestion (review/cover.jpg).
+    Per-platform copies and CapCut layers were dropped (Hesham, 2026-11-01): the reel has no handle or end card,
+    so Instagram and TikTok get the same file. `platforms` is kept for old callers and ignored."""
     sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
     from compile import compile_job
     tl = json.load(open(os.path.join(job, "timeline.json"), encoding="utf-8"))
     os.makedirs(os.path.join(job, "final"), exist_ok=True)
-    v = 1 + max([int(m) for f in glob.glob(os.path.join(job, "final", "reel_v*_*.mp4"))
-                 for m in re.findall(r"reel_v(\d+)_", f)] or [0])
-    outs = []
-    for p in platforms:
-        try:
-            project = compile_job(job, p, final=True)
-        except hfbuild.BuildError as e:
-            raise RenderError(str(e))
-        check(project)
-        path = os.path.join(job, "final", f"reel_v{v}_{p}.mp4")
-        if os.path.exists(path):
-            raise RenderError(f"{path} exists; never overwritten")
-        render(project, path, "high")
-        verify(path, tl["duration"])
-        even_sound(path)
-        qa = qa_check.run(job, path, final=True, project=project)
-        if qa["errors"]:
-            bad = path.replace(".mp4", "_QA_FAILED.mp4"); os.rename(path, bad)
-            raise RenderError(f"final {p} failed QA (kept as {os.path.basename(bad)}): " + "; ".join(qa["errors"][:4]))
-        outs.append(path)
-    cov = os.path.join(job, "review", "cover.jpg")
-    if os.path.exists(cov):
-        dst = os.path.join(job, "final", f"cover_v{v}.jpg"); shutil.copy(cov, dst); outs.append(dst)
+    v = 1 + max([int(m) for f in glob.glob(os.path.join(job, "final", "reel_v*.mp4"))
+                 for m in re.findall(r"reel_v(\d+)", os.path.basename(f))] or [0])
     try:
-        outs += capcut_layers(job, platforms[0])
-    except RenderError as e:            # the finals are fine; only the CapCut layers failed
-        print(f"   CapCut layers not made: {e}")
+        project = compile_job(job, "instagram", final=True)
+    except hfbuild.BuildError as e:
+        raise RenderError(str(e))
+    check(project)
+    path = os.path.join(job, "final", f"reel_v{v}.mp4")
+    if os.path.exists(path):
+        raise RenderError(f"{path} exists; never overwritten")
+    render(project, path, "high")
+    verify(path, tl["duration"])
+    even_sound(path)
+    qa = qa_check.run(job, path, final=True, project=project)
+    if qa["errors"]:
+        bad = path.replace(".mp4", "_QA_FAILED.mp4"); os.rename(path, bad)
+        raise RenderError("final video failed QA (kept as " + os.path.basename(bad) + "): " + "; ".join(qa["errors"][:4]))
+    outs = [path]
+    cover = make_cover(job)                       # step 2: the cover suggestion; a cover problem never stops the reel
+    if isinstance(cover, dict) and cover.get("cover"):
+        outs.append(cover["cover"])
+    elif isinstance(cover, dict) and cover.get("error"):
+        print(f"   cover not made: {cover['error']}")
     return outs
 
 

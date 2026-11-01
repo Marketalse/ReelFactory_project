@@ -97,11 +97,12 @@ class ProgressTests(ApiTest):
 
         d = self.job("2026-11-01-cc", "rendered", ["===== run 2026-11-01 | jobs/c --approve", "FINAL:"])
         os.makedirs(os.path.join(d, "final"))
-        for f in ("reel_v1_instagram.mp4", "reel_v2_instagram.mp4", "reel_v2_tiktok.mp4", "reel_v2_tiktok_QA_FAILED.mp4"):
+        for f in ("reel_v1_instagram.mp4", "reel_v1_tiktok.mp4", "reel_v2.mp4", "reel_v3_QA_FAILED.mp4"):   # old per-platform files + new single file
             open(os.path.join(d, "final", f), "wb").write(b"0")
         p = self.api.progress("cc")
         self.assertEqual(p["state"], "final"); self.assertEqual(p["last_mode"], "final")
-        self.assertEqual(p["finals"], ["reel_v2_instagram.mp4", "reel_v2_tiktok.mp4"])
+        self.assertEqual(p["finals"], ["reel_v2.mp4"]); self.assertEqual(p["version"], 2)
+        self.assertNotIn("package", p)                                                  # no CapCut step any more
 
     def test_early_failure_before_the_job_exists_is_explained(self):
         os.makedirs(self.api.RUNS, exist_ok=True)
@@ -119,6 +120,13 @@ class ProgressTests(ApiTest):
     def test_unset_handles_are_reported(self):
         json.dump({"handles": {"instagram": "CONFIRM (proposed)", "tiktok": "CONFIRM"}}, open(os.path.join(self.root, "config", "brand.json"), "w"))
         self.assertFalse(self.api._handles_set())
+
+    def test_handles_not_needed_without_end_card(self):
+        json.dump({"handles": {"instagram": "CONFIRM"}, "cta": {"enabled": False}}, open(os.path.join(self.root, "config", "brand.json"), "w"))
+        self.assertTrue(self.api._handles_set())
+
+    def test_final_steps_are_video_then_cover(self):
+        self.assertEqual([k for k, _, _ in self.api.FINAL_STEPS], ["video", "cover"])
 
 
 class PerformanceTests(ApiTest):

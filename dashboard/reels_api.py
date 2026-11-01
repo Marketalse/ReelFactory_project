@@ -288,13 +288,12 @@ STEPS = [
     ("render", "Rendering and checking the draft", "Making the draft video and checking every frame", ["draft", "report"]),
 ]
 FINAL_STEPS = [
-    ("instagram", "Rendering the Instagram video", "High quality, with your Instagram handle"),
-    ("tiktok", "Rendering the TikTok video", "High quality, with your TikTok handle"),
-    ("capcut", "Making the CapCut files", "Your cut video and a see-through graphics layer"),
+    ("video", "Making your final video", "High quality, one video for Instagram and TikTok"),
+    ("cover", "Making your cover image", "A suggestion; you can upload your own after"),
 ]
 DEFAULT_SECS = {"ingest": 60, "transcribe": 270, "fix": 15, "review": 1, "selects": 20, "edl": 2, "keyframes": 15,
                 "shotlog": 25, "plan": 25, "compile": 5, "draft": 300, "report": 2}
-FINAL_SECS = {"instagram": 300, "tiktok": 300, "capcut": 420}
+FINAL_SECS = {"video": 300, "cover": 40}
 ORDER = [s for st in STEPS for s in st[3]]
 
 
@@ -371,7 +370,7 @@ def progress(ref):
     if mode == "final":
         steps, done_s = [], 0.0
         t0 = started
-        files = {"instagram": "final/reel_v*_instagram.mp4", "tiktok": "final/reel_v*_tiktok.mp4", "capcut": "edit_package/2_graphics.mov"}
+        files = {"video": "final/reel_v*.mp4", "cover": "review/cover.jpg"}
         import glob as _g
         for k, label, detail in FINAL_STEPS:
             hit = [p for p in _g.glob(os.path.join(jd, files[k])) if os.path.getmtime(p) >= started - 1]
@@ -443,10 +442,9 @@ def progress(ref):
         stop = _stop_text(runlog)
     if status == "rendered" and not stop:
         finals = sorted(f for f in os.listdir(os.path.join(jd, "final")) if f.endswith(".mp4") and "QA_FAILED" not in f) if os.path.isdir(os.path.join(jd, "final")) else []
-        latest = max([int(m) for f in finals for m in re.findall(r"reel_v(\d+)_", f)] or [0])
-        out.update(state="final", percent=100.0, eta=0, message="Your videos are ready",
-                   finals=[f for f in finals if f.startswith(f"reel_v{latest}_")],
-                   package=[f for f in ("1_video.mp4", "2_graphics.mov", "captions_ar.srt") if os.path.exists(os.path.join(jd, "edit_package", f))])
+        latest = max([int(m) for f in finals for m in re.findall(r"reel_v(\d+)", f)] or [0])
+        out.update(state="final", percent=100.0, eta=0, message="Your video is ready", version=latest,
+                   finals=[f for f in finals if re.match(rf"reel_v{latest}(?:_|\.)", f)])
     elif status == "preview_ready" and not stop:
         out.update(state="ready", percent=100.0, eta=0, message="Your draft is ready")
     elif stop:
@@ -468,7 +466,10 @@ def progress(ref):
 
 
 def _handles_set():
+    """Handles only matter when the end card is on (config/brand.json -> cta.enabled)."""
     b = _j(os.path.join(ROOT, "config", "brand.json"), {}) or {}
+    if (b.get("cta") or {}).get("enabled", True) is False:
+        return True
     h = b.get("handles") or {}
     return bool(h) and all(isinstance(v, str) and v.startswith("@") and "CONFIRM" not in v for v in h.values())
 

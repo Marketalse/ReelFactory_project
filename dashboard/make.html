@@ -35,7 +35,7 @@
       percent: 0..100,  eta: seconds left,  message: "Listening to your words",
       steps: [{key, label, detail, state: "done"|"active"|"waiting", fraction: 0..1, elapsed, expected, note}],
       draft:   "2026-11-01-store-tips/review/draft_540p.mp4",  draft_mtime,
-      finals:  ["reel_v1_instagram.mp4", "reel_v1_tiktok.mp4"],  package: ["1_video.mp4", ...],
+      finals:  ["reel_v1.mp4"],  version: 1,  cover: "<job>/review/cover.jpg",
       handles_set: true|false,  feedback: [{time, fix}]
     }
   A webhook backend only has to keep that object up to date per job and push it to the page
@@ -315,8 +315,8 @@ input[type=password]:focus{border-color:var(--violet)}
           <p>Made from your voice. No file needed.</p>
         </div>
         <div class="slot off">
-          <div class="head">Background music <span class="badge">Coming soon</span> <button class="tip" type="button" data-tip="Automatic music and sound effects are being built. For now, add music in CapCut after you approve. The CapCut files are made for you.">?</button></div>
-          <p>For now, add music in CapCut after you approve.</p>
+          <div class="head">Background music <span class="badge">Coming soon</span> <button class="tip" type="button" data-tip="Automatic music and sound effects are being built. Add trending music in Instagram or TikTok when you post. Sound effects are being built.">?</button></div>
+          <p>Add trending music in Instagram or TikTok when you post.</p>
         </div>
       </div>
     </div>
@@ -520,7 +520,7 @@ const canNotify = () => "Notification" in window && Notification.permission === 
 function askNotify(){ try{ if("Notification" in window && Notification.permission==="default") Notification.requestPermission(); }catch(e){} }
 function notifyDone(p){
   if(!canNotify()) return;
-  const m = p.state==="ready" ? ["Draft ready","Click to watch it and comment or approve."] : p.state==="final" ? ["Final videos ready","Click to download them."] :
+  const m = p.state==="ready" ? ["Draft ready","Click to watch it and comment or approve."] : p.state==="final" ? ["Final video ready","Click to watch, download or comment."] :
             ["Reel stopped","Click to see why and try again."];
   try{ const n=new Notification("Reel Factory: "+m[0],{body:m[1],tag:"rf-"+(p.job||p.slug)}); n.onclick=()=>{ window.focus(); n.close(); }; }catch(e){}
 }
@@ -592,7 +592,7 @@ function watch(ref){
     drawSteps(p, uploading);
     if(p.state!=="running"){ if(S.seenRunning) notifyDone(p); S.busy=false; showResult(p); refreshContinue(); }
     else if(!S.seenRunning){ S.seenRunning=true; refreshContinue(); }
-    else { $("#trackTitle").textContent = p.mode==="final" ? "Making your final videos" : p.mode==="fix" ? "Making a new draft with your changes" : "Making your reel"; $("#result").hidden=true; }
+    else { $("#trackTitle").textContent = p.mode==="final" ? "Making your final video and cover" : p.mode==="fix" ? "Making a new draft with your changes" : "Making your reel"; $("#result").hidden=true; }
   });
 }
 
@@ -603,14 +603,14 @@ function coverBlock(p){
   if(!p.cover && !p.cover_busy) return "";
   const src = p.cover ? backend.mediaUrl(p.job, p.cover.split("/").slice(1).join("/"))+"?v="+(p.cover_mtime||0) : "";
   return `<div class="cover" id="coverBox" style="border-top:1px solid var(--line);padding-top:14px;display:grid;gap:10px">
-    <b>Cover image</b>
+    <b>Cover image (thumbnail)</b>
     <div style="display:flex;gap:14px;align-items:flex-start;flex-wrap:wrap">
       ${src?`<a href="${src}" target="_blank" rel="noopener"><img src="${src}" alt="Cover image" style="width:132px;aspect-ratio:9/16;object-fit:cover;border-radius:10px;border:1px solid var(--line)"></a>`:""}
       <div style="display:grid;gap:8px;flex:1 1 180px">
-        <p class="small" style="margin:0" id="coverNote">${p.cover_busy?"Making your cover…":"Made from your title and your video. Use it as the cover when you post."}</p>
+        <p class="small" style="margin:0" id="coverNote">${p.cover_busy?"Making your cover…":p.cover_own?"Your own image is being used.":"Our suggestion, made from your title and your video. Use it, or upload your own image."}</p>
         ${src?`<a class="btn primary" href="${src}" download="cover.jpg">Download cover ↓</a>`:""}
-        <button class="btn" type="button" id="cvPhoto">Use my photo</button>
-        <button class="btn" type="button" id="cvOwn">Use my own cover</button>
+        <button class="btn" type="button" id="cvOwn">Upload my own cover ↑</button>
+        <button class="btn ghost" type="button" id="cvPhoto">Use my photo with our title</button>
         ${p.cover_own?'<button class="btn ghost" type="button" id="cvAuto">Back to automatic</button>':""}
       </div>
     </div>
@@ -686,19 +686,17 @@ function showResult(p){
       <div class="player"><video src="${src}" controls playsinline preload="metadata"></video></div>
       <div class="rside">
         <div class="done-head"><span class="ok">✓</span><h2>Watch it, then choose</h2></div>
-        <p class="small" style="margin:0">This is a quick preview (lower quality). Your final videos are made in high quality when you approve.</p>
+        <p class="small" style="margin:0">This is a quick preview (lower quality). When you approve, your final video is made in high quality, then a cover image.</p>
         <label for="fixText" style="font-weight:600">Want changes?</label>
         <textarea id="fixText" dir="auto" placeholder="Tell it like you'd tell an editor: “hook shorter”, “remove the flash”, “bigger captions”. Wrong word? Write: wrong => right"></textarea>
         <div class="row"><button class="btn violet" id="sendFix">Send changes</button></div>
         <div style="border-top:1px solid var(--line);padding-top:14px;display:grid;gap:10px">
           <b>Happy with it?</b>
           ${p.handles_set?"":`<div class="warn">Your Instagram and TikTok handles aren't set yet, and the final videos need them on the last card. Send them to Claude once, then come back and approve.</div>`}
-          <div class="row"><button class="btn primary" id="approve" ${p.handles_set?"":"disabled"}>Approve &amp; make final videos</button></div>
+          <div class="row"><button class="btn primary" id="approve" ${p.handles_set?"":"disabled"}>Approve &amp; make final video</button></div>
         </div>
-        ${coverBlock(p)}
         ${p.feedback&&p.feedback.length?`<details><summary class="small">Your earlier comments (${p.feedback.length})</summary><div class="history" style="margin-top:6px">${p.feedback.map(f=>`<div>${esc(f.time)} · ${esc(f.fix)}</div>`).join("")}</div></details>`:""}
       </div></div>`;
-    wireCover(p);
     $("#sendFix").onclick=async ()=>{
       const t=$("#fixText").value.trim(); if(!t){ toast("Write what to change first", "For example: “make the hook shorter”. Then click Send changes.", "error"); $("#fixText").focus(); return; }
       const r=await backend.fix(job,t); if(!r.ok) return toast("Couldn't send your changes", r.message, "error");
@@ -706,28 +704,34 @@ function showResult(p){
     };
     const ap=$("#approve"); if(ap) ap.onclick=async ()=>{
       ap.disabled=true; const r=await backend.approve(job); if(!r.ok){ ap.disabled=false; return toast("Couldn't approve", r.message, "error"); }
-      toast("Approved", "Making your high-quality videos now.", "ok"); showTrack(job,false); watch(job);
+      toast("Approved", "Making your final video, then your cover image.", "ok"); showTrack(job,false); watch(job);
     };
   } else if(p.state==="final"){
-    $("#trackTitle").textContent="Your videos are ready"; $("#overall").hidden=true;
-    const finals=p.finals||[]; const ig=finals.find(f=>/instagram/.test(f))||finals[0];
-    const nice=f=>/instagram/.test(f)?"Instagram":/tiktok/.test(f)?"TikTok":f;
+    $("#trackTitle").textContent="Your final video is ready"; $("#overall").hidden=true;
+    const fin=(p.finals||[]).find(f=>!/_tiktok/.test(f))||(p.finals||[])[0];
+    const fsrc=fin?backend.mediaUrl(job,"final/"+fin):"";
     R.innerHTML=`<div class="result">
-      <div class="player">${ig?`<video src="${backend.mediaUrl(job,"final/"+ig)}" controls playsinline preload="metadata"></video>`:""}</div>
+      <div class="player">${fin?`<video src="${fsrc}" controls playsinline preload="metadata"></video>`:""}</div>
       <div class="rside">
-        <div class="done-head"><span class="ok">✓</span><h2>Download and post</h2></div>
-        <div class="dl">${finals.map(f=>`<a class="btn primary" href="${backend.mediaUrl(job,"final/"+f)}" download="${esc(f)}"><span>Download processed video · ${nice(f)}</span><span aria-hidden="true">↓</span></a>`).join("")||'<p class="small">No final video found.</p>'}</div>
-        ${(p.package||[]).length?`<div style="border-top:1px solid var(--line);padding-top:14px;display:grid;gap:8px">
-          <b>Want to tweak it in CapCut?</b>
-          <p class="small" style="margin:0">Drag <b>1_video.mp4</b> onto the timeline and <b>2_graphics.mov</b> on the track above it. They line up by themselves.</p>
-          <div class="row">${p.package.map(f=>`<a class="btn" href="${backend.mediaUrl(job,"edit_package/"+f)}" download="${esc(f)}">${esc(f)}</a>`).join("")}</div>
-          <div class="row"><button class="btn ghost" id="reveal">Open in Finder</button></div></div>`:""}
+        <div class="done-head"><span class="ok">✓</span><h2>Final preview</h2></div>
+        <p class="small" style="margin:0">High quality. The same video works for Instagram and TikTok.</p>
+        ${fin?`<div class="dl"><a class="btn primary" href="${fsrc}" download="${esc(fin)}"><span>Download final video</span><span aria-hidden="true">↓</span></a></div>`:'<p class="small">No final video found.</p>'}
+        <label for="fixText" style="font-weight:600">Want changes?</label>
+        <textarea id="fixText" dir="auto" placeholder="Write your editing comments: “remove the second card”, “bigger captions”. Wrong word? Write: wrong => right"></textarea>
+        <p class="small" style="margin:0">Sending changes makes a new draft. Approve it again to get the new final video. This one stays saved.</p>
+        <div class="row"><button class="btn violet" id="sendFix">Send changes</button></div>
         ${coverBlock(p)}
         ${perfBlock(p)}
+        ${p.feedback&&p.feedback.length?`<details><summary class="small">Your earlier comments (${p.feedback.length})</summary><div class="history" style="margin-top:6px">${p.feedback.map(f=>`<div>${esc(f.time)} · ${esc(f.fix)}</div>`).join("")}</div></details>`:""}
         <p class="small" style="margin:0">Nothing is posted for you. Post it yourself when you're ready.</p>
-        <div class="row"><button class="btn violet" id="another">Make another reel</button></div>
+        <div class="row"><button class="btn ghost" id="reveal">Open in Finder</button><button class="btn violet" id="another">Make another reel</button></div>
       </div></div>`;
     wireCover(p); wirePerf(p);
+    $("#sendFix").onclick=async ()=>{
+      const t=$("#fixText").value.trim(); if(!t){ toast("Write what to change first", "For example: “remove the second card”. Then click Send changes.", "error"); $("#fixText").focus(); return; }
+      const r=await backend.fix(job,t); if(!r.ok) return toast("Couldn't send your changes", r.message, "error");
+      toast("Changes sent", "A new draft is being made. It usually takes a few minutes.", "ok"); showTrack(job,false); watch(job);
+    };
     const rv=$("#reveal"); if(rv) rv.onclick=async ()=>{ const r=await backend.reveal(job); toast(r.ok?"Opened in Finder":"Couldn't open Finder", r.ok?"":r.message, r.ok?"ok":"error"); };
     $("#another").onclick=()=>$("#newBtn").click();
   } else {
@@ -818,7 +822,7 @@ const DemoBackend = (()=>{
   const today=new Date().toISOString().slice(0,10);
   const PLAN=[["prepare",4],["listen",7],["story",3],["plan",5],["render",7]];
   const LABEL={prepare:["Preparing your video","Joining your takes and making a working copy"],listen:["Listening to your words","Writing down every word with its timing, then fixing spellings"],story:["Choosing the story and cutting","Picking the strongest part and removing pauses and false starts"],plan:["Planning captions and visuals","Placing captions, titles, cards and zooms on your words"],render:["Rendering and checking the draft","Making the draft video and checking every frame"]};
-  const FIN=[["instagram","Rendering the Instagram video","High quality, with your Instagram handle",3],["tiktok","Rendering the TikTok video","High quality, with your TikTok handle",3],["capcut","Making the CapCut files","Your cut video and a see-through graphics layer",3]];
+  const FIN=[["video","Making your final video","High quality, one video for Instagram and TikTok",5],["cover","Making your cover image","A suggestion; you can upload your own after",2]];
   function snap(j){
     const now=Date.now()/1000, el=now-j.t0;
     const plan = j.mode==="final" ? FIN.map(f=>[f[0],f[3]]) : j.mode==="fix" ? PLAN.map(([k,s])=>[k,["plan","render"].includes(k)?s:0]) : PLAN;
@@ -833,7 +837,7 @@ const DemoBackend = (()=>{
     if(!running && busy===j.job){ busy=null; j.status = j.mode==="final" ? "final" : "ready"; }
     const p={ref:j.job, job:j.job, slug:j.slug, mode:j.mode, state: running?"running": j.status, percent:pct, eta:Math.max(0,(total-el)*40), message: steps.find(s=>s.state==="active")?.label||"", steps, handles_set:true, feedback:j.feedback, draft:j.job+"/review/draft_540p.mp4"};
     if(p.state==="ready") p.message="Your draft is ready";
-    if(p.state==="final"){ p.message="Your videos are ready"; p.finals=["reel_v1_instagram.mp4","reel_v1_tiktok.mp4"]; p.package=["1_video.mp4","2_graphics.mov","captions_ar.srt"]; }
+    if(p.state==="final"){ p.message="Your video is ready"; p.finals=["reel_v1.mp4"]; p.version=1; }
     return p;
   }
   const wait=ms=>new Promise(r=>setTimeout(r,ms));

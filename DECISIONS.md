@@ -69,3 +69,10 @@ One line per decision. Newest at the bottom. If a later decision changes an earl
 - Hesham mostly uses trending Instagram music, added in the app when posting (sometimes CapCut music). Trending tracks can't be baked into the file (rights + they change weekly).
 - So: finals carry his voice + sound effects only (`audio.music.enabled` false). He picks the trending track in Instagram/TikTok. The CapCut package keeps voice, graphics and sound on separate tracks for reels where he wants CapCut music.
 - Next: learn SFX style and pace from his 11 best reels (references/own/best_reels.md), then build a small licence-safe SFX set (T23). An optional licensed music bed may come later, per reel.
+
+## 2026-11-01 · Approve = one final video, then the cover
+- Hesham: drop the Instagram / TikTok / CapCut steps after Approve. Now: (1) one high-quality final video `final/reel_vN.mp4`
+  (no handle or end card, so both platforms get the same file), (2) the cover suggestion `review/cover.jpg`, made after the video.
+- The final page shows the final preview, a download button, a "Want changes?" box (makes a new draft; approve again → reel_v(N+1)),
+  and the cover with "Upload my own cover". The draft page no longer shows the cover.
+- CapCut layers are no longer made (code kept in render.capcut_layers if ever wanted again). Old reels' per-platform files still show.

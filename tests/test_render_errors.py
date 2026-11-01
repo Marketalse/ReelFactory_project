@@ -34,3 +34,27 @@ class ExplainTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class SingleFinalTests(unittest.TestCase):
+    """Approve makes ONE final video, then the cover suggestion; no per-platform copies, no CapCut layers (2026-11-01)."""
+    def test_one_video_then_cover(self):
+        import json, tempfile
+        from unittest import mock
+        import render, compile as comp
+        order = []
+        with tempfile.TemporaryDirectory() as job:
+            json.dump({"duration": 10.0, "scenes": []}, open(os.path.join(job, "timeline.json"), "w"))
+            os.makedirs(os.path.join(job, "final")); open(os.path.join(job, "final", "reel_v1_instagram.mp4"), "w").close()
+            def fake_render(project, out, q):
+                order.append("video:" + os.path.basename(out)); open(out, "w").close(); return out
+            def fake_cover(j):
+                order.append("cover"); return {"cover": os.path.join(j, "review", "cover.jpg")}
+            with mock.patch.object(comp, "compile_job", return_value=job), mock.patch.object(render, "check", return_value=[]), \
+                 mock.patch.object(render, "render", side_effect=fake_render), mock.patch.object(render, "verify"), \
+                 mock.patch.object(render, "even_sound"), mock.patch.object(render.qa_check, "run", return_value={"errors": []}), \
+                 mock.patch.object(render, "make_cover", side_effect=fake_cover), \
+                 mock.patch.object(render, "capcut_layers", side_effect=AssertionError("no CapCut step")):
+                outs = render.final(job, ["instagram", "tiktok"])
+            self.assertEqual(order, ["video:reel_v2.mp4", "cover"])
+            self.assertEqual([os.path.basename(o) for o in outs], ["reel_v2.mp4", "cover.jpg"])
