@@ -96,10 +96,15 @@ class H(SimpleHTTPRequestHandler):
 
     def do_GET(self):
         q = {k: v[0] for k, v in parse_qs(urlparse(self.path).query).items()}
+        if self.path.startswith("/api/watching"):
+            return self.send_json(200, {"watching": reels_api.watching(q.get("ref", ""))})
         if self.path.startswith("/api/progress"):
-            return self.send_json(200, reels_api.progress(q.get("ref", "")))
+            p = reels_api.progress(q.get("ref", ""))
+            if q.get("notify") == "1":
+                reels_api.mark_seen(p.get("job"), p.get("slug"), p.get("ref"))
+            return self.send_json(200, p)
         if self.path.startswith("/api/events"):
-            return self.stream_progress(q.get("ref", ""))
+            return self.stream_progress(q.get("ref", ""), notify=q.get("notify") == "1")
         if self.path.startswith("/api/root"):
             return self.send_json(200, {"root": os.path.realpath(reels_api.ROOT)})
         if self.path.startswith("/api/reels"):
@@ -118,7 +123,7 @@ class H(SimpleHTTPRequestHandler):
             self.path = "/make.html"
         return super().do_GET()
 
-    def stream_progress(self, ref, every=1.0, limit=4 * 3600):
+    def stream_progress(self, ref, every=1.0, limit=4 * 3600, notify=False):
         """Server-Sent Events: one progress object per second until the run ends (or the tab closes)."""
         self.send_response(200)
         self.send_header("Content-Type", "text/event-stream"); self.send_header("Cache-Control", "no-store")
@@ -127,6 +132,8 @@ class H(SimpleHTTPRequestHandler):
         try:
             while time.time() - t0 < limit:
                 p = reels_api.progress(ref)
+                if notify:
+                    reels_api.mark_seen(p.get("job"), p.get("slug"), p.get("ref"))
                 self.wfile.write(b"data: " + json.dumps(p, ensure_ascii=False).encode() + b"\n\n"); self.wfile.flush()
                 if p.get("state") != "running":
                     break

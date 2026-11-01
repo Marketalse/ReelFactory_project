@@ -287,7 +287,7 @@ textarea{min-height:84px;resize:vertical}
     <div class="row" style="align-items:center;justify-content:space-between">
       <div>
         <h1 id="trackTitle">Making your reel</h1>
-        <p class="lede" id="trackLede">You can close this tab. You'll get a Mac notification when the draft is ready.</p>
+        <p class="lede" id="trackLede">You can close this tab. You'll get a notification when the draft is ready.</p>
       </div>
       <button class="btn ghost" id="newBtn" type="button">+ New reel</button>
     </div>
@@ -457,6 +457,20 @@ $("#makeBtn").onclick=async ()=>{
   }
 };
 
+/* ---------------------------------------------------------------- browser notifications */
+// Clicking one brings this tab to the front (a Mac notification from the pipeline would open Script Editor).
+// While a tab with permission is following a reel, the pipeline skips its own Mac notification.
+const canNotify = () => "Notification" in window && Notification.permission === "granted";
+function askNotify(){ try{ if("Notification" in window && Notification.permission==="default") Notification.requestPermission(); }catch(e){} }
+function notifyDone(p){
+  if(!canNotify()) return;
+  const m = p.state==="ready" ? ["Draft ready","Click to watch it and comment or approve."] : p.state==="final" ? ["Final videos ready","Click to download them."] :
+            ["Reel stopped","Click to see why and try again."];
+  try{ const n=new Notification("Reel Factory: "+m[0],{body:m[1],tag:"rf-"+(p.job||p.slug)}); n.onclick=()=>{ window.focus(); n.close(); }; }catch(e){}
+}
+["#makeBtn"].forEach(s=>$(s).addEventListener("click", askNotify));
+document.addEventListener("click", e=>{ if(e.target.closest("#sendFix,#approve,#retry,.rchip")) askNotify(); });
+
 /* ---------------------------------------------------------------- tracker */
 function showTrack(ref, uploading){
   S.tracking=ref; store.set("rf.track", ref);
@@ -520,7 +534,7 @@ function watch(ref){
     if(p.job && p.job!==S.tracking){ S.tracking=p.job; store.set("rf.track", p.job); }
     const uploading = S.busy && S.uploadFrac<1;
     drawSteps(p, uploading);
-    if(p.state!=="running"){ S.busy=false; showResult(p); refreshContinue(); }
+    if(p.state!=="running"){ if(S.seenRunning) notifyDone(p); S.busy=false; showResult(p); refreshContinue(); }
     else if(!S.seenRunning){ S.seenRunning=true; refreshContinue(); }
     else { $("#trackTitle").textContent = p.mode==="final" ? "Making your final videos" : p.mode==="fix" ? "Making a new draft with your changes" : "Making your reel"; $("#result").hidden=true; }
   });
@@ -639,9 +653,10 @@ const RealBackend = {
   watch(ref, onUpdate){
     // Server-Sent Events first (one update per second); polling if SSE isn't available or drops.
     let es=null, timer=null, stopped=false, gotAny=false;
-    const poll=async ()=>{ if(stopped) return; try{ const r=await fetch("/api/progress?ref="+encodeURIComponent(ref),{cache:"no-store"}); const p=await r.json(); onUpdate(p); if(p.state!=="running") return; }catch(e){} timer=setTimeout(poll,2000); };
+    const nq=()=> canNotify() ? "&notify=1" : "";
+    const poll=async ()=>{ if(stopped) return; try{ const r=await fetch("/api/progress?ref="+encodeURIComponent(ref)+nq(),{cache:"no-store"}); const p=await r.json(); onUpdate(p); if(p.state!=="running") return; }catch(e){} timer=setTimeout(poll,2000); };
     if(window.EventSource){
-      es=new EventSource("/api/events?ref="+encodeURIComponent(ref));
+      es=new EventSource("/api/events?ref="+encodeURIComponent(ref)+nq());
       es.onmessage=e=>{ gotAny=true; const p=JSON.parse(e.data); onUpdate(p); if(p.state!=="running"){ es.close(); } };
       es.onerror=()=>{ es.close(); if(!stopped && (!gotAny || (S.last&&S.last.state==="running"))) timer=setTimeout(poll,1500); };
     } else poll();

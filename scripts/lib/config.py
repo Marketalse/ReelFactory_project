@@ -69,6 +69,17 @@ def auth():
     return a.get("inference_base_url") or r["base_url"], a["agent_key"]
 
 
+def key_source():
+    """Where the API key comes from, in words (for error messages). Never returns the key."""
+    r = PROJECT["route"]
+    if os.environ.get("RF_API_KEY", "").strip():
+        return "the RF_API_KEY setting"
+    kf = os.path.expanduser(r.get("key_file") or "")
+    if kf and os.path.isfile(kf) and open(kf, encoding="utf-8").read().strip():
+        return f"Reel Factory's own key ({r['key_file']})"
+    return f"your Hermes login ({r['auth_file']})"
+
+
 def month_spent(month=None):
     """Total recorded spend for a month (YYYY-MM) from dashboard/expenses.json."""
     month = month or date.today().isoformat()[:7]
