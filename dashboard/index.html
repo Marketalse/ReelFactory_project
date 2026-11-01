@@ -265,6 +265,9 @@ function renderReels(){
        <p class="hint" style="margin-top:6px">Changes make a new draft here in a few minutes. Approve makes one high-quality video per platform.</p>`:''}
      ${r.feedback.length?`<div class="hint" style="margin-top:8px"><b>Your earlier comments:</b><br>${r.feedback.slice(-3).map(f=>esc(f.time+': '+f.fix)).join('<br>')}</div>`:''}
      ${r.finals.length?`<div style="margin-top:10px"><b>Final videos:</b> ${r.finals.map(f=>`<a style="color:var(--lime)" href="/media/${r.job}/final/${encodeURIComponent(f)}" download>${esc(f)}</a>`).join(' · ')}</div>`:''}
+     ${r.package.length?`<div style="margin-top:10px"><b>For CapCut:</b> ${r.package.map(f=>`<a style="color:var(--lime)" href="/media/${r.job}/edit_package/${f}" download>${f}</a>`).join(' · ')}
+       <button class="btn" data-reveal="${r.job}" style="margin-left:8px">Open in Finder</button>
+       <div class="hint">Drag 1_video.mp4 to track 1 and 2_graphics.mov above it. They line up by themselves.</div></div>`:''}
      </div></div>`;
   }
   el.innerHTML=h;
@@ -273,6 +276,7 @@ function renderReels(){
   el.querySelectorAll('[data-resume]').forEach(b=>b.onclick=()=>act('resume',{job:b.dataset.resume},'Trying again'));
   el.querySelectorAll('[data-fix]').forEach(b=>b.onclick=()=>{const t=typing[b.dataset.fix]||'';if(!t.trim()){toast('Write what to change first');return}
     act('fix',{job:b.dataset.fix,text:t},'Working on your changes').then(()=>{typing[b.dataset.fix]=''})});
+  el.querySelectorAll('[data-reveal]').forEach(b=>b.onclick=()=>act('reveal',{job:b.dataset.reveal},'Opened in Finder'));
   el.querySelectorAll('[data-approve]').forEach(b=>b.onclick=()=>{if(confirm('Make the final videos for '+b.dataset.approve+'?'))act('approve',{job:b.dataset.approve},'Making the final videos')});
 }
 function render(){

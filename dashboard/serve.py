@@ -101,7 +101,8 @@ class H(SimpleHTTPRequestHandler):
             p = reels_api.media_path(unquote(self.path[7:].split("?")[0]))
             if not p:
                 return self.send_json(404, {"error": "not found"})
-            return self.send_file(p, "video/mp4" if p.endswith(".mp4") else "image/jpeg")
+            ctype = {".mp4": "video/mp4", ".mov": "video/quicktime", ".srt": "text/plain; charset=utf-8"}.get(os.path.splitext(p)[1], "image/jpeg")
+            return self.send_file(p, ctype)
         if self.path.startswith("/api/tasks"):
             return self.send_json(200, load(TASKS, {"tasks": [], "version": 0}))
         if self.path.startswith("/api/expenses"):
@@ -119,7 +120,8 @@ class H(SimpleHTTPRequestHandler):
                 return self.send_json(400, {"error": "bad JSON"})
             action = self.path.split("/")[3].split("?")[0]
             fn = {"start": lambda: reels_api.start(body.get("slug")), "resume": lambda: reels_api.resume(body.get("job")),
-                  "fix": lambda: reels_api.fix(body.get("job"), body.get("text")), "approve": lambda: reels_api.approve(body.get("job"))}.get(action)
+                  "fix": lambda: reels_api.fix(body.get("job"), body.get("text")), "approve": lambda: reels_api.approve(body.get("job")),
+                  "reveal": lambda: reels_api.reveal(body.get("job"))}.get(action)
             if not fn:
                 return self.send_json(404, {"error": "unknown action"})
             ok, msg = fn()
