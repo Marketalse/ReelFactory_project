@@ -40,9 +40,10 @@
     "_note": "hyperframes transcribe accepts tiny/base/small/medium/large-v3 (not large-v3-turbo; checked 2026-11-01, v0.8.226)"
   },
   "gates": {
-    "transcript_review": true,
-    "story_pick": true,
-    "preview_approval": true
+    "transcript_review": false,
+    "story_pick": "auto",
+    "preview_approval": true,
+    "_note": "Autopilot (Hesham, 2026-11-01): only the draft needs him. Words are fixed by commenting 'old => new'; the best-scored story is picked automatically. Set transcript_review true / story_pick 'ask' to bring the gates back."
   },
   "review": {
     "draft_width": 540,

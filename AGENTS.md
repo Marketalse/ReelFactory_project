@@ -28,10 +28,10 @@ You help turn Hesham's raw talking-head clips (Iraqi Arabic, marketing and busin
 - Same error 3 times → stop, write it in the task notes, hand back. Never loop.
 - Code changes go through git: work on a branch, commit with a clear message, push. Never rewrite `main`'s history.
 
-## 4. The three approval gates (never skip)
-1. **Gate 0, transcript:** Hesham fixes words before anything is planned.
-2. **Gate 1, story:** Hesham picks one of the 3 story options. `--select auto` only if he said so for that reel.
-3. **Gate 2, preview:** Hesham approves the draft. The final high-quality render happens only after approval.
+## 4. Approval (autopilot, decided by Hesham 2026-11-01)
+- Hesham only reviews the **draft**: he comments or approves on the dashboard (Reels page). Never render finals without his Approve.
+- The transcript check and story pick run automatically (`config/project.json → gates`). Word fixes come from his comments (`old => new`).
+- If Hesham turns a gate back on in `config/project.json`, respect it.
 
 ## 5. Content rules
 - Everything on screen comes from what Hesham said: same words, numbers and names, his spelling (`config/glossary.json`).

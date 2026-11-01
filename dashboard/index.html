@@ -64,6 +64,17 @@ table{width:100%;border-collapse:collapse;font-size:13px}
 th,td{text-align:left;padding:7px 8px;border-bottom:1px solid var(--line)}
 th{color:var(--muted);font-weight:500}
 .next li{margin:6px 0 6px 18px}
+.reel{display:grid;grid-template-columns:300px 1fr;gap:18px;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:14px}
+.reel video{width:100%;border-radius:10px;background:#000;aspect-ratio:9/16}
+.reel h3{font-size:16px;margin-bottom:6px}
+.state{display:inline-block;padding:3px 10px;border-radius:999px;font-size:12px;font-weight:600}
+.state.ready{background:var(--lime);color:#111}.state.run{background:var(--violet)}.state.bad{background:var(--coral);color:#111}.state.done{background:#2f6;color:#111}.state.idle{background:var(--panel2);color:var(--muted)}
+.reel textarea{min-height:110px;margin:10px 0 8px}
+.hint{color:var(--muted);font-size:12px;line-height:1.5}
+.inbox{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px}
+.inbox .card{display:flex;align-items:center;gap:12px}
+.mono{font-family:ui-monospace,Menlo,monospace;font-size:12px;color:var(--muted);white-space:pre-wrap;background:var(--panel2);border-radius:8px;padding:8px;margin-top:8px;max-height:120px;overflow:auto}
+@media (max-width:760px){.reel{grid-template-columns:1fr}}
 .toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:var(--panel2);border:1px solid var(--line);padding:10px 16px;border-radius:10px;display:none;z-index:20}
 .hidden{display:none}
 @media (max-width:760px){.phase{grid-template-columns:1fr}header{padding:12px 16px}main{padding:14px 16px 60px}}
@@ -74,7 +85,8 @@ th{color:var(--muted);font-weight:500}
   <h1>Reel Factory <span>Control</span></h1>
   <span class="pill" id="ver">—</span>
   <nav>
-    <button data-v="map" class="on">Plan map</button>
+    <button data-v="reels" class="on">Reels</button>
+    <button data-v="map">Plan map</button>
     <button data-v="board">Task board</button>
     <button data-v="spend">Spend</button>
     <button data-v="log">Activity</button>
@@ -92,7 +104,8 @@ th{color:var(--muted);font-weight:500}
     <input id="fText" placeholder="Search tasks…" style="max-width:260px">
     <button class="btn" id="reload">Reload</button>
   </div>
-  <section id="v-map"></section>
+  <section id="v-reels"></section>
+  <section id="v-map" class="hidden"></section>
   <section id="v-board" class="hidden"><div class="board" id="board"></div></section>
   <section id="v-spend" class="hidden"></section>
   <section id="v-log" class="hidden"></section>
@@ -123,7 +136,7 @@ th{color:var(--muted);font-weight:500}
 const COLORS={todo:'var(--todo)',in_progress:'var(--prog)',review:'var(--review)',blocked:'var(--blocked)',done:'var(--done)'};
 const NAMES={todo:'To do',in_progress:'In progress',review:'Review',blocked:'Blocked',done:'Done'};
 const MONTHLY_CAP=50;
-let D=null, view='map', editing=null;
+let D=null, view='reels', editing=null, R=null, typing={};
 const $=s=>document.querySelector(s);
 const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 function toast(m){const t=$('#toast');t.textContent=m;t.style.display='block';clearTimeout(t._h);t._h=setTimeout(()=>t.style.display='none',2600)}
@@ -219,10 +232,55 @@ async function renderSpend(){
 function renderLog(){
   $('#v-log').innerHTML=`<div class="card"><table><tr><th>When</th><th>Who</th><th>Task</th><th>Change</th></tr>${(D.log||[]).slice().reverse().slice(0,300).map(l=>`<tr><td>${esc(l.time)}</td><td class="own-${esc(l.who)}">${esc(l.who)}</td><td>${esc(l.task)}</td><td>${esc(l.change)}</td></tr>`).join('')}</table></div>`;
 }
+async function loadReels(){
+  try{R=await (await fetch('/api/reels',{cache:'no-store'})).json()}catch(_){R=null}
+  if(view==='reels')renderReels();
+}
+async function act(action,body,msg){
+  const r=await fetch('/api/reels/'+action,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+  const j=await r.json().catch(()=>({}));
+  toast(j.ok?msg:(j.message||'Could not start')); await loadReels();
+}
+function renderReels(){
+  const el=$('#v-reels');
+  if(!R){el.innerHTML='<div class="card">Start the dashboard with <code>python3 dashboard/serve.py</code> to see your reels.</div>';return}
+  const cls=s=>({'ready to review':'ready','running':'run','working':'run','needs attention':'bad','final ready':'done'}[s]||'idle');
+  let h='<h2 style="font-size:16px;margin-bottom:10px">New footage</h2>';
+  h+=R.inbox.length?'<div class="inbox">'+R.inbox.map(i=>`<div class="card"><div><b>${esc(i.slug)}</b><div class="hint">${i.clips} clip(s) in inbox/${esc(i.slug)}</div></div>
+     <button class="btn lime" data-start="${esc(i.slug)}" ${R.busy.length?'disabled':''}>${i.running?'Working…':'Make reel'}</button></div>`).join('')+'</div>'
+     :'<p class="hint" style="margin-bottom:16px">Put your clips in <b>inbox/&lt;short-name&gt;/clips/</b> (Finder: ReelFactory_project → inbox). They appear here.</p>';
+  h+='<h2 style="font-size:16px;margin:6px 0 10px">Your reels</h2>';
+  if(!R.reels.length)h+='<p class="hint">No reels yet.</p>';
+  for(const r of R.reels){
+    const busy=R.busy.length>0, v=r.draft_mtime;
+    h+=`<div class="reel"><div>${r.has_draft?`<video controls preload="metadata" src="/media/${r.job}/review/draft_540p.mp4?v=${v}"></video>`:'<div class="card hint" style="aspect-ratio:9/16;display:flex;align-items:center;justify-content:center;text-align:center">No draft yet.<br>It appears here when ready.</div>'}</div>
+     <div><h3>${esc(r.job)} <span class="state ${cls(r.state)}">${esc(r.state)}</span></h3>
+     <div class="hint">${r.length?`Length ${r.length}s · `:''}Spent $${r.cost.toFixed(3)}${r.qa.length?' · '+r.qa.length+' QA note(s)':''}</div>
+     ${r.stop?`<div class="mono">${esc(r.stop)}</div><button class="btn" data-resume="${r.job}" ${busy?'disabled':''} style="margin-top:8px">Try again</button>`:''}
+     ${r.state==='running'||r.state==='working'?`<div class="mono">${esc(r.log.join('\n'))}</div>`:''}
+     ${r.has_draft&&r.state!=='running'?`
+       <textarea id="c-${r.job}" placeholder="What should change? Write it like you'd tell an editor, e.g.\n- hook shorter\n- bigger captions\n- remove the flash at the end\nWrong word in the captions? Write:  old => new">${esc(typing[r.job]||'')}</textarea>
+       <div class="row"><button class="btn" data-fix="${r.job}" ${busy?'disabled':''}>Send changes</button>
+       <button class="btn lime" data-approve="${r.job}" ${busy?'disabled':''}>Approve → make final videos</button></div>
+       <p class="hint" style="margin-top:6px">Changes make a new draft here in a few minutes. Approve makes one high-quality video per platform.</p>`:''}
+     ${r.feedback.length?`<div class="hint" style="margin-top:8px"><b>Your earlier comments:</b><br>${r.feedback.slice(-3).map(f=>esc(f.time+': '+f.fix)).join('<br>')}</div>`:''}
+     ${r.finals.length?`<div style="margin-top:10px"><b>Final videos:</b> ${r.finals.map(f=>`<a style="color:var(--lime)" href="/media/${r.job}/final/${encodeURIComponent(f)}" download>${esc(f)}</a>`).join(' · ')}</div>`:''}
+     </div></div>`;
+  }
+  el.innerHTML=h;
+  el.querySelectorAll('textarea').forEach(t=>t.oninput=()=>typing[t.id.slice(2)]=t.value);
+  el.querySelectorAll('[data-start]').forEach(b=>b.onclick=()=>act('start',{slug:b.dataset.start},'Started — you get a notification when the draft is ready'));
+  el.querySelectorAll('[data-resume]').forEach(b=>b.onclick=()=>act('resume',{job:b.dataset.resume},'Trying again'));
+  el.querySelectorAll('[data-fix]').forEach(b=>b.onclick=()=>{const t=typing[b.dataset.fix]||'';if(!t.trim()){toast('Write what to change first');return}
+    act('fix',{job:b.dataset.fix,text:t},'Working on your changes').then(()=>{typing[b.dataset.fix]=''})});
+  el.querySelectorAll('[data-approve]').forEach(b=>b.onclick=()=>{if(confirm('Make the final videos for '+b.dataset.approve+'?'))act('approve',{job:b.dataset.approve},'Making the final videos')});
+}
 function render(){
   summary();
-  ['map','board','spend','log'].forEach(v=>$('#v-'+v).classList.toggle('hidden',v!==view));
-  $('.filters').classList.toggle('hidden',view==='spend'||view==='log');
+  ['reels','map','board','spend','log'].forEach(v=>$('#v-'+v).classList.toggle('hidden',v!==view));
+  $('.filters').classList.toggle('hidden',view!=='map'&&view!=='board');
+  $('#summary').classList.toggle('hidden',view==='reels');
+  if(view==='reels'){renderReels();return}
   if(view==='map')renderMap(); if(view==='board')renderBoard(); if(view==='spend')renderSpend(); if(view==='log')renderLog();
   document.querySelectorAll('.chip').forEach(c=>{c.onclick=()=>openEdit(c.dataset.id);c.ondragstart=e=>e.dataTransfer.setData('text',c.dataset.id)});
 }
@@ -255,7 +313,8 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape')$('#edit').classList
 setInterval(async()=>{ if($('#edit').classList.contains('open'))return;
   try{const r=await fetch('/api/tasks',{cache:'no-store'});const j=await r.json();if(D&&j.version!==D.version){D=j;render();toast('Board updated (another editor saved)')}}catch(_){}
 },15000);
-load();
+load(); loadReels();
+setInterval(()=>{ if(view==='reels' && !document.activeElement.matches('textarea')) loadReels(); },8000);
 </script>
 </body>
 </html>

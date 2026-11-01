@@ -1,6 +1,6 @@
 {
  "project": "Reel Factory",
- "version": 8,
+ "version": 9,
  "owners": [
   "Hesham",
   "Claude",
@@ -511,7 +511,7 @@
     "T25"
    ],
    "done_when": "review/draft_540p.mp4, report.md and edit_package/ exist for the IMG_0020 job",
-   "notes": "Hesham does Gate 0 (fix words) and Gate 1 (--select). Then: python3 scripts/reel.py jobs/<date>-img0020 . Spend about $0.05-0.15.",
+   "notes": "Now just: double-click Reel Factory.command → Make reel (or continue test001 with 'Try again'), then comment/approve on the Reels page.",
    "evidence": "",
    "updated": "2026-11-01"
   },
@@ -754,6 +754,18 @@
    "notes": "Needs Hesham's editor answer (T06).",
    "evidence": "",
    "updated": "2026-11-01"
+  },
+  {
+   "id": "T52",
+   "phase": "P3",
+   "title": "Autopilot: Reels page (Make reel / Send changes / Approve), automatic gates, notifications",
+   "owner": "Claude",
+   "status": "review",
+   "depends": [],
+   "done_when": "Hesham makes a reel without Terminal: drop clips, click, comment or approve",
+   "evidence": "branch autopilot: dashboard/reels_api.py, Reels page, Reel Factory.command, 34 tests, API + browser tested with a fake project",
+   "notes": "Word fixes via comments 'old => new'. One reel runs at a time. Media served only from jobs/ drafts and finals.",
+   "updated": "2026-11-01"
   }
  ],
  "log": [
@@ -816,6 +828,12 @@
    "who": "Claude",
    "task": "T35",
    "change": "deterministic QA built, tested and wired into draft + final → review"
+  },
+  {
+   "time": "2026-11-01T20:30",
+   "who": "Claude",
+   "task": "T52",
+   "change": "autopilot + Reels page built and tested → review"
   }
  ]
 }
