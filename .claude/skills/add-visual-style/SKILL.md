@@ -19,7 +19,7 @@ Read first: `AGENTS.md` §5, `style/SAFE_ZONES.md`. Only the HTML templates deci
    - `test_safe_zones.py` fills every block with its LONGEST text and fails if anything crosses the safe box. If `sample_values()` needs a realistic value for the new block, add it there.
    - `TemplateContractTests` catches visibility tweens.
 5. **Show Hesham a sample**: render a still with `python3 scripts/safe_zone_preview.py` (overlay of the safe zones) or a HyperFrames snapshot, look at it yourself first, then send it.
-6. Log the choice in `DECISIONS.md` (one line), commit on a branch, push, set the board task to **review** with the sample as evidence.
+6. Log the choice in `docs/DECISIONS.md` (one line), commit on a branch, push, set the board task to **review** with the sample as evidence.
 
 ## Don'ts
 - Don't let the AI write or edit HTML; it only picks values.

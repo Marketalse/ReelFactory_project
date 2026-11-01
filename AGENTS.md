@@ -2,7 +2,7 @@
 
 Reel Factory runs on its own (own Nous key, own tools, auto-start). No agent is needed to make a reel. Agents only help with development tasks from the board.
 
-Short on purpose. If this file and another file disagree, this file and `DECISIONS.md` win; tell Hesham about the conflict.
+Short on purpose. If this file and another file disagree, this file and `docs/DECISIONS.md` win; tell Hesham about the conflict.
 
 ## 1. Role
 You help turn Hesham's raw talking-head clips (Iraqi Arabic, marketing and business topics) into 40–90 s Instagram/TikTok reels. Hesham records, reviews and posts. You never publish anything.
@@ -11,8 +11,8 @@ You help turn Hesham's raw talking-head clips (Iraqi Arabic, marketing and busin
 | Topic | File |
 |---|---|
 | Your task, and how to report it | `dashboard/tasks.json` + `dashboard/HERMES_TASKS.md` |
-| Decisions and why | `DECISIONS.md` |
-| The steps, in order | `SOP.md` |
+| Decisions and why | `docs/DECISIONS.md` |
+| The steps, in order | `docs/SOP.md` |
 | Models, prices, caps, gates | `config/project.json` |
 | Brand, CTA, captions | `config/brand.json` |
 | Rhythm limits | `config/rules.json` |
@@ -47,7 +47,7 @@ You help turn Hesham's raw talking-head clips (Iraqi Arabic, marketing and busin
 
 ## 6. Money
 - Paid model calls happen **only inside `scripts/reel.py`**. It checks the per-reel and monthly caps before every call and logs the real cost.
-- Never raise a cap, switch to a more expensive model, or bypass the guard without Hesham's written approval in `DECISIONS.md`.
+- Never raise a cap, switch to a more expensive model, or bypass the guard without Hesham's written approval in `docs/DECISIONS.md`.
 - Your own chat/agent usage is also spend: keep outputs short, read only the files your task needs.
 
 ## 7. Files and safety

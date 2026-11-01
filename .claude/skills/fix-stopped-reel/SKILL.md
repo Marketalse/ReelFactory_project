@@ -21,7 +21,7 @@ Read first: `.reel-agent/lessons.md` → "Known failures" (most errors already h
 | `plan still breaks the rules after repair: …` | AI plan broke a block rule | fix in `scripts/lib/director.py` (e.g. `fix_hook`), add a test in `tests/test_taste.py` |
 | `face cut shorter than 0.3 s` | tiny cut piece | fold it into a neighbour (compile) |
 | `no key saved (Settings)` | Nous key missing | Hesham saves it in Settings (never ask for it in chat) |
-| `budget` / cap stop | money guard | never raise a cap without Hesham's written OK in `DECISIONS.md` |
+| `budget` / cap stop | money guard | never raise a cap without Hesham's written OK in `docs/DECISIONS.md` |
 | captions missing in video but fine in stills | a template sets visibility | `TemplateContractTests` |
 
 ## 3. Reproduce offline, fix, prove

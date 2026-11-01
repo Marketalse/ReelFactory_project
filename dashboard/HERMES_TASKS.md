@@ -5,7 +5,7 @@
 Give Hermes this file at the start of every session. `dashboard/tasks.json` is the **only** task list. Hermes never creates status, index, queue or board files of any other kind.
 
 ## Each session
-1. Read `dashboard/tasks.json`, `DECISIONS.md` and `AGENTS.md`. Nothing else unless the task needs it.
+1. Read `dashboard/tasks.json`, `docs/DECISIONS.md` and `AGENTS.md`. Nothing else unless the task needs it.
 2. Pick **one** task where all of these are true:
    - `owner` is `"Hermes"`
    - `status` is `"todo"`

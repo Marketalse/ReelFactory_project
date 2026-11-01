@@ -4,7 +4,7 @@
     python3 scripts/models_refresh.py            report: are our models still offered, and at what price
     python3 scripts/models_refresh.py --write    also update prices_per_mtok for the models we use
 
-Never switches models: that needs Hesham's approval in DECISIONS.md (AGENTS.md section 6).
+Never switches models: that needs Hesham's approval in docs/DECISIONS.md (AGENTS.md section 6).
 """
 import argparse, json, os, sys, urllib.request
 

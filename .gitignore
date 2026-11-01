@@ -12,6 +12,7 @@
 !style/**/*.png
 inbox/*
 !inbox/.gitkeep
+!inbox/BRIEF_TEMPLATE.md
 jobs/*
 !jobs/.gitkeep
 library/*

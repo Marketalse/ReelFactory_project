@@ -1,6 +1,6 @@
 # Safe zones: the layout rule every reel, cover and template follows
 
-Source: Hesham's "Instagram & TikTok Safe Zone & Design Guide" (`style/safe_zones_guide_source.md`, 2026-11-01).
+Source: Hesham's "Instagram & TikTok Safe Zone & Design Guide" (`references/safe_zones_guide_source.md`, 2026-11-01).
 Numbers live in `config/rules.json → safe_zone` (single source); templates use them as CSS variables.
 
 ## The box (1080 × 1920, both platforms at once = the stricter number)
