@@ -75,3 +75,36 @@ def test_key(opener=urllib.request.urlopen):
         return False, f"The AI service answered with an error ({e.code}). Try again in a minute."
     except Exception:
         return False, "Couldn't reach the AI service. Check your internet connection."
+
+
+ROOT = os.path.dirname(HERE)
+
+
+def _git(*args, timeout=60):
+    return subprocess.run(["git", "-C", ROOT, *args], capture_output=True, text=True, timeout=timeout)
+
+
+def version():
+    """Which version is running, and whether it auto-starts. No network."""
+    head = _git("rev-parse", "--short", "HEAD").stdout.strip()
+    branch = _git("rev-parse", "--abbrev-ref", "HEAD").stdout.strip()
+    agent = os.path.expanduser("~/Library/LaunchAgents/com.reelfactory.dashboard.plist")
+    return {"version": head or "unknown", "branch": branch, "autostart": os.path.exists(agent), "git": bool(head)}
+
+
+def update(busy):
+    """Get the latest version from GitHub. Returns (ok, message, restart_needed)."""
+    if busy:
+        return False, "A reel is being made right now. Update when it's finished.", False
+    if not _git("rev-parse", "--is-inside-work-tree").stdout.strip():
+        return False, "This copy isn't linked to GitHub (a ZIP download?), so it can't update itself.", False
+    before = _git("rev-parse", "HEAD").stdout.strip()
+    r = _git("pull", "--ff-only", "--quiet", timeout=120)
+    if r.returncode:
+        if "local changes" in r.stderr or "overwritten" in r.stderr:
+            return False, "Couldn't update: files in the project were changed on this Mac. Send this message to Claude.", False
+        return False, "Couldn't reach GitHub. Check your internet connection and try again.", False
+    after = _git("rev-parse", "HEAD").stdout.strip()
+    if after == before:
+        return True, "You already have the latest version.", False
+    return True, "Updated. Reel Factory restarts now; this page reloads by itself.", True

@@ -247,6 +247,11 @@ input[type=password]:focus{border-color:var(--violet)}
     <button class="btn" id="keyTest" type="button">Test</button>
   </div>
   <p class="kmsg" id="keyMsg" role="status"></p>
+  <hr style="border:0;border-top:1px solid var(--line);margin:16px 0">
+  <b>Updates</b>
+  <p style="margin:2px 0 8px;color:var(--muted);font-size:13.5px" id="verLine">…</p>
+  <button class="btn" id="updBtn" type="button">Get the latest version</button>
+  <p class="kmsg" id="updMsg" role="status"></p>
   <div style="text-align:right;margin-top:10px"><button class="btn" id="setClose" type="button">Close</button></div>
 </dialog>
 
@@ -760,9 +765,22 @@ async function settingsPost(action, body){
   catch(e){ return {ok:false,message:"The dashboard didn't answer."}; }
 }
 function keyMsg(r){ const m=$("#keyMsg"); m.textContent=r.message||""; m.className="kmsg "+(r.ok&&!/refused|couldn't|error/i.test(r.message)?"ok":"err"); }
+async function loadVersion(){
+  try{ const v=await (await fetch("/api/version",{cache:"no-store"})).json();
+    $("#verLine").textContent=`Version ${v.version}${v.branch&&v.branch!=="main"?" ("+v.branch+")":""}. `+(v.autostart?"Starts by itself when you log in.":"To have it start by itself, double-click “Turn on auto-start.command” once (in your project folder).");
+  }catch(e){ $("#verLine").textContent=""; }
+}
+async function waitBack(){
+  for(let i=0;i<60;i++){ await new Promise(r=>setTimeout(r,1000)); try{ const r=await fetch("/api/reels",{cache:"no-store"}); if(r.ok){ location.reload(); return; } }catch(e){} }
+  $("#updMsg").textContent="Reel Factory didn't come back. Double-click Reel Factory.command."; $("#updMsg").className="kmsg err";
+}
 function setupSettings(){
+  loadVersion();
+  $("#updBtn").onclick=async ()=>{ const m=$("#updMsg"); m.textContent="Checking GitHub…"; m.className="kmsg"; $("#updBtn").disabled=true;
+    const r=await settingsPost("update"); $("#updBtn").disabled=false; m.textContent=r.message||""; m.className="kmsg "+(r.ok?"ok":"err");
+    if(r.restart){ $("#updBtn").disabled=true; waitBack(); } };
   const d=$("#settings"); $("#settingsBtn").hidden=false;
-  $("#settingsBtn").onclick=()=>{ $("#keyMsg").textContent=""; loadHealth(); d.showModal(); };
+  $("#settingsBtn").onclick=()=>{ $("#keyMsg").textContent=""; $("#updMsg").textContent=""; loadHealth(); loadVersion(); d.showModal(); };
   $("#setClose").onclick=()=>d.close();
   $("#keySave").onclick=async ()=>{ const k=$("#keyIn").value; if(!k.trim()) return keyMsg({ok:false,message:"Paste your key first."});
     $("#keySave").disabled=true; const r=await settingsPost("key",{key:k}); $("#keySave").disabled=false;

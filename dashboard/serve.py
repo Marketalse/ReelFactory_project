@@ -8,7 +8,7 @@ Every save makes a backup in dashboard/.backups/ (last 50 kept). A save is refus
 else (e.g. Hermes) changed the file since you loaded it, so nobody's edit is lost silently.
 Listens on 127.0.0.1 only: nothing is reachable from other machines.
 """
-import json, os, shutil, sys, time
+import json, os, shutil, sys, threading, time
 from http.server import ThreadingHTTPServer, SimpleHTTPRequestHandler
 from urllib.parse import unquote, urlparse, parse_qs
 
@@ -106,6 +106,8 @@ class H(SimpleHTTPRequestHandler):
             return self.send_json(200, p)
         if self.path.startswith("/api/events"):
             return self.stream_progress(q.get("ref", ""), notify=q.get("notify") == "1")
+        if self.path.startswith("/api/version"):
+            return self.send_json(200, settings_api.version())
         if self.path.startswith("/api/health"):
             return self.send_json(200, settings_api.health())
         if self.path.startswith("/api/root"):
@@ -165,6 +167,12 @@ class H(SimpleHTTPRequestHandler):
                 ok, msg = settings_api.save_key(body.get("key"))
             elif action == "test":
                 ok, msg = settings_api.test_key()
+            elif action == "update":
+                ok, msg, restart = settings_api.update(reels_api.busy())
+                self.send_json(200 if ok else 409, {"ok": ok, "message": msg, "restart": restart})
+                if restart:
+                    threading.Thread(target=restart_self, daemon=True).start()
+                return
             else:
                 return self.send_json(404, {"ok": False, "message": "unknown action"})
             return self.send_json(200 if ok else 400, {"ok": ok, "message": msg})
@@ -213,8 +221,22 @@ class H(SimpleHTTPRequestHandler):
         return self.send_json(200, {"ok": True, "version": d["version"]})
 
 
+def restart_self(delay=1.0):
+    """Start again with the new code (same command, same port). Under the auto-start agent launchd would also restart us."""
+    time.sleep(delay)
+    try:
+        SERVER.server_close()
+    except Exception:
+        pass
+    os.execv(sys.executable, [sys.executable, os.path.abspath(__file__)])
+
+
+SERVER = None
+
 if __name__ == "__main__":
     if not os.path.exists(TASKS):
         sys.exit(f"missing {TASKS}")
     print(f"Reel Factory dashboard: http://127.0.0.1:{PORT}  (Ctrl+C to stop)")
-    ThreadingHTTPServer(("127.0.0.1", PORT), H).serve_forever()
+    ThreadingHTTPServer.allow_reuse_address = True
+    SERVER = ThreadingHTTPServer(("127.0.0.1", PORT), H)
+    SERVER.serve_forever()

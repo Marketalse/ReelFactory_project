@@ -45,3 +45,7 @@ One line per decision. Newest at the bottom. If a later decision changes an earl
 - The API key comes only from `RF_API_KEY` or `~/.reelfactory/nous_api_key` (saved from the page's **Settings**). The Hermes login is no longer read.
 - ffmpeg/ffprobe: PATH, then `~/.reelfactory/tools`, then Homebrew. If only the old Hermes copy exists it is copied once into `~/.reelfactory/tools` (the Hermes folder is never changed).
 - The dashboard refuses POSTs whose Origin isn't the dashboard itself, so other websites can't start, approve or change settings.
+
+## 2026-11-01 · v2: auto-start and one-click update
+- "Turn on auto-start.command" installs a LaunchAgent (com.reelfactory.dashboard) that runs scripts/autostart.sh at login (git pull --ff-only, then the dashboard). It records the Terminal PATH so node/npx/ffmpeg are found. "Turn off auto-start.command" removes it.
+- Settings → "Get the latest version" runs git pull --ff-only (refused while a reel is being made) and restarts the dashboard in place.

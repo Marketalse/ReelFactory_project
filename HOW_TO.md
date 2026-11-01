@@ -1,10 +1,13 @@
 # How to make a reel: 3 steps, no Terminal
 
-## Once per session: open Reel Factory
-In Finder, open your **ReelFactory_project** folder (the one you cloned with git, **not** a ZIP copy in Downloads)
-and double-click **Reel Factory.command**. Your browser opens the **Make a new reel** page.
+## Open Reel Factory
+**Best (once):** in your **ReelFactory_project** folder, double-click **Turn on auto-start.command**.
+From then on Reel Factory starts by itself whenever you log in. Just open http://127.0.0.1:8765 (bookmark it).
+Without auto-start: double-click **Reel Factory.command** each time.
 First time only: if macOS says it can't verify the file, click **Done**, then go to **System Settings → Privacy & Security**,
 click **Open Anyway** and double-click again.
+
+**Updates:** click **Settings → Get the latest version**. No Terminal needed.
 
 ## 1. Upload your video
 Drag your video onto the box (or click it to choose). MP4, MOV, AVI or WebM.
