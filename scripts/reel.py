@@ -350,7 +350,7 @@ def st_plan(c):
     brief = open(os.path.join(c.job, "brief.md"), encoding="utf-8").read() if os.path.exists(os.path.join(c.job, "brief.md")) else ""
     job = jload(os.path.join(c.job, "job.json"), {})
     feedback = c.a.fix or ""
-    prompt = director.build_prompt(words, e["duration"], brief, job_logos(c), feedback)
+    prompt = director.build_prompt(words, e["duration"], brief, job_logos(c), feedback, director.taste())
     if feedback and os.path.exists(os.path.join(c.job, "scene_plan.json")):
         prompt += "\n\nPREVIOUS PLAN:\n" + json.dumps(jload(os.path.join(c.job, "scene_plan.json")), ensure_ascii=False)
     plan = parse_json(c.llm("plan", M_DIR, [{"type": "text", "text": prompt}], 6000, c.a.effort))
