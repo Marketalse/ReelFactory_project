@@ -54,7 +54,7 @@ number. A deterministic renderer builds the video from fixed templates; it only 
 AUDIENCE: Iraqi Gen-Z / young business owners on Instagram and TikTok. Something must change on screen at least every
 {hold} s. Frame 0 is the thumbnail: the hook title is on screen from 0 s.
 BRAND: {brand}
-REEL LENGTH: {dur:.1f} s. CTA occupies the last {cta_dur} s automatically.
+REEL LENGTH: {dur:.1f} s. {cta_note}
 BRIEF FROM HESHAM: {brief}
 LOGO FILES AVAILABLE (logo_card may only use these): {logos}
 NUMBERS ACTUALLY SPOKEN (split.value / flash.word may only use these): {numbers}
@@ -68,8 +68,7 @@ RULES:
 - hook.line1 (max 28 chars) + hook.line2 (max 22 chars, the punchiest words) come from his own words in the first sentences.
 - keyword_ids: 1 keyword per 2-4 seconds of speech, the words that carry the meaning.
 - flash: at most {flash_max}, only on a payoff or a spoken number. text_card: at least {tc_gap} s apart; one every {chapter} s on long reels.
-- Never two full-screen moments (text_card, flash) back to back; never a moment inside the last {cta_dur} s.
-- cta.type "follow" unless the brief gives a comment keyword. cta.line/promise in his Iraqi dialect, short.
+- Never two full-screen moments (text_card, flash) back to back.{cta_rules}
 - values must fit the max lengths exactly.
 - cover = the reel's cover image (thumbnail). Its big title is the hook. Add, only if it fits what he said:
   tag (max 16 chars, a short topic label in English capitals from a term he used, e.g. "STOCK TIPS"),
@@ -82,7 +81,7 @@ TRANSCRIPT (reel time, (word number)word):
 
 Return ONLY JSON:
 {{"hook":{{"line1":"","line2":""}},"keyword_ids":[],"moments":[{{"block":"","at_word":0,"duration":0,"values":{{}}}}],
-"punch_ins":[{{"at_word":0,"scale":1.25}}],"cta":{{"type":"follow","line":"","promise":"","keyword":""}},
+"punch_ins":[{{"at_word":0,"scale":1.25}}],{cta_json}
 "cover":{{"tag":"","sticker":"","card_label":"","card_value":""}}}}"""
 
 
@@ -129,7 +128,11 @@ def build_prompt(words, dur, brief="", logos=(), feedback="", prefs=""):
     c = cfg.BRAND["colors"]
     p = PROMPT.format(
         hold=r["max_still_hold_s"], brand=f'bg {c["bg"]}, lime {c["accent"]}, violet {c["secondary"]}, font Readex Pro',
-        dur=dur, cta_dur=CTA_DUR, brief=brief.strip() or "none", logos=", ".join(logos) or "none",
+        dur=dur, cta_note=(f"CTA occupies the last {CTA_DUR} s automatically." if cta_on() else
+                           "No end card, no follow ask, no handle: the reel stays clean and ends on his face."),
+        cta_rules=(f' Never a moment inside the last {CTA_DUR} s.\n- cta.type "follow" unless the brief gives a comment keyword. '
+                   "cta.line/promise in his Iraqi dialect, short." if cta_on() else ""),
+        cta_json=('"cta":{"type":"follow","line":"","promise":"","keyword":""},' if cta_on() else ""), brief=brief.strip() or "none", logos=", ".join(logos) or "none",
         numbers=", ".join(spoken_numbers(words)) or "none", catalogue=catalogue(),
         flash_max=r["moments"]["flash"]["max_per_reel"], tc_gap=r["moments"]["text_card"]["min_gap_s"],
         chapter="-".join(str(x) for x in r["chapter_card_every_s"]), transcript=numbered_transcript(words))
@@ -172,6 +175,15 @@ def fix_hook(h, edl_words=()):
 
 
 CTA_DUR = 3.5
+
+
+def cta_on():
+    """End card (follow ask + handle) on or off: config/brand.json -> cta.enabled. Off = the reel ends on his face."""
+    return bool(cfg.BRAND.get("cta", {}).get("enabled", True))
+
+
+def cta_dur():
+    return CTA_DUR if cta_on() else 0.0
 HOOK_DUR = 2.6
 
 
@@ -182,7 +194,7 @@ def resolve(plan, edl_words, duration, *, logos=(), platform_handle="@handle"):
     n = len(edl_words)
     r = cfg.RULES
     scenes, frames = [], []
-    cta_t = max(0.0, duration - CTA_DUR)
+    cta_t = max(0.0, duration - cta_dur())
 
     def at(w, where):
         if not isinstance(w, int) or not 0 <= w < n:
@@ -222,7 +234,8 @@ def resolve(plan, edl_words, duration, *, logos=(), platform_handle="@handle"):
         if t < HOOK_DUR - 0.05:
             err.append(f"{where}: starts at {t:.1f}s, inside the hook (first {HOOK_DUR} s)")
         if t + d > cta_t + 0.01:
-            err.append(f"{where}: ends at {t + d:.1f}s, inside the CTA (from {cta_t:.1f}s)")
+            err.append(f"{where}: ends at {t + d:.1f}s, inside the CTA (from {cta_t:.1f}s)" if cta_on()
+                       else f"{where}: ends at {t + d:.1f}s, after the reel ends ({duration:.1f}s)")
         if b == "split" and vals.get("value") and DIGITS.search(vals["value"]) and DIGITS.search(vals["value"]).group(0).rstrip(".,") not in spoken:
             err.append(f"{where}: value {vals['value']!r} is not a number he said ({', '.join(sorted(spoken)) or 'none spoken'})")
         if b == "flash" and DIGITS.search(vals.get("word", "")) and DIGITS.search(vals["word"]).group(0).rstrip(".,") not in spoken:
@@ -260,14 +273,15 @@ def resolve(plan, edl_words, duration, *, logos=(), platform_handle="@handle"):
         if t is not None:
             frames.append((round(t, 3), float(sc)))
 
-    c = plan.get("cta") or {}
-    cta_vals = {"line": c.get("line", ""), "promise": c.get("promise", ""), "keyword": c.get("keyword", "") if c.get("type") == "comment" else "",
-                "handle": platform_handle}
-    try:
-        check_values("cta_card", cta_vals, "cta")
-    except BuildError as e:
-        err.append(str(e))
-    scenes.append({"id": "cta", "block": "cta_card", "t_in": round(cta_t, 3), "t_out": round(duration, 3), "values": cta_vals})
+    if cta_on():
+        c = plan.get("cta") or {}
+        cta_vals = {"line": c.get("line", ""), "promise": c.get("promise", ""), "keyword": c.get("keyword", "") if c.get("type") == "comment" else "",
+                    "handle": platform_handle}
+        try:
+            check_values("cta_card", cta_vals, "cta")
+        except BuildError as e:
+            err.append(str(e))
+        scenes.append({"id": "cta", "block": "cta_card", "t_in": round(cta_t, 3), "t_out": round(duration, 3), "values": cta_vals})
 
     kw = [i for i in (plan.get("keyword_ids") or []) if isinstance(i, int) and 0 <= i < n]
     if len(kw) != len(plan.get("keyword_ids") or []):

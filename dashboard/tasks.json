@@ -150,11 +150,11 @@
    "phase": "P0",
    "title": "Answer: CTA wording corrections",
    "owner": "Hesham",
-   "status": "todo",
+   "status": "review",
    "depends": [],
    "done_when": "",
-   "notes": "",
-   "evidence": "",
+   "notes": "Hesham 2026-11-01: no CTA for now. Keep reels clean (attention first, not sales). End card switched off: config/brand.json cta.enabled=false. Turn back on when the strategy changes.",
+   "evidence": "config/brand.json cta.enabled=false; tests/test_p3.py CleanEndingTests",
    "updated": "2026-11-01"
   },
   {

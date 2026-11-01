@@ -41,7 +41,7 @@ You help turn Hesham's raw talking-head clips (Iraqi Arabic, marketing and busin
 - Never invent a number, name, ranking, quote or result. If unclear, ask in one line and stop.
 - Numbers on screen: Western digits only. A counter appears only if the number is actually spoken.
 - English terms he says (customer service, ads…) are written in Latin letters.
-- Handle and CTA appear only on the last card. Logos only from the reel's own `assets/` folder.
+- No CTA for now (`config/brand.json → cta.enabled` false, Hesham 2026-11-01). When on: handle and CTA appear only on the last card. Logos only from the reel's own `assets/` folder.
 - Visuals come only from the approved templates. AI chooses values; it never writes or edits template HTML.
 - Layout follows the safe zones (`style/SAFE_ZONES.md`): text and cards rest inside x 108–920, y 250–1500, text ≤ 780 px wide, captions in y 1200–1450. Any template change must pass `tests/test_safe_zones.py`.
 

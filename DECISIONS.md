@@ -59,3 +59,8 @@ One line per decision. Newest at the bottom. If a later decision changes an earl
 ## 2026-11-01 · Reel results, step 1: typed in by hand
 - Each finished reel has a "How did it do?" box: platform, 2/7/30 days after posting, views, average watch time, watched-to-end %, likes, comments, shares, saves, follows. Stored in jobs/<job>/performance.json; the Results page and CSV join them with what the edit was (length, hook, cards, zooms, own cover).
 - Step 2 (later, T76): read the same numbers from linked Instagram/TikTok accounts (read-only). Learning rules start at 5 reels with results.
+
+## 2026-11-01 · No CTA for now: clean reels
+- Hesham: "keep my video clean since I'm not creating greedy commercial video, I'm focusing on attracting people attention then I would change my strategy."
+- `config/brand.json → cta.enabled = false`: no end card, no follow ask, no handle, no comment keyword. The reel ends on his face with captions to the last word. The AI editor is told so and may place moments up to the end.
+- To bring it back: set `cta.enabled` to true (wording in the same block). Covered by tests/test_p3.py (CleanEndingTests + DirectorTests with it on).

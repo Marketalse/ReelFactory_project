@@ -40,6 +40,8 @@
     "max": 90
   },
   "cta": {
+    "enabled": false,
+    "_enabled_note": "Hesham 2026-11-01: keep reels clean, no end card / follow ask / handle for now (focus on attention). Set true to bring the end card back.",
     "default_type": "follow",
     "show_handle": "cta_card_only",
     "platform_variants": {
