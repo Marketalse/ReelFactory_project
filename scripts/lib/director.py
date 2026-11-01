@@ -214,8 +214,8 @@ def face_cuts(timeline, segments):
     pts = sorted(t for t in cuts_at if 0 <= t <= timeline["duration"])
     out = []
     for a, b in zip(pts, pts[1:]):
-        if b - a < 0.05:
-            continue
+        if b - a < 1e-4:
+            continue                      # same instant; any real sliver is kept here and folded in by absorb_short
         seg_i = next(i for i, s in enumerate(segments) if s["t_in"] - 1e-6 <= a < s["t_out"] - 1e-6) if any(
             s["t_in"] - 1e-6 <= a < s["t_out"] - 1e-6 for s in segments) else len(segments) - 1
         seg = segments[seg_i]

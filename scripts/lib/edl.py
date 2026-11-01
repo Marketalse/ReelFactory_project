@@ -67,13 +67,32 @@ def build(words, s0, s1, *, pause=None, drop_fillers=True, retakes=True):
             if gap > pause:
                 removed["pauses"] += 1
         spans.append([a, b, [i]])
-    # merge tiny pieces and overlapping pads
+    # a piece shorter than MIN_SEG is widened into the silence around it (never into other words);
+    # pieces that then touch or overlap are joined. Long pauses are never brought back.
+    for k, sp in enumerate(spans):
+        need = MIN_SEG - (sp[1] - sp[0])
+        if need <= 0:
+            continue
+        after = (spans[k + 1][0] if k + 1 < len(spans) else s1) - sp[1]
+        grow = min(need, max(0.0, after)); sp[1] += grow; need -= grow
+        before = sp[0] - (spans[k - 1][1] if k else s0)
+        grow = min(need, max(0.0, before)); sp[0] -= grow
     merged = []
     for sp in spans:
-        if merged and (sp[0] <= merged[-1][1] or sp[1] - sp[0] < MIN_SEG):
+        if merged and sp[0] <= merged[-1][1] + 1e-6:
             merged[-1][1] = max(merged[-1][1], sp[1]); merged[-1][2] += sp[2]
         else:
             merged.append(sp)
+    # still too short (no silence around it at all): join the nearest neighbour
+    k = 0
+    while k < len(merged) and len(merged) > 1:
+        a, b, ws = merged[k]
+        if b - a >= MIN_SEG - 1e-6:
+            k += 1; continue
+        if k + 1 < len(merged):
+            nxt = merged.pop(k + 1); merged[k] = [a, nxt[1], ws + nxt[2]]
+        else:
+            prv = merged.pop(k - 1); merged[k - 1] = [prv[0], b, prv[2] + ws]; k -= 1
 
     segments, out_words, t = [], [], 0.0
     for a, b, ws in merged:

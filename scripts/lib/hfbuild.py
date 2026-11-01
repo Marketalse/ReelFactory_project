@@ -57,9 +57,10 @@ def stamp(block, inst_id, dur, groups_html=""):
     return src.replace("__ID__", inst_id).replace("__DUR__", _num(dur)).replace("<!--GROUPS-->", groups_html)
 
 
-def caption_groups(words, keyword_idx, inst_id, t_offset=0.0, max_words=None, gap=0.15, hold=0.35):
+def caption_groups(words, keyword_idx, inst_id, t_offset=0.0, max_words=None, gap=0.15, hold=0.35, stops=()):
     """Group transcript words (reel time) into caption groups of up to max_words; returns HTML.
-    words: [{"text","start","end"}] already on the reel timeline. keyword_idx: indices into words."""
+    words: [{"text","start","end"}] already on the reel timeline. keyword_idx: indices into words.
+    stops: times where a full-screen card or the CTA begins; a caption never stays on screen past one."""
     max_words = max_words or cfg.RULES["captions"]["max_words"]
     kw = set(keyword_idx or [])
     groups, cur = [], []
@@ -77,6 +78,9 @@ def caption_groups(words, keyword_idx, inst_id, t_offset=0.0, max_words=None, ga
         if nxt is not None:
             e = min(e, nxt)
         e = max(e, s + 0.3)
+        stop = min([t for t in stops if t > s + 1e-3], default=None)
+        if stop is not None:
+            e = min(e, stop)
         spans = "".join(
             f'<span class="{inst_id}-w{" " + inst_id + "-kw" if i in kw else ""}" data-t="{_num(max(s, words[i]["start"] - t_offset))}">'
             f'{html.escape(words[i]["text"])}</span>' for i in g)
@@ -149,7 +153,7 @@ def build_project(out_dir, *, duration, face_cuts, scenes, video_src, audio=None
     videos, tweens, hosts = [], [], []
     for n, f in enumerate(face_cuts):
         d = f["t_out"] - f["t_in"]
-        if d < 0.3:
+        if d < 0.3 - 1e-3:
             raise BuildError(f"{f['id']}: face cut shorter than 0.3 s")
         videos.append(f'    <video id="{f["id"]}" class="clip" src="assets/proxy.mp4" data-start="{_num(f["t_in"])}" '
                       f'data-duration="{_num(d)}" data-media-start="{_num(f["src_in"])}" '
