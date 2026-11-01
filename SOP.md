@@ -18,7 +18,7 @@ Command: `python3 scripts/reel.py <clip or job folder> --slug <name>`. Every sta
 | 8 | Director | Haiku 5.5 writes `scene_plan.json`: beats/moments using only existing blocks and real media. | ~$0.01 | works with the current schema; cue-by-spoken-word schema: coming (T30) |
 | 9 | Validate | Rules from `config/rules.json` checked by code. If it fails: one repair with the Director, then one with the fallback (Sonnet). Still failing → stop. | ~$0.01–0.1 | works |
 | 10 | Report | `pipeline_report.md`: tokens, cost and time per stage, warnings. | $0 | works |
-| 11 | Compile | Scene plan → HyperFrames project from the approved blocks only (`scripts/compile.py`). | $0 | coming (T31; blocks T20–T25) |
+| 11 | Compile | Scene plan → HyperFrames project from the approved blocks only (`scripts/compile.py`, built on `scripts/lib/hfbuild.py`). | $0 | blocks + builder work (`scripts/block_samples.py`); waiting for Hesham's look approval (T25); compiler coming (T31) |
 | 12 | QA | Deterministic checks (freeze, black frames, loudness, duration, caption coverage, banned text). | $0 | coming (T35) |
 | 13 | Committee | Script, visual and audience critics + measurements → score and report; up to 2 automatic fixes. | ~$0.10–0.20 | coming (T37), pending approval (T14) |
 | — | **Gate 2** | Hesham gets the 540p draft, the edit package and the committee report; replies `ok` or `fix: …`. | — | coming (T32) |

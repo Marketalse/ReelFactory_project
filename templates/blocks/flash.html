@@ -1,0 +1,22 @@
+<html data-composition-variables='[{"id":"word","type":"string","label":"One word or number","default":"2x","maxLength":12}]'>
+<template>
+<style>
+#root{position:absolute;inset:0;pointer-events:none}
+#__ID__-bg{position:absolute;inset:0;background:var(--lime)}
+#__ID__-word{position:absolute;left:0;right:0;top:720px;text-align:center;color:var(--bg);font-family:var(--font);font-size:260px;font-weight:700;line-height:1;direction:rtl}
+</style>
+<div id="root" data-composition-id="__ID__" data-width="1080" data-height="1920">
+  <div id="__ID__-bg" class="clip" data-start="0" data-duration="__DUR__"></div>
+  <div id="__ID__-word" class="clip" data-start="0" data-duration="__DUR__" data-var-text="word">.</div>
+</div>
+<script>
+const tl = gsap.timeline({ paused: true });
+const D = __DUR__;
+tl.fromTo("#__ID__-bg", { opacity: 0 }, { opacity: 1, duration: 0.06 }, 0);
+tl.fromTo("#__ID__-word", { scale: 1.6, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.28, ease: "back.out(2.5)" }, 0.03);
+tl.fromTo("#__ID__-word", { rotation: -3 }, { rotation: 0, duration: 0.3, ease: "elastic.out(1,0.4)" }, 0.03);
+tl.to(["#__ID__-bg", "#__ID__-word"], { opacity: 0, duration: 0.1 }, D - 0.1);
+window.__timelines["__ID__"] = tl;
+</script>
+</template>
+</html>

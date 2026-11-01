@@ -1,23 +1,73 @@
 {
   "_note": "Single source for models, prices, budget and gate settings. Prices are $ per million tokens from the Nous route catalogue (2026-11-01); the pipeline logs the provider's real cost for every call.",
-  "route": { "provider": "nous", "base_url": "https://inference-api.nousresearch.com/v1", "auth_file": "~/.hermes/auth.json" },
+  "route": {
+    "provider": "nous",
+    "base_url": "https://inference-api.nousresearch.com/v1",
+    "auth_file": "~/.hermes/auth.json"
+  },
   "models": {
     "transcript_fix": "anthropic/claude-haiku-5.5",
-    "selects":        "anthropic/claude-sonnet-5.5",
-    "director":       "anthropic/claude-haiku-5.5",
+    "selects": "anthropic/claude-sonnet-5.5",
+    "director": "anthropic/claude-haiku-5.5",
     "director_fallback": "anthropic/claude-sonnet-5.5",
-    "committee":      "anthropic/claude-sonnet-5.5",
-    "vision":         "anthropic/claude-sonnet-5.5"
+    "committee": "anthropic/claude-sonnet-5.5",
+    "vision": "anthropic/claude-sonnet-5.5"
   },
   "prices_per_mtok": {
-    "anthropic/claude-haiku-5.5":  { "in": 0.1, "out": 0.5 },
-    "anthropic/claude-sonnet-5.5": { "in": 2.0, "out": 10.0 },
-    "anthropic/claude-opus-5":     { "in": 5.0, "out": 25.0 }
+    "anthropic/claude-haiku-5.5": {
+      "in": 0.1,
+      "out": 0.5
+    },
+    "anthropic/claude-sonnet-5.5": {
+      "in": 2.0,
+      "out": 10.0
+    },
+    "anthropic/claude-opus-5": {
+      "in": 5.0,
+      "out": 25.0
+    }
   },
-  "budget_usd": { "per_reel_warn": 0.30, "per_reel_stop": 1.00, "monthly_stop": 50.0, "_pending": "warn 0.45 proposed (T14)" },
-  "asr": { "engine": "hyperframes transcribe (whisper)", "model": "large-v3-turbo", "language": "ar" },
-  "gates": { "transcript_review": true, "story_pick": true, "preview_approval": true },
-  "review": { "draft_width": 540, "final_width": 1080, "fps": 30, "platforms": ["instagram", "tiktok"] },
-  "committee": { "pass": 7.5, "auto_fix_from": 6.0, "min_single": 5, "max_auto_rounds": 2,
-                 "weights": { "hook": 0.30, "script": 0.25, "visual": 0.25, "feel": 0.20 }, "_status": "proposed (T14)" }
+  "budget_usd": {
+    "per_reel_warn": 0.3,
+    "per_reel_stop": 1.0,
+    "monthly_stop": 50.0,
+    "_pending": "warn 0.45 proposed (T14)"
+  },
+  "asr": {
+    "engine": "hyperframes transcribe (whisper)",
+    "model": "large-v3-turbo",
+    "language": "ar"
+  },
+  "gates": {
+    "transcript_review": true,
+    "story_pick": true,
+    "preview_approval": true
+  },
+  "review": {
+    "draft_width": 540,
+    "final_width": 1080,
+    "fps": 30,
+    "platforms": [
+      "instagram",
+      "tiktok"
+    ]
+  },
+  "committee": {
+    "pass": 7.5,
+    "auto_fix_from": 6.0,
+    "min_single": 5,
+    "max_auto_rounds": 2,
+    "weights": {
+      "hook": 0.3,
+      "script": 0.25,
+      "visual": 0.25,
+      "feel": 0.2
+    },
+    "_status": "proposed (T14)"
+  },
+  "tools": {
+    "hyperframes": "0.8.226",
+    "gsap": "3.15.0 (vendored in templates/vendor)",
+    "_note": "Pinned so old reels re-render identically. Upgrade only between jobs."
+  }
 }
