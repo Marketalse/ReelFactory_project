@@ -1,6 +1,6 @@
 {
  "project": "Reel Factory",
- "version": 11,
+ "version": 12,
  "owners": [
   "Hesham",
   "Claude",
@@ -138,11 +138,11 @@
    "phase": "P0",
    "title": "Answer: Instagram + TikTok handles",
    "owner": "Hesham",
-   "status": "todo",
+   "status": "review",
    "depends": [],
    "done_when": "",
    "notes": "Needed before Approve: the final CTA card shows them. Send them to Claude in chat.",
-   "evidence": "",
+   "evidence": "config/brand.json handles: instagram + tiktok = @hesham_alshakarchi",
    "updated": "2026-11-01"
   },
   {
@@ -1154,6 +1154,12 @@
    "who": "Claude",
    "task": "T64",
    "change": "built and tested → review"
+  },
+  {
+   "time": "2026-11-01T23:00",
+   "who": "Claude",
+   "task": "T07",
+   "change": "handles set → review"
   }
  ]
 }
