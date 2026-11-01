@@ -1,6 +1,6 @@
 {
  "project": "Reel Factory",
- "version": 15,
+ "version": 16,
  "owners": [
   "Hesham",
   "Claude",
@@ -1019,6 +1019,18 @@
    "done_when": "Second reel's plan follows a comment given on the first reel",
    "evidence": "branch v2: director.taste, tests/test_taste.py",
    "notes": "Built on branch v2; main (v1) untouched. Backup branch backup-v1-working.",
+   "updated": "2026-11-01"
+  },
+  {
+   "id": "T73",
+   "phase": "P8",
+   "title": "Cover image (thumbnail) with every reel + upload your own photo or cover",
+   "owner": "Claude",
+   "status": "review",
+   "depends": [],
+   "done_when": "Hesham downloads a cover he'd post, from a real reel",
+   "evidence": "branch v2: scripts/cover.py, tests/test_cover.py, page: Cover image box (Download / Use my photo / Use my own cover / Back to automatic), Extras → Cover photo",
+   "notes": "Look copied from Hesham's STOCK reference, 2026-11-01.",
    "updated": "2026-11-01"
   }
  ],

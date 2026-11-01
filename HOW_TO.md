@@ -32,6 +32,13 @@ The draft plays on the page.
   Wrong word in the captions? Write `wrong word => right word` on its own line.
 - **Happy?** Click **Approve & make final videos**. Then click **Download processed video** (one for Instagram, one for TikTok).
 
+## Cover image (thumbnail)
+Every draft comes with a **cover image** (your title on top, you underneath, in your brand style). Click **Download cover**.
+- **Use my photo**: pick a photo of you; the cover is made again with it (about 20 seconds).
+- **Use my own cover**: pick a finished cover image; it's used as is (cropped to vertical).
+- **Back to automatic**: the best moment from your video again.
+You can also add a cover photo before you start, under **Extras → Cover photo**. After Approve the cover is saved next to the final videos.
+
 ## Want to tweak it yourself in CapCut?
 After Approve the page also shows the **CapCut files**. Click **Open in Finder**, then in CapCut (new 9:16 project):
 1. Drag **1_video.mp4** onto the timeline (you, already cut, with zooms and sound).

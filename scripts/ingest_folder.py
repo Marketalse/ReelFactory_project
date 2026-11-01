@@ -6,6 +6,7 @@
 
 inbox/<slug>/clips/*   footage, joined in filename order (or video files directly in inbox/<slug>/)
 inbox/<slug>/assets/*  logos (SVG/PNG) and screenshots -> jobs/<job>/assets/ (SVGs cleaned)
+inbox/<slug>/cover/*   photo.<ext> (photo for the cover) or own.<ext> (the whole cover) -> jobs/<job>/cover/
 inbox/<slug>/refs/*    reference videos for this reel  -> jobs/<job>/refs/
 inbox/<slug>/brief.md  optional notes                  -> jobs/<job>/brief.md
 
@@ -92,7 +93,7 @@ def main():
     open(os.path.join(job, "loudness.txt"), "w").write((f"I: {m[-1]} LUFS" if m else "unknown") + "\n")
 
     if folder:
-        for name in ("assets", "refs"):
+        for name in ("assets", "refs", "cover"):
             s = os.path.join(folder, name)
             if os.path.isdir(s):
                 d = os.path.join(job, name); os.makedirs(d, exist_ok=True)

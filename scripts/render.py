@@ -216,6 +216,15 @@ def capcut_layers(job, platform="instagram"):
     return out
 
 
+def make_cover(job):
+    """The cover image (review/cover.jpg). A cover problem never stops the reel: it is reported instead."""
+    import cover as cov
+    try:
+        return cov.make(job)
+    except Exception as e:              # noqa: BLE001
+        return {"error": str(e)[:300]}
+
+
 def draft(job):
     project = os.path.join(job, "hyperframes")
     tl = json.load(open(os.path.join(job, "timeline.json"), encoding="utf-8"))
@@ -235,7 +244,8 @@ def draft(job):
     if sheet and os.path.exists(sheet):
         shutil.copy(sheet, os.path.join(job, "review", "contact_sheet.jpg"))
     pkg = edit_package(job, project)
-    return {"draft": small, "contact_sheet": os.path.join(job, "review", "contact_sheet.jpg") if sheet else None,
+    cover = make_cover(job)
+    return {"cover": cover, "draft": small, "contact_sheet": os.path.join(job, "review", "contact_sheet.jpg") if sheet else None,
             "edit_package": pkg, "check_warnings": warnings, "qa": qa}
 
 
@@ -264,6 +274,9 @@ def final(job, platforms):
             bad = path.replace(".mp4", "_QA_FAILED.mp4"); os.rename(path, bad)
             raise RenderError(f"final {p} failed QA (kept as {os.path.basename(bad)}): " + "; ".join(qa["errors"][:4]))
         outs.append(path)
+    cov = os.path.join(job, "review", "cover.jpg")
+    if os.path.exists(cov):
+        dst = os.path.join(job, "final", f"cover_v{v}.jpg"); shutil.copy(cov, dst); outs.append(dst)
     try:
         outs += capcut_layers(job, platforms[0])
     except RenderError as e:            # the finals are fine; only the CapCut layers failed

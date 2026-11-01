@@ -71,13 +71,19 @@ RULES:
 - Never two full-screen moments (text_card, flash) back to back; never a moment inside the last {cta_dur} s.
 - cta.type "follow" unless the brief gives a comment keyword. cta.line/promise in his Iraqi dialect, short.
 - values must fit the max lengths exactly.
+- cover = the reel's cover image (thumbnail). Its big title is the hook. Add, only if it fits what he said:
+  tag (max 16 chars, a short topic label in English capitals from a term he used, e.g. "STOCK TIPS"),
+  sticker (max 18 chars, a short question or phrase he said, English terms in Latin letters),
+  card_label (max 24 chars) + card_value (max 26 chars): a formula or result he actually said, spoken numbers only (e.g. "1,200 × 3 = 3,600").
+  Leave any of them "" when there is nothing real for it.
 
 TRANSCRIPT (reel time, (word number)word):
 {transcript}
 
 Return ONLY JSON:
 {{"hook":{{"line1":"","line2":""}},"keyword_ids":[],"moments":[{{"block":"","at_word":0,"duration":0,"values":{{}}}}],
-"punch_ins":[{{"at_word":0,"scale":1.25}}],"cta":{{"type":"follow","line":"","promise":"","keyword":""}}}}"""
+"punch_ins":[{{"at_word":0,"scale":1.25}}],"cta":{{"type":"follow","line":"","promise":"","keyword":""}},
+"cover":{{"tag":"","sticker":"","card_label":"","card_value":""}}}}"""
 
 
 TASTE_MAX = 1800

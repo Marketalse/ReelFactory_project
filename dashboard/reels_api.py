@@ -138,7 +138,7 @@ def approve(job):
 def media_path(rel):
     """Only drafts, contact sheets and finals inside jobs/ may be served."""
     m = re.match(r"^(\d{4}-\d{2}-\d{2}-[a-z0-9-]+)/(review/draft_540p\.mp4|review/contact_sheet\.jpg|final/[A-Za-z0-9_.-]+\.mp4"
-                 r"|edit_package/(?:1_video\.mp4|2_graphics\.mov|captions_ar\.srt))$", rel or "")
+                 r"|review/cover\.jpg|final/cover_v\d+\.jpg|edit_package/(?:1_video\.mp4|2_graphics\.mov|captions_ar\.srt))$", rel or "")
     if not m:
         return None
     p = os.path.realpath(os.path.join(JOBS, rel))
@@ -163,7 +163,10 @@ def reveal(job):
 UPLOAD_KINDS = {                       # kind -> (sub-folder, allowed extensions, max bytes)
     "clip": ("clips", VIDEO, 20 << 30),
     "logo": ("assets", (".svg", ".png"), 50 << 20),
+    "cover_photo": ("cover", (".jpg", ".jpeg", ".png", ".webp"), 40 << 20),
+    "cover_own": ("cover", (".jpg", ".jpeg", ".png", ".webp"), 40 << 20),
 }
+COVER_EXT = (".jpg", ".jpeg", ".png", ".webp")
 SESSION = re.compile(r"^[a-z0-9]{8,40}$")
 MARK = ".upload_session"
 
@@ -220,6 +223,12 @@ def upload(slug, kind, name, session, length, stream, order=0):
         return False, d
     if kind == "clip" and order:
         safe = f"{int(order):02d}-{safe}"          # takes are joined in name order
+    if kind.startswith("cover_"):
+        safe = ("photo" if kind == "cover_photo" else "own") + os.path.splitext(safe)[1]
+        for e in COVER_EXT:                         # one photo / one own cover per reel
+            old = os.path.join(d, sub, safe.rsplit(".", 1)[0] + e)
+            if os.path.exists(old):
+                os.remove(old)
     dest = os.path.join(d, sub); os.makedirs(dest, exist_ok=True)
     path = os.path.join(dest, safe); tmp = path + ".part"
     left = length
@@ -444,6 +453,12 @@ def progress(ref):
         out.update(state="stopped", message=stop)
     else:
         out.update(state="paused", message="This reel was interrupted (the dashboard was closed?). Click Try again to continue.")
+    cp = os.path.join(jd, "review", "cover.jpg") if jd else ""
+    if cp and os.path.exists(cp):
+        out["cover"] = f"{job}/review/cover.jpg"; out["cover_mtime"] = int(os.path.getmtime(cp))
+        out["cover_own"] = any(os.path.exists(os.path.join(jd, "cover", n + e)) for n in ("own", "photo") for e in COVER_EXT)
+    if job in _covering:
+        out["cover_busy"] = True
     if jd and os.path.exists(os.path.join(jd, "review", "draft_540p.mp4")):
         out["draft"] = f"{job}/review/draft_540p.mp4"
         out["draft_mtime"] = int(os.path.getmtime(os.path.join(jd, "review", "draft_540p.mp4")))
@@ -488,3 +503,63 @@ def spend(month=None):
     return {"month": month, "total": round(total, 4), "reels": len(reels),
             "per_reel": round(total / len(reels), 4) if reels else 0.0,
             "projection": round(total / max(1, elapsed) * days, 2), "by_step": rnd(by_step), "by_model": rnd(by_model)}
+
+
+# ----------------------------------------------------------------------------- cover image
+_covering = set()
+
+
+def _remake_cover(job):
+    def work():
+        try:
+            subprocess.run([sys.executable, os.path.join(ROOT, "scripts", "cover.py"), os.path.join(JOBS, job)],
+                           cwd=ROOT, capture_output=True, text=True, timeout=600)
+        finally:
+            _covering.discard(job)
+    _covering.add(job)
+    threading.Thread(target=work, daemon=True).start()
+
+
+def cover_upload(job, kind, name, length, stream):
+    """After the draft: Hesham's own photo (kind 'photo') or whole cover (kind 'own'), then the cover is made again."""
+    if not JOB.match(job or "") or not os.path.isdir(os.path.join(JOBS, job)):
+        return False, "unknown reel"
+    if kind not in ("photo", "own"):
+        return False, "unknown cover type"
+    ext = os.path.splitext(_safe_name(name))[1]
+    if ext not in COVER_EXT:
+        return False, f"{name}: use a JPG, PNG or WebP image"
+    if not 0 < length <= 40 << 20:
+        return False, f"{name}: image is empty or larger than 40 MB"
+    d = os.path.join(JOBS, job, "cover"); os.makedirs(d, exist_ok=True)
+    tmp = os.path.join(d, ".upload.part"); left = length
+    with open(tmp, "wb") as f:
+        while left > 0:
+            chunk = stream.read(min(1 << 20, left))
+            if not chunk:
+                break
+            f.write(chunk); left -= len(chunk)
+    if left:
+        os.remove(tmp)
+        return False, f"{name}: upload was interrupted, try again"
+    for n in ("photo", "own"):                      # the new choice replaces both earlier ones
+        for e in COVER_EXT:
+            p = os.path.join(d, n + e)
+            if os.path.exists(p):
+                os.remove(p)
+    os.replace(tmp, os.path.join(d, kind + ext))
+    _remake_cover(job)
+    return True, "Making your cover…"
+
+
+def cover_reset(job):
+    """Back to the automatic cover (a frame from the video)."""
+    if not JOB.match(job or "") or not os.path.isdir(os.path.join(JOBS, job)):
+        return False, "unknown reel"
+    for n in ("photo", "own"):
+        for e in COVER_EXT:
+            p = os.path.join(JOBS, job, "cover", n + e)
+            if os.path.exists(p):
+                os.remove(p)
+    _remake_cover(job)
+    return True, "Making the automatic cover…"

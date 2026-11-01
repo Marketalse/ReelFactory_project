@@ -49,3 +49,9 @@ One line per decision. Newest at the bottom. If a later decision changes an earl
 ## 2026-11-01 · v2: auto-start and one-click update
 - "Turn on auto-start.command" installs a LaunchAgent (com.reelfactory.dashboard) that runs scripts/autostart.sh at login (git pull --ff-only, then the dashboard). It records the Terminal PATH so node/npx/ffmpeg are found. "Turn off auto-start.command" removes it.
 - Settings → "Get the latest version" runs git pull --ff-only (refused while a reel is being made) and restarts the dashboard in place.
+
+## 2026-11-01 · Cover image with every reel
+- Look from Hesham's reference: dark brand background with dot grid, lime topic pill, two-line title (white + lime) = the hook, his photo in the lower half, optional violet sticker and lime formula card.
+- Text comes from his words: the hook, and the AI's cover fields (tag, sticker, formula card) are dropped if too long or if they show a number he didn't say.
+- Photo: his upload (Extras → Cover photo, or "Use my photo" after the draft), else the sharpest of 10 frames from the take. "Use my own cover" uses his image as is.
+- Rendered by `scripts/cover.py` with HyperFrames snapshot (no extra tools). A cover problem never stops the reel.

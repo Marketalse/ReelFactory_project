@@ -16,7 +16,7 @@
 
     status()                         -> {reels:[...], inbox:[...], busy:[...]}            GET  /api/reels
     upload(slug, session, file, opts, onProgress(sentBytes))                              POST /api/upload
-        raw file bytes as the body; headers X-Slug, X-Kind ("clip" | "logo"), X-Name (URI-encoded),
+        raw file bytes as the body; headers X-Slug, X-Kind ("clip" | "logo" | "cover_photo"), X-Name (URI-encoded),
         X-Session (random id from this page), X-Order (1, 2, ... = order the takes are joined in).
         Answers {ok, message}. 409 + message = show it to the user as is (it is written for him).
     saveNotes(slug, session, text)   -> {ok, message}                                     POST /api/reels/notes
@@ -297,6 +297,15 @@ input[type=password]:focus{border-color:var(--violet)}
           </label>
           <input type="file" id="logoIn" accept=".svg,.png,image/svg+xml,image/png" hidden>
         </div>
+        <div class="slot">
+          <div class="head">Cover photo <span class="opt">optional</span> <button class="tip" type="button" data-tip="A cover image is made for every reel, with your title on it. Add a photo of you here to use it on the cover; without one, the best moment from your video is used. You can also change it after the draft.">?</button></div>
+          <label class="pick" id="cphPick" for="cphIn">
+            <img id="cphImg" alt="" hidden>
+            <span class="t" id="cphName">Choose a photo…</span>
+            <button class="ib" type="button" id="cphClear" aria-label="Remove cover photo" hidden>✕</button>
+          </label>
+          <input type="file" id="cphIn" accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp" hidden>
+        </div>
         <div class="slot wide">
           <div class="head">Notes for the editor <button class="tip" type="button" data-tip="Tell it what matters, in Arabic or English, like you'd brief a human editor. E.g. “Main point: reply to customers fast. Ask people to comment ‘store’.”">?</button></div>
           <textarea id="notes" dir="auto" maxlength="4000" placeholder="e.g. The key message is… / Put the hook on the first sentence / Ask viewers to comment “store”"></textarea>
@@ -368,7 +377,7 @@ function toast(title, text, kind="info", ms=7000){
 }
 
 /* ---------------------------------------------------------------- state */
-const S = { files: [], logo: null, session: rid(), slug: "", busy: false, uploadFrac: 0, uploadEta: 0, tracking: null, stopWatch: null, last: null, known: new Set() };
+const S = { files: [], logo: null, cph: null, session: rid(), slug: "", busy: false, uploadFrac: 0, uploadEta: 0, tracking: null, stopWatch: null, last: null, known: new Set() };
 let backend = null;
 
 /* ---------------------------------------------------------------- file list */
@@ -433,6 +442,16 @@ drop.addEventListener("drop", e=>{ if(!S.busy) addFiles(e.dataTransfer.files); }
 window.addEventListener("dragover", e=>e.preventDefault());
 window.addEventListener("drop", e=>{ e.preventDefault(); if(!$("#compose").hidden && !S.busy && e.dataTransfer.files.length) addFiles(e.dataTransfer.files); });
 
+/* ---------------------------------------------------------------- cover photo */
+const IMG_EXT=["jpg","jpeg","png","webp"];
+$("#cphIn").onchange=()=>{
+  const f=$("#cphIn").files[0]; $("#cphIn").value=""; if(!f) return;
+  if(!IMG_EXT.includes(ext(f.name))){ toast("That photo can't be used", "Use a JPG, PNG or WebP photo.", "error"); return; }
+  if(f.size>40*1024**2){ toast("Photo is too big", "Keep it under 40 MB.", "error"); return; }
+  S.cph=f; $("#cphImg").src=URL.createObjectURL(f); $("#cphImg").hidden=false; $("#cphName").textContent=f.name; $("#cphClear").hidden=false;
+};
+$("#cphClear").onclick=e=>{ e.preventDefault(); S.cph=null; $("#cphImg").hidden=true; $("#cphName").textContent="Choose a photo…"; $("#cphClear").hidden=true; };
+
 /* ---------------------------------------------------------------- logo + name */
 $("#logoIn").onchange=()=>{
   const f=$("#logoIn").files[0]; $("#logoIn").value=""; if(!f) return;
@@ -459,7 +478,7 @@ $("#makeBtn").onclick=async ()=>{
   S.busy=true; renderFiles(); $("#makeBtn").disabled=true;
   window.onbeforeunload = ()=> "Your video is still uploading. Leave anyway?";
   showTrack(S.slug, true);
-  const total = S.files.reduce((a,f)=>a+f.file.size,0) + (S.logo?S.logo.size:0);
+  const total = S.files.reduce((a,f)=>a+f.file.size,0) + (S.logo?S.logo.size:0) + (S.cph?S.cph.size:0);
   let doneBytes=0; const t0=performance.now();
   const onBytes = cur => { S.uploadFrac=(doneBytes+cur)/total; const sp=(doneBytes+cur)/Math.max(.1,(performance.now()-t0)/1000); S.uploadEta=(total-doneBytes-cur)/Math.max(1,sp); drawUpload(); };
   try{
@@ -470,6 +489,7 @@ $("#makeBtn").onclick=async ()=>{
       f.state="done"; f.sent=f.file.size; doneBytes+=f.file.size;
     }
     if(S.logo){ await backend.upload(S.slug, S.session, S.logo, {kind:"logo"}, onBytes); doneBytes+=S.logo.size; }
+    if(S.cph){ await backend.upload(S.slug, S.session, S.cph, {kind:"cover_photo"}, onBytes); doneBytes+=S.cph.size; }
     const notes=$("#notes").value.trim();
     if(notes){ const r=await backend.saveNotes(S.slug, S.session, notes); if(!r.ok) throw new Error(r.message); }
     S.uploadFrac=1; drawUpload();
@@ -524,7 +544,7 @@ function backToCompose(){
 $("#newBtn").onclick=()=>{
   if(S.busy && S.uploadFrac<1){ toast("Upload in progress", "Wait for the upload to finish before starting another reel."); return; }
   S.files.forEach(f=>URL.revokeObjectURL(f.url)); S.files=[]; S.logo=null; S.session=rid(); S.busy=false;
-  $("#notes").value=""; $("#reelName").value=""; $("#logoClear").click(); $("#makeBtn").disabled=false;
+  $("#notes").value=""; $("#reelName").value=""; $("#logoClear").click(); $("#cphClear").click(); $("#makeBtn").disabled=false;
   renderFiles(); updateSlug(); backToCompose();
 };
 const UPLOAD_W = 0.08;   // share of the overall bar used by the upload
@@ -577,6 +597,50 @@ function watch(ref){
 }
 
 /* ---------------------------------------------------------------- results */
+
+/* ---------------------------------------------------------------- cover image (thumbnail) */
+function coverBlock(p){
+  if(!p.cover && !p.cover_busy) return "";
+  const src = p.cover ? backend.mediaUrl(p.job, p.cover.split("/").slice(1).join("/"))+"?v="+(p.cover_mtime||0) : "";
+  return `<div class="cover" id="coverBox" style="border-top:1px solid var(--line);padding-top:14px;display:grid;gap:10px">
+    <b>Cover image</b>
+    <div style="display:flex;gap:14px;align-items:flex-start;flex-wrap:wrap">
+      ${src?`<a href="${src}" target="_blank" rel="noopener"><img src="${src}" alt="Cover image" style="width:132px;aspect-ratio:9/16;object-fit:cover;border-radius:10px;border:1px solid var(--line)"></a>`:""}
+      <div style="display:grid;gap:8px;flex:1 1 180px">
+        <p class="small" style="margin:0" id="coverNote">${p.cover_busy?"Making your cover…":"Made from your title and your video. Use it as the cover when you post."}</p>
+        ${src?`<a class="btn primary" href="${src}" download="cover.jpg">Download cover ↓</a>`:""}
+        <button class="btn" type="button" id="cvPhoto">Use my photo</button>
+        <button class="btn" type="button" id="cvOwn">Use my own cover</button>
+        ${p.cover_own?'<button class="btn ghost" type="button" id="cvAuto">Back to automatic</button>':""}
+      </div>
+    </div>
+    <input type="file" id="cvIn" accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp" hidden>
+  </div>`;
+}
+function wireCover(p){
+  const box=$("#coverBox"); if(!box) return;
+  let kind="photo";
+  const pick=k=>{ kind=k; $("#cvIn").click(); };
+  $("#cvPhoto").onclick=()=>pick("photo"); $("#cvOwn").onclick=()=>pick("own");
+  const a=$("#cvAuto"); if(a) a.onclick=async ()=>{ const r=await backend.post("cover_reset",{job:p.job}); if(!r.ok) return toast("Couldn't change the cover", r.message, "error"); waitCover(p); };
+  $("#cvIn").onchange=async ()=>{
+    const f=$("#cvIn").files[0]; $("#cvIn").value=""; if(!f) return;
+    if(!IMG_EXT.includes(ext(f.name))) return toast("That image can't be used", "Use a JPG, PNG or WebP image.", "error");
+    $("#coverNote").textContent="Uploading…";
+    try{ await backend.coverUpload(p.job, kind, f); }catch(e){ $("#coverNote").textContent=""; return toast("Couldn't upload the image", e.message, "error"); }
+    waitCover(p);
+  };
+  if(p.cover_busy) waitCover(p);
+}
+async function waitCover(p){
+  const n=$("#coverNote"); if(n) n.textContent="Making your cover… (about 20 seconds)";
+  for(let i=0;i<90;i++){
+    await new Promise(r=>setTimeout(r,2000));
+    try{ const q=await (await fetch("/api/progress?ref="+encodeURIComponent(p.job),{cache:"no-store"})).json();
+      if(!q.cover_busy){ const box=$("#coverBox"); if(box){ box.outerHTML=coverBlock({...p,...q,job:p.job}); wireCover({...p,...q,job:p.job}); } return; } }catch(e){}
+  }
+}
+
 function showResult(p){
   const R=$("#result"); R.hidden=false; $("#trackLede").hidden=true;
   const job=p.job;
@@ -596,8 +660,10 @@ function showResult(p){
           ${p.handles_set?"":`<div class="warn">Your Instagram and TikTok handles aren't set yet, and the final videos need them on the last card. Send them to Claude once, then come back and approve.</div>`}
           <div class="row"><button class="btn primary" id="approve" ${p.handles_set?"":"disabled"}>Approve &amp; make final videos</button></div>
         </div>
+        ${coverBlock(p)}
         ${p.feedback&&p.feedback.length?`<details><summary class="small">Your earlier comments (${p.feedback.length})</summary><div class="history" style="margin-top:6px">${p.feedback.map(f=>`<div>${esc(f.time)} · ${esc(f.fix)}</div>`).join("")}</div></details>`:""}
       </div></div>`;
+    wireCover(p);
     $("#sendFix").onclick=async ()=>{
       const t=$("#fixText").value.trim(); if(!t){ toast("Write what to change first", "For example: “make the hook shorter”. Then click Send changes.", "error"); $("#fixText").focus(); return; }
       const r=await backend.fix(job,t); if(!r.ok) return toast("Couldn't send your changes", r.message, "error");
@@ -621,9 +687,11 @@ function showResult(p){
           <p class="small" style="margin:0">Drag <b>1_video.mp4</b> onto the timeline and <b>2_graphics.mov</b> on the track above it. They line up by themselves.</p>
           <div class="row">${p.package.map(f=>`<a class="btn" href="${backend.mediaUrl(job,"edit_package/"+f)}" download="${esc(f)}">${esc(f)}</a>`).join("")}</div>
           <div class="row"><button class="btn ghost" id="reveal">Open in Finder</button></div></div>`:""}
+        ${coverBlock(p)}
         <p class="small" style="margin:0">Nothing is posted for you. Post it yourself when you're ready.</p>
         <div class="row"><button class="btn violet" id="another">Make another reel</button></div>
       </div></div>`;
+    wireCover(p);
     const rv=$("#reveal"); if(rv) rv.onclick=async ()=>{ const r=await backend.reveal(job); toast(r.ok?"Opened in Finder":"Couldn't open Finder", r.ok?"":r.message, r.ok?"ok":"error"); };
     $("#another").onclick=()=>$("#newBtn").click();
   } else {
@@ -679,6 +747,14 @@ const RealBackend = {
   },
   async post(action, body){ try{ const r=await fetch("/api/reels/"+action,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)}); return await r.json(); }catch(e){ return {ok:false,message:"The dashboard didn't answer. Check that Reel Factory.command is running."}; } },
   saveNotes(slug, session, text){ return this.post("notes",{slug,session,text}); },
+  coverUpload(job, kind, file){
+    return new Promise((resolve, reject)=>{
+      const x=new XMLHttpRequest(); x.open("POST","/api/cover");
+      x.setRequestHeader("X-Job",job); x.setRequestHeader("X-Kind",kind); x.setRequestHeader("X-Name",encodeURIComponent(file.name));
+      x.onload=()=>{ let j={}; try{j=JSON.parse(x.responseText)}catch(e){} (x.status===200&&j.ok)? resolve(j) : reject(new Error(j.message||("upload failed ("+x.status+")"))); };
+      x.onerror=()=>reject(new Error("the dashboard didn't answer")); x.send(file);
+    });
+  },
   check(slug, session){ return this.post("check",{slug,session}); },
   start(slug){ return this.post("start",{slug}); },
   fix(job,text){ return this.post("fix",{job,text}); },
@@ -741,6 +817,8 @@ const DemoBackend = (()=>{
     async approve(job){ Object.assign(jobs[job],{t0:Date.now()/1000,mode:"final"}); busy=job; return {ok:true}; },
     async resume(job){ return this.fix(job,"(try again)"); },
     async reveal(){ return {ok:false,message:"Finder can't be opened in demo mode."}; },
+    async post(){ return {ok:false,message:"Not available in demo mode."}; },
+    async coverUpload(){ throw new Error("Not available in demo mode."); },
     mediaUrl(job){ const j=jobs[job]; const f=j&&j.files.find(f=>!/\.(avi|mkv)$/i.test(f.name)); if(!f) return ""; return (f._url=f._url||URL.createObjectURL(f)); },
     watch(ref, onUpdate){
       const id=jobs[ref]?ref:today+"-"+ref; let t=null;
