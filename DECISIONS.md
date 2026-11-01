@@ -49,3 +49,30 @@ One line per decision. Newest at the bottom. If a later decision changes an earl
 ## 2026-11-01 · v2: auto-start and one-click update
 - "Turn on auto-start.command" installs a LaunchAgent (com.reelfactory.dashboard) that runs scripts/autostart.sh at login (git pull --ff-only, then the dashboard). It records the Terminal PATH so node/npx/ffmpeg are found. "Turn off auto-start.command" removes it.
 - Settings → "Get the latest version" runs git pull --ff-only (refused while a reel is being made) and restarts the dashboard in place.
+
+## 2026-11-01 · Cover image with every reel
+- Look from Hesham's reference: dark brand background with dot grid, lime topic pill, two-line title (white + lime) = the hook, his photo in the lower half, optional violet sticker and lime formula card.
+- Text comes from his words: the hook, and the AI's cover fields (tag, sticker, formula card) are dropped if too long or if they show a number he didn't say.
+- Photo: his upload (Extras → Cover photo, or "Use my photo" after the draft), else the sharpest of 10 frames from the take. "Use my own cover" uses his image as is.
+- Rendered by `scripts/cover.py` with HyperFrames snapshot (no extra tools). A cover problem never stops the reel.
+
+## 2026-11-01 · Reel results, step 1: typed in by hand
+- Each finished reel has a "How did it do?" box: platform, 2/7/30 days after posting, views, average watch time, watched-to-end %, likes, comments, shares, saves, follows. Stored in jobs/<job>/performance.json; the Results page and CSV join them with what the edit was (length, hook, cards, zooms, own cover).
+- Step 2 (later, T76): read the same numbers from linked Instagram/TikTok accounts (read-only). Learning rules start at 5 reels with results.
+
+## 2026-11-01 · No CTA for now: clean reels
+- Hesham: "keep my video clean since I'm not creating greedy commercial video, I'm focusing on attracting people attention then I would change my strategy."
+- `config/brand.json → cta.enabled = false`: no end card, no follow ask, no handle, no comment keyword. The reel ends on his face with captions to the last word. The AI editor is told so and may place moments up to the end.
+- To bring it back: set `cta.enabled` to true (wording in the same block). Covered by tests/test_p3.py (CleanEndingTests + DirectorTests with it on).
+
+## 2026-11-01 · Music is added when posting; the factory adds sound effects
+- Hesham mostly uses trending Instagram music, added in the app when posting (sometimes CapCut music). Trending tracks can't be baked into the file (rights + they change weekly).
+- So: finals carry his voice + sound effects only (`audio.music.enabled` false). He picks the trending track in Instagram/TikTok. The CapCut package keeps voice, graphics and sound on separate tracks for reels where he wants CapCut music.
+- Next: learn SFX style and pace from his 11 best reels (references/own/best_reels.md), then build a small licence-safe SFX set (T23). An optional licensed music bed may come later, per reel.
+
+## 2026-11-01 · Approve = one final video, then the cover
+- Hesham: drop the Instagram / TikTok / CapCut steps after Approve. Now: (1) one high-quality final video `final/reel_vN.mp4`
+  (no handle or end card, so both platforms get the same file), (2) the cover suggestion `review/cover.jpg`, made after the video.
+- The final page shows the final preview, a download button, a "Want changes?" box (makes a new draft; approve again → reel_v(N+1)),
+  and the cover with "Upload my own cover". The draft page no longer shows the cover.
+- CapCut layers are no longer made (code kept in render.capcut_layers if ever wanted again). Old reels' per-platform files still show.

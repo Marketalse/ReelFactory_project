@@ -48,12 +48,28 @@ def check_values(block, values, where):
         raise BuildError(f"{where}: unknown field(s) {sorted(unknown)} for {block}")
 
 
-def stamp(block, inst_id, dur, groups_html=""):
+FIT = {  # block -> {value: (largest px, smallest px)}: one-line text sized from its length to fit the 780 px text box
+    "flash": {"word": (260, 90)},
+    "split": {"value": (230, 96)},
+}
+GLYPH_EM = 0.62          # average Readex Pro bold glyph width in em (Arabic and digits), with margin
+
+
+def fit_size(text, big, small, width=None):
+    width = width or cfg.RULES["safe_zone"]["text_max_width"]
+    n = max(1, len(str(text or "")))
+    return int(max(small, min(big, width / (GLYPH_EM * n))))
+
+
+def stamp(block, inst_id, dur, groups_html="", values=None):
     """Return the scene file text for one use of a block."""
     if not ID_RE.match(inst_id):
         raise BuildError(f"bad instance id '{inst_id}' (lowercase letters, digits, _)")
     spec = REGISTRY["blocks"][block]
     src = open(os.path.join(BLOCKS_DIR, spec["file"]), encoding="utf-8").read()
+    for key, (big, small) in FIT.get(block, {}).items():
+        v = (values or {}).get(key) or spec["inputs"][key].get("default") or ""
+        src = src.replace(f"__SIZE_{key}__", str(fit_size(v, big, small)))
     return src.replace("__ID__", inst_id).replace("__DUR__", _num(dur)).replace("<!--GROUPS-->", groups_html)
 
 
@@ -127,6 +143,12 @@ def brand_vars():
     c = cfg.BRAND["colors"]
     pairs = {"bg": c["bg"], "lime": c["accent"], "violet": c["secondary"], "coral": c["negative"],
              "text": c["text"], "surface": c["surface"], "muted": c["muted"], "font": '"Readex Pro", sans-serif'}
+    z = cfg.RULES["safe_zone"]
+    W_, H_ = z["canvas"]
+    pairs.update({"safe-top": f'{z["top"]}px', "safe-bottom": f'{H_ - z["bottom"]}px', "safe-left": f'{z["left"]}px',
+                  "safe-right": f'{W_ - z["right"]}px', "text-x": f'{z["text_x"]}px', "text-w": f'{z["text_max_width"]}px',
+                  "cap-top": f'{z["captions_y"][0]}px', "cap-h": f'{z["captions_y"][1] - z["captions_y"][0]}px',
+                  "feed-top": f'{z["feed_square_y"][0]}px'})
     return " ".join(f"--{k}: {v};" for k, v in pairs.items())
 
 
@@ -167,7 +189,7 @@ def build_project(out_dir, *, duration, face_cuts, scenes, video_src, audio=None
         check_values(s["block"], s.get("values", {}), s["id"])
         spec = REGISTRY["blocks"][s["block"]]
         d = s["t_out"] - s["t_in"]
-        text = stamp(s["block"], s["id"], d, s.get("groups_html", ""))
+        text = stamp(s["block"], s["id"], d, s.get("groups_html", ""), s.get("values"))
         open(os.path.join(out_dir, "compositions", s["id"] + ".html"), "w", encoding="utf-8").write(text)
         full = {k: v.get("default", "") for k, v in spec["inputs"].items() if v.get("type") != "generated"}
         full.update(s.get("values", {}))

@@ -95,7 +95,10 @@ def good_plan(n):
 
 
 class DirectorTests(unittest.TestCase):
+    """Written for the end card ON; CleanEndingTests covers OFF (Hesham's current choice)."""
     def setUp(self):
+        from unittest import mock
+        p = mock.patch.object(director, "cta_on", return_value=True); p.start(); self.addCleanup(p.stop)
         self.words = reel_words()
         self.dur = self.words[-1]["end"] + 0.1
         self.segments = [{"src_in": 10, "src_out": 10 + self.dur, "t_in": 0, "t_out": self.dur}]
@@ -182,3 +185,35 @@ class WordFixTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class CleanEndingTests(unittest.TestCase):
+    """cta.enabled false (Hesham 2026-11-01): no end card, no handle, no follow ask; the reel ends on his face."""
+    def setUp(self):
+        from unittest import mock
+        p = mock.patch.object(director, "cta_on", return_value=False); p.start(); self.addCleanup(p.stop)
+        self.words = reel_words(); self.dur = self.words[-1]["end"] + 0.1
+
+    def test_no_end_card_and_moments_may_run_to_the_end(self):
+        p = good_plan(len(self.words))
+        p["punch_ins"] = [{"at_word": w, "scale": 1.25} for w in range(6, len(self.words) - 2, 6)]
+        p["moments"].append({"block": "text_card", "at_word": len(self.words) - 6, "duration": 1.5, "values": {"headline": "رد على الزبون"}})
+        tl, err, _ = director.resolve(p, self.words, self.dur)
+        self.assertEqual(err, [])
+        self.assertNotIn("cta_card", [s["block"] for s in tl["scenes"]])
+        self.assertFalse(any("@" in json.dumps(s["values"], ensure_ascii=False) for s in tl["scenes"]))
+
+    def test_moment_past_the_end_is_named(self):
+        p = good_plan(len(self.words))
+        p["moments"].append({"block": "text_card", "at_word": len(self.words) - 1, "duration": 2.0, "values": {"headline": "x"}})
+        _, err, _ = director.resolve(p, self.words, self.dur)
+        self.assertTrue(any("after the reel ends" in e for e in err), err)
+
+    def test_prompt_asks_for_no_cta(self):
+        pr = director.build_prompt(self.words, self.dur)
+        self.assertIn("No end card", pr); self.assertNotIn('"cta"', pr)
+
+
+class BrandSettingTests(unittest.TestCase):
+    def test_end_card_is_off_in_brand_settings(self):
+        self.assertFalse(director.cta_on())

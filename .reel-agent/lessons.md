@@ -2,7 +2,8 @@
 Read at the start of every job. Max ~150 lines. Format: one line, verb first, with evidence.
 
 ## Hesham's taste
-- Use `علقلي متجر` as the CTA comment keyword for store-related reels (chosen 2026-10-31)
+- Keep reels clean: no CTA, no follow ask, no handle on screen; attention first, sales later (Hesham, 2026-11-01, DECISIONS.md)
+- Use `علقلي متجر` as the CTA comment keyword for store-related reels, only once the CTA is turned back on (chosen 2026-10-31)
 - Keep the project lean: prefer local files, local preview, and low spend before adding tools or automation.
 
 ## Known failures

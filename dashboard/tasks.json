@@ -1,6 +1,6 @@
 {
  "project": "Reel Factory",
- "version": 14,
+ "version": 20,
  "owners": [
   "Hesham",
   "Claude",
@@ -150,11 +150,11 @@
    "phase": "P0",
    "title": "Answer: CTA wording corrections",
    "owner": "Hesham",
-   "status": "todo",
+   "status": "review",
    "depends": [],
    "done_when": "",
-   "notes": "",
-   "evidence": "",
+   "notes": "Hesham 2026-11-01: no CTA for now. Keep reels clean (attention first, not sales). End card switched off: config/brand.json cta.enabled=false. Turn back on when the strategy changes.",
+   "evidence": "config/brand.json cta.enabled=false; tests/test_p3.py CleanEndingTests",
    "updated": "2026-11-01"
   },
   {
@@ -162,10 +162,10 @@
    "phase": "P0",
    "title": "Answer: music + SFX library",
    "owner": "Hesham",
-   "status": "todo",
+   "status": "in_progress",
    "depends": [],
    "done_when": "",
-   "notes": "",
+   "notes": "Hesham 2026-11-01: build it together, starting from his 11 best reels (references/own/best_reels.md).",
    "evidence": "",
    "updated": "2026-11-01"
   },
@@ -210,10 +210,10 @@
    "phase": "P0",
    "title": "Send 2–3 of your best previous reels (references/own)",
    "owner": "Hesham",
-   "status": "todo",
+   "status": "in_progress",
    "depends": [],
    "done_when": "",
-   "notes": "",
+   "notes": "11 links received 2026-11-01 (references/own/best_reels.md). Waiting for the video files (Instagram is blocked from the cloud).",
    "evidence": "",
    "updated": "2026-11-01"
   },
@@ -292,7 +292,7 @@
    "id": "T19",
    "phase": "P1",
    "title": "On the Mac: pull, run the tests, and do the first real transcription (whisper large-v3)",
-   "owner": "Hermes",
+   "owner": "Hesham",
    "status": "review",
    "depends": [
     "T16",
@@ -300,7 +300,7 @@
     "T18"
    ],
    "done_when": "Tests pass on the Mac and the IMG_0020 job stops at Gate 0 with transcript_review.txt written",
-   "notes": "large-v3 ran locally on the Mac.",
+   "notes": "Done another way: Hesham ran the real reel on the Mac himself (T34).",
    "evidence": "Mac run: transcription of the smuggling reel finished (stopped later at the word-fix step, a key problem)",
    "updated": "2026-11-01"
   },
@@ -365,13 +365,13 @@
    "id": "T24",
    "phase": "P2",
    "title": "On the Mac: render the block samples on real footage",
-   "owner": "Hermes",
+   "owner": "Claude",
    "status": "todo",
    "depends": [
     "T22"
    ],
    "done_when": "sample_draft.mp4 rendered from your real proxy, plus the snapshot contact sheet, in jobs/_samples/blocks",
-   "notes": "cd ~/Desktop/ReelFactory_project && git pull && python3 scripts/block_samples.py --video jobs/<IMG_0020 job>/proxy.mp4 --start 0  |  cd jobs/_samples/blocks && npx --yes hyperframes@0.8.226 check && npx --yes hyperframes@0.8.226 snapshot --at 0,3.5,6,9,12.6,14.5,16,19 && npx --yes hyperframes@0.8.226 render --quality draft -o sample_draft.mp4  |  Put the contact-sheet path and the MP4 path in evidence. Free (no paid calls).",
+   "notes": "cd ~/Desktop/ReelFactory_project && git pull && python3 scripts/block_samples.py --video jobs/<IMG_0020 job>/proxy.mp4 --start 0  |  cd jobs/_samples/blocks && npx --yes hyperframes@0.8.226 check && npx --yes hyperframes@0.8.226 snapshot --at 0,3.5,6,9,12.6,14.5,16,19 && npx --yes hyperframes@0.8.226 render --quality draft -o sample_draft.mp4  |  Put the contact-sheet path and the MP4 path in evidence. Free (no paid calls). Reassigned from Hermes (v2: Hermes optional).",
    "evidence": "",
    "updated": "2026-11-01"
   },
@@ -510,14 +510,14 @@
    "phase": "P3",
    "title": "First real reel on the Mac via the upload page (job: smuggling)",
    "owner": "Hesham",
-   "status": "in_progress",
+   "status": "review",
    "depends": [
     "T19",
     "T25"
    ],
    "done_when": "Draft plays on the upload page; Hesham comments or approves",
-   "notes": "Transcription worked on the Mac. Stopped at word fixing with HTTP 401 (key); key topped up and Try again clicked.",
-   "evidence": "",
+   "notes": "Real reel end to end on the Mac after fixes #15-#19.",
+   "evidence": "Mac: job 2026-11-01-img-0061-2 reached draft and final videos (Instagram, TikTok, CapCut files)",
    "updated": "2026-11-01"
   },
   {
@@ -582,13 +582,13 @@
    "phase": "P5",
    "title": "lib/llm.py: per-job + monthly cap guard, logs every call",
    "owner": "Claude",
-   "status": "in_progress",
+   "status": "review",
    "depends": [
     "T16"
    ],
    "done_when": "",
    "notes": "Per-reel + monthly guard now in reel.py (Ctx.llm), tested. Moving it into lib/llm.py comes with the committee work.",
-   "evidence": "",
+   "evidence": "scripts/reel.py LLM guard: per-reel warn/stop and monthly cap checked before every call; real cost logged to cost.json + expenses.json",
    "updated": "2026-11-01"
   },
   {
@@ -623,14 +623,14 @@
    "id": "T42",
    "phase": "P6",
    "title": "Run 3 real clips end to end",
-   "owner": "Hermes",
+   "owner": "Claude",
    "status": "todo",
    "depends": [
     "T38",
     "T39"
    ],
    "done_when": "3 drafts + committee reports",
-   "notes": "",
+   "notes": " Reassigned from Hermes (v2: Hermes optional).",
    "evidence": "",
    "updated": "2026-11-01"
   },
@@ -672,7 +672,7 @@
     "T43"
    ],
    "done_when": "",
-   "notes": "",
+   "notes": " Now done on the page: open the reel → How did it do? (2026-11-01).",
    "evidence": "",
    "updated": "2026-11-01"
   },
@@ -708,13 +708,13 @@
    "id": "T48",
    "phase": "P7",
    "title": "Text-behind-head (needs matte) — prove on the Mac",
-   "owner": "Hermes",
+   "owner": "Claude",
    "status": "todo",
    "depends": [
     "T43"
    ],
    "done_when": "",
-   "notes": "",
+   "notes": " Reassigned from Hermes (v2: Hermes optional).",
    "evidence": "",
    "updated": "2026-11-01"
   },
@@ -801,13 +801,13 @@
    "phase": "P8",
    "title": "Save the new key on the Mac (HOW_TO → Your API key) and finish one reel on it",
    "owner": "Hesham",
-   "status": "todo",
+   "status": "review",
    "depends": [
     "T53"
    ],
    "done_when": "A reel passes the word-fix step using the own key",
-   "evidence": "",
-   "notes": "One Terminal command; the key is never pasted in chat.",
+   "evidence": "Key saved on the Mac (\"KEY WORKS\"); first reel finished on it",
+   "notes": "Hesham: mark done if you agree.",
    "updated": "2026-11-01"
   },
   {
@@ -815,13 +815,13 @@
    "phase": "P8",
    "title": "Remove the Hermes fallback; clear message on the upload page if the key file is missing",
    "owner": "Claude",
-   "status": "todo",
+   "status": "review",
    "depends": [
     "T54"
    ],
    "done_when": "No code reads ~/.hermes; missing key = plain message with the fix",
-   "evidence": "",
-   "notes": "Makes Reel Factory fully independent of Hermes.",
+   "evidence": "branch v2: config.auth has no Hermes fallback; Settings shows \"AI key: not saved yet\" with a paste box",
+   "notes": "Same work as T69.",
    "updated": "2026-11-01"
   },
   {
@@ -855,13 +855,13 @@
    "phase": "P8",
    "title": "Model catalogue refresh: script reads the Nous model list + prices into config/project.json",
    "owner": "Claude",
-   "status": "todo",
+   "status": "review",
    "depends": [
     "T55"
    ],
    "done_when": "One command updates prices; cost estimates match the portal",
-   "evidence": "",
-   "notes": "Prices in config are from 2026-11-01.",
+   "evidence": "branch v2: scripts/models_refresh.py (report; --write updates prices only, never models); tests/test_models_refresh.py",
+   "notes": "Not run against the live Nous list yet (needs the key: run on the Mac).",
    "updated": "2026-11-01"
   },
   {
@@ -912,12 +912,12 @@
    "phase": "P8",
    "title": "Spend page: cost per step and per model, this month vs portal, projection to month end",
    "owner": "Claude",
-   "status": "todo",
+   "status": "review",
    "depends": [
     "T55"
    ],
    "done_when": "Spend page answers 'where does the money go?'",
-   "evidence": "",
+   "evidence": "branch v2: /api/spend + Spend page (by step, by model, per reel, month-end estimate); tests/test_dashboard.py SpendTests",
    "notes": "",
    "updated": "2026-11-01"
   },
@@ -926,13 +926,13 @@
    "phase": "P8",
    "title": "Learning loop: after each approved reel, turn Hesham's comments into ≤3 lessons and feed them to the Director",
    "owner": "Claude",
-   "status": "todo",
+   "status": "review",
    "depends": [
     "T34"
    ],
    "done_when": "Next draft avoids last reel's fixed issues; lessons.md grows",
-   "evidence": "",
-   "notes": ".reel-agent/lessons.md; newest feedback wins.",
+   "evidence": "branch v2: director.taste() feeds Hesham's taste lessons + earlier comments into every plan; tests/test_taste.py",
+   "notes": "Lessons are added after reels (lessons.md); comments are read automatically.",
    "updated": "2026-11-01"
   },
   {
@@ -952,12 +952,12 @@
    "phase": "P8",
    "title": "Hermes role: optional helper for development tasks only; update AGENTS.md, README, HERMES_TASKS.md",
    "owner": "Claude",
-   "status": "todo",
+   "status": "review",
    "depends": [
     "T55"
    ],
    "done_when": "Docs say reels never depend on Hermes",
-   "evidence": "",
+   "evidence": "branch v2: AGENTS.md, README.md, HERMES_TASKS.md say Hermes is optional, development only",
    "notes": "",
    "updated": "2026-11-01"
   },
@@ -1019,6 +1019,66 @@
    "done_when": "Second reel's plan follows a comment given on the first reel",
    "evidence": "branch v2: director.taste, tests/test_taste.py",
    "notes": "Built on branch v2; main (v1) untouched. Backup branch backup-v1-working.",
+   "updated": "2026-11-01"
+  },
+  {
+   "id": "T73",
+   "phase": "P8",
+   "title": "Cover image (thumbnail) with every reel + upload your own photo or cover",
+   "owner": "Claude",
+   "status": "review",
+   "depends": [],
+   "done_when": "Hesham downloads a cover he'd post, from a real reel",
+   "evidence": "branch v2: scripts/cover.py, tests/test_cover.py, page: Cover image box (Download / Use my photo / Use my own cover / Back to automatic), Extras → Cover photo",
+   "notes": "Look copied from Hesham's STOCK reference, 2026-11-01.",
+   "updated": "2026-11-01"
+  },
+  {
+   "id": "T74",
+   "phase": "P8",
+   "title": "Safe zones: all text and cards inside the Instagram/TikTok safe box (Hesham's guide)",
+   "owner": "Claude",
+   "status": "review",
+   "depends": [],
+   "done_when": "Hesham checks a sample and a real reel on his phone: nothing hidden under buttons or captions",
+   "evidence": "style/SAFE_ZONES.md, config/rules.json safe_zone, AGENTS.md §5, templates moved, tests/test_safe_zones.py (longest text, every template + cover), scripts/safe_zone_preview.py",
+   "notes": "Stricter of both platforms: x 108-920, y 250-1500, text ≤780 px, captions y 1200-1450, hook/cover title in the feed square. Also fixed: captions vanished in real renders (visibility tween), now guarded by a test.",
+   "updated": "2026-11-01"
+  },
+  {
+   "id": "T75",
+   "phase": "P7",
+   "title": "Later: turn Hesham's visual prompts into templates (floating UI card, document card, lower-third info card, pixel-art scenes)",
+   "owner": "Claude",
+   "status": "todo",
+   "depends": [],
+   "done_when": "Hesham approves samples of the ones he wants",
+   "evidence": "",
+   "notes": "Prompts saved in docs/visual_prompts_for_later.md (2026-11-01). Start only when Hesham asks.",
+   "updated": "2026-11-01"
+  },
+  {
+   "id": "T76",
+   "phase": "P7",
+   "title": "Later: self-learning editor: track how each posted reel performs (manual or Instagram/TikTok API) and learn what editing works",
+   "owner": "Claude",
+   "status": "todo",
+   "depends": [],
+   "done_when": "Hesham agrees the plan; then: performance entered for 10+ reels and the first learned rules appear in lessons.md",
+   "evidence": "",
+   "notes": "Step 1 (manual results box + Results page + CSV) built on v2, 2026-11-01. Step 2 = linked Instagram/TikTok accounts + learning rules (from 5 reels). Reminder 2026-11-08.",
+   "updated": "2026-11-01"
+  },
+  {
+   "id": "T77",
+   "phase": "P8",
+   "title": "Reel results by hand: 'How did it do?' box on each finished reel + Results page + CSV",
+   "owner": "Claude",
+   "status": "review",
+   "depends": [],
+   "done_when": "Hesham saves results for his first posted reel",
+   "evidence": "branch v2: reels_api.save_performance/performance/performance_csv, make.html How did it do?, index.html Results, tests PerformanceTests",
+   "notes": "Step 1 of T76.",
    "updated": "2026-11-01"
   }
  ],
@@ -1226,6 +1286,60 @@
    "who": "Claude",
    "task": "T68",
    "change": "created and fixed → review"
+  },
+  {
+   "time": "2026-11-01 20:30",
+   "who": "Claude",
+   "task": "T34",
+   "change": "status → review"
+  },
+  {
+   "time": "2026-11-01 20:30",
+   "who": "Claude",
+   "task": "T54",
+   "change": "status → review"
+  },
+  {
+   "time": "2026-11-01 20:30",
+   "who": "Claude",
+   "task": "T55",
+   "change": "status → review"
+  },
+  {
+   "time": "2026-11-01 20:30",
+   "who": "Claude",
+   "task": "T62",
+   "change": "status → review"
+  },
+  {
+   "time": "2026-11-01 20:30",
+   "who": "Claude",
+   "task": "T58",
+   "change": "status → review"
+  },
+  {
+   "time": "2026-11-01 20:30",
+   "who": "Claude",
+   "task": "T63",
+   "change": "status → review"
+  },
+  {
+   "time": "2026-11-01 20:30",
+   "who": "Claude",
+   "task": "T65",
+   "change": "status → review"
+  },
+  {
+   "time": "2026-11-01 20:30",
+   "who": "Claude",
+   "task": "T39",
+   "change": "status → review"
+  },
+  {
+   "time": "2026-11-01 20:30",
+   "who": "Claude",
+   "task": "T19",
+   "change": "status → review"
   }
  ]
 }

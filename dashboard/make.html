@@ -16,7 +16,7 @@
 
     status()                         -> {reels:[...], inbox:[...], busy:[...]}            GET  /api/reels
     upload(slug, session, file, opts, onProgress(sentBytes))                              POST /api/upload
-        raw file bytes as the body; headers X-Slug, X-Kind ("clip" | "logo"), X-Name (URI-encoded),
+        raw file bytes as the body; headers X-Slug, X-Kind ("clip" | "logo" | "cover_photo"), X-Name (URI-encoded),
         X-Session (random id from this page), X-Order (1, 2, ... = order the takes are joined in).
         Answers {ok, message}. 409 + message = show it to the user as is (it is written for him).
     saveNotes(slug, session, text)   -> {ok, message}                                     POST /api/reels/notes
@@ -35,7 +35,7 @@
       percent: 0..100,  eta: seconds left,  message: "Listening to your words",
       steps: [{key, label, detail, state: "done"|"active"|"waiting", fraction: 0..1, elapsed, expected, note}],
       draft:   "2026-11-01-store-tips/review/draft_540p.mp4",  draft_mtime,
-      finals:  ["reel_v1_instagram.mp4", "reel_v1_tiktok.mp4"],  package: ["1_video.mp4", ...],
+      finals:  ["reel_v1.mp4"],  version: 1,  cover: "<job>/review/cover.jpg",
       handles_set: true|false,  feedback: [{time, fix}]
     }
   A webhook backend only has to keep that object up to date per job and push it to the page
@@ -297,6 +297,15 @@ input[type=password]:focus{border-color:var(--violet)}
           </label>
           <input type="file" id="logoIn" accept=".svg,.png,image/svg+xml,image/png" hidden>
         </div>
+        <div class="slot">
+          <div class="head">Cover photo <span class="opt">optional</span> <button class="tip" type="button" data-tip="A cover image is made for every reel, with your title on it. Add a photo of you here to use it on the cover; without one, the best moment from your video is used. You can also change it after the draft.">?</button></div>
+          <label class="pick" id="cphPick" for="cphIn">
+            <img id="cphImg" alt="" hidden>
+            <span class="t" id="cphName">Choose a photo…</span>
+            <button class="ib" type="button" id="cphClear" aria-label="Remove cover photo" hidden>✕</button>
+          </label>
+          <input type="file" id="cphIn" accept=".jpg,.jpeg,.png,.webp,.heic,.heif,image/jpeg,image/png,image/webp,image/heic" hidden>
+        </div>
         <div class="slot wide">
           <div class="head">Notes for the editor <button class="tip" type="button" data-tip="Tell it what matters, in Arabic or English, like you'd brief a human editor. E.g. “Main point: reply to customers fast. Ask people to comment ‘store’.”">?</button></div>
           <textarea id="notes" dir="auto" maxlength="4000" placeholder="e.g. The key message is… / Put the hook on the first sentence / Ask viewers to comment “store”"></textarea>
@@ -306,8 +315,8 @@ input[type=password]:focus{border-color:var(--violet)}
           <p>Made from your voice. No file needed.</p>
         </div>
         <div class="slot off">
-          <div class="head">Background music <span class="badge">Coming soon</span> <button class="tip" type="button" data-tip="Automatic music and sound effects are being built. For now, add music in CapCut after you approve. The CapCut files are made for you.">?</button></div>
-          <p>For now, add music in CapCut after you approve.</p>
+          <div class="head">Background music <span class="badge">Coming soon</span> <button class="tip" type="button" data-tip="Automatic music and sound effects are being built. Add trending music in Instagram or TikTok when you post. Sound effects are being built.">?</button></div>
+          <p>Add trending music in Instagram or TikTok when you post.</p>
         </div>
       </div>
     </div>
@@ -368,7 +377,7 @@ function toast(title, text, kind="info", ms=7000){
 }
 
 /* ---------------------------------------------------------------- state */
-const S = { files: [], logo: null, session: rid(), slug: "", busy: false, uploadFrac: 0, uploadEta: 0, tracking: null, stopWatch: null, last: null, known: new Set() };
+const S = { files: [], logo: null, cph: null, session: rid(), slug: "", busy: false, uploadFrac: 0, uploadEta: 0, tracking: null, stopWatch: null, last: null, known: new Set() };
 let backend = null;
 
 /* ---------------------------------------------------------------- file list */
@@ -433,6 +442,16 @@ drop.addEventListener("drop", e=>{ if(!S.busy) addFiles(e.dataTransfer.files); }
 window.addEventListener("dragover", e=>e.preventDefault());
 window.addEventListener("drop", e=>{ e.preventDefault(); if(!$("#compose").hidden && !S.busy && e.dataTransfer.files.length) addFiles(e.dataTransfer.files); });
 
+/* ---------------------------------------------------------------- cover photo */
+const IMG_EXT=["jpg","jpeg","png","webp","heic","heif"];
+$("#cphIn").onchange=()=>{
+  const f=$("#cphIn").files[0]; $("#cphIn").value=""; if(!f) return;
+  if(!IMG_EXT.includes(ext(f.name))){ toast("That photo can't be used", "Use a JPG, PNG or WebP photo.", "error"); return; }
+  if(f.size>40*1024**2){ toast("Photo is too big", "Keep it under 40 MB.", "error"); return; }
+  S.cph=f; $("#cphImg").src=URL.createObjectURL(f); $("#cphImg").hidden=false; $("#cphName").textContent=f.name; $("#cphClear").hidden=false;
+};
+$("#cphClear").onclick=e=>{ e.preventDefault(); S.cph=null; $("#cphImg").hidden=true; $("#cphName").textContent="Choose a photo…"; $("#cphClear").hidden=true; };
+
 /* ---------------------------------------------------------------- logo + name */
 $("#logoIn").onchange=()=>{
   const f=$("#logoIn").files[0]; $("#logoIn").value=""; if(!f) return;
@@ -459,7 +478,7 @@ $("#makeBtn").onclick=async ()=>{
   S.busy=true; renderFiles(); $("#makeBtn").disabled=true;
   window.onbeforeunload = ()=> "Your video is still uploading. Leave anyway?";
   showTrack(S.slug, true);
-  const total = S.files.reduce((a,f)=>a+f.file.size,0) + (S.logo?S.logo.size:0);
+  const total = S.files.reduce((a,f)=>a+f.file.size,0) + (S.logo?S.logo.size:0) + (S.cph?S.cph.size:0);
   let doneBytes=0; const t0=performance.now();
   const onBytes = cur => { S.uploadFrac=(doneBytes+cur)/total; const sp=(doneBytes+cur)/Math.max(.1,(performance.now()-t0)/1000); S.uploadEta=(total-doneBytes-cur)/Math.max(1,sp); drawUpload(); };
   try{
@@ -470,6 +489,7 @@ $("#makeBtn").onclick=async ()=>{
       f.state="done"; f.sent=f.file.size; doneBytes+=f.file.size;
     }
     if(S.logo){ await backend.upload(S.slug, S.session, S.logo, {kind:"logo"}, onBytes); doneBytes+=S.logo.size; }
+    if(S.cph){ await backend.upload(S.slug, S.session, S.cph, {kind:"cover_photo"}, onBytes); doneBytes+=S.cph.size; }
     const notes=$("#notes").value.trim();
     if(notes){ const r=await backend.saveNotes(S.slug, S.session, notes); if(!r.ok) throw new Error(r.message); }
     S.uploadFrac=1; drawUpload();
@@ -500,7 +520,7 @@ const canNotify = () => "Notification" in window && Notification.permission === 
 function askNotify(){ try{ if("Notification" in window && Notification.permission==="default") Notification.requestPermission(); }catch(e){} }
 function notifyDone(p){
   if(!canNotify()) return;
-  const m = p.state==="ready" ? ["Draft ready","Click to watch it and comment or approve."] : p.state==="final" ? ["Final videos ready","Click to download them."] :
+  const m = p.state==="ready" ? ["Draft ready","Click to watch it and comment or approve."] : p.state==="final" ? ["Final video ready","Click to watch, download or comment."] :
             ["Reel stopped","Click to see why and try again."];
   try{ const n=new Notification("Reel Factory: "+m[0],{body:m[1],tag:"rf-"+(p.job||p.slug)}); n.onclick=()=>{ window.focus(); n.close(); }; }catch(e){}
 }
@@ -524,7 +544,7 @@ function backToCompose(){
 $("#newBtn").onclick=()=>{
   if(S.busy && S.uploadFrac<1){ toast("Upload in progress", "Wait for the upload to finish before starting another reel."); return; }
   S.files.forEach(f=>URL.revokeObjectURL(f.url)); S.files=[]; S.logo=null; S.session=rid(); S.busy=false;
-  $("#notes").value=""; $("#reelName").value=""; $("#logoClear").click(); $("#makeBtn").disabled=false;
+  $("#notes").value=""; $("#reelName").value=""; $("#logoClear").click(); $("#cphClear").click(); $("#makeBtn").disabled=false;
   renderFiles(); updateSlug(); backToCompose();
 };
 const UPLOAD_W = 0.08;   // share of the overall bar used by the upload
@@ -572,11 +592,90 @@ function watch(ref){
     drawSteps(p, uploading);
     if(p.state!=="running"){ if(S.seenRunning) notifyDone(p); S.busy=false; showResult(p); refreshContinue(); }
     else if(!S.seenRunning){ S.seenRunning=true; refreshContinue(); }
-    else { $("#trackTitle").textContent = p.mode==="final" ? "Making your final videos" : p.mode==="fix" ? "Making a new draft with your changes" : "Making your reel"; $("#result").hidden=true; }
+    else { $("#trackTitle").textContent = p.mode==="final" ? "Making your final video and cover" : p.mode==="fix" ? "Making a new draft with your changes" : "Making your reel"; $("#result").hidden=true; }
   });
 }
 
 /* ---------------------------------------------------------------- results */
+
+/* ---------------------------------------------------------------- cover image (thumbnail) */
+function coverBlock(p){
+  if(!p.cover && !p.cover_busy) return "";
+  const src = p.cover ? backend.mediaUrl(p.job, p.cover.split("/").slice(1).join("/"))+"?v="+(p.cover_mtime||0) : "";
+  return `<div class="cover" id="coverBox" style="border-top:1px solid var(--line);padding-top:14px;display:grid;gap:10px">
+    <b>Cover image (thumbnail)</b>
+    <div style="display:flex;gap:14px;align-items:flex-start;flex-wrap:wrap">
+      ${src?`<a href="${src}" target="_blank" rel="noopener"><img src="${src}" alt="Cover image" style="width:132px;aspect-ratio:9/16;object-fit:cover;border-radius:10px;border:1px solid var(--line)"></a>`:""}
+      <div style="display:grid;gap:8px;flex:1 1 180px">
+        <p class="small" style="margin:0" id="coverNote">${p.cover_busy?"Making your cover…":p.cover_own?"Your own image is being used.":"Our suggestion, made from your title and your video. Use it, or upload your own image."}</p>
+        ${src?`<a class="btn primary" href="${src}" download="cover.jpg">Download cover ↓</a>`:""}
+        <button class="btn" type="button" id="cvOwn">Upload my own cover ↑</button>
+        <button class="btn ghost" type="button" id="cvPhoto">Use my photo with our title</button>
+        ${p.cover_own?'<button class="btn ghost" type="button" id="cvAuto">Back to automatic</button>':""}
+      </div>
+    </div>
+    <input type="file" id="cvIn" accept=".jpg,.jpeg,.png,.webp,.heic,.heif,image/jpeg,image/png,image/webp,image/heic" hidden>
+  </div>`;
+}
+function wireCover(p){
+  const box=$("#coverBox"); if(!box) return;
+  let kind="photo";
+  const pick=k=>{ kind=k; $("#cvIn").click(); };
+  $("#cvPhoto").onclick=()=>pick("photo"); $("#cvOwn").onclick=()=>pick("own");
+  const a=$("#cvAuto"); if(a) a.onclick=async ()=>{ const r=await backend.post("cover_reset",{job:p.job}); if(!r.ok) return toast("Couldn't change the cover", r.message, "error"); waitCover(p); };
+  $("#cvIn").onchange=async ()=>{
+    const f=$("#cvIn").files[0]; $("#cvIn").value=""; if(!f) return;
+    if(!IMG_EXT.includes(ext(f.name))) return toast("That image can't be used", "Use a JPG, PNG or WebP image.", "error");
+    $("#coverNote").textContent="Uploading…";
+    try{ await backend.coverUpload(p.job, kind, f); }catch(e){ $("#coverNote").textContent=""; return toast("Couldn't upload the image", e.message, "error"); }
+    waitCover(p);
+  };
+  if(p.cover_busy) waitCover(p);
+}
+async function waitCover(p){
+  const n=$("#coverNote"); if(n) n.textContent="Making your cover… (about 20 seconds)";
+  for(let i=0;i<90;i++){
+    await new Promise(r=>setTimeout(r,2000));
+    try{ const q=await (await fetch("/api/progress?ref="+encodeURIComponent(p.job),{cache:"no-store"})).json();
+      if(!q.cover_busy){ const box=$("#coverBox"); if(box){ box.outerHTML=coverBlock({...p,...q,job:p.job}); wireCover({...p,...q,job:p.job}); } return; } }catch(e){}
+  }
+}
+
+/* ---------------------------------------------------------------- how did it do? (results after posting) */
+const PERF=[["views","Views"],["avg_watch_s","Average watch time (seconds)"],["full_pct","Watched to the end (%)"],["likes","Likes"],["comments","Comments"],["shares","Shares"],["saves","Saves"],["follows","New follows"]];
+const WHEN_TXT={"48h":"2 days after posting","7d":"7 days after posting","30d":"30 days after posting"};
+function perfBlock(p){
+  return `<div id="perfBox" style="border-top:1px solid var(--line);padding-top:14px;display:grid;gap:10px">
+    <b>How did it do?</b>
+    <p class="small" style="margin:0">After you post, open Insights on Instagram or TikTok and copy the numbers here, 2 days after posting (and again after 7 days if you can). Reel Factory learns what works for your audience.</p>
+    <div class="row" style="gap:8px;flex-wrap:wrap">
+      <select id="pfPlat" class="btn" style="padding:9px 12px"><option value="instagram">Instagram</option><option value="tiktok">TikTok</option></select>
+      <select id="pfWhen" class="btn" style="padding:9px 12px">${Object.entries(WHEN_TXT).map(([k,v])=>`<option value="${k}">${v}</option>`).join("")}</select>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px">
+      ${PERF.map(([k,l])=>`<label class="small" style="display:grid;gap:4px">${l}<input type="text" inputmode="decimal" id="pf_${k}" autocomplete="off"></label>`).join("")}
+    </div>
+    <div class="row"><button class="btn violet" type="button" id="pfSave">Save results</button></div>
+    <div id="pfList" class="small"></div>
+  </div>`;
+}
+async function loadPerf(job){
+  try{ const d=await (await fetch("/api/performance?job="+encodeURIComponent(job),{cache:"no-store"})).json();
+    const r=(d.reels||[])[0]; const L=$("#pfList"); if(!L) return;
+    L.innerHTML = r&&r.entries.length ? "<b>Saved:</b><br>"+r.entries.map(e=>`${e.platform==="tiktok"?"TikTok":"Instagram"}, ${WHEN_TXT[e.when]||e.when}: ${Number(e.views).toLocaleString()} views${e.watch_pct!=null?`, watched ${e.watch_pct}% on average`:""}${e.saves!=null?`, ${e.saves} saves`:""}`).join("<br>") : "";
+  }catch(e){}
+}
+function wirePerf(p){
+  if(!$("#perfBox")) return;
+  $("#pfSave").onclick=async ()=>{
+    const data={platform:$("#pfPlat").value, when:$("#pfWhen").value}; PERF.forEach(([k])=>{ const v=$("#pf_"+k).value.trim(); if(v) data[k]=v; });
+    const r=await backend.post("performance",{job:p.job,data});
+    if(!r.ok) return toast("Couldn't save", r.message, "error");
+    toast("Results saved", r.message, "ok"); PERF.forEach(([k])=>$("#pf_"+k).value=""); loadPerf(p.job);
+  };
+  loadPerf(p.job);
+}
+
 function showResult(p){
   const R=$("#result"); R.hidden=false; $("#trackLede").hidden=true;
   const job=p.job;
@@ -587,14 +686,14 @@ function showResult(p){
       <div class="player"><video src="${src}" controls playsinline preload="metadata"></video></div>
       <div class="rside">
         <div class="done-head"><span class="ok">✓</span><h2>Watch it, then choose</h2></div>
-        <p class="small" style="margin:0">This is a quick preview (lower quality). Your final videos are made in high quality when you approve.</p>
+        <p class="small" style="margin:0">This is a quick preview (lower quality). When you approve, your final video is made in high quality, then a cover image.</p>
         <label for="fixText" style="font-weight:600">Want changes?</label>
         <textarea id="fixText" dir="auto" placeholder="Tell it like you'd tell an editor: “hook shorter”, “remove the flash”, “bigger captions”. Wrong word? Write: wrong => right"></textarea>
         <div class="row"><button class="btn violet" id="sendFix">Send changes</button></div>
         <div style="border-top:1px solid var(--line);padding-top:14px;display:grid;gap:10px">
           <b>Happy with it?</b>
           ${p.handles_set?"":`<div class="warn">Your Instagram and TikTok handles aren't set yet, and the final videos need them on the last card. Send them to Claude once, then come back and approve.</div>`}
-          <div class="row"><button class="btn primary" id="approve" ${p.handles_set?"":"disabled"}>Approve &amp; make final videos</button></div>
+          <div class="row"><button class="btn primary" id="approve" ${p.handles_set?"":"disabled"}>Approve &amp; make final video</button></div>
         </div>
         ${p.feedback&&p.feedback.length?`<details><summary class="small">Your earlier comments (${p.feedback.length})</summary><div class="history" style="margin-top:6px">${p.feedback.map(f=>`<div>${esc(f.time)} · ${esc(f.fix)}</div>`).join("")}</div></details>`:""}
       </div></div>`;
@@ -605,25 +704,34 @@ function showResult(p){
     };
     const ap=$("#approve"); if(ap) ap.onclick=async ()=>{
       ap.disabled=true; const r=await backend.approve(job); if(!r.ok){ ap.disabled=false; return toast("Couldn't approve", r.message, "error"); }
-      toast("Approved", "Making your high-quality videos now.", "ok"); showTrack(job,false); watch(job);
+      toast("Approved", "Making your final video, then your cover image.", "ok"); showTrack(job,false); watch(job);
     };
   } else if(p.state==="final"){
-    $("#trackTitle").textContent="Your videos are ready"; $("#overall").hidden=true;
-    const finals=p.finals||[]; const ig=finals.find(f=>/instagram/.test(f))||finals[0];
-    const nice=f=>/instagram/.test(f)?"Instagram":/tiktok/.test(f)?"TikTok":f;
+    $("#trackTitle").textContent="Your final video is ready"; $("#overall").hidden=true;
+    const fin=(p.finals||[]).find(f=>!/_tiktok/.test(f))||(p.finals||[])[0];
+    const fsrc=fin?backend.mediaUrl(job,"final/"+fin):"";
     R.innerHTML=`<div class="result">
-      <div class="player">${ig?`<video src="${backend.mediaUrl(job,"final/"+ig)}" controls playsinline preload="metadata"></video>`:""}</div>
+      <div class="player">${fin?`<video src="${fsrc}" controls playsinline preload="metadata"></video>`:""}</div>
       <div class="rside">
-        <div class="done-head"><span class="ok">✓</span><h2>Download and post</h2></div>
-        <div class="dl">${finals.map(f=>`<a class="btn primary" href="${backend.mediaUrl(job,"final/"+f)}" download="${esc(f)}"><span>Download processed video · ${nice(f)}</span><span aria-hidden="true">↓</span></a>`).join("")||'<p class="small">No final video found.</p>'}</div>
-        ${(p.package||[]).length?`<div style="border-top:1px solid var(--line);padding-top:14px;display:grid;gap:8px">
-          <b>Want to tweak it in CapCut?</b>
-          <p class="small" style="margin:0">Drag <b>1_video.mp4</b> onto the timeline and <b>2_graphics.mov</b> on the track above it. They line up by themselves.</p>
-          <div class="row">${p.package.map(f=>`<a class="btn" href="${backend.mediaUrl(job,"edit_package/"+f)}" download="${esc(f)}">${esc(f)}</a>`).join("")}</div>
-          <div class="row"><button class="btn ghost" id="reveal">Open in Finder</button></div></div>`:""}
+        <div class="done-head"><span class="ok">✓</span><h2>Final preview</h2></div>
+        <p class="small" style="margin:0">High quality. The same video works for Instagram and TikTok.</p>
+        ${fin?`<div class="dl"><a class="btn primary" href="${fsrc}" download="${esc(fin)}"><span>Download final video</span><span aria-hidden="true">↓</span></a></div>`:'<p class="small">No final video found.</p>'}
+        <label for="fixText" style="font-weight:600">Want changes?</label>
+        <textarea id="fixText" dir="auto" placeholder="Write your editing comments: “remove the second card”, “bigger captions”. Wrong word? Write: wrong => right"></textarea>
+        <p class="small" style="margin:0">Sending changes makes a new draft. Approve it again to get the new final video. This one stays saved.</p>
+        <div class="row"><button class="btn violet" id="sendFix">Send changes</button></div>
+        ${coverBlock(p)}
+        ${perfBlock(p)}
+        ${p.feedback&&p.feedback.length?`<details><summary class="small">Your earlier comments (${p.feedback.length})</summary><div class="history" style="margin-top:6px">${p.feedback.map(f=>`<div>${esc(f.time)} · ${esc(f.fix)}</div>`).join("")}</div></details>`:""}
         <p class="small" style="margin:0">Nothing is posted for you. Post it yourself when you're ready.</p>
-        <div class="row"><button class="btn violet" id="another">Make another reel</button></div>
+        <div class="row"><button class="btn ghost" id="reveal">Open in Finder</button><button class="btn violet" id="another">Make another reel</button></div>
       </div></div>`;
+    wireCover(p); wirePerf(p);
+    $("#sendFix").onclick=async ()=>{
+      const t=$("#fixText").value.trim(); if(!t){ toast("Write what to change first", "For example: “remove the second card”. Then click Send changes.", "error"); $("#fixText").focus(); return; }
+      const r=await backend.fix(job,t); if(!r.ok) return toast("Couldn't send your changes", r.message, "error");
+      toast("Changes sent", "A new draft is being made. It usually takes a few minutes.", "ok"); showTrack(job,false); watch(job);
+    };
     const rv=$("#reveal"); if(rv) rv.onclick=async ()=>{ const r=await backend.reveal(job); toast(r.ok?"Opened in Finder":"Couldn't open Finder", r.ok?"":r.message, r.ok?"ok":"error"); };
     $("#another").onclick=()=>$("#newBtn").click();
   } else {
@@ -679,6 +787,14 @@ const RealBackend = {
   },
   async post(action, body){ try{ const r=await fetch("/api/reels/"+action,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)}); return await r.json(); }catch(e){ return {ok:false,message:"The dashboard didn't answer. Check that Reel Factory.command is running."}; } },
   saveNotes(slug, session, text){ return this.post("notes",{slug,session,text}); },
+  coverUpload(job, kind, file){
+    return new Promise((resolve, reject)=>{
+      const x=new XMLHttpRequest(); x.open("POST","/api/cover");
+      x.setRequestHeader("X-Job",job); x.setRequestHeader("X-Kind",kind); x.setRequestHeader("X-Name",encodeURIComponent(file.name));
+      x.onload=()=>{ let j={}; try{j=JSON.parse(x.responseText)}catch(e){} (x.status===200&&j.ok)? resolve(j) : reject(new Error(j.message||("upload failed ("+x.status+")"))); };
+      x.onerror=()=>reject(new Error("the dashboard didn't answer")); x.send(file);
+    });
+  },
   check(slug, session){ return this.post("check",{slug,session}); },
   start(slug){ return this.post("start",{slug}); },
   fix(job,text){ return this.post("fix",{job,text}); },
@@ -706,7 +822,7 @@ const DemoBackend = (()=>{
   const today=new Date().toISOString().slice(0,10);
   const PLAN=[["prepare",4],["listen",7],["story",3],["plan",5],["render",7]];
   const LABEL={prepare:["Preparing your video","Joining your takes and making a working copy"],listen:["Listening to your words","Writing down every word with its timing, then fixing spellings"],story:["Choosing the story and cutting","Picking the strongest part and removing pauses and false starts"],plan:["Planning captions and visuals","Placing captions, titles, cards and zooms on your words"],render:["Rendering and checking the draft","Making the draft video and checking every frame"]};
-  const FIN=[["instagram","Rendering the Instagram video","High quality, with your Instagram handle",3],["tiktok","Rendering the TikTok video","High quality, with your TikTok handle",3],["capcut","Making the CapCut files","Your cut video and a see-through graphics layer",3]];
+  const FIN=[["video","Making your final video","High quality, one video for Instagram and TikTok",5],["cover","Making your cover image","A suggestion; you can upload your own after",2]];
   function snap(j){
     const now=Date.now()/1000, el=now-j.t0;
     const plan = j.mode==="final" ? FIN.map(f=>[f[0],f[3]]) : j.mode==="fix" ? PLAN.map(([k,s])=>[k,["plan","render"].includes(k)?s:0]) : PLAN;
@@ -721,7 +837,7 @@ const DemoBackend = (()=>{
     if(!running && busy===j.job){ busy=null; j.status = j.mode==="final" ? "final" : "ready"; }
     const p={ref:j.job, job:j.job, slug:j.slug, mode:j.mode, state: running?"running": j.status, percent:pct, eta:Math.max(0,(total-el)*40), message: steps.find(s=>s.state==="active")?.label||"", steps, handles_set:true, feedback:j.feedback, draft:j.job+"/review/draft_540p.mp4"};
     if(p.state==="ready") p.message="Your draft is ready";
-    if(p.state==="final"){ p.message="Your videos are ready"; p.finals=["reel_v1_instagram.mp4","reel_v1_tiktok.mp4"]; p.package=["1_video.mp4","2_graphics.mov","captions_ar.srt"]; }
+    if(p.state==="final"){ p.message="Your video is ready"; p.finals=["reel_v1.mp4"]; p.version=1; }
     return p;
   }
   const wait=ms=>new Promise(r=>setTimeout(r,ms));
@@ -741,6 +857,8 @@ const DemoBackend = (()=>{
     async approve(job){ Object.assign(jobs[job],{t0:Date.now()/1000,mode:"final"}); busy=job; return {ok:true}; },
     async resume(job){ return this.fix(job,"(try again)"); },
     async reveal(){ return {ok:false,message:"Finder can't be opened in demo mode."}; },
+    async post(){ return {ok:false,message:"Not available in demo mode."}; },
+    async coverUpload(){ throw new Error("Not available in demo mode."); },
     mediaUrl(job){ const j=jobs[job]; const f=j&&j.files.find(f=>!/\.(avi|mkv)$/i.test(f.name)); if(!f) return ""; return (f._url=f._url||URL.createObjectURL(f)); },
     watch(ref, onUpdate){
       const id=jobs[ref]?ref:today+"-"+ref; let t=null;

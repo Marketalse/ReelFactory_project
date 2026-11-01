@@ -118,10 +118,19 @@ class H(SimpleHTTPRequestHandler):
             p = reels_api.media_path(unquote(self.path[7:].split("?")[0]))
             if not p:
                 return self.send_json(404, {"error": "not found"})
-            ctype = {".mp4": "video/mp4", ".mov": "video/quicktime", ".srt": "text/plain; charset=utf-8"}.get(os.path.splitext(p)[1], "image/jpeg")
+            ctype = {".jpg": "image/jpeg", ".mp4": "video/mp4", ".mov": "video/quicktime", ".srt": "text/plain; charset=utf-8"}.get(os.path.splitext(p)[1], "image/jpeg")
             return self.send_file(p, ctype)
         if self.path.startswith("/api/tasks"):
             return self.send_json(200, load(TASKS, {"tasks": [], "version": 0}))
+        if self.path.startswith("/api/performance.csv"):
+            b = reels_api.performance_csv().encode("utf-8")
+            self.send_response(200); self.send_header("Content-Type", "text/csv; charset=utf-8")
+            self.send_header("Content-Disposition", 'attachment; filename="reel_results.csv"')
+            self.send_header("Content-Length", str(len(b))); self.end_headers(); self.wfile.write(b); return
+        if self.path.startswith("/api/performance"):
+            return self.send_json(200, {"reels": reels_api.performance(q.get("job") or None), "fields": {k: v[0] for k, v in reels_api.PERF_FIELDS.items()}})
+        if self.path.startswith("/api/spend"):
+            return self.send_json(200, reels_api.spend())
         if self.path.startswith("/api/expenses"):
             return self.send_json(200, load(EXPENSES, {"rows": []}))
         if self.path in ("/", ""):
@@ -176,6 +185,16 @@ class H(SimpleHTTPRequestHandler):
             else:
                 return self.send_json(404, {"ok": False, "message": "unknown action"})
             return self.send_json(200 if ok else 400, {"ok": ok, "message": msg})
+        if self.path.startswith("/api/cover"):
+            h = self.headers
+            try:
+                n = int(h.get("Content-Length", 0))
+            except ValueError:
+                return self.send_json(400, {"ok": False, "message": "bad upload headers"})
+            ok, msg = reels_api.cover_upload(h.get("X-Job"), h.get("X-Kind"), unquote(h.get("X-Name", "")), n, self.rfile)
+            if not ok:
+                self.close_connection = True
+            return self.send_json(200 if ok else 409, {"ok": ok, "message": msg})
         if self.path.startswith("/api/upload"):
             h = self.headers
             try:
@@ -196,6 +215,8 @@ class H(SimpleHTTPRequestHandler):
             fn = {"start": lambda: reels_api.start(body.get("slug")), "resume": lambda: reels_api.resume(body.get("job")),
                   "fix": lambda: reels_api.fix(body.get("job"), body.get("text")), "approve": lambda: reels_api.approve(body.get("job")),
                   "reveal": lambda: reels_api.reveal(body.get("job")),
+                  "cover_reset": lambda: reels_api.cover_reset(body.get("job")),
+                  "performance": lambda: reels_api.save_performance(body.get("job"), body.get("data")),
                   "check": lambda: reels_api.check_name(body.get("slug"), body.get("session")),
                   "notes": lambda: reels_api.save_notes(body.get("slug"), body.get("session"), body.get("text"))}.get(action)
             if not fn:

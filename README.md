@@ -15,7 +15,7 @@ Turns Hesham's raw talking-head clips into reviewable Instagram/TikTok reels (40
 | Brand, CTA, captions | `config/brand.json` |
 | Rhythm limits | `config/rules.json` |
 | Word spellings | `config/glossary.json` |
-| How Hermes works | `dashboard/HERMES_TASKS.md` |
+| How a helper agent (e.g. Hermes) picks up board tasks (optional) | `dashboard/HERMES_TASKS.md` |
 
 ## Handing in a reel
 ```

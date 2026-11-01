@@ -27,7 +27,7 @@ Every run is written to `jobs/<job>/run.log`; `job.json → status` is updated b
 | 11 | QA + Committee | **QA (works):** `scripts/qa_check.py` on every draft and final: length, black frames, frozen picture, audio, loudness, captions = speech, numbers on screen were said, no placeholder text, handle set. Errors stop before Gate 2. **Committee:** script/visual/audience critics. | QA $0; committee ~$0.10–0.20 | QA works; committee awaits approval (T14) |
 | — | **Gate 2** | Watch the draft; `--approve` or `--fix "what to change"` (re-plans with your words, keeps everything else). | — | works |
 | 12 | Final | `--approve`: one high-quality 1080×1920 file per platform (`final/reel_vN_<platform>.mp4`, never overwritten), duration checked. Refuses until your handles are set. | $0 | works in code; first real run after T07 |
-| 13 | Learn | Visual ledger + lessons; `performance.csv` at 48 h. | $0 | coming (T45, T49) |
+| 13 | Learn | Lessons; results typed in on the page ("How did it do?") at 2 and 7 days; Results page + CSV. | $0 | results: yes; learning: coming (T76) |
 
 ## Money guard (works)
 - Per reel: warning at `budget_usd.per_reel_warn`; hard stop at `per_reel_stop` (the `--budget` default).

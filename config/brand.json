@@ -23,8 +23,9 @@
     "max_words_on_screen": 3,
     "position": "lower_middle",
     "safe_zone_px": {
-      "top": 120,
-      "bottom": 280
+      "_see": "config/rules.json safe_zone",
+      "top": 250,
+      "bottom": 420
     },
     "keyword": {
       "color": "accent",
@@ -39,6 +40,8 @@
     "max": 90
   },
   "cta": {
+    "enabled": false,
+    "_enabled_note": "Hesham 2026-11-01: keep reels clean, no end card / follow ask / handle for now (focus on attention). Set true to bring the end card back.",
     "default_type": "follow",
     "show_handle": "cta_card_only",
     "platform_variants": {
@@ -64,10 +67,11 @@
   "audio": {
     "voice_target_lufs": -14,
     "music": {
-      "enabled": true,
+      "enabled": false,
       "level_under_voice_db": -20,
       "duck_while_speaking": true,
-      "source": "CONFIRM licensed library"
+      "source": "CONFIRM licensed library",
+      "_note": "Hesham 2026-11-01: mostly adds trending music inside Instagram/TikTok when posting, sometimes in CapCut. So finals ship voice + SFX, no music baked in; music bed (licensed, ducked) stays optional per reel."
     },
     "sfx": {
       "enabled": true,

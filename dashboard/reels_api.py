@@ -1,6 +1,6 @@
 """Reels API for the dashboard: list reels, start one, stream the draft, send comments, approve.
 Runs scripts/reel.py in the background (one at a time) and never through a shell. Local only."""
-import json, os, re, subprocess, sys, threading, time
+import glob, json, os, re, subprocess, sys, threading, time
 
 ROOT = os.environ.get("RF_ROOT") or os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 JOBS, INBOX = os.path.join(ROOT, "jobs"), os.path.join(ROOT, "inbox")
@@ -138,7 +138,7 @@ def approve(job):
 def media_path(rel):
     """Only drafts, contact sheets and finals inside jobs/ may be served."""
     m = re.match(r"^(\d{4}-\d{2}-\d{2}-[a-z0-9-]+)/(review/draft_540p\.mp4|review/contact_sheet\.jpg|final/[A-Za-z0-9_.-]+\.mp4"
-                 r"|edit_package/(?:1_video\.mp4|2_graphics\.mov|captions_ar\.srt))$", rel or "")
+                 r"|review/cover\.jpg|final/cover_v\d+\.jpg|edit_package/(?:1_video\.mp4|2_graphics\.mov|captions_ar\.srt))$", rel or "")
     if not m:
         return None
     p = os.path.realpath(os.path.join(JOBS, rel))
@@ -163,7 +163,10 @@ def reveal(job):
 UPLOAD_KINDS = {                       # kind -> (sub-folder, allowed extensions, max bytes)
     "clip": ("clips", VIDEO, 20 << 30),
     "logo": ("assets", (".svg", ".png"), 50 << 20),
+    "cover_photo": ("cover", (".jpg", ".jpeg", ".png", ".webp", ".heic", ".heif"), 40 << 20),
+    "cover_own": ("cover", (".jpg", ".jpeg", ".png", ".webp", ".heic", ".heif"), 40 << 20),
 }
+COVER_EXT = (".jpg", ".jpeg", ".png", ".webp", ".heic", ".heif")
 SESSION = re.compile(r"^[a-z0-9]{8,40}$")
 MARK = ".upload_session"
 
@@ -220,6 +223,12 @@ def upload(slug, kind, name, session, length, stream, order=0):
         return False, d
     if kind == "clip" and order:
         safe = f"{int(order):02d}-{safe}"          # takes are joined in name order
+    if kind.startswith("cover_"):
+        safe = ("photo" if kind == "cover_photo" else "own") + os.path.splitext(safe)[1]
+        for e in COVER_EXT:                         # one photo / one own cover per reel
+            old = os.path.join(d, sub, safe.rsplit(".", 1)[0] + e)
+            if os.path.exists(old):
+                os.remove(old)
     dest = os.path.join(d, sub); os.makedirs(dest, exist_ok=True)
     path = os.path.join(dest, safe); tmp = path + ".part"
     left = length
@@ -279,13 +288,12 @@ STEPS = [
     ("render", "Rendering and checking the draft", "Making the draft video and checking every frame", ["draft", "report"]),
 ]
 FINAL_STEPS = [
-    ("instagram", "Rendering the Instagram video", "High quality, with your Instagram handle"),
-    ("tiktok", "Rendering the TikTok video", "High quality, with your TikTok handle"),
-    ("capcut", "Making the CapCut files", "Your cut video and a see-through graphics layer"),
+    ("video", "Making your final video", "High quality, one video for Instagram and TikTok"),
+    ("cover", "Making your cover image", "A suggestion; you can upload your own after"),
 ]
 DEFAULT_SECS = {"ingest": 60, "transcribe": 270, "fix": 15, "review": 1, "selects": 20, "edl": 2, "keyframes": 15,
                 "shotlog": 25, "plan": 25, "compile": 5, "draft": 300, "report": 2}
-FINAL_SECS = {"instagram": 300, "tiktok": 300, "capcut": 420}
+FINAL_SECS = {"video": 300, "cover": 40}
 ORDER = [s for st in STEPS for s in st[3]]
 
 
@@ -362,7 +370,7 @@ def progress(ref):
     if mode == "final":
         steps, done_s = [], 0.0
         t0 = started
-        files = {"instagram": "final/reel_v*_instagram.mp4", "tiktok": "final/reel_v*_tiktok.mp4", "capcut": "edit_package/2_graphics.mov"}
+        files = {"video": "final/reel_v*.mp4", "cover": "review/cover.jpg"}
         import glob as _g
         for k, label, detail in FINAL_STEPS:
             hit = [p for p in _g.glob(os.path.join(jd, files[k])) if os.path.getmtime(p) >= started - 1]
@@ -434,16 +442,21 @@ def progress(ref):
         stop = _stop_text(runlog)
     if status == "rendered" and not stop:
         finals = sorted(f for f in os.listdir(os.path.join(jd, "final")) if f.endswith(".mp4") and "QA_FAILED" not in f) if os.path.isdir(os.path.join(jd, "final")) else []
-        latest = max([int(m) for f in finals for m in re.findall(r"reel_v(\d+)_", f)] or [0])
-        out.update(state="final", percent=100.0, eta=0, message="Your videos are ready",
-                   finals=[f for f in finals if f.startswith(f"reel_v{latest}_")],
-                   package=[f for f in ("1_video.mp4", "2_graphics.mov", "captions_ar.srt") if os.path.exists(os.path.join(jd, "edit_package", f))])
+        latest = max([int(m) for f in finals for m in re.findall(r"reel_v(\d+)", f)] or [0])
+        out.update(state="final", percent=100.0, eta=0, message="Your video is ready", version=latest,
+                   finals=[f for f in finals if re.match(rf"reel_v{latest}(?:_|\.)", f)])
     elif status == "preview_ready" and not stop:
         out.update(state="ready", percent=100.0, eta=0, message="Your draft is ready")
     elif stop:
         out.update(state="stopped", message=stop)
     else:
         out.update(state="paused", message="This reel was interrupted (the dashboard was closed?). Click Try again to continue.")
+    cp = os.path.join(jd, "review", "cover.jpg") if jd else ""
+    if cp and os.path.exists(cp):
+        out["cover"] = f"{job}/review/cover.jpg"; out["cover_mtime"] = int(os.path.getmtime(cp))
+        out["cover_own"] = any(os.path.exists(os.path.join(jd, "cover", n + e)) for n in ("own", "photo") for e in COVER_EXT)
+    if job in _covering:
+        out["cover_busy"] = True
     if jd and os.path.exists(os.path.join(jd, "review", "draft_540p.mp4")):
         out["draft"] = f"{job}/review/draft_540p.mp4"
         out["draft_mtime"] = int(os.path.getmtime(os.path.join(jd, "review", "draft_540p.mp4")))
@@ -453,6 +466,198 @@ def progress(ref):
 
 
 def _handles_set():
+    """Handles only matter when the end card is on (config/brand.json -> cta.enabled)."""
     b = _j(os.path.join(ROOT, "config", "brand.json"), {}) or {}
+    if (b.get("cta") or {}).get("enabled", True) is False:
+        return True
     h = b.get("handles") or {}
     return bool(h) and all(isinstance(v, str) and v.startswith("@") and "CONFIRM" not in v for v in h.values())
+
+
+STAGE_WORDS = {"fix": "Fixing transcript words", "selects": "Choosing the story", "plan": "Planning the edit",
+               "repair": "Repairing the plan", "shotlog": "Looking at the video", "committee": "Quality review"}
+
+
+def spend(month=None):
+    """This month's AI cost by step and by model (from jobs/*/cost.json), plus a month-end projection."""
+    import calendar
+    from datetime import date
+    today = date.today(); month = month or today.isoformat()[:7]
+    by_step, by_model, reels, total = {}, {}, set(), 0.0
+    for p in glob.glob(os.path.join(ROOT, "jobs", month + "-*", "cost.json")):
+        try:
+            calls = json.load(open(p, encoding="utf-8")).get("calls") or []
+        except (OSError, ValueError):
+            continue
+        for c in calls:
+            amt = float(c.get("cost") or 0); total += amt
+            st = str(c.get("stage", "?")).split(":")[0]
+            step = STAGE_WORDS.get(st, st)
+            by_step[step] = by_step.get(step, 0) + amt
+            m = str(c.get("model", "?")).split("/")[-1]
+            by_model[m] = by_model.get(m, 0) + amt
+        if calls:
+            reels.add(os.path.basename(os.path.dirname(p)))
+    days = calendar.monthrange(int(month[:4]), int(month[5:7]))[1]
+    elapsed = today.day if month == today.isoformat()[:7] else days
+    rnd = lambda d: [{"name": k, "amount": round(v, 4)} for k, v in sorted(d.items(), key=lambda x: -x[1])]
+    return {"month": month, "total": round(total, 4), "reels": len(reels),
+            "per_reel": round(total / len(reels), 4) if reels else 0.0,
+            "projection": round(total / max(1, elapsed) * days, 2), "by_step": rnd(by_step), "by_model": rnd(by_model)}
+
+
+# ----------------------------------------------------------------------------- cover image
+_covering = set()
+
+
+def _remake_cover(job):
+    def work():
+        try:
+            subprocess.run([sys.executable, os.path.join(ROOT, "scripts", "cover.py"), os.path.join(JOBS, job)],
+                           cwd=ROOT, capture_output=True, text=True, timeout=600)
+        finally:
+            _covering.discard(job)
+    _covering.add(job)
+    threading.Thread(target=work, daemon=True).start()
+
+
+def cover_upload(job, kind, name, length, stream):
+    """After the draft: Hesham's own photo (kind 'photo') or whole cover (kind 'own'), then the cover is made again."""
+    if not JOB.match(job or "") or not os.path.isdir(os.path.join(JOBS, job)):
+        return False, "unknown reel"
+    if kind not in ("photo", "own"):
+        return False, "unknown cover type"
+    ext = os.path.splitext(_safe_name(name))[1]
+    if ext not in COVER_EXT:
+        return False, f"{name}: use a JPG, PNG, WebP or iPhone (HEIC) photo"
+    if not 0 < length <= 40 << 20:
+        return False, f"{name}: image is empty or larger than 40 MB"
+    d = os.path.join(JOBS, job, "cover"); os.makedirs(d, exist_ok=True)
+    tmp = os.path.join(d, ".upload.part"); left = length
+    with open(tmp, "wb") as f:
+        while left > 0:
+            chunk = stream.read(min(1 << 20, left))
+            if not chunk:
+                break
+            f.write(chunk); left -= len(chunk)
+    if left:
+        os.remove(tmp)
+        return False, f"{name}: upload was interrupted, try again"
+    for n in ("photo", "own"):                      # the new choice replaces both earlier ones
+        for e in COVER_EXT:
+            p = os.path.join(d, n + e)
+            if os.path.exists(p):
+                os.remove(p)
+    os.replace(tmp, os.path.join(d, kind + ext))
+    _remake_cover(job)
+    return True, "Making your cover…"
+
+
+def cover_reset(job):
+    """Back to the automatic cover (a frame from the video)."""
+    if not JOB.match(job or "") or not os.path.isdir(os.path.join(JOBS, job)):
+        return False, "unknown reel"
+    for n in ("photo", "own"):
+        for e in COVER_EXT:
+            p = os.path.join(JOBS, job, "cover", n + e)
+            if os.path.exists(p):
+                os.remove(p)
+    _remake_cover(job)
+    return True, "Making the automatic cover…"
+
+
+# ----------------------------------------------------------------------------- performance (how a posted reel did)
+PERF_FIELDS = {          # key -> (label, max)
+    "views": ("Views", 10**10), "avg_watch_s": ("Average watch time (s)", 3600), "full_pct": ("Watched to the end (%)", 100),
+    "likes": ("Likes", 10**9), "comments": ("Comments", 10**9), "shares": ("Shares", 10**9), "saves": ("Saves", 10**9),
+    "follows": ("New follows", 10**9),
+}
+PLATFORMS = ("instagram", "tiktok")
+WHEN = ("48h", "7d", "30d")
+
+
+def save_performance(job, data):
+    """Hesham types the numbers from Instagram/TikTok Insights. Kept per reel in jobs/<job>/performance.json."""
+    if not JOB.match(job or "") or not os.path.isdir(os.path.join(JOBS, job)):
+        return False, "unknown reel"
+    data = data or {}
+    platform, when = data.get("platform"), data.get("when")
+    if platform not in PLATFORMS:
+        return False, "choose Instagram or TikTok"
+    if when not in WHEN:
+        return False, "choose when you checked (2 days, 7 days or 30 days after posting)"
+    entry = {"platform": platform, "when": when, "saved": time.strftime("%Y-%m-%d %H:%M")}
+    for k, (label, hi) in PERF_FIELDS.items():
+        v = data.get(k)
+        if v in (None, ""):
+            continue
+        try:
+            v = float(str(v).replace(",", "").strip())
+        except ValueError:
+            return False, f"{label}: type a number"
+        if not 0 <= v <= hi:
+            return False, f"{label}: that number looks wrong"
+        entry[k] = int(v) if k not in ("avg_watch_s", "full_pct") else round(v, 1)
+    if "views" not in entry:
+        return False, "Views is needed"
+    p = os.path.join(JOBS, job, "performance.json")
+    d = _j(p, {"entries": []})
+    d["entries"] = [e for e in d.get("entries", []) if (e.get("platform"), e.get("when")) != (platform, when)] + [entry]
+    tmp = p + ".tmp"
+    json.dump(d, open(tmp, "w", encoding="utf-8"), indent=1); os.replace(tmp, p)
+    return True, "Saved. Thanks: every result teaches Reel Factory what works."
+
+
+def edit_facts(job):
+    """What the edit was (for learning later): length, hook, moments, zooms, captions."""
+    jd = os.path.join(JOBS, job)
+    tl = _j(os.path.join(jd, "timeline.json"), {})
+    scenes = tl.get("scenes", [])
+    hook = next((s.get("values", {}) for s in scenes if s.get("block") == "hook_two_tone"), {})
+    kinds = {}
+    for s in scenes:
+        if s.get("block") not in ("hook_two_tone", "captions", "cta_card"):
+            kinds[s["block"]] = kinds.get(s["block"], 0) + 1
+    zooms = sum(1 for f in tl.get("frames", []) if isinstance(f, (list, tuple)) and len(f) > 1 and f[1] and f[1] > 1.01)
+    dur = tl.get("duration") or 0
+    return {"length_s": round(dur, 1), "hook": " / ".join(x for x in (hook.get("line1"), hook.get("line2")) if x),
+            "hook_chars": len((hook.get("line1") or "") + (hook.get("line2") or "")),
+            "moments": sum(kinds.values()), "moment_kinds": kinds, "zooms": zooms,
+            "own_cover": any(os.path.exists(os.path.join(jd, "cover", n + e)) for n in ("photo", "own") for e in COVER_EXT)}
+
+
+def performance(job=None):
+    """All reels with results (or one): edit facts + entries + simple rates. Used by the Results page and the CSV."""
+    out = []
+    names = [job] if job else (sorted(n for n in os.listdir(JOBS) if JOB.match(n)) if os.path.isdir(JOBS) else [])
+    for n in names:
+        if not JOB.match(n or "") or not os.path.isdir(os.path.join(JOBS, n)):
+            continue
+        d = _j(os.path.join(JOBS, n, "performance.json"), {"entries": []})
+        st = (_j(os.path.join(JOBS, n, "job.json"), {}) or {}).get("status")
+        if not d.get("entries") and st != "rendered" and not job:
+            continue
+        facts = edit_facts(n)
+        rows = []
+        for e in d.get("entries", []):
+            e = dict(e); v = e.get("views") or 0
+            if v:
+                for k in ("likes", "comments", "shares", "saves", "follows"):
+                    if k in e:
+                        e[k + "_per_1k"] = round(1000 * e[k] / v, 1)
+            if facts["length_s"] and e.get("avg_watch_s") is not None:
+                e["watch_pct"] = round(min(100, 100 * e["avg_watch_s"] / facts["length_s"]), 1)
+            rows.append(e)
+        out.append({"job": n, "status": st, "facts": facts, "entries": rows})
+    return out
+
+
+def performance_csv():
+    cols = ["job", "platform", "when", "views", "avg_watch_s", "watch_pct", "full_pct", "likes", "comments", "shares", "saves",
+            "follows", "saves_per_1k", "shares_per_1k", "length_s", "hook_chars", "moments", "zooms", "own_cover", "hook"]
+    lines = [",".join(cols)]
+    for r in performance():
+        for e in r["entries"]:
+            row = dict(r["facts"], **e, job=r["job"])
+            lines.append(",".join('"' + str(row.get(c, "")).replace('"', "'") + '"' if c == "hook" else str(row.get(c, "")) for c in cols))
+    return "\n".join(lines) + "\n"

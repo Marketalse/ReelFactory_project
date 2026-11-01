@@ -97,11 +97,12 @@ class ProgressTests(ApiTest):
 
         d = self.job("2026-11-01-cc", "rendered", ["===== run 2026-11-01 | jobs/c --approve", "FINAL:"])
         os.makedirs(os.path.join(d, "final"))
-        for f in ("reel_v1_instagram.mp4", "reel_v2_instagram.mp4", "reel_v2_tiktok.mp4", "reel_v2_tiktok_QA_FAILED.mp4"):
+        for f in ("reel_v1_instagram.mp4", "reel_v1_tiktok.mp4", "reel_v2.mp4", "reel_v3_QA_FAILED.mp4"):   # old per-platform files + new single file
             open(os.path.join(d, "final", f), "wb").write(b"0")
         p = self.api.progress("cc")
         self.assertEqual(p["state"], "final"); self.assertEqual(p["last_mode"], "final")
-        self.assertEqual(p["finals"], ["reel_v2_instagram.mp4", "reel_v2_tiktok.mp4"])
+        self.assertEqual(p["finals"], ["reel_v2.mp4"]); self.assertEqual(p["version"], 2)
+        self.assertNotIn("package", p)                                                  # no CapCut step any more
 
     def test_early_failure_before_the_job_exists_is_explained(self):
         os.makedirs(self.api.RUNS, exist_ok=True)
@@ -119,6 +120,55 @@ class ProgressTests(ApiTest):
     def test_unset_handles_are_reported(self):
         json.dump({"handles": {"instagram": "CONFIRM (proposed)", "tiktok": "CONFIRM"}}, open(os.path.join(self.root, "config", "brand.json"), "w"))
         self.assertFalse(self.api._handles_set())
+
+    def test_handles_not_needed_without_end_card(self):
+        json.dump({"handles": {"instagram": "CONFIRM"}, "cta": {"enabled": False}}, open(os.path.join(self.root, "config", "brand.json"), "w"))
+        self.assertTrue(self.api._handles_set())
+
+    def test_final_steps_are_video_then_cover(self):
+        self.assertEqual([k for k, _, _ in self.api.FINAL_STEPS], ["video", "cover"])
+
+
+class PerformanceTests(ApiTest):
+    def test_save_check_and_rates(self):
+        d = self.job("2026-11-01-stock", "rendered", [])
+        json.dump({"duration": 50.0, "scenes": [{"block": "hook_two_tone", "values": {"line1": "شكد بضاعة", "line2": "لازم تجيب"}},
+                                                {"block": "text_card"}, {"block": "flash"}], "frames": [[0, 1.0, 0], [3, 1.25, 0]]},
+                  open(os.path.join(d, "timeline.json"), "w"), ensure_ascii=False)
+        api = self.api
+        self.assertFalse(api.save_performance("2026-11-01-stock", {"platform": "x", "when": "48h", "views": 5})[0])
+        self.assertFalse(api.save_performance("2026-11-01-stock", {"platform": "tiktok", "when": "48h"})[0])          # views needed
+        self.assertFalse(api.save_performance("2026-11-01-stock", {"platform": "tiktok", "when": "48h", "views": "abc"})[0])
+        self.assertFalse(api.save_performance("2026-11-01-stock", {"platform": "tiktok", "when": "48h", "views": 9, "full_pct": 140})[0])
+        self.assertFalse(api.save_performance("../x", {"platform": "tiktok", "when": "48h", "views": 9})[0])
+        ok, _ = api.save_performance("2026-11-01-stock", {"platform": "instagram", "when": "48h", "views": "12,000", "avg_watch_s": "20", "saves": "60"})
+        self.assertTrue(ok)
+        api.save_performance("2026-11-01-stock", {"platform": "instagram", "when": "48h", "views": 13000})            # same slot replaces
+        api.save_performance("2026-11-01-stock", {"platform": "instagram", "when": "7d", "views": 20000, "avg_watch_s": 25, "saves": 100})
+        r = api.performance("2026-11-01-stock")[0]
+        self.assertEqual(len(r["entries"]), 2)
+        e = [x for x in r["entries"] if x["when"] == "7d"][0]
+        self.assertEqual((e["watch_pct"], e["saves_per_1k"]), (50.0, 5.0))
+        self.assertEqual((r["facts"]["moments"], r["facts"]["zooms"], r["facts"]["hook_chars"]), (2, 1, 18))
+        csv_ = api.performance_csv().splitlines()
+        self.assertEqual(len(csv_), 3); self.assertIn("2026-11-01-stock,instagram,7d,20000", csv_[2])
+
+
+class SpendTests(ApiTest):
+    def test_spend_by_step_model_and_projection(self):
+        from datetime import date
+        m = date.today().isoformat()[:7]
+        for job, calls in ((m + "-01-a", [{"stage": "fix", "model": "anthropic/claude-haiku-5.5", "cost": 0.01},
+                                           {"stage": "plan", "model": "anthropic/claude-haiku-5.5", "cost": 0.02}]),
+                           (m + "-02-b", [{"stage": "repair", "model": "anthropic/claude-sonnet-5.5", "cost": 0.05}])):
+            d = os.path.join(self.root, "jobs", job); os.makedirs(d)
+            json.dump({"calls": calls}, open(os.path.join(d, "cost.json"), "w"))
+        s = self.api.spend()
+        self.assertAlmostEqual(s["total"], 0.08); self.assertEqual(s["reels"], 2); self.assertAlmostEqual(s["per_reel"], 0.04)
+        steps = {x["name"]: x["amount"] for x in s["by_step"]}
+        self.assertEqual(steps["Repairing the plan"], 0.05); self.assertEqual(steps["Planning the edit"], 0.02)
+        self.assertEqual({x["name"] for x in s["by_model"]}, {"claude-haiku-5.5", "claude-sonnet-5.5"})
+        self.assertGreaterEqual(s["projection"], 0.08)
 
 
 if __name__ == "__main__":
