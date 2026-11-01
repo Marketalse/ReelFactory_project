@@ -41,3 +41,11 @@ That's all. If a reel says **Stopped**, click **Try again**. If it stops again, 
 Cost: about $0.05–0.15 per reel; it never spends more than $1 per reel or $50 per month.
 Before the first **Approve**, your handles must be set in `config/brand.json` (Claude can do this for you).
 The older view (all reels, task board, spend) is under **All reels & tasks** at the top right.
+
+## Your API key (once)
+Reel Factory uses its own Nous Research API key, saved on your Mac in `~/.reelfactory/nous_api_key` (never in the project or git).
+To save or replace it, paste this in Terminal, press Enter, paste your key (nothing shows while you paste) and press Enter again:
+```
+mkdir -p ~/.reelfactory && read -rs 'K?Paste your API key, then press Enter: ' && printf '%s' "$K" > ~/.reelfactory/nous_api_key && chmod 600 ~/.reelfactory/nous_api_key && unset K && echo && echo "Saved."
+```
+Without that file it falls back to your Hermes login. "HTTP 401" on a reel = the key is wrong or the account is out of credit (portal.nousresearch.com).

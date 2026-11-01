@@ -48,14 +48,24 @@ def find_ffmpeg():
 
 
 def auth():
-    """(base_url, key) for the model route. The key is read from the auth file, never stored in the repo."""
+    """(base_url, key) for the model route. The key never lives in the repo. Order:
+    1. env RF_API_KEY;  2. Reel Factory's own key file (route.key_file, one line);  3. Hermes' login (route.auth_file)."""
     r = PROJECT["route"]
+    key = os.environ.get("RF_API_KEY", "").strip()
+    if not key and r.get("key_file"):
+        try:
+            with open(os.path.expanduser(r["key_file"]), encoding="utf-8") as f:
+                key = f.read().strip()
+        except OSError:
+            key = ""
+    if key:
+        return r["base_url"], key
     path = os.path.expanduser(r["auth_file"])
     try:
         with open(path, encoding="utf-8") as f:
             a = json.load(f)["providers"][r["provider"]]
     except (OSError, KeyError, json.JSONDecodeError) as e:
-        raise SystemExit(f"Cannot read the '{r['provider']}' key from {path}: {e}")
+        raise SystemExit(f"No API key: save one in {r.get('key_file')} (see HOW_TO.md) or log in to Hermes ({path}: {e})")
     return a.get("inference_base_url") or r["base_url"], a["agent_key"]
 
 
