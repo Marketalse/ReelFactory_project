@@ -1,6 +1,6 @@
 {
  "project": "Reel Factory",
- "version": 7,
+ "version": 8,
  "owners": [
   "Hesham",
   "Claude",
@@ -352,7 +352,7 @@
     "T20"
    ],
    "done_when": "",
-   "notes": "Waits for the music/SFX library answer (T09).",
+   "notes": "Waits for the music/SFX library (T09). Also add loudness levelling to -14 LUFS here: QA warns that test audio sits at -18.9 LUFS, and iPhone voice is often quiet too.",
    "evidence": "",
    "updated": "2026-11-01"
   },
@@ -520,13 +520,13 @@
    "phase": "P4",
    "title": "qa_check.py: freeze, black, loudness, duration, caption coverage, banned text",
    "owner": "Claude",
-   "status": "todo",
+   "status": "review",
    "depends": [
     "T31"
    ],
    "done_when": "",
-   "notes": "",
-   "evidence": "",
+   "notes": "Free checks on every draft and final: length, black frames (incl. first frame), frozen picture, audio present, loudness, captions = speech, numbers on screen were said, no placeholder text, handle set for finals. Errors stop before Gate 2; a failing final is kept as *_QA_FAILED.mp4.",
+   "evidence": "scripts/qa_check.py, tests/test_qa.py (6 tests), e2e rehearsal: QA passed, captions 87/87, 0 errors",
    "updated": "2026-11-01"
   },
   {
@@ -561,15 +561,15 @@
   {
    "id": "T38",
    "phase": "P4",
-   "title": "QA catches 3 deliberately broken reels, passes the good one",
-   "owner": "Hermes",
-   "status": "todo",
+   "title": "QA catches broken reels and passes good ones",
+   "owner": "Claude",
+   "status": "review",
    "depends": [
     "T37"
    ],
    "done_when": "",
-   "notes": "",
-   "evidence": "",
+   "notes": "Proven with generated videos in the cloud instead of on the Mac.",
+   "evidence": "tests/test_qa.py: black, frozen, no audio, wrong length, unsaid number, placeholder, caption mismatch, handle",
    "updated": "2026-11-01"
   },
   {
@@ -591,13 +591,13 @@
    "phase": "P5",
    "title": "Fix ledger: no 200-row deletion, correct categories, 'stopped' status",
    "owner": "Claude",
-   "status": "in_progress",
+   "status": "review",
    "depends": [
     "T16"
    ],
    "done_when": "",
-   "notes": "200-row deletion removed. Still to do: category names, mark partial runs as stopped.",
-   "evidence": "",
+   "notes": "Category descriptions are only labels; left as is.",
+   "evidence": "reel.py logs run status (ok/stopped/crashed) in the ledger note; add_expense.py no longer deletes rows",
    "updated": "2026-11-01"
   },
   {
@@ -810,6 +810,12 @@
    "who": "Claude",
    "task": "T26-T33",
    "change": "P3 pipeline built and rehearsed end to end in the cloud; → review. T19/T34 updated for the first real run."
+  },
+  {
+   "time": "2026-11-01T19:30",
+   "who": "Claude",
+   "task": "T35",
+   "change": "deterministic QA built, tested and wired into draft + final → review"
   }
  ]
 }

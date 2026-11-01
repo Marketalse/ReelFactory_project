@@ -11,6 +11,7 @@ import argparse, glob, json, os, re, shutil, subprocess, sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from lib import config as cfg       # noqa: E402
 from lib import hfbuild             # noqa: E402
+import qa_check                     # noqa: E402
 
 HF = ["npx", "--yes", f"hyperframes@{cfg.PROJECT.get('tools', {}).get('hyperframes', '0.8.226')}"]
 
@@ -130,6 +131,7 @@ def draft(job):
     os.makedirs(os.path.join(job, "review"), exist_ok=True)
     full = render(project, os.path.join(job, "review", "_draft_full.mp4"), "draft")
     verify(full, tl["duration"])
+    qa = qa_check.run(job, full, final=False, project=project)
     small = os.path.join(job, "review", "draft_540p.mp4")
     r = subprocess.run(["ffmpeg", "-hide_banner", "-loglevel", "error", "-y", "-i", full, "-vf", "scale=540:-2",
                         "-c:v", "libx264", "-crf", "28", "-preset", "veryfast", "-c:a", "aac", "-b:a", "96k", small], capture_output=True, text=True)
@@ -140,7 +142,7 @@ def draft(job):
         shutil.copy(sheet, os.path.join(job, "review", "contact_sheet.jpg"))
     pkg = edit_package(job, project)
     return {"draft": small, "contact_sheet": os.path.join(job, "review", "contact_sheet.jpg") if sheet else None,
-            "edit_package": pkg, "check_warnings": warnings}
+            "edit_package": pkg, "check_warnings": warnings, "qa": qa}
 
 
 def final(job, platforms):
@@ -162,6 +164,10 @@ def final(job, platforms):
             raise RenderError(f"{path} exists; never overwritten")
         render(project, path, "high")
         verify(path, tl["duration"])
+        qa = qa_check.run(job, path, final=True, project=project)
+        if qa["errors"]:
+            bad = path.replace(".mp4", "_QA_FAILED.mp4"); os.rename(path, bad)
+            raise RenderError(f"final {p} failed QA (kept as {os.path.basename(bad)}): " + "; ".join(qa["errors"][:4]))
         outs.append(path)
     return outs
 
