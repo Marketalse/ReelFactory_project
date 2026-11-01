@@ -140,3 +140,17 @@ class SafeZoneTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TemplateContractTests(unittest.TestCase):
+    def test_no_visibility_tweens(self):
+        """HyperFrames shows/hides clips itself; a script that sets visibility/display/autoAlpha makes them vanish in the
+        real render (captions were missing from drafts until 2026-11-01) even though snapshots look fine."""
+        bad = []
+        for f in sorted(os.listdir(os.path.join(ROOT, "templates", "blocks"))):
+            if f.endswith(".html"):
+                src = open(os.path.join(ROOT, "templates", "blocks", f), encoding="utf-8").read()
+                script = "".join(re.findall(r"<script>(.*?)</script>", src, re.S))
+                if re.search(r"\b(visibility|display|autoAlpha)\s*:", script):
+                    bad.append(f)
+        self.assertEqual(bad, [])

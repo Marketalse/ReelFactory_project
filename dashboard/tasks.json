@@ -1,6 +1,6 @@
 {
  "project": "Reel Factory",
- "version": 17,
+ "version": 18,
  "owners": [
   "Hesham",
   "Claude",
@@ -1042,7 +1042,19 @@
    "depends": [],
    "done_when": "Hesham checks a sample and a real reel on his phone: nothing hidden under buttons or captions",
    "evidence": "style/SAFE_ZONES.md, config/rules.json safe_zone, AGENTS.md §5, templates moved, tests/test_safe_zones.py (longest text, every template + cover), scripts/safe_zone_preview.py",
-   "notes": "Stricter of both platforms: x 108-920, y 250-1500, text ≤780 px, captions y 1200-1450, hook/cover title in the feed square.",
+   "notes": "Stricter of both platforms: x 108-920, y 250-1500, text ≤780 px, captions y 1200-1450, hook/cover title in the feed square. Also fixed: captions vanished in real renders (visibility tween), now guarded by a test.",
+   "updated": "2026-11-01"
+  },
+  {
+   "id": "T75",
+   "phase": "P7",
+   "title": "Later: turn Hesham's visual prompts into templates (floating UI card, document card, lower-third info card, pixel-art scenes)",
+   "owner": "Claude",
+   "status": "todo",
+   "depends": [],
+   "done_when": "Hesham approves samples of the ones he wants",
+   "evidence": "",
+   "notes": "Prompts saved in docs/visual_prompts_for_later.md (2026-11-01). Start only when Hesham asks.",
    "updated": "2026-11-01"
   }
  ],

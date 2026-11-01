@@ -22,7 +22,6 @@ document.querySelectorAll(".__ID__-g").forEach((g) => {
     if (w.classList.contains("__ID__-kw")) tl.fromTo(w, { scale: 1 }, { scale: 1.14, duration: 0.12, ease: "power2.out", yoyo: true, repeat: 1 }, Math.max(s, t));
   });
   tl.to(g, { opacity: 0, duration: 0.08, ease: "power2.in" }, e - 0.08);
-  tl.set(g, { opacity: 0, visibility: "hidden" }, e);
 });
 window.__timelines["__ID__"] = tl;
 </script>
