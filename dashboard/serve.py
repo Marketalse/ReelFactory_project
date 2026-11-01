@@ -14,6 +14,7 @@ from urllib.parse import unquote, urlparse, parse_qs
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import reels_api  # noqa: E402
+import settings_api  # noqa: E402
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 TASKS = os.path.join(HERE, "tasks.json")
@@ -105,6 +106,8 @@ class H(SimpleHTTPRequestHandler):
             return self.send_json(200, p)
         if self.path.startswith("/api/events"):
             return self.stream_progress(q.get("ref", ""), notify=q.get("notify") == "1")
+        if self.path.startswith("/api/health"):
+            return self.send_json(200, settings_api.health())
         if self.path.startswith("/api/root"):
             return self.send_json(200, {"root": os.path.realpath(reels_api.ROOT)})
         if self.path.startswith("/api/reels"):
@@ -142,7 +145,29 @@ class H(SimpleHTTPRequestHandler):
             pass
         self.close_connection = True
 
+    def same_origin(self):
+        """Only this page may change settings (a website you visit can't post to the dashboard)."""
+        o = self.headers.get("Origin")
+        return o in (None, f"http://127.0.0.1:{PORT}", f"http://localhost:{PORT}")
+
     def do_POST(self):
+        if not self.same_origin():
+            self.close_connection = True
+            return self.send_json(403, {"ok": False, "message": "not allowed"})
+        if self.path.startswith("/api/settings/"):
+            try:
+                n = int(self.headers.get("Content-Length", 0))
+                body = json.loads(self.rfile.read(min(n, 4096)).decode("utf-8") or "{}")
+            except Exception:
+                return self.send_json(400, {"ok": False, "message": "bad request"})
+            action = self.path.split("/")[3].split("?")[0]
+            if action == "key":
+                ok, msg = settings_api.save_key(body.get("key"))
+            elif action == "test":
+                ok, msg = settings_api.test_key()
+            else:
+                return self.send_json(404, {"ok": False, "message": "unknown action"})
+            return self.send_json(200 if ok else 400, {"ok": ok, "message": msg})
         if self.path.startswith("/api/upload"):
             h = self.headers
             try:

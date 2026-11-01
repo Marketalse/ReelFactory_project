@@ -61,7 +61,7 @@ def explain_http(stage, code, body):
     src = cfg.key_source()
     if code in (401, 403):
         why = (f"the AI service refused the API key ({src}): it is wrong, expired or the account is out of credit. "
-               "Check credit at portal.nousresearch.com; to replace the key see HOW_TO.md, 'Your API key'. Then click Try again.")
+               "Check credit at portal.nousresearch.com; to replace the key, click Settings on the Reel Factory page. Then click Try again.")
     elif code == 402:
         why = "the AI service account is out of credit. Top up at portal.nousresearch.com, then click Try again."
     elif code == 404:

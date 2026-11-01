@@ -200,6 +200,21 @@ textarea{min-height:84px;resize:vertical}
 .toast .x{background:none;border:0;color:var(--dim);cursor:pointer;font-size:18px;line-height:1}
 @keyframes tin{from{opacity:0;transform:translateY(8px)}}
 
+
+/* Settings dialog: AI key + health checks */
+.hbtn{background:none;border:1px solid var(--line);color:var(--muted);border-radius:99px;padding:4px 12px;font-size:13.5px;cursor:pointer}
+.hbtn:hover{color:var(--text)} .hbtn.warn{border-color:var(--amber);color:#ffe2a6}
+dialog.settings{background:var(--panel);color:var(--text);border:1px solid var(--line);border-radius:14px;padding:22px;width:min(560px,calc(100vw - 32px))}
+dialog.settings::backdrop{background:rgba(0,0,0,.55)}
+dialog.settings h2{margin:0 0 4px;font-size:20px}
+.checks{list-style:none;padding:0;margin:12px 0 18px;display:grid;gap:6px}
+.checks li{display:grid;grid-template-columns:22px 1fr;gap:8px;font-size:14px}
+.checks li small{display:block;color:var(--muted)}
+.keyrow{display:flex;gap:8px;flex-wrap:wrap} .keyrow input{flex:1 1 220px}
+input[type=password]{width:100%;background:var(--bg);border:1px solid var(--line);border-radius:9px;padding:9px 11px;outline:none}
+input[type=password]:focus{border-color:var(--violet)}
+.kmsg{min-height:1.5em;margin:8px 0 0;font-size:14px;color:var(--muted)} .kmsg.ok{color:var(--lime)} .kmsg.err{color:var(--coral)}
+
 @media (max-width:680px){
   .extras{grid-template-columns:1fr}
   .result{grid-template-columns:1fr}
@@ -217,7 +232,23 @@ textarea{min-height:84px;resize:vertical}
   <div class="brand">Reel <b>Factory</b></div>
   <span class="conn" id="conn"><i></i><span>Connecting…</span></span>
   <a href="index.html">All reels &amp; tasks →</a>
+  <button class="hbtn" id="settingsBtn" type="button" hidden>Settings</button>
 </header>
+
+<dialog class="settings" id="settings" aria-labelledby="setTitle">
+  <h2 id="setTitle">Settings</h2>
+  <p class="sub" style="margin:0;color:var(--muted)">Everything Reel Factory needs on this Mac.</p>
+  <ul class="checks" id="checks"><li>Checking…</li></ul>
+  <label for="keyIn"><b>Your Nous API key</b></label>
+  <p style="margin:2px 0 8px;color:var(--muted);font-size:13.5px">Copy it from portal.nousresearch.com → API keys, paste it here and click Save. It's stored only on this Mac, never in the project.</p>
+  <div class="keyrow">
+    <input type="password" id="keyIn" autocomplete="off" spellcheck="false" placeholder="Paste your key here">
+    <button class="btn" id="keySave" type="button">Save</button>
+    <button class="btn" id="keyTest" type="button">Test</button>
+  </div>
+  <p class="kmsg" id="keyMsg" role="status"></p>
+  <div style="text-align:right;margin-top:10px"><button class="btn" id="setClose" type="button">Close</button></div>
+</dialog>
 
 <main>
   <div id="demoNote" class="demo-note" hidden><b>Demo mode.</b> The dashboard server isn't running, so nothing is really processed. To make real reels, double-click <b>Reel Factory.command</b> in your project folder.</div>
@@ -714,6 +745,32 @@ const DemoBackend = (()=>{
   };
 })();
 
+
+/* ---------------------------------------------------------------- settings */
+async function loadHealth(){
+  try{
+    const h=await (await fetch("/api/health",{cache:"no-store"})).json();
+    $("#checks").innerHTML=h.checks.map(c=>`<li><span aria-hidden="true">${c.ok?"✅":"⚠️"}</span><div>${esc(c.label)}<small>${esc(c.detail)}</small></div></li>`).join("");
+    $("#settingsBtn").classList.toggle("warn",!h.all_ok); $("#settingsBtn").textContent=h.all_ok?"Settings":"Settings ⚠️";
+    return h;
+  }catch(e){ $("#checks").innerHTML="<li>Couldn't check right now.</li>"; return null; }
+}
+async function settingsPost(action, body){
+  try{ const r=await fetch("/api/settings/"+action,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body||{})}); return await r.json(); }
+  catch(e){ return {ok:false,message:"The dashboard didn't answer."}; }
+}
+function keyMsg(r){ const m=$("#keyMsg"); m.textContent=r.message||""; m.className="kmsg "+(r.ok&&!/refused|couldn't|error/i.test(r.message)?"ok":"err"); }
+function setupSettings(){
+  const d=$("#settings"); $("#settingsBtn").hidden=false;
+  $("#settingsBtn").onclick=()=>{ $("#keyMsg").textContent=""; loadHealth(); d.showModal(); };
+  $("#setClose").onclick=()=>d.close();
+  $("#keySave").onclick=async ()=>{ const k=$("#keyIn").value; if(!k.trim()) return keyMsg({ok:false,message:"Paste your key first."});
+    $("#keySave").disabled=true; const r=await settingsPost("key",{key:k}); $("#keySave").disabled=false;
+    if(r.ok) $("#keyIn").value=""; keyMsg(r); loadHealth(); };
+  $("#keyTest").onclick=async ()=>{ $("#keyMsg").textContent="Testing…"; $("#keyMsg").className="kmsg"; keyMsg(await settingsPost("test")); };
+  loadHealth();
+}
+
 /* ---------------------------------------------------------------- boot */
 async function boot(){
   const live = location.protocol.startsWith("http") && await Promise.race([
@@ -721,6 +778,7 @@ async function boot(){
   backend = live ? RealBackend : DemoBackend;
   const c=$("#conn"); c.className="conn "+(live?"on":"demo"); c.querySelector("span").textContent = live? "Connected" : "Demo mode";
   $("#demoNote").hidden = live;
+  if(live) setupSettings();
   renderFiles(); updateSlug(); await refreshContinue();
   const ref=store.get("rf.track");
   if(live && ref){
