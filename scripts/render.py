@@ -20,9 +20,21 @@ class RenderError(Exception):
     pass
 
 
+NOISE = re.compile(r"^\s*(npm (notice|warn|WARN)|npx: |\[?[0-9:.]+\]?\s*$|$)")
+ENV = dict(os.environ, NPM_CONFIG_UPDATE_NOTIFIER="false", NPM_CONFIG_FUND="false", NO_UPDATE_NOTIFIER="1")
+
+
 def run(cmd, cwd, timeout=1800):
-    r = subprocess.run(cmd, cwd=cwd, capture_output=True, text=True, timeout=timeout)
+    r = subprocess.run(cmd, cwd=cwd, capture_output=True, text=True, timeout=timeout, env=ENV)
     return r.returncode, r.stdout, r.stderr
+
+
+def explain(out, err, limit=400):
+    """The lines that say what went wrong, without npm's update notices."""
+    lines = [l.rstrip() for l in (err + "\n" + out).splitlines() if not NOISE.match(l)]
+    hits = [l for l in lines if re.search(r"error|fail|cannot|not found|missing|denied|ENOENT|killed|timed? ?out", l, re.I)]
+    text = " | ".join((hits or lines)[-4:]).strip()
+    return (text or "no error text (see review/render_error.log)")[-limit:]
 
 
 def duration(path):
@@ -37,7 +49,7 @@ def check(project):
     try:
         d = json.loads(out[out.find("{"):])
     except ValueError:
-        raise RenderError("hyperframes check did not return JSON: " + (err or out)[-400:])
+        raise RenderError("hyperframes check did not return JSON: " + explain(out, err))
     found = []
 
     def walk(x):
@@ -66,7 +78,12 @@ def snapshot(project, total):
 def render(project, out_path, quality):
     code, out, err = run(HF + ["render", "--quality", quality, "-o", out_path], project, 3600)
     if code or not os.path.exists(out_path) or os.path.getsize(out_path) == 0:
-        raise RenderError(f"render failed ({code}): " + (err or out)[-400:])
+        log = os.path.join(os.path.dirname(os.path.abspath(out_path)), "render_error.log")
+        try:
+            open(log, "w", encoding="utf-8").write(f"$ {' '.join(HF)} render --quality {quality}\nexit {code}\n--- stdout\n{out}\n--- stderr\n{err}\n")
+        except OSError:
+            pass
+        raise RenderError(f"render failed ({code}): " + explain(out, err))
     return out_path
 
 
