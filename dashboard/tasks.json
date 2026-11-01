@@ -1,6 +1,6 @@
 {
  "project": "Reel Factory",
- "version": 10,
+ "version": 11,
  "owners": [
   "Hesham",
   "Claude",
@@ -90,11 +90,11 @@
    "phase": "P0",
    "title": "Back up the whole Reel-Factory folder (zip) before any change",
    "owner": "Hesham",
-   "status": "todo",
+   "status": "review",
    "depends": [],
    "done_when": "Reel-Factory-backup-2026-11-01.zip exists outside the project folder",
-   "notes": "",
-   "evidence": "",
+   "notes": "Keep it outside the project folder; never run Reel Factory.command from it.",
+   "evidence": "Hesham: downloaded a backup copy of the project (2026-11-01)",
    "updated": "2026-11-01"
   },
   {
@@ -843,12 +843,10 @@
    "phase": "P8",
    "title": "Provider errors handled smartly: 401/402 → 'key or credit' message; 429/5xx → wait and retry once, then stop",
    "owner": "Claude",
-   "status": "todo",
-   "depends": [
-    "T55"
-   ],
+   "status": "review",
+   "depends": [],
    "done_when": "Each error shows a plain-language fix on the upload page; retry tested with a fake server",
-   "evidence": "",
+   "evidence": "branch smart-errors: post_with_retry + explain_http in scripts/reel.py; tests/test_errors.py",
    "notes": "Smarter execution: no lost runs from a brief provider hiccup.",
    "updated": "2026-11-01"
   },
@@ -942,12 +940,10 @@
    "phase": "P8",
    "title": "Notifications open the dashboard (not Script Editor) when clicked",
    "owner": "Claude",
-   "status": "todo",
-   "depends": [
-    "T55"
-   ],
+   "status": "review",
+   "depends": [],
    "done_when": "Clicking 'Draft ready' opens the reel page",
-   "evidence": "",
+   "evidence": "branch smart-errors: browser notifications in make.html (click opens the reel); Mac notification skipped while a tab watches",
    "notes": "",
    "updated": "2026-11-01"
   },
@@ -1140,6 +1136,24 @@
    "who": "Claude",
    "task": "T65",
    "change": "created, assigned to Claude"
+  },
+  {
+   "time": "2026-11-01T22:30",
+   "who": "Claude",
+   "task": "T03",
+   "change": "backup made by Hesham → review"
+  },
+  {
+   "time": "2026-11-01T22:30",
+   "who": "Claude",
+   "task": "T57",
+   "change": "built and tested → review"
+  },
+  {
+   "time": "2026-11-01T22:30",
+   "who": "Claude",
+   "task": "T64",
+   "change": "built and tested → review"
   }
  ]
 }

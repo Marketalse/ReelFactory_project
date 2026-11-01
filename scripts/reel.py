@@ -52,6 +52,47 @@ def nous():
     return cfg.auth()
 
 
+RETRY_CODES = (408, 429, 500, 502, 503, 504, 529)
+
+
+def explain_http(stage, code, body):
+    """Provider errors in plain words, with what to do. The raw reply is kept short at the end."""
+    raw = body[:160].decode("utf-8", "replace") if isinstance(body, bytes) else str(body)[:160]
+    src = cfg.key_source()
+    if code in (401, 403):
+        why = (f"the AI service refused the API key ({src}): it is wrong, expired or the account is out of credit. "
+               "Check credit at portal.nousresearch.com; to replace the key see HOW_TO.md, 'Your API key'. Then click Try again.")
+    elif code == 402:
+        why = "the AI service account is out of credit. Top up at portal.nousresearch.com, then click Try again."
+    elif code == 404:
+        why = "the AI model name was not found. Tell Claude: the model in config/project.json may have been renamed."
+    elif code == 400:
+        why = "the AI service rejected the request. Send this message to Claude."
+    elif code in RETRY_CODES:
+        why = "the AI service is busy or having problems right now (already retried). Wait a few minutes, then click Try again."
+    else:
+        why = "the AI service returned an unexpected error. Send this message to Claude."
+    return f"{stage}: {why} [HTTP {code}: {raw}]"
+
+
+def post_with_retry(req, stage, tries=2, wait=20, timeout=600, sleep=time.sleep):
+    """One retry for temporary problems (rate limit, overload, network). Failed calls are not charged."""
+    for n in range(1, tries + 1):
+        try:
+            return json.load(urllib.request.urlopen(req, timeout=timeout))
+        except urllib.error.HTTPError as e:
+            body = e.read()
+            if e.code in RETRY_CODES and n < tries:
+                ra = e.headers.get("Retry-After") if e.headers else None
+                w = min(60, int(ra)) if ra and ra.isdigit() else wait
+                print(f"   [{stage}] AI service busy (HTTP {e.code}); retrying in {w}s"); sleep(w); continue
+            raise Stop(explain_http(stage, e.code, body))
+        except (urllib.error.URLError, TimeoutError, ConnectionError) as e:
+            if n < tries:
+                print(f"   [{stage}] no answer from the AI service ({e}); retrying in {wait}s"); sleep(wait); continue
+            raise Stop(f"{stage}: could not reach the AI service (internet down?). Check the connection, then click Try again. [{e}]")
+
+
 class Tee:
     """Copy everything printed during a run into <job>/run.log, so a stop is never unexplained."""
     def __init__(self, path, out):
@@ -93,10 +134,7 @@ class Ctx:
         req = urllib.request.Request(base + "/chat/completions", data=json.dumps(body).encode(),
                                      headers={"Authorization": "Bearer " + key, "Content-Type": "application/json"})
         t0 = time.time()
-        try:
-            d = json.load(urllib.request.urlopen(req, timeout=600))
-        except urllib.error.HTTPError as e:
-            raise Stop(f"{stage}: provider error HTTP {e.code} {e.read()[:200]!r}")
+        d = post_with_retry(req, stage)
         dt = time.time() - t0
         u = d["usage"]
         rec = {"stage": stage, "model": model, "in": u["prompt_tokens"], "out": u["completion_tokens"],
@@ -434,8 +472,21 @@ def apply_word_fixes(job, comment):
     return changed // 2 if os.path.exists(os.path.join(job, "edl.json")) else changed
 
 
-def notify(msg):
-    """macOS notification (silently skipped elsewhere)."""
+def dashboard_watching(job):
+    """True when an open dashboard tab is following this reel and can show its own notification
+    (clicking a browser notification opens the reel; a Mac notification would open Script Editor)."""
+    port = os.environ.get("RF_DASH_PORT", "8765")
+    try:
+        with urllib.request.urlopen(f"http://127.0.0.1:{port}/api/watching?ref={os.path.basename(job)}", timeout=2) as r:
+            return bool(json.load(r).get("watching"))
+    except Exception:
+        return False
+
+
+def notify(msg, job=None):
+    """Mac notification, unless a dashboard tab will show a clickable one (silently skipped off macOS)."""
+    if job and dashboard_watching(job):
+        return
     try:
         subprocess.run(["osascript", "-e", f'display notification "{msg}" with title "Reel Factory"'], capture_output=True, timeout=5)
     except (OSError, subprocess.SubprocessError):
@@ -524,7 +575,7 @@ def main():
         print(f"TOTAL this job ${c.spent():.4f} | wall {time.time() - t_all:.0f}s")
         st = jload(os.path.join(job, "job.json"), {}).get("status", "")
         notify({"preview_ready": "Draft ready: open the dashboard to watch it", "rendered": "Final videos ready"}.get(st)
-               or (f"Stopped: see run.log ({os.path.basename(job)})" if status != "ok" else f"{os.path.basename(job)}: {st}"))
+               or (f"Stopped: see run.log ({os.path.basename(job)})" if status != "ok" else f"{os.path.basename(job)}: {st}"), job)
 
 if __name__ == "__main__":
     main()

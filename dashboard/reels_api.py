@@ -317,6 +317,19 @@ def _stop_text(lines):
     return tail[-1].strip() if tail else ""
 
 
+_seen = {}            # reel ref -> last time a tab that can show notifications asked for its progress
+
+
+def mark_seen(*refs):
+    for r in refs:
+        if r:
+            _seen[r] = time.time()
+
+
+def watching(ref):
+    return time.time() - _seen.get(ref or "", 0) < 15
+
+
 def progress(ref):
     """Everything the page needs to draw the progress bar, for a job name or an inbox slug.
     state: running | ready | final | stopped | paused | missing."""
