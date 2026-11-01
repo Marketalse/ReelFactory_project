@@ -21,10 +21,11 @@ def handle_for(platform, final):
     return h
 
 
-def compile_job(job, platform="instagram", final=False, out=None):
+def compile_job(job, platform="instagram", final=False, out=None, layer="full"):
+    """layer: full (the reel), video (you, cut + zooms, with sound) or graphics (everything else, transparent)."""
     tl = json.load(open(os.path.join(job, "timeline.json"), encoding="utf-8"))
     edl = json.load(open(os.path.join(job, "edl.json"), encoding="utf-8"))
-    out = out or os.path.join(job, "hyperframes" if not final else f"hyperframes_{platform}")
+    out = out or os.path.join(job, ("hyperframes" if not final else f"hyperframes_{platform}") + ("" if layer == "full" else f"_{layer}"))
     scenes = [dict(s) for s in tl["scenes"]]
     for s in scenes:
         if s["block"] == "cta_card":
@@ -44,8 +45,10 @@ def compile_job(job, platform="instagram", final=False, out=None):
         for f in os.listdir(src_logos):
             if f.lower().endswith((".svg", ".png", ".jpg", ".jpeg", ".webp")):
                 shutil.copy(os.path.join(src_logos, f), os.path.join(out, "assets", "logos", f))
-    hfbuild.build_project(out, duration=tl["duration"], face_cuts=cuts, scenes=scenes,
-                          video_src=os.path.join(job, "proxy.mp4"))
+    if layer == "video":
+        scenes = []
+    hfbuild.build_project(out, duration=tl["duration"], face_cuts=[] if layer == "graphics" else cuts, scenes=scenes,
+                          video_src=os.path.join(job, "proxy.mp4"), transparent=layer == "graphics")
     json.dump({"platform": platform, "final": final, "face_cuts": cuts, "caption_words": len(cap_words)},
               open(os.path.join(out, "compile_info.json"), "w"), indent=1)
     return out

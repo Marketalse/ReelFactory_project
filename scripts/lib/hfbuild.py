@@ -95,7 +95,7 @@ ROOT_TEMPLATE = """<!doctype html>
 @font-face {{ font-family: "Readex Pro"; src: url("assets/fonts/ReadexPro.ttf"); font-weight: 160 700; }}
 :root {{ {vars} }}
 * {{ margin: 0; padding: 0; box-sizing: border-box; }}
-html, body {{ width: {W}px; height: {H}px; overflow: hidden; background: var(--bg); }}
+html, body {{ width: {W}px; height: {H}px; overflow: hidden; background: {page_bg}; }}
 #root {{ position: relative; width: 100%; height: 100%; overflow: hidden; font-family: var(--font); }}
 #face {{ position: absolute; inset: 0; transform-origin: 50% 38%; }}
 #face video {{ position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }}
@@ -126,7 +126,7 @@ def brand_vars():
     return " ".join(f"--{k}: {v};" for k, v in pairs.items())
 
 
-def build_project(out_dir, *, duration, face_cuts, scenes, video_src, audio=None):
+def build_project(out_dir, *, duration, face_cuts, scenes, video_src, audio=None, transparent=False):
     """Write a complete HyperFrames project.
     face_cuts: [{"id","t_in","t_out","src_in","scale","cx","cy","y"}]  (y = vertical shift in px, e.g. 480 for split)
     scenes:    [{"id","block","t_in","t_out","values", "groups_html"?}]
@@ -140,7 +140,7 @@ def build_project(out_dir, *, duration, face_cuts, scenes, video_src, audio=None
     shutil.copy(os.path.join(cfg.ROOT, "style", "fonts", fonts[0]), os.path.join(out_dir, "assets", "fonts", "ReadexPro.ttf"))
     shutil.copy(os.path.join(cfg.ROOT, "templates", "vendor", "gsap.min.js"), os.path.join(out_dir, "vendor", "gsap.min.js"))
     vid = os.path.join(out_dir, "assets", "proxy.mp4")
-    if not os.path.exists(vid):
+    if face_cuts and not os.path.exists(vid):
         try:
             os.link(video_src, vid)
         except OSError:
@@ -178,7 +178,7 @@ def build_project(out_dir, *, duration, face_cuts, scenes, video_src, audio=None
     if audio:
         audio_html = "\n".join(f'  <audio id="{a["id"]}" class="clip" src="{a["src"]}" data-start="{_num(a["t_in"])}" '
                                f'data-duration="{_num(a["dur"])}" data-volume="{a.get("volume", 1)}"></audio>' for a in audio)
-    page = ROOT_TEMPLATE.format(W=W, H=H, vars=brand_vars(), dur=_num(duration), videos="\n".join(videos),
+    page = ROOT_TEMPLATE.format(W=W, H=H, vars=brand_vars(), page_bg="transparent" if transparent else "var(--bg)", dur=_num(duration), videos="\n".join(videos),
                                 hosts="\n".join(hosts), audio=audio_html, root_tweens="\n".join(tweens))
     open(os.path.join(out_dir, "index.html"), "w", encoding="utf-8").write(page)
     json.dump({"id": os.path.basename(out_dir.rstrip("/")), "name": os.path.basename(out_dir.rstrip("/"))},

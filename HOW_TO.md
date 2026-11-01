@@ -25,6 +25,14 @@ The draft plays on the dashboard.
 - **Happy?** Click **Approve**. The final high-quality videos (one for Instagram, one for TikTok)
   appear under the reel as download links.
 
+## Want to tweak it yourself in CapCut?
+After Approve, the reel also shows **For CapCut** files. Click **Open in Finder**, then in CapCut (new 9:16 project):
+1. Drag **1_video.mp4** onto the timeline (you, already cut, with zooms and sound).
+2. Drag **2_graphics.mov** onto the track **above** it (captions, titles, cards, on a transparent background).
+They start at 0:00 and are the same length, so they line up by themselves. Trim, move or delete anything, then export.
+Prefer CapCut's own caption styles? Delete track 2 and import **captions_ar.srt** instead.
+For bigger changes, just comment on the dashboard and click Send changes.
+
 That's all. If a reel says **needs attention**, click **Try again**; if it still stops, send Claude the message shown.
 
 Cost: about $0.05–0.15 per reel; it never spends more than $1 per reel or $50 per month.

@@ -53,6 +53,7 @@ def list_reels():
             dr = _j(os.path.join(jd, "review", "draft.json"), {})
             cost = sum(c.get("cost", 0) for c in (_j(os.path.join(jd, "cost.json"), {}) or {}).get("calls", []))
             finals = sorted(f for f in os.listdir(os.path.join(jd, "final"))) if os.path.isdir(os.path.join(jd, "final")) else []
+            pkg = [f for f in ("1_video.mp4", "2_graphics.mov", "captions_ar.srt") if os.path.exists(os.path.join(jd, "edit_package", f))]
             done_slugs.add(name[11:])
             reels.append({
                 "job": name, "status": st, "state": state, "stop": last_stop if stopped else "",
@@ -60,7 +61,7 @@ def list_reels():
                 "draft_mtime": int(os.path.getmtime(os.path.join(jd, "review", "draft_540p.mp4"))) if os.path.exists(os.path.join(jd, "review", "draft_540p.mp4")) else 0,
                 "qa": (dr.get("qa") or {}).get("warnings", []), "cost": round(cost, 4),
                 "length": ((dr.get("qa") or {}).get("metrics") or {}).get("duration"),
-                "feedback": job.get("feedback_history", []), "finals": finals, "log": log[-6:],
+                "feedback": job.get("feedback_history", []), "finals": finals, "package": pkg, "log": log[-6:],
             })
     inbox = []
     if os.path.isdir(INBOX):
@@ -124,8 +125,21 @@ def approve(job):
 
 def media_path(rel):
     """Only drafts, contact sheets and finals inside jobs/ may be served."""
-    m = re.match(r"^(\d{4}-\d{2}-\d{2}-[a-z0-9-]+)/(review/draft_540p\.mp4|review/contact_sheet\.jpg|final/[A-Za-z0-9_.-]+\.mp4)$", rel or "")
+    m = re.match(r"^(\d{4}-\d{2}-\d{2}-[a-z0-9-]+)/(review/draft_540p\.mp4|review/contact_sheet\.jpg|final/[A-Za-z0-9_.-]+\.mp4"
+                 r"|edit_package/(?:1_video\.mp4|2_graphics\.mov|captions_ar\.srt))$", rel or "")
     if not m:
         return None
     p = os.path.realpath(os.path.join(JOBS, rel))
     return p if p.startswith(os.path.realpath(JOBS) + os.sep) and os.path.isfile(p) else None
+
+
+def reveal(job):
+    """Open the reel's folder in Finder (macOS) so files can be dragged into CapCut."""
+    if not JOB.match(job or "") or not os.path.isdir(os.path.join(JOBS, job)):
+        return False, "unknown reel"
+    target = os.path.join(JOBS, job, "edit_package") if os.path.isdir(os.path.join(JOBS, job, "edit_package")) else os.path.join(JOBS, job)
+    try:
+        subprocess.run(["open", target], capture_output=True, timeout=5)
+    except (OSError, subprocess.SubprocessError):
+        return False, "could not open Finder here"
+    return True, "opened in Finder"

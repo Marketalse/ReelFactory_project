@@ -87,25 +87,34 @@ def srt(words_html_groups):
     return "\n".join(out)
 
 
-def edit_package(job, project):
-    """clean_cut.mp4 (talking head after cutting, no graphics), captions_ar.srt, and the HyperFrames project."""
-    pkg = os.path.join(job, "edit_package"); os.makedirs(pkg, exist_ok=True)
-    edl = json.load(open(os.path.join(job, "edl.json"), encoding="utf-8"))
-    parts = []
-    for i, s in enumerate(edl["segments"]):
-        parts.append(f"[0:v]trim={s['src_in']}:{s['src_out']},setpts=PTS-STARTPTS[v{i}];[0:a]atrim={s['src_in']}:{s['src_out']},asetpts=PTS-STARTPTS[a{i}]")
-    chain = ";".join(parts) + ";" + "".join(f"[v{i}][a{i}]" for i in range(len(parts))) + f"concat=n={len(parts)}:v=1:a=1[v][a]"
-    r = subprocess.run(["ffmpeg", "-hide_banner", "-loglevel", "error", "-y", "-i", os.path.join(job, "proxy.mp4"),
-                        "-filter_complex", chain, "-map", "[v]", "-map", "[a]", "-c:v", "libx264", "-crf", "18", "-preset", "veryfast",
-                        "-c:a", "aac", "-b:a", "192k", os.path.join(pkg, "clean_cut.mp4")], capture_output=True, text=True)
-    if r.returncode:
-        raise RenderError("clean_cut failed: " + r.stderr[-300:])
+def captions_srt(project, out_path):
     caps = open(os.path.join(project, "compositions", "caps.html"), encoding="utf-8").read()
     groups = []
     for m in re.finditer(r'data-start="([0-9.]+)" data-duration="([0-9.]+)"><div[^>]*>(.*?)</div></div>', caps):
         text = " ".join(re.sub("<[^>]+>", " ", m.group(3)).split())
         groups.append((float(m.group(1)), float(m.group(1)) + float(m.group(2)), text))
-    open(os.path.join(pkg, "captions_ar.srt"), "w", encoding="utf-8").write(srt(groups))
+    open(out_path, "w", encoding="utf-8").write(srt(groups))
+
+
+README = """Edit package - for small changes in CapCut (or any editor)
+
+CapCut: new project, 9:16. Drag in:
+  track 1:  1_video.mp4     you, already cut, with zooms and your voice
+  track 2:  2_graphics.mov  captions, titles, cards, CTA on a transparent background (put it ABOVE track 1)
+Both start at 0:00 and are the same length, so they line up by themselves.
+- Want CapCut's own captions instead? Delete track 2 and import captions_ar.srt (Text > Captions > Import).
+- 2_graphics.mov uses the Instagram handle on the last card. For TikTok, use the final TikTok video,
+  or cover the handle in CapCut.
+
+Bigger changes (any text, colours, timing): open the hyperframes/ folder in the HyperFrames desktop app,
+or just write what to change on the dashboard and click Send changes.
+"""
+
+
+def edit_package(job, project):
+    """At draft time: captions_ar.srt + the editable HyperFrames project (the heavy CapCut layers come on Approve)."""
+    pkg = os.path.join(job, "edit_package"); os.makedirs(pkg, exist_ok=True)
+    captions_srt(project, os.path.join(pkg, "captions_ar.srt"))
     dst = os.path.join(pkg, "hyperframes")
     if os.path.exists(dst):
         shutil.rmtree(dst)
@@ -115,12 +124,33 @@ def edit_package(job, project):
         os.symlink(rel, os.path.join(dst, "assets", "proxy.mp4"))
     except OSError:
         pass
-    open(os.path.join(pkg, "README.txt"), "w", encoding="utf-8").write(
-        "Edit package\n- clean_cut.mp4: you after cutting (no graphics). Put it on track 1 in CapCut/DaVinci.\n"
-        "- captions_ar.srt: the captions as text with timings (import into your editor if you want plain captions).\n"
-        "- hyperframes/: the full project. Open it in the HyperFrames desktop app to change any text and export.\n"
-        "Coming next: graphics layer with transparency (graphics_alpha.mov) and timeline.fcpxml.\n")
+    open(os.path.join(pkg, "README.txt"), "w", encoding="utf-8").write(README)
     return pkg
+
+
+def capcut_layers(job, platform="instagram"):
+    """On Approve: 1_video.mp4 (you + zooms + sound) and 2_graphics.mov (transparent ProRes 4444), same length."""
+    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+    from compile import compile_job
+    tl = json.load(open(os.path.join(job, "timeline.json"), encoding="utf-8"))
+    pkg = os.path.join(job, "edit_package"); os.makedirs(pkg, exist_ok=True)
+    out = []
+    for layer, name, fmt in (("video", "1_video.mp4", "mp4"), ("graphics", "2_graphics.mov", "mov")):
+        try:
+            project = compile_job(job, platform, final=True, layer=layer)
+        except hfbuild.BuildError as e:
+            raise RenderError(str(e))
+        check(project)
+        path = os.path.join(pkg, name)
+        if os.path.exists(path):
+            os.remove(path)
+        code, o, e = run(HF + ["render", "--format", fmt, "--quality", "high", "-o", path], project, 3600)
+        if code or not os.path.exists(path):
+            raise RenderError(f"{name} failed: " + (e or o)[-300:])
+        verify(path, tl["duration"])
+        out.append(path)
+    open(os.path.join(pkg, "README.txt"), "w", encoding="utf-8").write(README)
+    return out
 
 
 def draft(job):
@@ -169,6 +199,10 @@ def final(job, platforms):
             bad = path.replace(".mp4", "_QA_FAILED.mp4"); os.rename(path, bad)
             raise RenderError(f"final {p} failed QA (kept as {os.path.basename(bad)}): " + "; ".join(qa["errors"][:4]))
         outs.append(path)
+    try:
+        outs += capcut_layers(job, platforms[0])
+    except RenderError as e:            # the finals are fine; only the CapCut layers failed
+        print(f"   CapCut layers not made: {e}")
     return outs
 
 
