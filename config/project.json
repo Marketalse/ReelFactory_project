@@ -3,7 +3,8 @@
   "route": {
     "provider": "nous",
     "base_url": "https://inference-api.nousresearch.com/v1",
-    "auth_file": "~/.hermes/auth.json"
+    "key_file": "~/.reelfactory/nous_api_key",
+  "auth_file": "~/.hermes/auth.json"
   },
   "models": {
     "transcript_fix": "anthropic/claude-haiku-5.5",
