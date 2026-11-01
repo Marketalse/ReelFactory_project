@@ -365,7 +365,10 @@ def st_draft(c):
             raise Stop(str(e))
         jsave(os.path.join(c.job, "review", "draft.json"), res)
     c.gate2 = res
-    return f"draft ready ({len(res.get('check_warnings', []))} check warnings)"
+    qa = res.get("qa") or {}
+    if qa.get("errors"):
+        raise Stop("QA found problems before Gate 2 (draft kept for inspection): " + "; ".join(qa["errors"][:5]))
+    return f"draft ready: QA passed ({len(qa.get('warnings', []))} QA warnings, {len(res.get('check_warnings', []))} check warnings)"
 
 
 def st_report(c):
@@ -384,7 +387,11 @@ def st_report(c):
           f"{len(e.get('removed', {}).get('fillers', []))} fillers, {len(e.get('removed', {}).get('retakes', []))} retake words.",
           f"Plan: {len(tl.get('scenes', []))} scenes, {len(tl.get('punch_ins', []))} punch-ins; director {str(tl.get('director', '')).split('/')[-1]}; "
           f"repairs: {max(0, len(val.get('attempts', [])) - 1)}.", "", "Warnings:"]
-    L += [f"- {w}" for w in val.get("warnings", []) + dr.get("check_warnings", [])] or ["- none"]
+    qa = dr.get("qa") or {}
+    qm = qa.get("metrics", {})
+    L += [f"QA: length {qm.get('duration')}s, loudness {qm.get('lufs')} LUFS, captions {qm.get('caption_words')}/{qm.get('spoken_words_shown')} words, "
+          f"errors {len(qa.get('errors', []))}.", ""]
+    L += [f"- {w}" for w in val.get("warnings", []) + qa.get("warnings", []) + dr.get("check_warnings", [])] or ["- none"]
     L += ["", "Files: `review/draft_540p.mp4`, `review/contact_sheet.jpg`, `edit_package/` (clean_cut.mp4, captions_ar.srt, hyperframes/)."]
     open(os.path.join(c.job, "report.md"), "w", encoding="utf-8").write("\n".join(L) + "\n")
     return "report.md"
