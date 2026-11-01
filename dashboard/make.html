@@ -641,6 +641,41 @@ async function waitCover(p){
   }
 }
 
+/* ---------------------------------------------------------------- how did it do? (results after posting) */
+const PERF=[["views","Views"],["avg_watch_s","Average watch time (seconds)"],["full_pct","Watched to the end (%)"],["likes","Likes"],["comments","Comments"],["shares","Shares"],["saves","Saves"],["follows","New follows"]];
+const WHEN_TXT={"48h":"2 days after posting","7d":"7 days after posting","30d":"30 days after posting"};
+function perfBlock(p){
+  return `<div id="perfBox" style="border-top:1px solid var(--line);padding-top:14px;display:grid;gap:10px">
+    <b>How did it do?</b>
+    <p class="small" style="margin:0">After you post, open Insights on Instagram or TikTok and copy the numbers here, 2 days after posting (and again after 7 days if you can). Reel Factory learns what works for your audience.</p>
+    <div class="row" style="gap:8px;flex-wrap:wrap">
+      <select id="pfPlat" class="btn" style="padding:9px 12px"><option value="instagram">Instagram</option><option value="tiktok">TikTok</option></select>
+      <select id="pfWhen" class="btn" style="padding:9px 12px">${Object.entries(WHEN_TXT).map(([k,v])=>`<option value="${k}">${v}</option>`).join("")}</select>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px">
+      ${PERF.map(([k,l])=>`<label class="small" style="display:grid;gap:4px">${l}<input type="text" inputmode="decimal" id="pf_${k}" autocomplete="off"></label>`).join("")}
+    </div>
+    <div class="row"><button class="btn violet" type="button" id="pfSave">Save results</button></div>
+    <div id="pfList" class="small"></div>
+  </div>`;
+}
+async function loadPerf(job){
+  try{ const d=await (await fetch("/api/performance?job="+encodeURIComponent(job),{cache:"no-store"})).json();
+    const r=(d.reels||[])[0]; const L=$("#pfList"); if(!L) return;
+    L.innerHTML = r&&r.entries.length ? "<b>Saved:</b><br>"+r.entries.map(e=>`${e.platform==="tiktok"?"TikTok":"Instagram"}, ${WHEN_TXT[e.when]||e.when}: ${Number(e.views).toLocaleString()} views${e.watch_pct!=null?`, watched ${e.watch_pct}% on average`:""}${e.saves!=null?`, ${e.saves} saves`:""}`).join("<br>") : "";
+  }catch(e){}
+}
+function wirePerf(p){
+  if(!$("#perfBox")) return;
+  $("#pfSave").onclick=async ()=>{
+    const data={platform:$("#pfPlat").value, when:$("#pfWhen").value}; PERF.forEach(([k])=>{ const v=$("#pf_"+k).value.trim(); if(v) data[k]=v; });
+    const r=await backend.post("performance",{job:p.job,data});
+    if(!r.ok) return toast("Couldn't save", r.message, "error");
+    toast("Results saved", r.message, "ok"); PERF.forEach(([k])=>$("#pf_"+k).value=""); loadPerf(p.job);
+  };
+  loadPerf(p.job);
+}
+
 function showResult(p){
   const R=$("#result"); R.hidden=false; $("#trackLede").hidden=true;
   const job=p.job;
@@ -688,10 +723,11 @@ function showResult(p){
           <div class="row">${p.package.map(f=>`<a class="btn" href="${backend.mediaUrl(job,"edit_package/"+f)}" download="${esc(f)}">${esc(f)}</a>`).join("")}</div>
           <div class="row"><button class="btn ghost" id="reveal">Open in Finder</button></div></div>`:""}
         ${coverBlock(p)}
+        ${perfBlock(p)}
         <p class="small" style="margin:0">Nothing is posted for you. Post it yourself when you're ready.</p>
         <div class="row"><button class="btn violet" id="another">Make another reel</button></div>
       </div></div>`;
-    wireCover(p);
+    wireCover(p); wirePerf(p);
     const rv=$("#reveal"); if(rv) rv.onclick=async ()=>{ const r=await backend.reveal(job); toast(r.ok?"Opened in Finder":"Couldn't open Finder", r.ok?"":r.message, r.ok?"ok":"error"); };
     $("#another").onclick=()=>$("#newBtn").click();
   } else {

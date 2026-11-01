@@ -121,6 +121,31 @@ class ProgressTests(ApiTest):
         self.assertFalse(self.api._handles_set())
 
 
+class PerformanceTests(ApiTest):
+    def test_save_check_and_rates(self):
+        d = self.job("2026-11-01-stock", "rendered", [])
+        json.dump({"duration": 50.0, "scenes": [{"block": "hook_two_tone", "values": {"line1": "شكد بضاعة", "line2": "لازم تجيب"}},
+                                                {"block": "text_card"}, {"block": "flash"}], "frames": [[0, 1.0, 0], [3, 1.25, 0]]},
+                  open(os.path.join(d, "timeline.json"), "w"), ensure_ascii=False)
+        api = self.api
+        self.assertFalse(api.save_performance("2026-11-01-stock", {"platform": "x", "when": "48h", "views": 5})[0])
+        self.assertFalse(api.save_performance("2026-11-01-stock", {"platform": "tiktok", "when": "48h"})[0])          # views needed
+        self.assertFalse(api.save_performance("2026-11-01-stock", {"platform": "tiktok", "when": "48h", "views": "abc"})[0])
+        self.assertFalse(api.save_performance("2026-11-01-stock", {"platform": "tiktok", "when": "48h", "views": 9, "full_pct": 140})[0])
+        self.assertFalse(api.save_performance("../x", {"platform": "tiktok", "when": "48h", "views": 9})[0])
+        ok, _ = api.save_performance("2026-11-01-stock", {"platform": "instagram", "when": "48h", "views": "12,000", "avg_watch_s": "20", "saves": "60"})
+        self.assertTrue(ok)
+        api.save_performance("2026-11-01-stock", {"platform": "instagram", "when": "48h", "views": 13000})            # same slot replaces
+        api.save_performance("2026-11-01-stock", {"platform": "instagram", "when": "7d", "views": 20000, "avg_watch_s": 25, "saves": 100})
+        r = api.performance("2026-11-01-stock")[0]
+        self.assertEqual(len(r["entries"]), 2)
+        e = [x for x in r["entries"] if x["when"] == "7d"][0]
+        self.assertEqual((e["watch_pct"], e["saves_per_1k"]), (50.0, 5.0))
+        self.assertEqual((r["facts"]["moments"], r["facts"]["zooms"], r["facts"]["hook_chars"]), (2, 1, 18))
+        csv_ = api.performance_csv().splitlines()
+        self.assertEqual(len(csv_), 3); self.assertIn("2026-11-01-stock,instagram,7d,20000", csv_[2])
+
+
 class SpendTests(ApiTest):
     def test_spend_by_step_model_and_projection(self):
         from datetime import date

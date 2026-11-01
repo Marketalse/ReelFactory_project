@@ -563,3 +563,100 @@ def cover_reset(job):
                 os.remove(p)
     _remake_cover(job)
     return True, "Making the automatic cover…"
+
+
+# ----------------------------------------------------------------------------- performance (how a posted reel did)
+PERF_FIELDS = {          # key -> (label, max)
+    "views": ("Views", 10**10), "avg_watch_s": ("Average watch time (s)", 3600), "full_pct": ("Watched to the end (%)", 100),
+    "likes": ("Likes", 10**9), "comments": ("Comments", 10**9), "shares": ("Shares", 10**9), "saves": ("Saves", 10**9),
+    "follows": ("New follows", 10**9),
+}
+PLATFORMS = ("instagram", "tiktok")
+WHEN = ("48h", "7d", "30d")
+
+
+def save_performance(job, data):
+    """Hesham types the numbers from Instagram/TikTok Insights. Kept per reel in jobs/<job>/performance.json."""
+    if not JOB.match(job or "") or not os.path.isdir(os.path.join(JOBS, job)):
+        return False, "unknown reel"
+    data = data or {}
+    platform, when = data.get("platform"), data.get("when")
+    if platform not in PLATFORMS:
+        return False, "choose Instagram or TikTok"
+    if when not in WHEN:
+        return False, "choose when you checked (2 days, 7 days or 30 days after posting)"
+    entry = {"platform": platform, "when": when, "saved": time.strftime("%Y-%m-%d %H:%M")}
+    for k, (label, hi) in PERF_FIELDS.items():
+        v = data.get(k)
+        if v in (None, ""):
+            continue
+        try:
+            v = float(str(v).replace(",", "").strip())
+        except ValueError:
+            return False, f"{label}: type a number"
+        if not 0 <= v <= hi:
+            return False, f"{label}: that number looks wrong"
+        entry[k] = int(v) if k not in ("avg_watch_s", "full_pct") else round(v, 1)
+    if "views" not in entry:
+        return False, "Views is needed"
+    p = os.path.join(JOBS, job, "performance.json")
+    d = _j(p, {"entries": []})
+    d["entries"] = [e for e in d.get("entries", []) if (e.get("platform"), e.get("when")) != (platform, when)] + [entry]
+    tmp = p + ".tmp"
+    json.dump(d, open(tmp, "w", encoding="utf-8"), indent=1); os.replace(tmp, p)
+    return True, "Saved. Thanks: every result teaches Reel Factory what works."
+
+
+def edit_facts(job):
+    """What the edit was (for learning later): length, hook, moments, zooms, captions."""
+    jd = os.path.join(JOBS, job)
+    tl = _j(os.path.join(jd, "timeline.json"), {})
+    scenes = tl.get("scenes", [])
+    hook = next((s.get("values", {}) for s in scenes if s.get("block") == "hook_two_tone"), {})
+    kinds = {}
+    for s in scenes:
+        if s.get("block") not in ("hook_two_tone", "captions", "cta_card"):
+            kinds[s["block"]] = kinds.get(s["block"], 0) + 1
+    zooms = sum(1 for f in tl.get("frames", []) if isinstance(f, (list, tuple)) and len(f) > 1 and f[1] and f[1] > 1.01)
+    dur = tl.get("duration") or 0
+    return {"length_s": round(dur, 1), "hook": " / ".join(x for x in (hook.get("line1"), hook.get("line2")) if x),
+            "hook_chars": len((hook.get("line1") or "") + (hook.get("line2") or "")),
+            "moments": sum(kinds.values()), "moment_kinds": kinds, "zooms": zooms,
+            "own_cover": any(os.path.exists(os.path.join(jd, "cover", n + e)) for n in ("photo", "own") for e in COVER_EXT)}
+
+
+def performance(job=None):
+    """All reels with results (or one): edit facts + entries + simple rates. Used by the Results page and the CSV."""
+    out = []
+    names = [job] if job else (sorted(n for n in os.listdir(JOBS) if JOB.match(n)) if os.path.isdir(JOBS) else [])
+    for n in names:
+        if not JOB.match(n or "") or not os.path.isdir(os.path.join(JOBS, n)):
+            continue
+        d = _j(os.path.join(JOBS, n, "performance.json"), {"entries": []})
+        st = (_j(os.path.join(JOBS, n, "job.json"), {}) or {}).get("status")
+        if not d.get("entries") and st != "rendered" and not job:
+            continue
+        facts = edit_facts(n)
+        rows = []
+        for e in d.get("entries", []):
+            e = dict(e); v = e.get("views") or 0
+            if v:
+                for k in ("likes", "comments", "shares", "saves", "follows"):
+                    if k in e:
+                        e[k + "_per_1k"] = round(1000 * e[k] / v, 1)
+            if facts["length_s"] and e.get("avg_watch_s") is not None:
+                e["watch_pct"] = round(min(100, 100 * e["avg_watch_s"] / facts["length_s"]), 1)
+            rows.append(e)
+        out.append({"job": n, "status": st, "facts": facts, "entries": rows})
+    return out
+
+
+def performance_csv():
+    cols = ["job", "platform", "when", "views", "avg_watch_s", "watch_pct", "full_pct", "likes", "comments", "shares", "saves",
+            "follows", "saves_per_1k", "shares_per_1k", "length_s", "hook_chars", "moments", "zooms", "own_cover", "hook"]
+    lines = [",".join(cols)]
+    for r in performance():
+        for e in r["entries"]:
+            row = dict(r["facts"], **e, job=r["job"])
+            lines.append(",".join('"' + str(row.get(c, "")).replace('"', "'") + '"' if c == "hook" else str(row.get(c, "")) for c in cols))
+    return "\n".join(lines) + "\n"

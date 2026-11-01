@@ -1,6 +1,6 @@
 {
  "project": "Reel Factory",
- "version": 19,
+ "version": 20,
  "owners": [
   "Hesham",
   "Claude",
@@ -672,7 +672,7 @@
     "T43"
    ],
    "done_when": "",
-   "notes": "",
+   "notes": " Now done on the page: open the reel → How did it do? (2026-11-01).",
    "evidence": "",
    "updated": "2026-11-01"
   },
@@ -1066,7 +1066,19 @@
    "depends": [],
    "done_when": "Hesham agrees the plan; then: performance entered for 10+ reels and the first learned rules appear in lessons.md",
    "evidence": "",
-   "notes": "Idea saved in docs/idea_self_learning.md (2026-11-01). Reminder set for 2026-11-08. Builds on T45, T36, T49.",
+   "notes": "Step 1 (manual results box + Results page + CSV) built on v2, 2026-11-01. Step 2 = linked Instagram/TikTok accounts + learning rules (from 5 reels). Reminder 2026-11-08.",
+   "updated": "2026-11-01"
+  },
+  {
+   "id": "T77",
+   "phase": "P8",
+   "title": "Reel results by hand: 'How did it do?' box on each finished reel + Results page + CSV",
+   "owner": "Claude",
+   "status": "review",
+   "depends": [],
+   "done_when": "Hesham saves results for his first posted reel",
+   "evidence": "branch v2: reels_api.save_performance/performance/performance_csv, make.html How did it do?, index.html Results, tests PerformanceTests",
+   "notes": "Step 1 of T76.",
    "updated": "2026-11-01"
   }
  ],

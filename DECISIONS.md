@@ -55,3 +55,7 @@ One line per decision. Newest at the bottom. If a later decision changes an earl
 - Text comes from his words: the hook, and the AI's cover fields (tag, sticker, formula card) are dropped if too long or if they show a number he didn't say.
 - Photo: his upload (Extras → Cover photo, or "Use my photo" after the draft), else the sharpest of 10 frames from the take. "Use my own cover" uses his image as is.
 - Rendered by `scripts/cover.py` with HyperFrames snapshot (no extra tools). A cover problem never stops the reel.
+
+## 2026-11-01 · Reel results, step 1: typed in by hand
+- Each finished reel has a "How did it do?" box: platform, 2/7/30 days after posting, views, average watch time, watched-to-end %, likes, comments, shares, saves, follows. Stored in jobs/<job>/performance.json; the Results page and CSV join them with what the edit was (length, hook, cards, zooms, own cover).
+- Step 2 (later, T76): read the same numbers from linked Instagram/TikTok accounts (read-only). Learning rules start at 5 reels with results.

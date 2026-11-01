@@ -122,6 +122,13 @@ class H(SimpleHTTPRequestHandler):
             return self.send_file(p, ctype)
         if self.path.startswith("/api/tasks"):
             return self.send_json(200, load(TASKS, {"tasks": [], "version": 0}))
+        if self.path.startswith("/api/performance.csv"):
+            b = reels_api.performance_csv().encode("utf-8")
+            self.send_response(200); self.send_header("Content-Type", "text/csv; charset=utf-8")
+            self.send_header("Content-Disposition", 'attachment; filename="reel_results.csv"')
+            self.send_header("Content-Length", str(len(b))); self.end_headers(); self.wfile.write(b); return
+        if self.path.startswith("/api/performance"):
+            return self.send_json(200, {"reels": reels_api.performance(q.get("job") or None), "fields": {k: v[0] for k, v in reels_api.PERF_FIELDS.items()}})
         if self.path.startswith("/api/spend"):
             return self.send_json(200, reels_api.spend())
         if self.path.startswith("/api/expenses"):
@@ -209,6 +216,7 @@ class H(SimpleHTTPRequestHandler):
                   "fix": lambda: reels_api.fix(body.get("job"), body.get("text")), "approve": lambda: reels_api.approve(body.get("job")),
                   "reveal": lambda: reels_api.reveal(body.get("job")),
                   "cover_reset": lambda: reels_api.cover_reset(body.get("job")),
+                  "performance": lambda: reels_api.save_performance(body.get("job"), body.get("data")),
                   "check": lambda: reels_api.check_name(body.get("slug"), body.get("session")),
                   "notes": lambda: reels_api.save_notes(body.get("slug"), body.get("session"), body.get("text"))}.get(action)
             if not fn:

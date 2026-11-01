@@ -39,6 +39,12 @@ Every draft comes with a **cover image** (your title on top, you underneath, in 
 - **Back to automatic**: the best moment from your video again.
 You can also add a cover photo before you start, under **Extras → Cover photo**. After Approve the cover is saved next to the final videos.
 
+## After you post: "How did it do?"
+2 days after posting, open **Insights** on Instagram or TikTok, open the reel on the Make a reel page (**Your reels** at the top)
+and type the numbers into **How did it do?** (views, average watch time, watched to the end, likes, comments, shares, saves, follows).
+Do it again after 7 days if you can. All results are under **All reels & tasks → Results** (also as a spreadsheet).
+From 5 reels on, Reel Factory starts learning what works for your audience.
+
 ## Want to tweak it yourself in CapCut?
 After Approve the page also shows the **CapCut files**. Click **Open in Finder**, then in CapCut (new 9:16 project):
 1. Drag **1_video.mp4** onto the timeline (you, already cut, with zooms and sound).

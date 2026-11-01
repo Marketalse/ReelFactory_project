@@ -104,6 +104,7 @@ th{color:var(--muted);font-weight:500}
     <button data-v="map">Plan map</button>
     <button data-v="board">Task board</button>
     <button data-v="spend">Spend</button>
+    <button data-v="results">Results</button>
     <button data-v="log">Activity</button>
   </nav>
   <a class="btn lime" href="make.html" style="text-decoration:none">+ New reel</a>
@@ -125,6 +126,7 @@ th{color:var(--muted);font-weight:500}
   <section id="v-map" class="hidden"></section>
   <section id="v-board" class="hidden"><div class="board" id="board"></div></section>
   <section id="v-spend" class="hidden"></section>
+  <section id="v-results" class="hidden"></section>
   <section id="v-log" class="hidden"></section>
 </main>
 
@@ -273,6 +275,21 @@ async function renderSpend(){
     <div class="card"><table><tr><th>Date</th><th>Job / video</th><th>Category</th><th>Amount</th><th>Note</th></tr>
     ${rows.slice().reverse().map(r=>`<tr><td>${esc(r.date)}</td><td>${esc(r.video)}</td><td>${esc(r.category)}</td><td>$${(+r.amount||0).toFixed(4)}</td><td style="color:var(--muted)">${esc(r.note)}</td></tr>`).join('')||'<tr><td colspan=5>No spend recorded (expenses.json not found or empty)</td></tr>'}</table></div>`;
 }
+async function renderResults(){
+  let d={reels:[]}; try{d=await (await fetch('/api/performance',{cache:'no-store'})).json()}catch(_){}
+  const rows=[]; (d.reels||[]).forEach(r=>{ if(!r.entries.length) rows.push({r,e:null}); r.entries.forEach(e=>rows.push({r,e})); });
+  const withData=(d.reels||[]).filter(r=>r.entries.length).length;
+  const W={'48h':'2 days','7d':'7 days','30d':'30 days'}, n=v=>v==null?'':Number(v).toLocaleString();
+  $('#v-results').innerHTML=`<div class="summary">
+    <div class="card"><div class="label">Reels with results</div><div class="big">${withData}</div><div class="label">${withData<5?`Learning starts at 5 reels (${5-withData} to go)`:'Enough to start learning'}</div></div>
+    <div class="card"><div class="label">Add results</div><p style="margin:6px 0 0;color:var(--muted)">Open a finished reel on the <a href="/" style="color:var(--lime)">Make a reel</a> page → "How did it do?"</p></div>
+    <div class="card"><div class="label">All results</div><p style="margin:6px 0 0"><a href="/api/performance.csv" style="color:var(--lime)">Download as a spreadsheet (CSV)</a></p></div></div>
+    <div class="card"><table><tr><th>Reel</th><th>Where / when</th><th>Views</th><th>Avg watched</th><th>To the end</th><th>Saves /1k</th><th>Shares /1k</th><th>Length</th><th>Cards</th><th>Zooms</th><th>Title</th></tr>
+    ${rows.map(({r,e})=>`<tr><td>${esc(r.job)}</td><td>${e?(e.platform==='tiktok'?'TikTok':'Instagram')+' · '+(W[e.when]||e.when):'<span style="color:var(--muted)">no results yet</span>'}</td>
+      <td>${e?n(e.views):''}</td><td>${e&&e.watch_pct!=null?e.watch_pct+'%':''}</td><td>${e&&e.full_pct!=null?e.full_pct+'%':''}</td>
+      <td>${e&&e.saves_per_1k!=null?e.saves_per_1k:''}</td><td>${e&&e.shares_per_1k!=null?e.shares_per_1k:''}</td>
+      <td>${r.facts.length_s?Math.round(r.facts.length_s)+' s':''}</td><td>${r.facts.moments}</td><td>${r.facts.zooms}</td><td dir="auto">${esc(r.facts.hook)}</td></tr>`).join('')||'<tr><td colspan=11>No finished reels yet.</td></tr>'}</table></div>`;
+}
 function renderLog(){
   $('#v-log').innerHTML=`<div class="card"><table><tr><th>When</th><th>Who</th><th>Task</th><th>Change</th></tr>${(D.log||[]).slice().reverse().slice(0,300).map(l=>`<tr><td>${esc(l.time)}</td><td class="own-${esc(l.who)}">${esc(l.who)}</td><td>${esc(l.task)}</td><td>${esc(l.change)}</td></tr>`).join('')}</table></div>`;
 }
@@ -325,11 +342,11 @@ function renderReels(){
 }
 function render(){
   summary();
-  ['reels','table','map','board','spend','log'].forEach(v=>$('#v-'+v).classList.toggle('hidden',v!==view));
+  ['reels','table','map','board','spend','results','log'].forEach(v=>$('#v-'+v).classList.toggle('hidden',v!==view));
   $('.filters').classList.toggle('hidden',!['map','board','table'].includes(view));
   $('#summary').classList.toggle('hidden',view==='reels');
   if(view==='reels'){renderReels();return}
-  if(view==='table')renderTable(); if(view==='map')renderMap(); if(view==='board')renderBoard(); if(view==='spend')renderSpend(); if(view==='log')renderLog();
+  if(view==='table')renderTable(); if(view==='map')renderMap(); if(view==='board')renderBoard(); if(view==='spend')renderSpend(); if(view==='results')renderResults(); if(view==='log')renderLog();
   document.querySelectorAll('.chip').forEach(c=>{c.onclick=()=>openEdit(c.dataset.id);c.ondragstart=e=>e.dataTransfer.setData('text',c.dataset.id)});
 }
 function logc(t,change){(D.log=D.log||[]).push({time:now(),who:'Hesham',task:t.id,change})}
