@@ -165,5 +165,20 @@ class CompileTests(unittest.TestCase):
             cfg.BRAND["handles"] = old
 
 
+class WordFixTests(unittest.TestCase):
+    def test_comment_word_fixes_change_transcript_and_cut(self):
+        import json, tempfile, reel
+        with tempfile.TemporaryDirectory() as d:
+            words = [W(t, i, i + 0.8) for i, t in enumerate("حاط رخنه تواصل kastomer سيرفس".split())]
+            json.dump(words, open(os.path.join(d, "transcript.json"), "w"))
+            json.dump({"words": [dict(w, src_i=i) for i, w in enumerate(words)]}, open(os.path.join(d, "edl.json"), "w"))
+            n = reel.apply_word_fixes(d, "make the hook shorter\nرخنه => رقم\nkastomer سيرفس -> customer service")
+            t = [w["text"] for w in json.load(open(os.path.join(d, "transcript.json")))]
+            e = [w["text"] for w in json.load(open(os.path.join(d, "edl.json")))["words"]]
+        self.assertEqual(t, "حاط رقم تواصل customer service".split())
+        self.assertEqual(e, t)
+        self.assertEqual(n, 3)
+
+
 if __name__ == "__main__":
     unittest.main()

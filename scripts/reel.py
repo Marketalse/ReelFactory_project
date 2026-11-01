@@ -273,6 +273,8 @@ def st_selects(c):
             from_job = chosen[0]; pick = chosen[0]["id"]
     if not pick and len(sel) == 1 and sel[0].get("label") == "the whole take":
         pick = "A"
+    if not pick and cfg.PROJECT["gates"].get("story_pick", "ask") == "auto":
+        pick = "auto"
     if not pick:
         print("\n   GATE 1 - Hesham picks the story. Candidates:")
         for s in sel: print(f"     {s['id']}  {s['range'][0]:.0f}-{s['range'][1]:.0f}s  {s['label']}  | {s['hook_line']}")
@@ -281,7 +283,7 @@ def st_selects(c):
     if from_job:
         s = {"id": from_job["id"], "range": from_job["range"], "label": from_job["label"], "hook_line": ""}; by = "hesham (job.json)"
     else:
-        s = sel[0] if pick == "auto" else next((x for x in sel if x["id"] == pick), None); by = "auto (gate skipped)" if pick == "auto" else "hesham (--select)"
+        s = max(sel, key=lambda x: x.get("score", 0)) if pick == "auto" else next((x for x in sel if x["id"] == pick), None); by = "auto (best score)" if pick == "auto" else "hesham (--select)"
     if not s: raise Stop(f"unknown select {pick}")
     jsave(os.path.join(c.job, "chosen_select.json"), dict(s, picked_by=by))
     return f"select {s['id']} {s['range']}"
@@ -397,6 +399,49 @@ def st_report(c):
     return "report.md"
 
 
+WORD_FIX = re.compile(r"^\s*(.+?)\s*(?:=>|->|→)\s*(.+?)\s*$")
+
+
+def apply_word_fixes(job, comment):
+    """Comment lines like 'رخنه => رقم' or 'kastomer => customer' replace those words everywhere in the transcript
+    (word count may change; timings are shared out within the replaced words)."""
+    pairs = [m.groups() for m in (WORD_FIX.match(l) for l in comment.splitlines()) if m]
+    if not pairs:
+        return 0
+    changed = 0
+    for name in ("transcript.json", "edl.json"):
+        p = os.path.join(job, name); d = jload(p)
+        if d is None: continue
+        words = d["words"] if isinstance(d, dict) else d
+        out, i = [], 0
+        while i < len(words):
+            hit = None
+            for old, new in pairs:
+                ow = old.split()
+                if [w["text"] for w in words[i:i + len(ow)]] == ow:
+                    hit = (ow, new.split()); break
+            if not hit:
+                out.append(words[i]); i += 1; continue
+            ow, nw = hit; span = words[i:i + len(ow)]
+            a0, b0 = span[0]["start"], span[-1]["end"]; step = (b0 - a0) / max(1, len(nw))
+            for k, t in enumerate(nw):
+                w = dict(span[min(k, len(span) - 1)]); w.update(text=t, start=round(a0 + k * step, 3), end=round(a0 + (k + 1) * step - 0.02, 3))
+                out.append(w)
+            changed += len(ow); i += len(ow)
+        if isinstance(d, dict): d["words"] = out
+        else: d = out
+        jsave(p, d)
+    return changed // 2 if os.path.exists(os.path.join(job, "edl.json")) else changed
+
+
+def notify(msg):
+    """macOS notification (silently skipped elsewhere)."""
+    try:
+        subprocess.run(["osascript", "-e", f'display notification "{msg}" with title "Reel Factory"'], capture_output=True, timeout=5)
+    except (OSError, subprocess.SubprocessError):
+        pass
+
+
 FUNCS = {"ingest": st_ingest, "transcribe": st_transcribe, "fix": st_fix, "review": st_review, "selects": st_selects,
          "edl": st_edl, "keyframes": st_keyframes, "shotlog": st_shotlog, "plan": st_plan, "compile": st_compile,
          "draft": st_draft, "report": st_report}
@@ -436,6 +481,8 @@ def main():
     if a.fix:
         j = jload(os.path.join(job, "job.json"), {}); j.setdefault("feedback_history", []).append({"time": time.strftime("%Y-%m-%d %H:%M"), "fix": a.fix})
         jsave(os.path.join(job, "job.json"), j)
+        n = apply_word_fixes(job, a.fix)
+        if n: print(f"   word fixes from your comment: {n} word(s) changed in the transcript")
     print(f"JOB {os.path.basename(job)} | budget ${a.budget:.2f} | spent so far ${c.spent():.4f}")
     t_all = time.time(); status = "ok"
     try:
@@ -475,6 +522,9 @@ def main():
                             "--amount", f"{new:.4f}", "--note", f"reel.py run ({status}); measured provider usage.cost"], capture_output=True)
             c.cost["logged"] = c.spent(); jsave(c.cost_path, c.cost)
         print(f"TOTAL this job ${c.spent():.4f} | wall {time.time() - t_all:.0f}s")
+        st = jload(os.path.join(job, "job.json"), {}).get("status", "")
+        notify({"preview_ready": "Draft ready: open the dashboard to watch it", "rendered": "Final videos ready"}.get(st)
+               or (f"Stopped: see run.log ({os.path.basename(job)})" if status != "ok" else f"{os.path.basename(job)}: {st}"))
 
 if __name__ == "__main__":
     main()

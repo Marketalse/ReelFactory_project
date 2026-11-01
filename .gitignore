@@ -30,3 +30,4 @@ __pycache__/
 auth.json
 dashboard/.backups/
 dashboard/expenses.json
+dashboard/server.log
