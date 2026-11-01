@@ -1,0 +1,16 @@
+{
+  "_status": "DRAFT 2026-11-01. Add the words you say often; the transcript fixer and captions follow this list.",
+  "rule": "English words spoken in English are written in Latin letters; Arabic words in Arabic letters.",
+  "terms": [
+    { "spoken": "customer service", "write": "customer service", "script": "latin", "confirmed": true },
+    { "spoken": "customer care",    "write": "customer care",    "script": "latin", "confirmed": false },
+    { "spoken": "page / بيج",       "write": "CONFIRM: page or بيج", "script": "CONFIRM", "confirmed": false },
+    { "spoken": "ads",              "write": "ads",              "script": "latin", "confirmed": false },
+    { "spoken": "store / متجر",     "write": "CONFIRM: store or متجر", "script": "CONFIRM", "confirmed": false },
+    { "spoken": "Meta",             "write": "Meta",             "script": "latin", "confirmed": false },
+    { "spoken": "Instagram",        "write": "Instagram",        "script": "latin", "confirmed": false },
+    { "spoken": "TikTok",           "write": "TikTok",           "script": "latin", "confirmed": false }
+  ],
+  "names": [],
+  "never_change": []
+}

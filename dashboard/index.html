@@ -1,0 +1,261 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Reel Factory Control</title>
+<style>
+:root{
+  --bg:#1c1f29; --panel:#242834; --panel2:#2e3342; --line:#3a4052;
+  --text:#eef0f5; --muted:#9aa1b4; --lime:#B6FF00; --violet:#7D53FF; --coral:#FF6B4A;
+  --todo:#6b7287; --prog:#7D53FF; --review:#ffb020; --blocked:#FF6B4A; --done:#B6FF00;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font:14px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Readex Pro",sans-serif}
+header{position:sticky;top:0;z-index:5;background:var(--bg);border-bottom:1px solid var(--line);padding:14px 20px;display:flex;gap:16px;align-items:center;flex-wrap:wrap}
+h1{font-size:18px;font-weight:700}
+h1 span{color:var(--lime)}
+.pill{display:inline-flex;align-items:center;gap:6px;padding:3px 9px;border-radius:999px;font-size:12px;background:var(--panel2);color:var(--muted);white-space:nowrap}
+.dot{width:8px;height:8px;border-radius:50%;display:inline-block}
+nav{display:flex;gap:4px;margin-left:auto;flex-wrap:wrap}
+nav button,.btn{background:var(--panel);color:var(--text);border:1px solid var(--line);border-radius:8px;padding:7px 12px;cursor:pointer;font:inherit}
+nav button.on{background:var(--violet);border-color:var(--violet)}
+.btn.lime{background:var(--lime);color:#111;border-color:var(--lime);font-weight:600}
+.btn:hover,nav button:hover{filter:brightness(1.15)}
+main{padding:18px 20px 60px;max-width:1500px;margin:0 auto}
+#banner{display:none;margin:12px 20px 0;padding:12px 14px;border-radius:10px;background:#3a2620;border:1px solid var(--coral);color:#ffd8cf}
+#banner code{background:#0003;padding:1px 6px;border-radius:4px}
+.summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin-bottom:18px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px}
+.big{font-size:28px;font-weight:700}
+.label{color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.4px}
+.bar{height:8px;background:var(--panel2);border-radius:99px;overflow:hidden;margin-top:8px;display:flex}
+.bar i{display:block;height:100%}
+.filters{display:flex;gap:8px;align-items:center;margin-bottom:14px;flex-wrap:wrap}
+select,input,textarea{background:var(--panel2);color:var(--text);border:1px solid var(--line);border-radius:8px;padding:7px 9px;font:inherit;width:100%}
+.filters select{width:auto}
+/* map */
+.phase{display:grid;grid-template-columns:230px 1fr;gap:14px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:10px}
+.phase h3{font-size:15px}
+.phase .goal{color:var(--muted);font-size:12px;margin:2px 0 6px}
+.chips{display:flex;flex-wrap:wrap;gap:8px;align-content:flex-start}
+.chip{border:1px solid var(--line);border-left:4px solid var(--todo);background:var(--panel2);border-radius:8px;padding:7px 10px;cursor:pointer;max-width:330px}
+.chip:hover{border-color:var(--muted)}
+.chip .t{font-size:13px}
+.chip .m{font-size:11px;color:var(--muted);margin-top:2px;display:flex;gap:8px}
+.chip.waiting{opacity:.55}
+/* board */
+.board{display:grid;grid-template-columns:repeat(5,minmax(220px,1fr));gap:12px;overflow-x:auto}
+.col{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:10px;min-height:200px}
+.col h4{font-size:13px;margin-bottom:8px;display:flex;justify-content:space-between}
+.col.drop{outline:2px dashed var(--lime)}
+.col .chip{max-width:none;margin-bottom:8px}
+/* owners */
+.own-Hesham{color:var(--lime)} .own-Claude{color:#b9a3ff} .own-Hermes{color:#5fd3ff}
+/* panel */
+#edit{position:fixed;top:0;right:0;height:100%;width:min(460px,100%);background:var(--panel);border-left:1px solid var(--line);transform:translateX(100%);transition:.2s;z-index:10;padding:18px;overflow:auto}
+#edit.open{transform:none}
+#edit h2{font-size:16px;margin-bottom:12px}
+.f{margin-bottom:11px}
+.f label{display:block;font-size:12px;color:var(--muted);margin-bottom:4px}
+.row{display:flex;gap:8px}
+textarea{min-height:70px;resize:vertical}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th,td{text-align:left;padding:7px 8px;border-bottom:1px solid var(--line)}
+th{color:var(--muted);font-weight:500}
+.next li{margin:6px 0 6px 18px}
+.toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:var(--panel2);border:1px solid var(--line);padding:10px 16px;border-radius:10px;display:none;z-index:20}
+.hidden{display:none}
+@media (max-width:760px){.phase{grid-template-columns:1fr}header{padding:12px 16px}main{padding:14px 16px 60px}}
+</style>
+</head>
+<body>
+<header>
+  <h1>Reel Factory <span>Control</span></h1>
+  <span class="pill" id="ver">—</span>
+  <nav>
+    <button data-v="map" class="on">Plan map</button>
+    <button data-v="board">Task board</button>
+    <button data-v="spend">Spend</button>
+    <button data-v="log">Activity</button>
+  </nav>
+  <button class="btn lime" id="add">+ New task</button>
+</header>
+<div id="banner"></div>
+<main>
+  <div class="summary" id="summary"></div>
+  <div class="filters">
+    <span class="label">Owner</span>
+    <select id="fOwner"><option value="">Everyone</option></select>
+    <span class="label">Status</span>
+    <select id="fStatus"><option value="">All</option></select>
+    <input id="fText" placeholder="Search tasks…" style="max-width:260px">
+    <button class="btn" id="reload">Reload</button>
+  </div>
+  <section id="v-map"></section>
+  <section id="v-board" class="hidden"><div class="board" id="board"></div></section>
+  <section id="v-spend" class="hidden"></section>
+  <section id="v-log" class="hidden"></section>
+</main>
+
+<aside id="edit">
+  <h2 id="eTitle">Task</h2>
+  <div class="f"><label>Title</label><input id="e_title"></div>
+  <div class="row">
+    <div class="f" style="flex:1"><label>Phase</label><select id="e_phase"></select></div>
+    <div class="f" style="flex:1"><label>Owner</label><select id="e_owner"></select></div>
+    <div class="f" style="flex:1"><label>Status</label><select id="e_status"></select></div>
+  </div>
+  <div class="f"><label>Waits on (task IDs, comma-separated)</label><input id="e_depends" placeholder="T04, T15"></div>
+  <div class="f"><label>Done when</label><textarea id="e_done"></textarea></div>
+  <div class="f"><label>Notes / instructions</label><textarea id="e_notes"></textarea></div>
+  <div class="f"><label>Evidence (file path or link that proves it's done)</label><input id="e_evidence"></div>
+  <div class="row" style="margin-top:6px">
+    <button class="btn lime" id="eSave">Save</button>
+    <button class="btn" id="eCancel">Close</button>
+    <button class="btn" id="eDel" style="margin-left:auto;color:var(--coral)">Delete</button>
+  </div>
+  <p style="color:var(--muted);font-size:12px;margin-top:14px" id="eMeta"></p>
+</aside>
+<div class="toast" id="toast"></div>
+
+<script>
+const COLORS={todo:'var(--todo)',in_progress:'var(--prog)',review:'var(--review)',blocked:'var(--blocked)',done:'var(--done)'};
+const NAMES={todo:'To do',in_progress:'In progress',review:'Review',blocked:'Blocked',done:'Done'};
+const MONTHLY_CAP=50;
+let D=null, view='map', editing=null;
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function toast(m){const t=$('#toast');t.textContent=m;t.style.display='block';clearTimeout(t._h);t._h=setTimeout(()=>t.style.display='none',2600)}
+function now(){return new Date().toISOString().slice(0,16)}
+
+async function load(){
+  try{
+    const r=await fetch('/api/tasks',{cache:'no-store'}); if(!r.ok) throw 0;
+    D=await r.json(); $('#banner').style.display='none';
+  }catch(e){
+    $('#banner').innerHTML='Not connected to the local server, so nothing can be saved. In Terminal run <code>python3 dashboard/serve.py</code> from the Reel-Factory folder, then open <code>http://127.0.0.1:8765</code>.';
+    $('#banner').style.display='block'; D=D||{tasks:[],phases:[],owners:[],statuses:Object.keys(NAMES),log:[]};
+  }
+  fillSelects(); render();
+}
+async function persist(msg){
+  const r=await fetch('/api/tasks',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(D)});
+  const j=await r.json().catch(()=>({}));
+  if(r.status===409){toast('Someone else changed the board. Reloading — please redo your change.');await load();return false}
+  if(!r.ok){toast('Not saved: '+(j.error||r.status));return false}
+  D.version=j.version; toast(msg||'Saved'); render(); return true;
+}
+function fillSelects(){
+  const o=D.owners||[], s=D.statuses||Object.keys(NAMES), p=D.phases||[];
+  const keep=(sel,html)=>{const v=sel.value;sel.innerHTML=html;sel.value=v};
+  keep($('#fOwner'),'<option value="">Everyone</option>'+o.map(x=>`<option>${esc(x)}</option>`).join(''));
+  keep($('#fStatus'),'<option value="">All</option>'+s.map(x=>`<option value="${x}">${NAMES[x]||x}</option>`).join(''));
+  $('#e_owner').innerHTML=o.map(x=>`<option>${esc(x)}</option>`).join('');
+  $('#e_status').innerHTML=s.map(x=>`<option value="${x}">${NAMES[x]||x}</option>`).join('');
+  $('#e_phase').innerHTML=p.map(x=>`<option value="${x.id}">${esc(x.id+' · '+x.name)}</option>`).join('');
+}
+const byId=id=>D.tasks.find(t=>t.id===id);
+const waiting=t=>t.status!=='done'&&(t.depends||[]).some(d=>{const x=byId(d);return x&&x.status!=='done'});
+function shown(){
+  const o=$('#fOwner').value,s=$('#fStatus').value,q=$('#fText').value.toLowerCase();
+  return D.tasks.filter(t=>(!o||t.owner===o)&&(!s||t.status===s)&&(!q||(t.title+' '+t.notes+' '+t.id).toLowerCase().includes(q)));
+}
+function chip(t){
+  const w=waiting(t);
+  return `<div class="chip${w?' waiting':''}" draggable="true" data-id="${t.id}" style="border-left-color:${COLORS[t.status]}">
+    <div class="t">${esc(t.title)}</div>
+    <div class="m"><span>${t.id}</span><span class="own-${esc(t.owner)}">● ${esc(t.owner)}</span><span>${NAMES[t.status]}</span>${w?'<span>⏳ waits on '+esc(t.depends.join(', '))+'</span>':''}</div></div>`;
+}
+function stackBar(list){
+  const n=list.length||1;
+  return '<div class="bar">'+Object.keys(NAMES).map(s=>`<i style="width:${100*list.filter(t=>t.status===s).length/n}%;background:${COLORS[s]}"></i>`).join('')+'</div>';
+}
+function summary(){
+  const all=D.tasks, done=all.filter(t=>t.status==='done').length, pct=all.length?Math.round(100*done/all.length):0;
+  const ready=o=>all.filter(t=>t.owner===o&&t.status!=='done'&&!waiting(t));
+  const cur=(D.phases||[]).find(p=>all.some(t=>t.phase===p.id&&t.status!=='done'));
+  $('#summary').innerHTML=`
+   <div class="card"><div class="label">Overall</div><div class="big">${pct}%</div>${stackBar(all)}<div class="label" style="margin-top:6px">${done} of ${all.length} tasks done</div></div>
+   <div class="card"><div class="label">Current phase</div><div class="big" style="font-size:20px">${cur?esc(cur.id+' · '+cur.name):'All done'}</div><div class="label" style="margin-top:6px">${cur?esc(cur.goal):''}</div></div>
+   ${['Hesham','Claude','Hermes'].map(o=>{const r=ready(o);return `<div class="card"><div class="label own-${o}">${o} — ready now</div><div class="big">${r.length}</div><div style="font-size:12px;color:var(--muted);margin-top:4px">${r[0]?'Next: '+esc(r[0].id+' '+r[0].title):'Nothing waiting'}</div></div>`}).join('')}
+   <div class="card"><div class="label">Blocked / in review</div><div class="big">${all.filter(t=>t.status==='blocked').length} / ${all.filter(t=>t.status==='review').length}</div></div>`;
+  $('#ver').textContent='board v'+(D.version??'—');
+}
+function renderMap(){
+  const list=shown();
+  $('#v-map').innerHTML=(D.phases||[]).map(p=>{
+    const all=D.tasks.filter(t=>t.phase===p.id), mine=list.filter(t=>t.phase===p.id);
+    const d=all.filter(t=>t.status==='done').length;
+    return `<div class="phase"><div><h3>${esc(p.id+' · '+p.name)}</h3><div class="goal">${esc(p.goal)}</div>
+      <div class="label">${d}/${all.length} done</div>${stackBar(all)}</div>
+      <div class="chips">${mine.map(chip).join('')||'<span style="color:var(--muted)">No tasks match the filter</span>'}</div></div>`}).join('');
+}
+function renderBoard(){
+  const list=shown();
+  $('#board').innerHTML=Object.keys(NAMES).map(s=>{const c=list.filter(t=>t.status===s);
+    return `<div class="col" data-s="${s}"><h4><span><span class="dot" style="background:${COLORS[s]}"></span> ${NAMES[s]}</span><span class="pill">${c.length}</span></h4>${c.map(chip).join('')}</div>`}).join('');
+  document.querySelectorAll('.col').forEach(col=>{
+    col.ondragover=e=>{e.preventDefault();col.classList.add('drop')};
+    col.ondragleave=()=>col.classList.remove('drop');
+    col.ondrop=e=>{e.preventDefault();col.classList.remove('drop');const t=byId(e.dataTransfer.getData('text'));
+      if(t&&t.status!==col.dataset.s){logc(t,`status ${t.status} → ${col.dataset.s}`);t.status=col.dataset.s;t.updated=now().slice(0,10);persist(t.id+' moved')}};
+  });
+}
+async function renderSpend(){
+  let e={rows:[]};
+  try{e=await (await fetch('/api/expenses',{cache:'no-store'})).json()}catch(_){}
+  const rows=e.rows||[], m=new Date().toISOString().slice(0,7);
+  const month=rows.filter(r=>(r.date||'').startsWith(m)), tot=month.reduce((a,r)=>a+(+r.amount||0),0);
+  const all=rows.reduce((a,r)=>a+(+r.amount||0),0);
+  const per={}; month.forEach(r=>per[r.video]=(per[r.video]||0)+(+r.amount||0));
+  $('#v-spend').innerHTML=`<div class="summary">
+    <div class="card"><div class="label">This month</div><div class="big">$${tot.toFixed(2)}</div><div class="bar"><i style="width:${Math.min(100,100*tot/MONTHLY_CAP)}%;background:${tot>MONTHLY_CAP*.8?'var(--coral)':'var(--lime)'}"></i></div><div class="label" style="margin-top:6px">of $${MONTHLY_CAP} cap</div></div>
+    <div class="card"><div class="label">All time</div><div class="big">$${all.toFixed(2)}</div></div>
+    <div class="card"><div class="label">Jobs this month</div><div class="big">${Object.keys(per).length}</div></div></div>
+    <div class="card"><table><tr><th>Date</th><th>Job / video</th><th>Category</th><th>Amount</th><th>Note</th></tr>
+    ${rows.slice().reverse().map(r=>`<tr><td>${esc(r.date)}</td><td>${esc(r.video)}</td><td>${esc(r.category)}</td><td>$${(+r.amount||0).toFixed(4)}</td><td style="color:var(--muted)">${esc(r.note)}</td></tr>`).join('')||'<tr><td colspan=5>No spend recorded (expenses.json not found or empty)</td></tr>'}</table></div>`;
+}
+function renderLog(){
+  $('#v-log').innerHTML=`<div class="card"><table><tr><th>When</th><th>Who</th><th>Task</th><th>Change</th></tr>${(D.log||[]).slice().reverse().slice(0,300).map(l=>`<tr><td>${esc(l.time)}</td><td class="own-${esc(l.who)}">${esc(l.who)}</td><td>${esc(l.task)}</td><td>${esc(l.change)}</td></tr>`).join('')}</table></div>`;
+}
+function render(){
+  summary();
+  ['map','board','spend','log'].forEach(v=>$('#v-'+v).classList.toggle('hidden',v!==view));
+  $('.filters').classList.toggle('hidden',view==='spend'||view==='log');
+  if(view==='map')renderMap(); if(view==='board')renderBoard(); if(view==='spend')renderSpend(); if(view==='log')renderLog();
+  document.querySelectorAll('.chip').forEach(c=>{c.onclick=()=>openEdit(c.dataset.id);c.ondragstart=e=>e.dataTransfer.setData('text',c.dataset.id)});
+}
+function logc(t,change){(D.log=D.log||[]).push({time:now(),who:'Hesham',task:t.id,change})}
+function openEdit(id){
+  editing=id?byId(id):null; const t=editing||{phase:(D.phases[0]||{}).id,owner:'Hermes',status:'todo',depends:[]};
+  $('#eTitle').textContent=editing?`${t.id} — edit task`:'New task';
+  $('#e_title').value=t.title||''; $('#e_phase').value=t.phase; $('#e_owner').value=t.owner; $('#e_status').value=t.status;
+  $('#e_depends').value=(t.depends||[]).join(', '); $('#e_done').value=t.done_when||''; $('#e_notes').value=t.notes||''; $('#e_evidence').value=t.evidence||'';
+  $('#eMeta').textContent=editing?`Last updated ${t.updated||'—'}`:''; $('#eDel').style.display=editing?'':'none';
+  $('#edit').classList.add('open'); $('#e_title').focus();
+}
+$('#eSave').onclick=async()=>{
+  const title=$('#e_title').value.trim(); if(!title){toast('A task needs a title');return}
+  const v={title,phase:$('#e_phase').value,owner:$('#e_owner').value,status:$('#e_status').value,
+    depends:$('#e_depends').value.split(',').map(s=>s.trim().toUpperCase()).filter(Boolean),
+    done_when:$('#e_done').value.trim(),notes:$('#e_notes').value.trim(),evidence:$('#e_evidence').value.trim(),updated:now().slice(0,10)};
+  let t=editing;
+  if(t){const ch=Object.keys(v).filter(k=>JSON.stringify(t[k])!==JSON.stringify(v[k])&&k!=='updated');Object.assign(t,v);if(ch.length)logc(t,'edited: '+ch.join(', '))}
+  else{const n=Math.max(0,...D.tasks.map(x=>+x.id.slice(1)||0))+1;t={id:'T'+String(n).padStart(2,'0'),...v};D.tasks.push(t);logc(t,`created, assigned to ${t.owner}`)}
+  if(await persist(t.id+' saved'))$('#edit').classList.remove('open');
+};
+$('#eDel').onclick=async()=>{if(!editing||!confirm('Delete '+editing.id+'?'))return;D.tasks=D.tasks.filter(t=>t!==editing);logc(editing,'deleted');if(await persist('Deleted'))$('#edit').classList.remove('open')};
+$('#eCancel').onclick=()=>$('#edit').classList.remove('open');
+$('#add').onclick=()=>openEdit(null);
+$('#reload').onclick=load;
+['#fOwner','#fStatus'].forEach(s=>$(s).onchange=render); $('#fText').oninput=render;
+document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>{view=b.dataset.v;document.querySelectorAll('nav button').forEach(x=>x.classList.toggle('on',x===b));render()});
+document.addEventListener('keydown',e=>{if(e.key==='Escape')$('#edit').classList.remove('open')});
+setInterval(async()=>{ if($('#edit').classList.contains('open'))return;
+  try{const r=await fetch('/api/tasks',{cache:'no-store'});const j=await r.json();if(D&&j.version!==D.version){D=j;render();toast('Board updated (another editor saved)')}}catch(_){}
+},15000);
+load();
+</script>
+</body>
+</html>

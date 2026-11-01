@@ -1,0 +1,784 @@
+{
+ "project": "Reel Factory",
+ "version": 4,
+ "owners": [
+  "Hesham",
+  "Claude",
+  "Hermes"
+ ],
+ "statuses": [
+  "todo",
+  "in_progress",
+  "review",
+  "blocked",
+  "done"
+ ],
+ "phases": [
+  {
+   "id": "P0",
+   "name": "Get ready (you)",
+   "goal": "Back up, repo, answers — before anyone builds"
+  },
+  {
+   "id": "P1",
+   "name": "Clean-up",
+   "goal": "One source of truth; old files archived"
+  },
+  {
+   "id": "P2",
+   "name": "Templates",
+   "goal": "8 approved visual blocks driven by one registry"
+  },
+  {
+   "id": "P3",
+   "name": "Core pipeline",
+   "goal": "Clips in → draft + edit package out"
+  },
+  {
+   "id": "P4",
+   "name": "QA + Committee",
+   "goal": "Checks and scoring before you see a reel"
+  },
+  {
+   "id": "P5",
+   "name": "Costs",
+   "goal": "Caps enforced, ledger correct"
+  },
+  {
+   "id": "P6",
+   "name": "Real reels",
+   "goal": "3 real clips end to end, measured"
+  },
+  {
+   "id": "P7",
+   "name": "Later",
+   "goal": "B-roll, more effects, calibration"
+  }
+ ],
+ "tasks": [
+  {
+   "id": "T01",
+   "phase": "P0",
+   "title": "Full diagnosis of the project",
+   "owner": "Claude",
+   "status": "done",
+   "depends": [],
+   "done_when": "Reel_Factory_Diagnosis.md written",
+   "notes": "",
+   "evidence": "",
+   "updated": "2026-11-01"
+  },
+  {
+   "id": "T02",
+   "phase": "P0",
+   "title": "Restructure plan + decisions log",
+   "owner": "Claude",
+   "status": "done",
+   "depends": [],
+   "done_when": "Restructure plan, DECISIONS.md, brand/glossary drafts written",
+   "notes": "",
+   "evidence": "",
+   "updated": "2026-11-01"
+  },
+  {
+   "id": "T03",
+   "phase": "P0",
+   "title": "Back up the whole Reel-Factory folder (zip) before any change",
+   "owner": "Hesham",
+   "status": "todo",
+   "depends": [],
+   "done_when": "Reel-Factory-backup-2026-11-01.zip exists outside the project folder",
+   "notes": "",
+   "evidence": "",
+   "updated": "2026-11-01"
+  },
+  {
+   "id": "T04",
+   "phase": "P0",
+   "title": "Create an empty PRIVATE GitHub repo and send owner/name to Claude",
+   "owner": "Hesham",
+   "status": "review",
+   "depends": [],
+   "done_when": "Claude has attached the repo",
+   "notes": "Repo created under Marketalse and attached to Claude. Mark Done when you have checked it.",
+   "evidence": "https://github.com/Marketalse/ReelFactory_project",
+   "updated": "2026-11-01"
+  },
+  {
+   "id": "T05",
+   "phase": "P0",
+   "title": "Run the Mac check command and send the output",
+   "owner": "Hesham",
+   "status": "todo",
+   "depends": [],
+   "done_when": "node/ffmpeg/hyperframes/python versions + doctor output sent",
+   "notes": "",
+   "evidence": "",
+   "updated": "2026-11-01"
+  },
+  {
+   "id": "T06",
+   "phase": "P0",
+   "title": "Answer: which editor (CapCut / DaVinci / Premiere / Final Cut)",
+   "owner": "Hesham",
+   "status": "todo",
+   "depends": [],
+   "done_when": "",
+   "notes": "",
+   "evidence": "",
+   "updated": "2026-11-01"
+  },
+  {
+   "id": "T07",
+   "phase": "P0",
+   "title": "Answer: Instagram + TikTok handles",
+   "owner": "Hesham",
+   "status": "todo",
+   "depends": [],
+   "done_when": "",
+   "notes": "",
+   "evidence": "",
+   "updated": "2026-11-01"
+  },
+  {
+   "id": "T08",
+   "phase": "P0",
+   "title": "Answer: CTA wording corrections",
+   "owner": "Hesham",
+   "status": "todo",
+   "depends": [],
+   "done_when": "",
+   "notes": "",
+   "evidence": "",
+   "updated": "2026-11-01"
+  },
+  {
+   "id": "T09",
+   "phase": "P0",
+   "title": "Answer: music + SFX library",
+   "owner": "Hesham",
+   "status": "todo",
+   "depends": [],
+   "done_when": "",
+   "notes": "",
+   "evidence": "",
+   "updated": "2026-11-01"
+  },
+  {
+   "id": "T10",
+   "phase": "P0",
+   "title": "Answer: never-show list (or 'nothing')",
+   "owner": "Hesham",
+   "status": "todo",
+   "depends": [],
+   "done_when": "",
+   "notes": "",
+   "evidence": "",
+   "updated": "2026-11-01"
+  },
+  {
+   "id": "T11",
+   "phase": "P0",
+   "title": "Answer: glossary page/بيج, store/متجر",
+   "owner": "Hesham",
+   "status": "todo",
+   "depends": [],
+   "done_when": "",
+   "notes": "",
+   "evidence": "",
+   "updated": "2026-11-01"
+  },
+  {
+   "id": "T12",
+   "phase": "P0",
+   "title": "Answer: clips = separate takes or multi-camera? filename order OK?",
+   "owner": "Hesham",
+   "status": "todo",
+   "depends": [],
+   "done_when": "",
+   "notes": "",
+   "evidence": "",
+   "updated": "2026-11-01"
+  },
+  {
+   "id": "T13",
+   "phase": "P0",
+   "title": "Send 2–3 of your best previous reels (references/own)",
+   "owner": "Hesham",
+   "status": "todo",
+   "depends": [],
+   "done_when": "",
+   "notes": "",
+   "evidence": "",
+   "updated": "2026-11-01"
+  },
+  {
+   "id": "T14",
+   "phase": "P0",
+   "title": "Approve the committee design + $0.45 warning",
+   "owner": "Hesham",
+   "status": "todo",
+   "depends": [],
+   "done_when": "",
+   "notes": "",
+   "evidence": "",
+   "updated": "2026-11-01"
+  },
+  {
+   "id": "T15",
+   "phase": "P1",
+   "title": "Repo skeleton: folders, .gitignore (media ignored), README",
+   "owner": "Claude",
+   "status": "review",
+   "depends": [
+    "T04"
+   ],
+   "done_when": "Repo has the target folder tree",
+   "notes": "Skeleton, .gitignore, README, DECISIONS, docs, configs and dashboard pushed to branch restructure-p1. Your existing code is not in yet (comes from the Mac).",
+   "evidence": "branch restructure-p1",
+   "updated": "2026-11-01"
+  },
+  {
+   "id": "T16",
+   "phase": "P1",
+   "title": "Move config into config/ (project, brand, rules, glossary)",
+   "owner": "Claude",
+   "status": "todo",
+   "depends": [
+    "T15",
+    "T50"
+   ],
+   "done_when": "reel.py reads config/; no hard-coded models/prices",
+   "notes": "",
+   "evidence": "",
+   "updated": "2026-11-01"
+  },
+  {
+   "id": "T17",
+   "phase": "P1",
+   "title": "Archive the 8 status files, old plan, v0 files; remove Telegram everywhere",
+   "owner": "Claude",
+   "status": "todo",
+   "depends": [
+    "T15",
+    "T50"
+   ],
+   "done_when": "archive/ holds them; grep 'telegram' finds nothing active",
+   "notes": "",
+   "evidence": "",
+   "updated": "2026-11-01"
+  },
+  {
+   "id": "T18",
+   "phase": "P1",
+   "title": "Slim AGENTS.md (≤150 lines) + rewrite SOP.md to match the code",
+   "owner": "Claude",
+   "status": "todo",
+   "depends": [
+    "T15",
+    "T50"
+   ],
+   "done_when": "One rulebook, no contradictions",
+   "notes": "",
+   "evidence": "",
+   "updated": "2026-11-01"
+  },
+  {
+   "id": "T19",
+   "phase": "P1",
+   "title": "Copy the cleaned repo onto the Mac (git clone) and confirm it runs --help",
+   "owner": "Hermes",
+   "status": "todo",
+   "depends": [
+    "T16",
+    "T17",
+    "T18"
+   ],
+   "done_when": "Screenshot/log of reel.py --help on the Mac",
+   "notes": "",
+   "evidence": "",
+   "updated": "2026-11-01"
+  },
+  {
+   "id": "T20",
+   "phase": "P2",
+   "title": "Block registry (registry.json) — single authority for all blocks",
+   "owner": "Claude",
+   "status": "todo",
+   "depends": [
+    "T16"
+   ],
+   "done_when": "Director prompt + validator generated from it",
+   "notes": "",
+   "evidence": "",
+   "updated": "2026-11-01"
+  },
+  {
+   "id": "T21",
+   "phase": "P2",
+   "title": "Base template: brand variables, Readex Pro, root timeline, finishing pass",
+   "owner": "Claude",
+   "status": "todo",
+   "depends": [
+    "T20"
+   ],
+   "done_when": "",
+   "notes": "",
+   "evidence": "",
+   "updated": "2026-11-01"
+  },
+  {
+   "id": "T22",
+   "phase": "P2",
+   "title": "8 blocks: face_cut, captions, hook_two_tone, text_card, split, flash, logo_card, cta_card",
+   "owner": "Claude",
+   "status": "todo",
+   "depends": [
+    "T21"
+   ],
+   "done_when": "Each renders from sample JSON",
+   "notes": "",
+   "evidence": "",
+   "updated": "2026-11-01"
+  },
+  {
+   "id": "T23",
+   "phase": "P2",
+   "title": "SFX catalog + licence file from the chosen library",
+   "owner": "Claude",
+   "status": "todo",
+   "depends": [
+    "T09",
+    "T20"
+   ],
+   "done_when": "",
+   "notes": "",
+   "evidence": "",
+   "updated": "2026-11-01"
+  },
+  {
+   "id": "T24",
+   "phase": "P2",
+   "title": "Render a 5 s sample of every block on the Mac",
+   "owner": "Hermes",
+   "status": "todo",
+   "depends": [
+    "T22",
+    "T19"
+   ],
+   "done_when": "8 sample MP4s in spikes/blocks/",
+   "notes": "",
+   "evidence": "",
+   "updated": "2026-11-01"
+  },
+  {
+   "id": "T25",
+   "phase": "P2",
+   "title": "Approve each block look (or send fixes)",
+   "owner": "Hesham",
+   "status": "todo",
+   "depends": [
+    "T24"
+   ],
+   "done_when": "All 8 marked approved",
+   "notes": "",
+   "evidence": "",
+   "updated": "2026-11-01"
+  },
+  {
+   "id": "T26",
+   "phase": "P3",
+   "title": "Ingest a folder of clips → one joined proxy + map to originals",
+   "owner": "Claude",
+   "status": "todo",
+   "depends": [
+    "T12",
+    "T16"
+   ],
+   "done_when": "",
+   "notes": "",
+   "evidence": "",
+   "updated": "2026-11-01"
+  },
+  {
+   "id": "T27",
+   "phase": "P3",
+   "title": "Transcription large-v3-turbo + Gate 0 transcript_review.txt",
+   "owner": "Claude",
+   "status": "todo",
+   "depends": [
+    "T26"
+   ],
+   "done_when": "",
+   "notes": "",
+   "evidence": "",
+   "updated": "2026-11-01"
+  },
+  {
+   "id": "T28",
+   "phase": "P3",
+   "title": "Story choice (Sonnet) with Script-critic scores at Gate 1",
+   "owner": "Claude",
+   "status": "todo",
+   "depends": [
+    "T27"
+   ],
+   "done_when": "",
+   "notes": "",
+   "evidence": "",
+   "updated": "2026-11-01"
+  },
+  {
+   "id": "T29",
+   "phase": "P3",
+   "title": "edl.py: cut pauses/fillers/retakes, re-time words",
+   "owner": "Claude",
+   "status": "todo",
+   "depends": [
+    "T27"
+   ],
+   "done_when": "",
+   "notes": "",
+   "evidence": "",
+   "updated": "2026-11-01"
+  },
+  {
+   "id": "T30",
+   "phase": "P3",
+   "title": "Director (Haiku → Sonnet fallback): moments cued to spoken words",
+   "owner": "Claude",
+   "status": "todo",
+   "depends": [
+    "T20",
+    "T29"
+   ],
+   "done_when": "",
+   "notes": "",
+   "evidence": "",
+   "updated": "2026-11-01"
+  },
+  {
+   "id": "T31",
+   "phase": "P3",
+   "title": "compile.py: plan → HyperFrames project from blocks only",
+   "owner": "Claude",
+   "status": "todo",
+   "depends": [
+    "T22",
+    "T30"
+   ],
+   "done_when": "",
+   "notes": "",
+   "evidence": "",
+   "updated": "2026-11-01"
+  },
+  {
+   "id": "T32",
+   "phase": "P3",
+   "title": "render.py: draft 540p + edit package + final per platform",
+   "owner": "Claude",
+   "status": "todo",
+   "depends": [
+    "T31",
+    "T06"
+   ],
+   "done_when": "",
+   "notes": "",
+   "evidence": "",
+   "updated": "2026-11-01"
+  },
+  {
+   "id": "T33",
+   "phase": "P3",
+   "title": "run.log + job.json status written by code; resume without paying twice",
+   "owner": "Claude",
+   "status": "todo",
+   "depends": [
+    "T26"
+   ],
+   "done_when": "",
+   "notes": "",
+   "evidence": "",
+   "updated": "2026-11-01"
+  },
+  {
+   "id": "T34",
+   "phase": "P3",
+   "title": "First full reel from IMG_0020 on the Mac",
+   "owner": "Hermes",
+   "status": "todo",
+   "depends": [
+    "T32",
+    "T25"
+   ],
+   "done_when": "draft + edit package in the job folder",
+   "notes": "",
+   "evidence": "",
+   "updated": "2026-11-01"
+  },
+  {
+   "id": "T35",
+   "phase": "P4",
+   "title": "qa_check.py: freeze, black, loudness, duration, caption coverage, banned text",
+   "owner": "Claude",
+   "status": "todo",
+   "depends": [
+    "T31"
+   ],
+   "done_when": "",
+   "notes": "",
+   "evidence": "",
+   "updated": "2026-11-01"
+  },
+  {
+   "id": "T36",
+   "phase": "P4",
+   "title": "energy.py: measure your best reels → target rates",
+   "owner": "Claude",
+   "status": "todo",
+   "depends": [
+    "T13"
+   ],
+   "done_when": "",
+   "notes": "",
+   "evidence": "",
+   "updated": "2026-11-01"
+  },
+  {
+   "id": "T37",
+   "phase": "P4",
+   "title": "Committee: script, visual, audience critics + chair + report",
+   "owner": "Claude",
+   "status": "todo",
+   "depends": [
+    "T14",
+    "T35"
+   ],
+   "done_when": "",
+   "notes": "",
+   "evidence": "",
+   "updated": "2026-11-01"
+  },
+  {
+   "id": "T38",
+   "phase": "P4",
+   "title": "QA catches 3 deliberately broken reels, passes the good one",
+   "owner": "Hermes",
+   "status": "todo",
+   "depends": [
+    "T37"
+   ],
+   "done_when": "",
+   "notes": "",
+   "evidence": "",
+   "updated": "2026-11-01"
+  },
+  {
+   "id": "T39",
+   "phase": "P5",
+   "title": "lib/llm.py: per-job + monthly cap guard, logs every call",
+   "owner": "Claude",
+   "status": "todo",
+   "depends": [
+    "T16"
+   ],
+   "done_when": "",
+   "notes": "",
+   "evidence": "",
+   "updated": "2026-11-01"
+  },
+  {
+   "id": "T40",
+   "phase": "P5",
+   "title": "Fix ledger: no 200-row deletion, correct categories, 'stopped' status",
+   "owner": "Claude",
+   "status": "todo",
+   "depends": [
+    "T16"
+   ],
+   "done_when": "",
+   "notes": "",
+   "evidence": "",
+   "updated": "2026-11-01"
+  },
+  {
+   "id": "T41",
+   "phase": "P5",
+   "title": "Update cost model (selects, repair, committee)",
+   "owner": "Claude",
+   "status": "todo",
+   "depends": [
+    "T37"
+   ],
+   "done_when": "",
+   "notes": "",
+   "evidence": "",
+   "updated": "2026-11-01"
+  },
+  {
+   "id": "T42",
+   "phase": "P6",
+   "title": "Run 3 real clips end to end",
+   "owner": "Hermes",
+   "status": "todo",
+   "depends": [
+    "T38",
+    "T39"
+   ],
+   "done_when": "3 drafts + committee reports",
+   "notes": "",
+   "evidence": "",
+   "updated": "2026-11-01"
+  },
+  {
+   "id": "T43",
+   "phase": "P6",
+   "title": "Review the 3 reels: approve or fix",
+   "owner": "Hesham",
+   "status": "todo",
+   "depends": [
+    "T42"
+   ],
+   "done_when": "",
+   "notes": "",
+   "evidence": "",
+   "updated": "2026-11-01"
+  },
+  {
+   "id": "T44",
+   "phase": "P6",
+   "title": "A/B Director Haiku vs Sonnet on the 3 clips; pick one",
+   "owner": "Hesham",
+   "status": "todo",
+   "depends": [
+    "T42"
+   ],
+   "done_when": "",
+   "notes": "",
+   "evidence": "",
+   "updated": "2026-11-01"
+  },
+  {
+   "id": "T45",
+   "phase": "P6",
+   "title": "Post, then fill performance.csv 48 h later",
+   "owner": "Hesham",
+   "status": "todo",
+   "depends": [
+    "T43"
+   ],
+   "done_when": "",
+   "notes": "",
+   "evidence": "",
+   "updated": "2026-11-01"
+  },
+  {
+   "id": "T46",
+   "phase": "P7",
+   "title": "B-roll library from your logos/screenshots/refs",
+   "owner": "Claude",
+   "status": "todo",
+   "depends": [
+    "T43"
+   ],
+   "done_when": "",
+   "notes": "",
+   "evidence": "",
+   "updated": "2026-11-01"
+  },
+  {
+   "id": "T47",
+   "phase": "P7",
+   "title": "Extra blocks: name_tag, number_graph, before_after, tier_list",
+   "owner": "Claude",
+   "status": "todo",
+   "depends": [
+    "T43"
+   ],
+   "done_when": "",
+   "notes": "",
+   "evidence": "",
+   "updated": "2026-11-01"
+  },
+  {
+   "id": "T48",
+   "phase": "P7",
+   "title": "Text-behind-head (needs matte) — prove on the Mac",
+   "owner": "Hermes",
+   "status": "todo",
+   "depends": [
+    "T43"
+   ],
+   "done_when": "",
+   "notes": "",
+   "evidence": "",
+   "updated": "2026-11-01"
+  },
+  {
+   "id": "T49",
+   "phase": "P7",
+   "title": "Monthly committee calibration from performance.csv",
+   "owner": "Claude",
+   "status": "todo",
+   "depends": [
+    "T45"
+   ],
+   "done_when": "",
+   "notes": "",
+   "evidence": "",
+   "updated": "2026-11-01"
+  },
+  {
+   "id": "T50",
+   "phase": "P1",
+   "title": "Import existing code from the Mac (scripts/import_from_old.sh), commit, push",
+   "owner": "Hermes",
+   "status": "todo",
+   "depends": [
+    "T04"
+   ],
+   "done_when": "reel.py, keyframes.py, ingest.sh, cost model, fonts, lessons and old docs (in archive/) are in the repo on GitHub",
+   "notes": "On the Mac: git clone https://github.com/Marketalse/ReelFactory_project.git ~/Desktop/ReelFactory_project ; cd ~/Desktop/ReelFactory_project ; git checkout restructure-p1 ; bash scripts/import_from_old.sh ~/Desktop/Reel-Factory ; git status ; git add -A ; git commit -m 'Import existing code' ; git push. Old folder is only read, never changed.",
+   "evidence": "",
+   "updated": "2026-11-01"
+  }
+ ],
+ "log": [
+  {
+   "time": "2026-11-01T12:00",
+   "who": "Claude",
+   "task": "-",
+   "change": "Board created from the restructure plan"
+  },
+  {
+   "time": "2026-11-01T13:30",
+   "who": "Claude",
+   "task": "T04",
+   "change": "blocked: no access to hesham-alshakarchi/reel-factory"
+  },
+  {
+   "time": "2026-11-01T13:30",
+   "who": "Claude",
+   "task": "T15",
+   "change": "skeleton committed locally (not pushed)"
+  },
+  {
+   "time": "2026-11-01T13:45",
+   "who": "Claude",
+   "task": "T04",
+   "change": "unblocked: Marketalse/ReelFactory_project attached → review"
+  },
+  {
+   "time": "2026-11-01T13:45",
+   "who": "Claude",
+   "task": "T15",
+   "change": "pushed to branch restructure-p1 → review"
+  },
+  {
+   "time": "2026-11-01T14:00",
+   "who": "Claude",
+   "task": "T50",
+   "change": "created: import script ready, assigned to Hermes"
+  }
+ ]
+}
