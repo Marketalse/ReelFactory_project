@@ -80,7 +80,7 @@
    "owner": "Claude",
    "status": "done",
    "depends": [],
-   "done_when": "Restructure plan, DECISIONS.md, brand/glossary drafts written",
+   "done_when": "Restructure plan, docs/DECISIONS.md, brand/glossary drafts written",
    "notes": "",
    "evidence": "",
    "updated": "2026-11-01"
@@ -114,10 +114,10 @@
    "phase": "P0",
    "title": "Run the Mac check command and send the output",
    "owner": "Hesham",
-   "status": "todo",
+   "status": "review",
    "depends": [],
    "done_when": "node/ffmpeg/hyperframes/python versions + doctor output sent",
-   "notes": "",
+   "notes": "Replaced by Settings → health checks on the dashboard (key, ffmpeg, node, npx, disk). Nothing to send.",
    "evidence": "",
    "updated": "2026-11-01"
   },
@@ -130,7 +130,7 @@
    "depends": [],
    "done_when": "",
    "notes": "Answered: CapCut (HyperFrames app for bigger edits).",
-   "evidence": "DECISIONS.md 2026-11-01: editor = CapCut",
+   "evidence": "docs/DECISIONS.md 2026-11-01: editor = CapCut",
    "updated": "2026-11-01"
   },
   {
@@ -276,7 +276,7 @@
   {
    "id": "T18",
    "phase": "P1",
-   "title": "Slim AGENTS.md (≤150 lines) + rewrite SOP.md to match the code",
+   "title": "Slim AGENTS.md (≤150 lines) + rewrite docs/SOP.md to match the code",
    "owner": "Claude",
    "status": "review",
    "depends": [
@@ -284,8 +284,8 @@
     "T50"
    ],
    "done_when": "One rulebook, no contradictions",
-   "notes": "AGENTS.md ~70 lines, one rulebook. SOP.md marks each stage works/coming with its task number.",
-   "evidence": "AGENTS.md, SOP.md on branch p1-config-docs",
+   "notes": "AGENTS.md ~70 lines, one rulebook. docs/SOP.md marks each stage works/coming with its task number.",
+   "evidence": "AGENTS.md, docs/SOP.md on branch p1-config-docs",
    "updated": "2026-11-01"
   },
   {
@@ -610,12 +610,12 @@
    "phase": "P5",
    "title": "Update cost model (selects, repair, committee)",
    "owner": "Claude",
-   "status": "todo",
+   "status": "review",
    "depends": [
     "T37"
    ],
    "done_when": "",
-   "notes": "",
+   "notes": "Superseded: the Spend tab shows real cost per step, model and reel (dashboard/index.html); old calculator archived in archive/planning-2026-11-01/.",
    "evidence": "",
    "updated": "2026-11-01"
   },
@@ -665,7 +665,7 @@
   {
    "id": "T45",
    "phase": "P6",
-   "title": "Post, then fill performance.csv 48 h later",
+   "title": "Post, then fill 'How did it do?' on the final page 2 and 7 days later",
    "owner": "Hesham",
    "status": "todo",
    "depends": [
@@ -735,7 +735,7 @@
   {
    "id": "T50",
    "phase": "P1",
-   "title": "Import existing code from the Mac (scripts/import_from_old.sh), commit, push",
+   "title": "Import existing code from the Mac (archive/planning-2026-11-01/import_from_old.sh), commit, push",
    "owner": "Hermes",
    "status": "review",
    "depends": [
@@ -882,13 +882,13 @@
   {
    "id": "T60",
    "phase": "P8",
-   "title": "Pick the model for each step from the bake-off (written in DECISIONS.md)",
+   "title": "Pick the model for each step from the bake-off (written in docs/DECISIONS.md)",
    "owner": "Hesham",
    "status": "todo",
    "depends": [
     "T59"
    ],
-   "done_when": "DECISIONS.md lists the chosen model per step",
+   "done_when": "docs/DECISIONS.md lists the chosen model per step",
    "evidence": "",
    "notes": "Rule: never a cheaper model if quality drops.",
    "updated": "2026-11-01"
@@ -1054,7 +1054,7 @@
    "depends": [],
    "done_when": "Hesham approves samples of the ones he wants",
    "evidence": "",
-   "notes": "Prompts saved in docs/visual_prompts_for_later.md (2026-11-01). Start only when Hesham asks.",
+   "notes": "Prompts saved in docs/ideas/visual_prompts.md (2026-11-01). Start only when Hesham asks.",
    "updated": "2026-11-01"
   },
   {
@@ -1123,7 +1123,7 @@
    "time": "2026-11-01T15:30",
    "who": "Claude",
    "task": "T16-T18",
-   "change": "config move, AGENTS.md, SOP.md, Telegram removal, tests → review on branch p1-config-docs"
+   "change": "config move, AGENTS.md, docs/SOP.md, Telegram removal, tests → review on branch p1-config-docs"
   },
   {
    "time": "2026-11-01T17:30",

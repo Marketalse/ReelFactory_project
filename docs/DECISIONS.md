@@ -76,3 +76,9 @@ One line per decision. Newest at the bottom. If a later decision changes an earl
 - The final page shows the final preview, a download button, a "Want changes?" box (makes a new draft; approve again → reel_v(N+1)),
   and the cover with "Upload my own cover". The draft page no longer shows the cover.
 - CapCut layers are no longer made (code kept in render.capcut_layers if ever wanted again). Old reels' per-platform files still show.
+
+## 2026-11-01 · Repository tidied
+- Main folder keeps only what Hesham opens: README (map), HOW_TO, AGENTS, the 3 .command files. `DECISIONS.md` and `SOP.md` moved to `docs/`; ideas to `docs/ideas/`.
+- Old planning files (diagnosis, restructure plan, Higgsfield notes, cost model + calculator, inputs list, one-time import script, empty visual ledger) moved to `archive/planning-2026-11-01/`.
+- Empty `templates/prompts` and `templates/schema` removed (prompts live in the scripts). Brief template is now `inbox/BRIEF_TEMPLATE.md`; the safe-zone guide source sits in `references/`.
+- No code path the Mac relies on moved (scripts/, dashboard/, templates/blocks/, style/, config/, the .command files and auto-start).

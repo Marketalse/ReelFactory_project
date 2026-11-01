@@ -1,31 +1,39 @@
 # Reel Factory
 
-Turns Hesham's raw talking-head clips into reviewable Instagram/TikTok reels (40–90 s, Iraqi Arabic), with three approval gates. Fixed, approved templates do the visuals; AI only fills in values.
+Turns Hesham's raw talking-head clips (Iraqi Arabic, marketing and business) into ready-to-post Instagram/TikTok reels (40–90 s).
+You upload, comment on the draft, approve, download. Nothing is ever posted for you.
 
-## Where things are
-| What | File |
+**Start here:** double-click `Reel Factory.command` (or turn on auto-start once), then read `HOW_TO.md`.
+
+## The main folder
+| | What it is |
 |---|---|
-| Make a reel (upload page) + tasks, progress, spend | `python3 dashboard/serve.py` → http://127.0.0.1:8765 (home = upload page, `index.html` = reels, tasks, spend) |
-| **How to make a reel (3 steps, no Terminal)** | `HOW_TO.md` + double-click `Reel Factory.command` |
-| Rules for agents | `AGENTS.md` |
-| Steps, in order (what works today) | `SOP.md` |
-| Decisions and why | `DECISIONS.md` |
-| Plan and target structure | `docs/RESTRUCTURE_PLAN.md` |
-| Models, budget, gates | `config/project.json` |
-| Brand, CTA, captions | `config/brand.json` |
-| Rhythm limits | `config/rules.json` |
-| Word spellings | `config/glossary.json` |
-| How a helper agent (e.g. Hermes) picks up board tasks (optional) | `dashboard/HERMES_TASKS.md` |
+| `Reel Factory.command` | Opens the dashboard (upload, review, results, settings) |
+| `Turn on auto-start.command` / `Turn off auto-start.command` | Dashboard starts by itself when the Mac starts |
+| `HOW_TO.md` | How to make a reel, in plain words |
+| `AGENTS.md` | Rules any AI helper must follow when working on the project |
 
-## Handing in a reel
-```
-inbox/<slug>/clips/   footage (joined in filename order)
-inbox/<slug>/assets/  logos (SVG/PNG), screenshots
-inbox/<slug>/refs/    optional reference videos
-inbox/<slug>/brief.md optional notes (template: templates/inbox_brief.md)
-```
-Run: `python3 scripts/reel.py inbox/<slug> --slug <slug>` — the run stops at each gate and tells you the next command (see `SOP.md`).
-Offline checks (no spend): `python3 -m unittest discover tests`
-Block look samples (no spend): `python3 scripts/block_samples.py --video jobs/<job>/proxy.mp4`
+## Folders
+| Folder | What's inside | You touch it? |
+|---|---|---|
+| `inbox/` | Videos waiting to become reels (the upload page puts them here) | No, use the dashboard |
+| `jobs/` | One folder per reel: drafts, final videos, cover, your comments, results | Only to find files |
+| `dashboard/` | The web page and its server, plus the task board (`tasks.json`) | No |
+| `scripts/` | The pipeline. `reel.py` runs every step | No |
+| `templates/blocks/` | The approved visuals (captions, titles, cards) | No |
+| `style/` | Fonts, safe zones (`SAFE_ZONES.md`), sound effects (coming) | No |
+| `config/` | Settings: AI models and spending caps, brand, rhythm, spellings | Rarely |
+| `references/` | Your best reels and other examples to learn from | Add examples |
+| `docs/` | `DECISIONS.md` (what we decided and why), `SOP.md` (every step), `ideas/` (for later) | Read |
+| `tests/` | Automatic checks (no cost) | No |
+| `archive/` | Old plans and files, history only | No |
+| `.reel-agent/lessons.md` | What was learned from each reel, including your taste | Read |
+| `.claude/skills/` | Step-by-step guides for AI helpers (new visual style, fixing a stopped reel) | No |
 
-Video never goes into git; it stays on the Mac.
+## For developers
+- Offline checks (no spend): `python3 -m unittest discover tests`
+- Run without the dashboard: `python3 scripts/reel.py inbox/<slug> --slug <slug>` (see `docs/SOP.md`)
+- Brief template for a reel: `inbox/BRIEF_TEMPLATE.md`
+- Branches: `main` is the version in use; work happens on a branch and is merged by Hesham. `backup-v1-working` is a frozen copy of the first working version.
+
+Video, audio and keys never go into git; they stay on the Mac.
