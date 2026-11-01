@@ -82,3 +82,8 @@ One line per decision. Newest at the bottom. If a later decision changes an earl
 - Old planning files (diagnosis, restructure plan, Higgsfield notes, cost model + calculator, inputs list, one-time import script, empty visual ledger) moved to `archive/planning-2026-11-01/`.
 - Empty `templates/prompts` and `templates/schema` removed (prompts live in the scripts). Brief template is now `inbox/BRIEF_TEMPLATE.md`; the safe-zone guide source sits in `references/`.
 - No code path the Mac relies on moved (scripts/, dashboard/, templates/blocks/, style/, config/, the .command files and auto-start).
+
+## 2026-11-01 · Backup to Google Drive / iCloud Drive (no database yet)
+- Settings → Backup: one ZIP of the small text files (jobs/*: job, plan, transcript, results, cost, report, logs; config; lessons; task board; expenses; briefs) into the Google Drive for desktop or iCloud Drive folder on the Mac → "Reel Factory backup". Never videos, images, audio or keys. Newest 30 kept.
+- Automatic once a day while the dashboard runs (can be switched off). Nothing is uploaded by us: the Drive/iCloud app syncs the folder.
+- A real database (e.g. Supabase) waits until results come in automatically or more than one device/person needs the data.

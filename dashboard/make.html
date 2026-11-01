@@ -248,6 +248,15 @@ input[type=password]:focus{border-color:var(--violet)}
   </div>
   <p class="kmsg" id="keyMsg" role="status"></p>
   <hr style="border:0;border-top:1px solid var(--line);margin:16px 0">
+  <b>Backup</b>
+  <p style="margin:2px 0 8px;color:var(--muted);font-size:13.5px">Copies your results, comments, edit plans, transcripts and settings (no videos) to your cloud folder. Runs by itself once a day while Reel Factory is open.</p>
+  <div class="keyrow" id="bkRow">
+    <select id="bkTarget" class="btn" style="padding:9px 12px;flex:1 1 auto"></select>
+    <button class="btn" id="bkBtn" type="button">Back up now</button>
+  </div>
+  <label style="display:flex;gap:8px;align-items:center;margin-top:8px;font-size:13.5px;color:var(--muted)"><input type="checkbox" id="bkAuto"> Back up automatically once a day</label>
+  <p class="kmsg" id="bkMsg" role="status"></p>
+  <hr style="border:0;border-top:1px solid var(--line);margin:16px 0">
   <b>Updates</b>
   <p style="margin:2px 0 8px;color:var(--muted);font-size:13.5px" id="verLine">…</p>
   <button class="btn" id="updBtn" type="button">Get the latest version</button>
@@ -892,13 +901,27 @@ async function waitBack(){
   for(let i=0;i<60;i++){ await new Promise(r=>setTimeout(r,1000)); try{ const r=await fetch("/api/reels",{cache:"no-store"}); if(r.ok){ location.reload(); return; } }catch(e){} }
   $("#updMsg").textContent="Reel Factory didn't come back. Double-click Reel Factory.command."; $("#updMsg").className="kmsg err";
 }
+async function loadBackup(){
+  try{ const b=await (await fetch("/api/backup",{cache:"no-store"})).json();
+    const sel=$("#bkTarget"), m=$("#bkMsg");
+    sel.innerHTML=b.targets.map(t=>`<option value="${esc(t.key)}"${t.key===b.target?" selected":""}>${esc(t.label)}</option>`).join("");
+    const none=!b.targets.length; sel.hidden=none; $("#bkBtn").disabled=none; $("#bkAuto").checked=b.auto!==false;
+    m.className="kmsg"+(b.error?" err":"");
+    m.textContent = none ? "No Google Drive or iCloud Drive folder found on this Mac. Install Google Drive for desktop (or turn on iCloud Drive), then reopen Settings."
+      : b.error ? "Last backup failed: "+b.error : b.last ? `Last backup: ${b.last} (${b.last_count} files) → ${b.last_file}` : "No backup yet.";
+  }catch(e){ $("#bkMsg").textContent=""; }
+}
 function setupSettings(){
   loadVersion();
+  $("#bkBtn").onclick=async ()=>{ const m=$("#bkMsg"); m.textContent="Backing up…"; m.className="kmsg"; $("#bkBtn").disabled=true;
+    const r=await settingsPost("backup",{target:$("#bkTarget").value}); $("#bkBtn").disabled=false;
+    m.textContent=r.message||""; m.className="kmsg "+(r.ok?"ok":"err"); };
+  $("#bkAuto").onchange=async ()=>{ const r=await settingsPost("backup_auto",{on:$("#bkAuto").checked}); const m=$("#bkMsg"); m.textContent=r.message||""; m.className="kmsg "+(r.ok?"ok":"err"); };
   $("#updBtn").onclick=async ()=>{ const m=$("#updMsg"); m.textContent="Checking GitHub…"; m.className="kmsg"; $("#updBtn").disabled=true;
     const r=await settingsPost("update"); $("#updBtn").disabled=false; m.textContent=r.message||""; m.className="kmsg "+(r.ok?"ok":"err");
     if(r.restart){ $("#updBtn").disabled=true; waitBack(); } };
   const d=$("#settings"); $("#settingsBtn").hidden=false;
-  $("#settingsBtn").onclick=()=>{ $("#keyMsg").textContent=""; $("#updMsg").textContent=""; loadHealth(); loadVersion(); d.showModal(); };
+  $("#settingsBtn").onclick=()=>{ $("#keyMsg").textContent=""; $("#updMsg").textContent=""; loadHealth(); loadVersion(); loadBackup(); d.showModal(); };
   $("#setClose").onclick=()=>d.close();
   $("#keySave").onclick=async ()=>{ const k=$("#keyIn").value; if(!k.trim()) return keyMsg({ok:false,message:"Paste your key first."});
     $("#keySave").disabled=true; const r=await settingsPost("key",{key:k}); $("#keySave").disabled=false;

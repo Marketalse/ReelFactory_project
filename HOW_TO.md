@@ -48,6 +48,12 @@ and type the numbers into **How did it do?** (views, average watch time, watched
 Do it again after 7 days if you can. All results are under **All reels & tasks → Results** (also as a spreadsheet).
 From 5 reels on, Reel Factory starts learning what works for your audience.
 
+## Backup
+**Settings → Backup** copies your results, comments, edit plans, transcripts, settings and lessons (no videos) into
+**Google Drive** or **iCloud Drive** on this Mac, in a folder called **Reel Factory backup** (one ZIP per backup, newest 30 kept).
+It runs by itself once a day while Reel Factory is open; click **Back up now** any time. Your videos stay only on the Mac:
+keep Time Machine on for those.
+
 That's all. If a reel says **Stopped**, click **Try again**. If it stops again, click **Copy message** and send it to Claude.
 
 Cost: about $0.05–0.15 per reel; it never spends more than $1 per reel or $50 per month.
