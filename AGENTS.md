@@ -16,6 +16,7 @@ You help turn Hesham's raw talking-head clips (Iraqi Arabic, marketing and busin
 | Models, prices, caps, gates | `config/project.json` |
 | Brand, CTA, captions | `config/brand.json` |
 | Rhythm limits | `config/rules.json` |
+| Safe zones (layout: where text may sit) | `style/SAFE_ZONES.md` + `config/rules.json → safe_zone` |
 | Word spellings | `config/glossary.json` |
 | Lessons from earlier reels | `.reel-agent/lessons.md` |
 | Plan and background | `docs/` (only when a task points there) |
@@ -42,6 +43,7 @@ You help turn Hesham's raw talking-head clips (Iraqi Arabic, marketing and busin
 - English terms he says (customer service, ads…) are written in Latin letters.
 - Handle and CTA appear only on the last card. Logos only from the reel's own `assets/` folder.
 - Visuals come only from the approved templates. AI chooses values; it never writes or edits template HTML.
+- Layout follows the safe zones (`style/SAFE_ZONES.md`): text and cards rest inside x 108–920, y 250–1500, text ≤ 780 px wide, captions in y 1200–1450. Any template change must pass `tests/test_safe_zones.py`.
 
 ## 6. Money
 - Paid model calls happen **only inside `scripts/reel.py`**. It checks the per-reel and monthly caps before every call and logs the real cost.

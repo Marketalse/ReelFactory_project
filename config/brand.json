@@ -23,8 +23,9 @@
     "max_words_on_screen": 3,
     "position": "lower_middle",
     "safe_zone_px": {
-      "top": 120,
-      "bottom": 280
+      "_see": "config/rules.json safe_zone",
+      "top": 250,
+      "bottom": 420
     },
     "keyword": {
       "color": "accent",

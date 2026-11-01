@@ -109,17 +109,17 @@ html, body {{ width:{W}px; height:{H}px; overflow:hidden; background:var(--bg); 
 #photo {{ position:absolute; left:0; right:0; top:{photo_top}px; bottom:0; overflow:hidden;
   -webkit-mask-image:linear-gradient(180deg,transparent 0,#000 220px,#000 82%,rgba(0,0,0,.35) 100%);
   mask-image:linear-gradient(180deg,transparent 0,#000 220px,#000 82%,rgba(0,0,0,.35) 100%); }}
-#photo img {{ width:100%; height:100%; object-fit:cover; object-position:50% 30%; }}
-#head {{ position:absolute; right:84px; left:84px; top:250px; display:flex; flex-direction:column; align-items:flex-end; gap:18px; }}
+#photo img {{ width:100%; height:100%; object-fit:cover; object-position:50% 20%; }}
+#head {{ position:absolute; left:var(--text-x); width:var(--text-w); top:var(--feed-top); display:flex; flex-direction:column; align-items:flex-end; gap:18px; }}
 #tag {{ background:var(--lime); color:#14161d; font-weight:700; font-size:46px; letter-spacing:2px; padding:10px 30px 12px;
   border-radius:40px; direction:ltr; }}
 .t {{ direction:rtl; text-align:right; font-weight:700; line-height:1.12; width:100%; }}
 #l1 {{ color:var(--text); font-size:{s1}px; }}
 #l2 {{ color:var(--lime); font-size:{s2}px; margin-top:-6px; }}
-#sticker {{ position:absolute; right:60px; top:{sticker_top}px; background:var(--violet); color:#fff; font-weight:700;
+#sticker {{ position:absolute; right:190px; top:{sticker_top}px; max-width:700px; background:var(--violet); color:#fff; font-weight:700;
   font-size:54px; letter-spacing:1px; padding:20px 38px 24px; border-radius:22px; direction:ltr; transform:rotate(4deg);
   box-shadow:0 18px 40px rgba(0,0,0,.35); }}
-#card {{ position:absolute; left:60px; bottom:170px; max-width:720px; background:var(--lime); color:#14161d; border-radius:34px;
+#card {{ position:absolute; left:140px; bottom:450px; max-width:740px; background:var(--lime); color:#14161d; border-radius:34px;
   padding:34px 44px 38px; transform:rotate(-3deg); box-shadow:0 22px 50px rgba(0,0,0,.4); direction:ltr; }}
 #card .lbl {{ font-size:36px; font-weight:600; letter-spacing:3px; }}
 #card .val {{ font-size:{sv}px; font-weight:700; margin-top:6px; white-space:nowrap; }}
@@ -165,9 +165,9 @@ def build(job, v, photo):
     two_lines = bool(v["line1"]) and bool(v["line2"])
     page = PAGE.format(
         W=W, H=H, vars=hfbuild.brand_vars(),
-        photo_top=760 if two_lines else 640,
-        sticker_top=900,
-        s1=_size(v["line1"], 150, 8, 70), s2=_size(v["line2"], 150, 8, 70), sv=_size(v["card_value"], 76, 2, 54),
+        photo_top=800 if two_lines else 700,
+        sticker_top=905,
+        s1=hfbuild.fit_size(v["line1"], 130, 64), s2=hfbuild.fit_size(v["line2"], 130, 64), sv=hfbuild.fit_size(v["card_value"], 72, 44, 640),
         photo=f'<div id="photo"><img src="assets/photo{ext}" alt=""></div>',
         tag=f'<div id="tag">{e(v["tag"])}</div>' if v["tag"] else "",
         line1=e(v["line1"]), line2=e(v["line2"]),

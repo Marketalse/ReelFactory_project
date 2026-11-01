@@ -1,6 +1,6 @@
 {
  "project": "Reel Factory",
- "version": 16,
+ "version": 17,
  "owners": [
   "Hesham",
   "Claude",
@@ -1031,6 +1031,18 @@
    "done_when": "Hesham downloads a cover he'd post, from a real reel",
    "evidence": "branch v2: scripts/cover.py, tests/test_cover.py, page: Cover image box (Download / Use my photo / Use my own cover / Back to automatic), Extras → Cover photo",
    "notes": "Look copied from Hesham's STOCK reference, 2026-11-01.",
+   "updated": "2026-11-01"
+  },
+  {
+   "id": "T74",
+   "phase": "P8",
+   "title": "Safe zones: all text and cards inside the Instagram/TikTok safe box (Hesham's guide)",
+   "owner": "Claude",
+   "status": "review",
+   "depends": [],
+   "done_when": "Hesham checks a sample and a real reel on his phone: nothing hidden under buttons or captions",
+   "evidence": "style/SAFE_ZONES.md, config/rules.json safe_zone, AGENTS.md §5, templates moved, tests/test_safe_zones.py (longest text, every template + cover), scripts/safe_zone_preview.py",
+   "notes": "Stricter of both platforms: x 108-920, y 250-1500, text ≤780 px, captions y 1200-1450, hook/cover title in the feed square.",
    "updated": "2026-11-01"
   }
  ],
