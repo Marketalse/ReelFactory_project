@@ -163,10 +163,10 @@ def reveal(job):
 UPLOAD_KINDS = {                       # kind -> (sub-folder, allowed extensions, max bytes)
     "clip": ("clips", VIDEO, 20 << 30),
     "logo": ("assets", (".svg", ".png"), 50 << 20),
-    "cover_photo": ("cover", (".jpg", ".jpeg", ".png", ".webp"), 40 << 20),
-    "cover_own": ("cover", (".jpg", ".jpeg", ".png", ".webp"), 40 << 20),
+    "cover_photo": ("cover", (".jpg", ".jpeg", ".png", ".webp", ".heic", ".heif"), 40 << 20),
+    "cover_own": ("cover", (".jpg", ".jpeg", ".png", ".webp", ".heic", ".heif"), 40 << 20),
 }
-COVER_EXT = (".jpg", ".jpeg", ".png", ".webp")
+COVER_EXT = (".jpg", ".jpeg", ".png", ".webp", ".heic", ".heif")
 SESSION = re.compile(r"^[a-z0-9]{8,40}$")
 MARK = ".upload_session"
 
@@ -528,7 +528,7 @@ def cover_upload(job, kind, name, length, stream):
         return False, "unknown cover type"
     ext = os.path.splitext(_safe_name(name))[1]
     if ext not in COVER_EXT:
-        return False, f"{name}: use a JPG, PNG or WebP image"
+        return False, f"{name}: use a JPG, PNG, WebP or iPhone (HEIC) photo"
     if not 0 < length <= 40 << 20:
         return False, f"{name}: image is empty or larger than 40 MB"
     d = os.path.join(JOBS, job, "cover"); os.makedirs(d, exist_ok=True)

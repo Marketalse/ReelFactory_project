@@ -19,7 +19,7 @@ from lib import config as cfg       # noqa: E402
 from lib import hfbuild             # noqa: E402
 
 W, H = 1080, 1920
-IMG = (".jpg", ".jpeg", ".png", ".webp")
+IMG = (".jpg", ".jpeg", ".png", ".webp", ".heic", ".heif")
 LIMITS = {"tag": 16, "sticker": 18, "card_label": 24, "card_value": 26}
 DIGITS = re.compile(r"[0-9][0-9,.]*")
 HF = ["npx", "--yes", f"hyperframes@{cfg.PROJECT.get('tools', {}).get('hyperframes', '0.8.226')}"]
@@ -109,7 +109,7 @@ html, body {{ width:{W}px; height:{H}px; overflow:hidden; background:var(--bg); 
 #photo {{ position:absolute; left:0; right:0; top:{photo_top}px; bottom:0; overflow:hidden;
   -webkit-mask-image:linear-gradient(180deg,transparent 0,#000 220px,#000 82%,rgba(0,0,0,.35) 100%);
   mask-image:linear-gradient(180deg,transparent 0,#000 220px,#000 82%,rgba(0,0,0,.35) 100%); }}
-#photo img {{ width:100%; height:100%; object-fit:cover; object-position:50% 20%; }}
+#photo img {{ width:100%; height:100%; object-fit:cover; object-position:50% 40%; }}
 #head {{ position:absolute; left:var(--text-x); width:var(--text-w); top:var(--feed-top); display:flex; flex-direction:column; align-items:flex-end; gap:18px; }}
 #tag {{ background:var(--lime); color:#14161d; font-weight:700; font-size:46px; letter-spacing:2px; padding:10px 30px 12px;
   border-radius:40px; direction:ltr; }}
@@ -119,7 +119,7 @@ html, body {{ width:{W}px; height:{H}px; overflow:hidden; background:var(--bg); 
 #sticker {{ position:absolute; right:190px; top:{sticker_top}px; max-width:700px; background:var(--violet); color:#fff; font-weight:700;
   font-size:54px; letter-spacing:1px; padding:20px 38px 24px; border-radius:22px; direction:ltr; transform:rotate(4deg);
   box-shadow:0 18px 40px rgba(0,0,0,.35); }}
-#card {{ position:absolute; left:140px; bottom:450px; max-width:740px; background:var(--lime); color:#14161d; border-radius:34px;
+#card {{ align-self:flex-start; margin:44px 0 0 16px; max-width:740px; background:var(--lime); color:#14161d; border-radius:34px;
   padding:34px 44px 38px; transform:rotate(-3deg); box-shadow:0 22px 50px rgba(0,0,0,.4); direction:ltr; }}
 #card .lbl {{ font-size:36px; font-weight:600; letter-spacing:3px; }}
 #card .val {{ font-size:{sv}px; font-weight:700; margin-top:6px; white-space:nowrap; }}
@@ -135,9 +135,9 @@ html, body {{ width:{W}px; height:{H}px; overflow:hidden; background:var(--bg); 
     {tag}
     <div class="t" id="l1">{line1}</div>
     <div class="t" id="l2">{line2}</div>
+    {card}
   </div>
   {sticker}
-  {card}
 </div>
 <script>
 const tl = gsap.timeline({{ paused: true }});
@@ -155,6 +155,7 @@ def build(job, v, photo):
     fonts = [f for f in os.listdir(os.path.join(cfg.ROOT, "style", "fonts")) if f.lower().endswith(".ttf")]
     shutil.copy(os.path.join(cfg.ROOT, "style", "fonts", fonts[0]), os.path.join(out, "assets", "fonts", "ReadexPro.ttf"))
     shutil.copy(os.path.join(cfg.ROOT, "templates", "vendor", "gsap.min.js"), os.path.join(out, "vendor", "gsap.min.js"))
+    photo = readable(photo)
     ext = os.path.splitext(photo)[1].lower()
     shutil.copy(photo, os.path.join(out, "assets", "photo" + ext))
     e = html.escape
@@ -165,8 +166,8 @@ def build(job, v, photo):
     two_lines = bool(v["line1"]) and bool(v["line2"])
     page = PAGE.format(
         W=W, H=H, vars=hfbuild.brand_vars(),
-        photo_top=800 if two_lines else 700,
-        sticker_top=905,
+        photo_top=(940 if v["card_value"] else 800) if two_lines else 700,
+        sticker_top=(1115 if v["card_value"] else 1000),
         s1=hfbuild.fit_size(v["line1"], 130, 64), s2=hfbuild.fit_size(v["line2"], 130, 64), sv=hfbuild.fit_size(v["card_value"], 72, 44, 640),
         photo=f'<div id="photo"><img src="assets/photo{ext}" alt=""></div>',
         tag=f'<div id="tag">{e(v["tag"])}</div>' if v["tag"] else "",
@@ -194,8 +195,25 @@ def shoot(project, dest):
     return dest
 
 
+def readable(src):
+    """iPhone photos (HEIC) -> JPEG with macOS's own `sips` (ffmpeg often can't read them). Other images unchanged."""
+    if not src.lower().endswith((".heic", ".heif")):
+        return src
+    out = os.path.splitext(src)[0] + "_heic.jpg"
+    if os.path.exists(out) and os.path.getmtime(out) >= os.path.getmtime(src):
+        return out
+    if shutil.which("sips"):
+        subprocess.run(["sips", "-s", "format", "jpeg", src, "--out", out], capture_output=True)
+    if not os.path.exists(out):
+        subprocess.run(["ffmpeg", "-v", "error", "-y", "-i", src, "-frames:v", "1", out], capture_output=True)
+    if not os.path.exists(out):
+        raise CoverError("couldn't read this iPhone photo (HEIC): export it as JPG and try again")
+    return out
+
+
 def to_jpg(src, dest):
     """Any image -> 1080x1920 JPEG, filling the frame (centre crop)."""
+    src = readable(src)
     r = subprocess.run(["ffmpeg", "-v", "error", "-y", "-i", src, "-vf",
                         f"scale={W}:{H}:force_original_aspect_ratio=increase,crop={W}:{H}", "-frames:v", "1", "-q:v", "2", dest],
                        capture_output=True, text=True)

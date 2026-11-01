@@ -304,7 +304,7 @@ input[type=password]:focus{border-color:var(--violet)}
             <span class="t" id="cphName">Choose a photo…</span>
             <button class="ib" type="button" id="cphClear" aria-label="Remove cover photo" hidden>✕</button>
           </label>
-          <input type="file" id="cphIn" accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp" hidden>
+          <input type="file" id="cphIn" accept=".jpg,.jpeg,.png,.webp,.heic,.heif,image/jpeg,image/png,image/webp,image/heic" hidden>
         </div>
         <div class="slot wide">
           <div class="head">Notes for the editor <button class="tip" type="button" data-tip="Tell it what matters, in Arabic or English, like you'd brief a human editor. E.g. “Main point: reply to customers fast. Ask people to comment ‘store’.”">?</button></div>
@@ -443,7 +443,7 @@ window.addEventListener("dragover", e=>e.preventDefault());
 window.addEventListener("drop", e=>{ e.preventDefault(); if(!$("#compose").hidden && !S.busy && e.dataTransfer.files.length) addFiles(e.dataTransfer.files); });
 
 /* ---------------------------------------------------------------- cover photo */
-const IMG_EXT=["jpg","jpeg","png","webp"];
+const IMG_EXT=["jpg","jpeg","png","webp","heic","heif"];
 $("#cphIn").onchange=()=>{
   const f=$("#cphIn").files[0]; $("#cphIn").value=""; if(!f) return;
   if(!IMG_EXT.includes(ext(f.name))){ toast("That photo can't be used", "Use a JPG, PNG or WebP photo.", "error"); return; }
@@ -614,7 +614,7 @@ function coverBlock(p){
         ${p.cover_own?'<button class="btn ghost" type="button" id="cvAuto">Back to automatic</button>':""}
       </div>
     </div>
-    <input type="file" id="cvIn" accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp" hidden>
+    <input type="file" id="cvIn" accept=".jpg,.jpeg,.png,.webp,.heic,.heif,image/jpeg,image/png,image/webp,image/heic" hidden>
   </div>`;
 }
 function wireCover(p){
