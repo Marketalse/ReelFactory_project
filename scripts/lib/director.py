@@ -134,6 +134,37 @@ def build_prompt(words, dur, brief="", logos=(), feedback="", prefs=""):
     return p
 
 
+HOOK_MAX = (28, 22)
+
+
+def _fit(words, limit):
+    """Longest run of whole words (from the start) that fits in `limit` characters."""
+    out = []
+    for w in words:
+        if len(" ".join(out + [w])) > limit:
+            break
+        out.append(w)
+    return out
+
+
+def fix_hook(h, edl_words=()):
+    """The hook always needs two lines. If the AI gave one (or none), split his own words into two lines:
+    line 2 gets the last, punchiest words. Never adds words he didn't say; trims at word boundaries to fit."""
+    l1 = " ".join(str(h.get("line1") or "").split()); l2 = " ".join(str(h.get("line2") or "").split())
+    if not l1 or not l2:
+        words = (l1 or l2).split()
+        if len(words) < 2:                                  # nothing usable: his first spoken words
+            words = [w["text"] for w in list(edl_words)[:8]] or words
+        if len(words) >= 2:
+            k = max(1, len(words) // 2)
+            l1, l2 = " ".join(words[:k]), " ".join(words[k:])
+    if len(l1) > HOOK_MAX[0]:
+        l1 = " ".join(_fit(l1.split(), HOOK_MAX[0])) or l1[:HOOK_MAX[0]]
+    if len(l2) > HOOK_MAX[1]:
+        l2 = " ".join(_fit(l2.split(), HOOK_MAX[1])) or l2[:HOOK_MAX[1]]
+    return dict(h, line1=l1, line2=l2)
+
+
 CTA_DUR = 3.5
 HOOK_DUR = 2.6
 
@@ -153,7 +184,8 @@ def resolve(plan, edl_words, duration, *, logos=(), platform_handle="@handle"):
             return None
         return max(0.0, edl_words[w]["start"] - 0.05)
 
-    h = plan.get("hook") or {}
+    h = fix_hook(plan.get("hook") or {}, edl_words)
+    plan["hook"] = h
     try:
         check_values("hook_two_tone", {"line1": h.get("line1", ""), "line2": h.get("line2", "")}, "hook")
     except BuildError as e:

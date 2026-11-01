@@ -27,3 +27,24 @@ class TasteTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class HookTests(unittest.TestCase):
+    W = [{"text": t, "start": i * .4, "end": i * .4 + .3} for i, t in enumerate("هاي الطريقة الوحيدة حتى تبيع اونلاين بدون اعلانات".split())]
+
+    def test_one_line_hook_is_split(self):
+        h = director.fix_hook({"line1": "الطريقة الوحيدة حتى تبيع اونلاين", "line2": ""}, self.W)
+        self.assertTrue(h["line1"] and h["line2"]); self.assertEqual(h["line1"] + " " + h["line2"], "الطريقة الوحيدة حتى تبيع اونلاين")
+
+    def test_missing_hook_uses_his_first_words(self):
+        h = director.fix_hook({}, self.W)
+        self.assertTrue(h["line1"] and h["line2"])
+        self.assertTrue(set((h["line1"] + " " + h["line2"]).split()) <= {w["text"] for w in self.W})
+
+    def test_long_lines_are_trimmed_at_words(self):
+        h = director.fix_hook({"line1": "كلمة " * 10, "line2": "ثانية " * 10}, self.W)
+        self.assertLessEqual(len(h["line1"]), 28); self.assertLessEqual(len(h["line2"]), 22)
+        self.assertFalse(h["line1"].endswith(" "))
+
+    def test_good_hook_unchanged(self):
+        self.assertEqual(director.fix_hook({"line1": "هاي الطريقة", "line2": "بدون اعلانات"}, self.W), {"line1": "هاي الطريقة", "line2": "بدون اعلانات"})
