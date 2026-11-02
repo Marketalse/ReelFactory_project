@@ -32,8 +32,15 @@ OK=""
 for i in $(seq 1 30); do [ "$(curl -s --max-time 1 -o /dev/null -w '%{http_code}' http://127.0.0.1:8765/api/reels)" = "200" ] && { OK=1; break; }; sleep 1; done
 if [ -n "$OK" ]; then
   open http://127.0.0.1:8765/
-  echo "Reel Factory now starts by itself when you log in, and restarts by itself if it ever stops."
-  echo "Bookmark the page that just opened (Cmd+D). You can close this window."
+  echo ""
+  echo "=============================================="
+  echo "  Reel Factory is open in your browser."
+  echo "  Make a reel:  http://127.0.0.1:8765"
+  echo "  Control:      http://127.0.0.1:8765/index.html"
+  echo "  (Hold Cmd and click a link to open it)"
+  echo "=============================================="
+  echo "It now starts by itself when you log in, and restarts by itself if it ever stops."
+  echo "You can close this window."
 else
   echo ""
   echo "PROBLEM: auto-start is on, but the dashboard didn't start. Send Claude a screenshot of this window."
@@ -45,5 +52,16 @@ else
   launchctl print "gui/$(id -u)/$LABEL" 2>&1 | grep -E "state|last exit|runs|program|working directory|disabled" | head -8
   echo ""
   echo "Tip: open System Settings > General > Login Items and make sure 'bash' (Reel Factory) is allowed in the background."
-  echo "Until this is fixed, double-click 'Reel Factory.command' to open the dashboard."
+  echo ""
+  echo "Starting the dashboard from this folder for now, so you can keep working..."
+  nohup python3 dashboard/serve.py > dashboard/server.log 2>&1 &
+  for i in $(seq 1 20); do [ "$(curl -s --max-time 1 -o /dev/null -w '%{http_code}' http://127.0.0.1:8765/api/reels)" = "200" ] && break; sleep 1; done
+  open http://127.0.0.1:8765/
+  echo ""
+  echo "=============================================="
+  echo "  Reel Factory is open in your browser."
+  echo "  Make a reel:  http://127.0.0.1:8765"
+  echo "  Control:      http://127.0.0.1:8765/index.html"
+  echo "  (Hold Cmd and click a link to open it)"
+  echo "=============================================="
 fi

@@ -81,7 +81,12 @@ fi
 if up; then
   open "$URL/"
   echo ""
-  echo "Opened in your browser: $URL"
+  echo "=============================================="
+  echo "  Reel Factory is open in your browser."
+  echo "  Make a reel:  http://127.0.0.1:8765"
+  echo "  Control:      http://127.0.0.1:8765/index.html"
+  echo "  (Hold Cmd and click a link to open it)"
+  echo "=============================================="
   echo "You can close this window."
 else
   echo ""
@@ -91,4 +96,7 @@ else
   [ -f "$HOME/.reelfactory/dashboard.log" ] && { echo "------ auto-start log ------"; tail -n 8 "$HOME/.reelfactory/dashboard.log"; }
   echo "------ what is using port 8765 ------"
   lsof -nP -i tcp:8765 -sTCP:LISTEN 2>/dev/null || echo "(nothing)"
+  open "$URL/"
+  echo ""
+  echo "Dashboard link (try it after fixing the problem): $URL"
 fi
