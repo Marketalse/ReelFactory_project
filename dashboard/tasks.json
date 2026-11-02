@@ -1410,11 +1410,11 @@
    "phase": "P14",
    "title": "P0 · Unified content intelligence: ONE file (content_intel.json) joining words, timing, pauses, emphasis, scene changes and face positions per phrase; the story step reads delivery hints from it",
    "owner": "Claude",
-   "status": "todo",
+   "status": "review",
    "depends": [],
    "done_when": "jobs/<job>/content_intel.json exists after the story step; the story prompt carries pause/emphasis marks.",
-   "notes": "",
-   "evidence": "",
+   "notes": "Built 2026-11-02. jobs/<job>/content_intel.json joins words, pauses, emphasis, speed, scene changes, faces; the story step reads short marks from it. A little more input for the story call (marks only where something is notable).",
+   "evidence": "scripts/lib/content_intel.py, scripts/reel.py (st_selects, st_plan), tests/test_content_intel.py",
    "updated": "2026-11-02"
   },
   {

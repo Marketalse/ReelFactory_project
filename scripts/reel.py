@@ -21,7 +21,7 @@ import argparse, base64, glob, json, os, re, shutil, subprocess, sys, time, urll
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from lib import config as cfg   # noqa: E402  (all settings live in config/*.json)
-from lib import transcript as tr, edl as edlmod, director, speech_intel, editorial, visual_plan, brand_memory, creative_brief   # noqa: E402
+from lib import transcript as tr, edl as edlmod, director, speech_intel, editorial, visual_plan, brand_memory, creative_brief, content_intel   # noqa: E402
 from lib.hfbuild import BuildError   # noqa: E402
 
 ROOT = cfg.ROOT
@@ -325,11 +325,19 @@ def st_selects(c):
     sp = os.path.join(c.job, "selects.json")
     cb = creative_brief.load(c.job)
     lmin, lmax = creative_brief.length_range(cb, (LEN_MIN, LEN_MAX))
+    legend = ""
+    try:                                              # one joined view of the footage: pauses, emphasis, speed, scene changes (free)
+        ci = content_intel.build(c.job)
+        if ci and any(content_intel.marks(p) for p in ci["phrases"]):
+            lines = content_intel.marked_lines(ci); legend = "\n" + content_intel.LEGEND
+            print(f"   content intelligence: {len(ci['phrases'])} phrases with delivery marks")
+    except Exception as ex:                           # noqa: BLE001 - extra facts never block the story pick
+        print("   content intelligence skipped:", ex)
     if not os.path.exists(sp) and proxy_duration(c.job) <= lmax + 5:
         jsave(sp, {"selects": [{"id": "A", "range": [0.0, proxy_duration(c.job)], "label": "the whole take", "hook_line": "", "why": "take is already reel length", "score": 0}]})
     if not os.path.exists(sp):
         dur = proxy_duration(c.job)
-        res = parse_json(c.llm("selects", M_SEL, [{"type": "text", "text": SELECTS_PROMPT.format(dur=dur, lines=lines, lmin=lmin, lmax=lmax) + (
+        res = parse_json(c.llm("selects", M_SEL, [{"type": "text", "text": SELECTS_PROMPT.format(dur=dur, lines=lines, lmin=lmin, lmax=lmax) + legend + (
             "\n\n" + creative_brief.to_text(cb) + (f"\nPrefer candidates whose style is {cb['style']}." if cb.get("style") else "") if cb else "")}], 5000, c.a.effort))
         try:                                          # score with the formula, check hooks are his own words (free)
             w8 = editorial.weights(cfg.RULES); si = jload(os.path.join(c.job, "speech_intel.json")); tw = jload(os.path.join(c.job, "transcript.json"), [])
@@ -451,6 +459,10 @@ def st_plan(c):
             for line in editorial.summary_lines(ed): print("   editorial:", line)
     except Exception as ex:                         # noqa: BLE001
         print("   editorial notes skipped:", ex)
+    try:                                            # refresh the joined view now that the shot log (faces) exists
+        content_intel.build(c.job)
+    except Exception:                               # noqa: BLE001
+        pass
     n = sum(1 for s in tl["scenes"] if s["block"] not in ("hook_two_tone", "cta_card"))
     return f"{n} moments, {len(tl['punch_ins'])} punch-ins, {len(tl['keyword_ids'])} keywords ({len(warn)} warnings)"
 
