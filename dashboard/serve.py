@@ -16,6 +16,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import reels_api  # noqa: E402
 import settings_api  # noqa: E402
 import backup_api  # noqa: E402
+import it_agent  # noqa: E402
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 TASKS = os.path.join(HERE, "tasks.json")
@@ -116,6 +117,8 @@ class H(SimpleHTTPRequestHandler):
             return self.send_json(200 if ok else 409, data if ok else {"ok": False, "message": data})
         if self.path.startswith("/api/backup"):
             return self.send_json(200, backup_api.status())
+        if self.path.startswith("/api/it"):
+            return self.send_json(200, it_agent.status())
         if self.path.startswith("/api/root"):
             return self.send_json(200, {"root": os.path.realpath(reels_api.ROOT)})
         if self.path.startswith("/api/reels"):
@@ -184,6 +187,8 @@ class H(SimpleHTTPRequestHandler):
                 ok, msg = settings_api.test_key()
             elif action == "backup":
                 ok, msg = backup_api.run(reels_api.ROOT, body.get("target") or None)
+            elif action == "it_agent":
+                ok, msg = it_agent.set_on(bool(body.get("on", True)))
             elif action == "backup_auto":
                 ok, msg = backup_api.set_auto(body.get("on", True))
             elif action == "update":
@@ -303,4 +308,5 @@ if __name__ == "__main__":
     ThreadingHTTPServer.allow_reuse_address = True
     SERVER = ThreadingHTTPServer(("127.0.0.1", PORT), H)
     threading.Thread(target=daily_backup, daemon=True).start()
+    threading.Thread(target=it_agent.watch, daemon=True).start()
     SERVER.serve_forever()

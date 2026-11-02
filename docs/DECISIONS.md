@@ -101,3 +101,8 @@ One line per decision. Newest at the bottom. If a later decision changes an earl
 - Edits are stored in SOURCE word numbers (`jobs/<job>/manual_edit.json`: drop / keep / texts) so a cut never moves a card onto the wrong word; `lib/manual_edit.py` rebuilds the cut (edl.build gained drop/keep/texts) and re-checks the plan with the same rules as the AI (director.resolve). Saving is refused while a rule is broken; every save backs up the previous files in `edits/<time>/`.
 - "Save & make new draft" runs `reel.py --rebuild`: compile + draft + report only, $0. Later `--fix` comments keep the manual cuts (st_edl reads manual_edit.json).
 - The live preview is approximate (HTML overlays on the source video); the exact look is the rendered draft.
+
+## 2026-11-02 — IT agent (watchdog), v1
+Hesham asked for an IT agent that detects issues, budget problems and errors and acts at once, with rules so it can't loop or be abused.
+Decision: v1 is a plain program inside the dashboard (`dashboard/it_agent.py`), **not an AI**: free, no internet, no keys, and it cannot be talked into anything by text in a log. It reports every problem in plain words on the dashboard and can do ONE safe action (Try again on a stuck reel), bounded to 2 tries per reel, 15 min apart, 3 per hour. Key/credit, budget, plan and unknown errors are only reported. Kill switch in Settings. Rules: `AGENTS.md` §11. Tests: `tests/test_it_agent.py`.
+Later (needs Hesham's OK): an AI "doctor" that reads an error and *proposes* a fix; it may never apply it alone.

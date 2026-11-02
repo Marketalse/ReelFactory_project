@@ -234,6 +234,7 @@ input[type=password]:focus{border-color:var(--violet)}
   <a href="index.html">All reels &amp; tasks →</a>
   <button class="hbtn" id="settingsBtn" type="button" hidden>Settings</button>
 </header>
+<div id="itBar" hidden style="margin:10px 16px 0;padding:10px 14px;border-radius:12px;background:#2d2a1f;border:1px solid #6b5f2a;color:#f2e6b3;font-size:14px;line-height:1.5"></div>
 
 <dialog class="settings" id="settings" aria-labelledby="setTitle">
   <h2 id="setTitle">Settings</h2>
@@ -256,6 +257,10 @@ input[type=password]:focus{border-color:var(--violet)}
   </div>
   <label style="display:flex;gap:8px;align-items:center;margin-top:8px;font-size:13.5px;color:var(--muted)"><input type="checkbox" id="bkAuto"> Back up automatically once a day</label>
   <p class="kmsg" id="bkMsg" role="status"></p>
+  <h3 style="margin:18px 0 4px;font-size:15px">IT helper</h3>
+  <p style="margin:0 0 6px;font-size:13.5px;color:var(--muted)" id="itLimits">Watches for problems and tells you in plain words. It only presses "Try again" on a stuck reel (never more than twice), and never approves, deletes or changes anything.</p>
+  <label style="display:flex;gap:8px;align-items:center;font-size:13.5px;color:var(--muted)"><input type="checkbox" id="itOn"> IT helper is on</label>
+  <p class="kmsg" id="itMsg" role="status"></p>
   <hr style="border:0;border-top:1px solid var(--line);margin:16px 0">
   <b>Updates</b>
   <p style="margin:2px 0 8px;color:var(--muted);font-size:13.5px" id="verLine">…</p>
@@ -919,6 +924,14 @@ async function waitBack(){
   for(let i=0;i<60;i++){ await new Promise(r=>setTimeout(r,1000)); try{ const r=await fetch("/api/reels",{cache:"no-store"}); if(r.ok){ location.reload(); return; } }catch(e){} }
   $("#updMsg").textContent="Reel Factory didn't come back. Double-click Reel Factory.command."; $("#updMsg").className="kmsg err";
 }
+async function loadIt(){
+  try{ const t=await (await fetch("/api/it",{cache:"no-store"})).json();
+    const bar=$("#itBar"), tx=(t.issues||[]).map(i=>i.text);
+    if(t.on && tx.length){ bar.hidden=false; bar.innerHTML="<b>IT helper:</b> "+tx.slice(0,3).map(x=>esc(x)).join("<br>"); } else bar.hidden=true;
+    if($("#itOn")) $("#itOn").checked=!!t.on;
+    if($("#itLimits") && t.limits) $("#itLimits").textContent="Watches for problems and tells you in plain words. "+t.limits;
+  }catch(e){}
+}
 async function loadBackup(){
   try{ const b=await (await fetch("/api/backup",{cache:"no-store"})).json();
     const sel=$("#bkTarget"), m=$("#bkMsg");
@@ -934,12 +947,13 @@ function setupSettings(){
   $("#bkBtn").onclick=async ()=>{ const m=$("#bkMsg"); m.textContent="Backing up…"; m.className="kmsg"; $("#bkBtn").disabled=true;
     const r=await settingsPost("backup",{target:$("#bkTarget").value}); $("#bkBtn").disabled=false;
     m.textContent=r.message||""; m.className="kmsg "+(r.ok?"ok":"err"); };
+  $("#itOn").onchange=async ()=>{ const r=await settingsPost("it_agent",{on:$("#itOn").checked}); const m=$("#itMsg"); m.textContent=r.message||""; m.className="kmsg "+(r.ok?"ok":"err"); loadIt(); };
   $("#bkAuto").onchange=async ()=>{ const r=await settingsPost("backup_auto",{on:$("#bkAuto").checked}); const m=$("#bkMsg"); m.textContent=r.message||""; m.className="kmsg "+(r.ok?"ok":"err"); };
   $("#updBtn").onclick=async ()=>{ const m=$("#updMsg"); m.textContent="Checking GitHub…"; m.className="kmsg"; $("#updBtn").disabled=true;
     const r=await settingsPost("update"); $("#updBtn").disabled=false; m.textContent=r.message||""; m.className="kmsg "+(r.ok?"ok":"err");
     if(r.restart){ $("#updBtn").disabled=true; waitBack(); } };
   const d=$("#settings"); $("#settingsBtn").hidden=false;
-  $("#settingsBtn").onclick=()=>{ $("#keyMsg").textContent=""; $("#updMsg").textContent=""; loadHealth(); loadVersion(); loadBackup(); d.showModal(); };
+  $("#settingsBtn").onclick=()=>{ $("#keyMsg").textContent=""; $("#updMsg").textContent=""; loadHealth(); loadVersion(); loadBackup(); loadIt(); d.showModal(); };
   $("#setClose").onclick=()=>d.close();
   $("#keySave").onclick=async ()=>{ const k=$("#keyIn").value; if(!k.trim()) return keyMsg({ok:false,message:"Paste your key first."});
     $("#keySave").disabled=true; const r=await settingsPost("key",{key:k}); $("#keySave").disabled=false;
@@ -968,6 +982,7 @@ async function boot(){
   }
 }
 boot();
+loadIt(); setInterval(loadIt, 60000);
 </script>
 </body>
 </html>
