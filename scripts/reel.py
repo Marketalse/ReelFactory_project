@@ -147,14 +147,23 @@ class Ctx:
                 print(f"   [{stage}] answer was cut off at {max_tokens}; trying once more with {max_tokens * 2}")
                 return self.llm(stage, model, content, max_tokens * 2, effort, est_in_tokens, _retry=True)
             raise Stop(f"{stage}: output hit max_tokens={max_tokens} (truncated JSON). Raise the limit or lower effort.")
-        return d["choices"][0]["message"]["content"]
+        text = d["choices"][0]["message"].get("content")
+        if not (text or "").strip():                   # the model sent nothing (often: it used its room thinking): once more with more room
+            if not _retry and max_tokens < 24000:
+                print(f"   [{stage}] the AI sent an empty answer (finish: {rec['finish']}); trying once more with {max_tokens * 2}")
+                return self.llm(stage, model, content, max_tokens * 2, effort, est_in_tokens, _retry=True)
+            raise Stop(f"{stage}: the AI sent an empty answer twice (finish: {rec['finish']}, thinking tokens: {rec['reasoning']}). Click Try again; if it repeats, send Claude this message.")
+        return text
 
 def parse_json(txt):
-    t = txt.strip()
+    t = (txt or "").strip()
     m = re.search(r"```(?:json)?\s*(.*?)```", t, re.S)
     if m: t = m.group(1).strip()
     i = min([x for x in (t.find("{"), t.find("[")) if x >= 0] or [0])
-    return json.loads(t[i:])
+    try:
+        return json.loads(t[i:])
+    except ValueError as e:
+        raise Stop(f"the AI's answer was not readable JSON ({e}); it began: {t[:80]!r}. Click Try again.")
 
 def lines_from_words(words, gap=0.35):
     """[(t0,t1,text,first_index)] phrases, split on pauses."""
