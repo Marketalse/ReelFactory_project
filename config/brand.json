@@ -75,7 +75,7 @@
     },
     "sfx": {
       "enabled": true,
-      "source": "CONFIRM licensed library",
+      "source": "made by scripts/make_sfx.py (own sounds, no licence needed); catalogue in style/sfx/catalog.json",
       "whoosh": "layout change",
       "pop": "keyword (max 1 per 3 s)",
       "ding": "spoken number / counter"
