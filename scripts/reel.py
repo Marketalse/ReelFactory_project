@@ -214,7 +214,7 @@ def st_fix(c):
     asr = jload(os.path.join(c.job, "transcript_asr.json"))
     if os.path.exists(out) and jload(os.path.join(c.job, "transcript_fix_meta.json")): return "cached"
     prompt = FIX_PROMPT.replace("{glossary}", glossary_text()) + "\n".join(f"{i}:{w['text']}" for i, w in enumerate(asr))
-    txt = c.llm("fix", M_FIX, [{"type": "text", "text": prompt}], min(16000, 4000 + 40 * len(asr)), "low")   # longer clip = longer answer
+    txt = c.llm("fix", M_FIX, [{"type": "text", "text": prompt}], 4000, "low")   # longer clip = longer answer
     fx = parse_json(txt)
     words = [dict(w) for w in asr]; applied = []
     for f in fx.get("fixes", []):
