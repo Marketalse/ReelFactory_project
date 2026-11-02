@@ -15,8 +15,8 @@ import glob, json, os, re
 from . import config as cfg
 from .hfbuild import REGISTRY, check_values, BuildError
 
-FULL_SCREEN = {"text_card", "flash", "number_graph", "before_after", "tier_list"}          # the face is hidden: captions pause
-DIRECTOR_BLOCKS = ["text_card", "split", "flash", "logo_card", "name_tag", "info_card", "number_graph", "before_after", "tier_list"]   # what the Director may place as moments
+FULL_SCREEN = {"text_card", "flash", "number_graph", "before_after", "tier_list", "pixel_scene"}          # the face is hidden: captions pause
+DIRECTOR_BLOCKS = ["text_card", "split", "flash", "logo_card", "name_tag", "info_card", "number_graph", "before_after", "tier_list", "ui_card", "doc_card", "pixel_scene"]   # what the Director may place as moments
 DIGITS = re.compile(r"[0-9][0-9,.]*")
 
 
@@ -250,6 +250,12 @@ def resolve(plan, edl_words, duration, *, logos=(), platform_handle="@handle", r
                     err.append(f"{where}: {key} {vals[key]!r} is not a number he said ({', '.join(sorted(spoken)) or 'none spoken'})")
         if b == "flash" and DIGITS.search(vals.get("word", "")) and DIGITS.search(vals["word"]).group(0).rstrip(".,") not in spoken:
             err.append(f"{where}: word {vals['word']!r} is a number he did not say")
+        if b == "ui_card" and vals.get("image"):
+            f = vals["image"]
+            if os.path.basename(f) not in logos:
+                err.append(f"{where}: image {f!r} is not in the reel's assets/ (have: {', '.join(logos) or 'none'})")
+            else:
+                vals["image"] = "assets/logos/" + os.path.basename(f)
         if b == "logo_card":
             for key in ("logo_a", "logo_b"):
                 f = vals.get(key)
