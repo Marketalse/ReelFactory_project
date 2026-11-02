@@ -98,6 +98,11 @@
    "id": "P16",
    "name": "PARKED · Closed without being built (reopen when you want)",
    "goal": "Needs your Mac, your screens, your style OK or extra cost"
+  },
+  {
+   "id": "P17",
+   "name": "NOW · Fixes from your first real reel (Nov 2)",
+   "goal": "AI that really edits, correct captions, real sound and richer visuals, a better cover"
   }
  ],
  "tasks": [
@@ -1637,6 +1642,66 @@
    "done_when": "Only if you approve the cost.",
    "notes": "Built 2026-11-02: new library pictures are described once by the vision AI (cached), one small text call per reel picks the ones that fit. Cents per reel; money guard applies; off switch in config/project.json -> broll_ai.enabled. Done on Hesham's instruction.",
    "evidence": "scripts/lib/broll_ai.py, scripts/reel.py (broll_ai_step), config/project.json (broll_ai), tests/test_broll_ai.py",
+   "updated": "2026-11-02"
+  },
+  {
+   "id": "T124",
+   "phase": "P17",
+   "title": "AI editor for the cutting: an AI pass reads the story and removes weak, repeated or off-topic parts (whole sentences only, checked by code), instead of only cutting pauses by rules",
+   "owner": "Claude",
+   "status": "todo",
+   "depends": [],
+   "done_when": "The reel's report lists what the AI cut and why; the Edit page shows each AI cut so you can restore it.",
+   "notes": "From Hesham's feedback on the first real reel, 2026-11-02.",
+   "evidence": "",
+   "updated": "2026-11-02"
+  },
+  {
+   "id": "T125",
+   "phase": "P17",
+   "title": "Captions that are right: a second AI proofreading pass on the doubtful words, and a warning when many words are doubtful",
+   "owner": "Claude",
+   "status": "todo",
+   "depends": [],
+   "done_when": "Fewer garbled words in the captions; the quality check says how many words are doubtful.",
+   "notes": "From Hesham's feedback on the first real reel, 2026-11-02.",
+   "evidence": "",
+   "updated": "2026-11-02"
+  },
+  {
+   "id": "T126",
+   "phase": "P17",
+   "title": "Results box only after you say 'I posted it' (it was shown before posting)",
+   "owner": "Claude",
+   "status": "todo",
+   "depends": [],
+   "done_when": "The 'How did it do?' box appears after 'I posted it' and tells you when to come back for the numbers.",
+   "notes": "From Hesham's feedback on the first real reel, 2026-11-02.",
+   "evidence": "",
+   "updated": "2026-11-02"
+  },
+  {
+   "id": "T127",
+   "phase": "P17",
+   "title": "Richer visuals and real sound: wire the sound effects (they were never used), smooth zoom snaps, emphasis marks for the director, variety rules",
+   "owner": "Claude",
+   "status": "todo",
+   "depends": [],
+   "done_when": "The draft has whoosh/pop/hit sounds on cards and zooms, zooms snap smoothly, and the director uses more block types.",
+   "notes": "From Hesham's feedback on the first real reel, 2026-11-02.",
+   "evidence": "",
+   "updated": "2026-11-02"
+  },
+  {
+   "id": "T128",
+   "phase": "P17",
+   "title": "A cover that attracts: bold title behind the head, your cutout in front, gradient background, best-frame choice",
+   "owner": "Claude",
+   "status": "todo",
+   "depends": [],
+   "done_when": "The cover looks like a real thumbnail: big two-line title, your face cut out, strong colours.",
+   "notes": "From Hesham's feedback on the first real reel, 2026-11-02.",
+   "evidence": "",
    "updated": "2026-11-02"
   }
  ],
