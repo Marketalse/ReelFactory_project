@@ -32,6 +32,11 @@ M_VIS = cfg.MODELS["vision"]
 M_SEL = cfg.MODELS["selects"]
 M_DIR = cfg.MODELS["director"]
 M_DIR_FALLBACK = cfg.MODELS.get("director_fallback")
+
+
+def eff(c, role):
+    """How long the AI thinks: the --effort given on the command line wins, else the role's setting."""
+    return getattr(c.a, "effort", None) or cfg.role(role)[1]
 LEN_MIN, LEN_MAX = cfg.RULES["reel_length_s"]["min"], cfg.RULES["reel_length_s"]["max"]
 STAGES = ["ingest", "transcribe", "fix", "review", "selects", "tighten", "edl", "keyframes", "shotlog", "plan", "compile", "draft", "report"]
 STATUS_AFTER = {"ingest": "ingested", "transcribe": "transcribed", "fix": "transcript_fixed", "review": "transcript_reviewed",
@@ -245,7 +250,7 @@ def st_fix(c):
         if not os.path.exists(os.path.join(c.job, "speech_intel.json")): speech_intel_run(c)
         return "cached"
     prompt = FIX_PROMPT.replace("{glossary}", glossary_text()) + "\n".join(f"{i}:{w['text']}" for i, w in enumerate(asr))
-    txt = c.llm("fix", M_FIX, [{"type": "text", "text": prompt}], 4000, "low")   # longer clip = longer answer
+    txt = c.llm("fix", M_FIX, [{"type": "text", "text": prompt}], 4000, eff(c, "word_fix"))   # longer clip = longer answer
     fx = parse_json(txt)
     words = [dict(w) for w in asr]; applied = []
     for f in fx.get("fixes", []):
@@ -271,7 +276,7 @@ def proofread(c, words):
         topic = ", ".join(k["word"] for k in si.get("key_terms", [])[:8]) or "none yet"
         done = []
         for chunk in tr.proof_chunks(words, doubtful)[:5]:
-            ans = parse_json(c.llm("proof", M_FIX, [{"type": "text", "text": tr.PROOF_PROMPT.format(glossary=glossary_text(), topic=topic) + chunk}], 2500, "low"))
+            ans = parse_json(c.llm("proof", M_FIX, [{"type": "text", "text": tr.PROOF_PROMPT.format(glossary=glossary_text(), topic=topic) + chunk}], 2500, eff(c, "proofread")))
             done += tr.apply_proof(words, ans.get("fixes", []) if isinstance(ans, dict) else [])
         if done: print(f"   proofreader: {len(done)} word(s) corrected in context")
         return done
@@ -341,7 +346,7 @@ def st_shotlog(c):
         content.append({"type": "text", "text": "t=%.2f" % f["t"]})
         b = base64.b64encode(open(os.path.join(c.job, f["file"]), "rb").read()).decode()
         content.append({"type": "image_url", "image_url": {"url": "data:image/jpeg;base64," + b}})
-    log = parse_json(c.llm("shotlog", M_VIS, content, 9000, "low"))
+    log = parse_json(c.llm("shotlog", M_VIS, content, 9000, eff(c, "shot_log")))
     if len(log) != len(frames): raise Stop(f"shot log returned {len(log)} rows for {len(frames)} frames")
     jsave(out, log); return f"{len(log)} rows"
 
@@ -380,7 +385,7 @@ def st_selects(c):
     if not os.path.exists(sp):
         dur = proxy_duration(c.job)
         res = parse_json(c.llm("selects", M_SEL, [{"type": "text", "text": SELECTS_PROMPT.format(dur=dur, lines=lines, lmin=lmin, lmax=lmax) + legend + (
-            "\n\n" + creative_brief.to_text(cb) + (f"\nPrefer candidates whose style is {cb['style']}." if cb.get("style") else "") if cb else "")}], 5000, c.a.effort))
+            "\n\n" + creative_brief.to_text(cb) + (f"\nPrefer candidates whose style is {cb['style']}." if cb.get("style") else "") if cb else "")}], 5000, eff(c, "story")))
         try:                                          # score with the formula, check hooks are his own words (free)
             w8 = editorial.weights(cfg.RULES); si = jload(os.path.join(c.job, "speech_intel.json")); tw = jload(os.path.join(c.job, "transcript.json"), [])
             for x in res.get("selects", []):
@@ -430,7 +435,7 @@ def st_tighten(c):
             jsave(tp, {"range_before": [s0, s1], "range": [s0, s1], "drops": [], "removed_s": 0, "summary": "too short to tighten"})
             return "nothing to tighten (very short)"
         sl = jload(os.path.join(c.job, "selects.json"), {}) or {}
-        ans = parse_json(c.llm("tighten", M_SEL, [{"type": "text", "text": tighten.build_prompt(us, sl.get("main_message"), sl.get("audience"), ch.get("style") or cb.get("style"), lmin, lmax)}], 2500, c.a.effort))
+        ans = parse_json(c.llm("tighten", M_SEL, [{"type": "text", "text": tighten.build_prompt(us, sl.get("main_message"), sl.get("audience"), ch.get("style") or cb.get("style"), lmin, lmax)}], 2500, eff(c, "tighten")))
         dec = tighten.decide(ans, us, lmin)
         rng, rows = tighten.apply(us, dec)
     except Stop as ex:
@@ -477,7 +482,7 @@ def broll_ai_step(c, words, root=None):
         if todo:
             content, sent = broll_ai.describe_content(root, todo)
             if sent:
-                rows = parse_json(c.llm("broll_describe", M_VIS, content, 1800, "low"))
+                rows = parse_json(c.llm("broll_describe", M_VIS, content, 1800, eff(c, "broll")))
                 new = broll_ai.clean_descriptions(rows, sent)
                 broll_ai.save(root, new)
                 print(f"   b-roll: described {len(new)} new library picture(s) once (kept for next time)")
@@ -485,7 +490,7 @@ def broll_ai_step(c, words, root=None):
         if not cat:
             return [], ""
         lines = "\n".join(f"[{a:.0f}] {t}" for a, b, t, _ in lines_from_words(words))
-        ans = parse_json(c.llm("broll_pick", M_SEL, [{"type": "text", "text": broll_ai.pick_prompt(lines, cat, int(conf.get("max_pick", 6)))}], 700, "low"))
+        ans = parse_json(c.llm("broll_pick", M_SEL, [{"type": "text", "text": broll_ai.pick_prompt(lines, cat, int(conf.get("max_pick", 6)))}], 700, eff(c, "broll")))
         picks = broll_ai.clean_picks(ans, cat, int(conf.get("max_pick", 6)))
         got = []
         for p in picks:
@@ -544,7 +549,7 @@ def st_plan(c):
     prompt = director.build_prompt(words, e["duration"], brief, job_logos(c), feedback, director.taste(), marks=marks)
     if feedback and os.path.exists(os.path.join(c.job, "scene_plan.json")):
         prompt += "\n\nPREVIOUS PLAN:\n" + json.dumps(jload(os.path.join(c.job, "scene_plan.json")), ensure_ascii=False)
-    plan = parse_json(c.llm("plan", M_DIR, [{"type": "text", "text": prompt}], 9000, c.a.effort))
+    plan = parse_json(c.llm("plan", M_DIR, [{"type": "text", "text": prompt}], 9000, eff(c, "director")))
     attempts = [(M_DIR, plan)]
 
     def resolve(p):
@@ -570,7 +575,7 @@ def st_plan(c):
         plan = parse_json(c.llm("repair", model, [{"type": "text", "text":
             "Fix this reel plan JSON so every error below is solved. Change only what is needed, keep the schema, "
             "return ONLY the full JSON.\n\nERRORS:\n" + "\n".join(err) + "\n\nPLAN:\n" + json.dumps(plan, ensure_ascii=False)
-            + "\n\nTRANSCRIPT:\n" + director.numbered_transcript(words)}], 9000, c.a.effort))
+            + "\n\nTRANSCRIPT:\n" + director.numbered_transcript(words)}], 9000, eff(c, "repair")))
         attempts.append((model, plan)); tl, err, warn = resolve(plan)
         plan, tl, err, warn = free_fixes(plan, tl, err, warn)
     jsave(os.path.join(c.job, "scene_plan.json"), plan)
@@ -838,7 +843,7 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("input"); ap.add_argument("--slug"); ap.add_argument("--select"); ap.add_argument("--stop-after", choices=STAGES)
     ap.add_argument("--budget", type=float, default=cfg.BUDGET["per_reel_stop"]); ap.add_argument("--width", type=int, default=540)
-    ap.add_argument("--every", type=float, default=2.0); ap.add_argument("--effort", default="low", choices=["low", "medium", "high"])
+    ap.add_argument("--every", type=float, default=2.0); ap.add_argument("--effort", default=None, choices=["low", "medium", "high"])
     ap.add_argument("--force", default=""); ap.add_argument("--asr-model", default=None); ap.add_argument("--retranscribe", action="store_true")
     ap.add_argument("--fresh-selects", action="store_true"); ap.add_argument("--no-repair", action="store_true")
     ap.add_argument("--skip-review", action="store_true", help="skip Gate 0 for this reel")

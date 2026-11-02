@@ -8,8 +8,8 @@
   "models": {
     "transcript_fix": "anthropic/claude-haiku-5.5",
     "selects": "anthropic/claude-sonnet-5.5",
-    "director": "anthropic/claude-haiku-5.5",
-    "director_fallback": "anthropic/claude-sonnet-5.5",
+    "director": "anthropic/claude-sonnet-5.5",
+    "director_fallback": "anthropic/claude-opus-5.5",
     "committee": "anthropic/claude-sonnet-5.5",
     "vision": "anthropic/claude-sonnet-5.5"
   },
@@ -25,6 +25,11 @@
     "anthropic/claude-opus-5": {
       "in": 5.0,
       "out": 25.0
+    },
+    "anthropic/claude-opus-5.5": {
+      "in": 5.0,
+      "out": 25.0,
+      "_note": "assumed equal to claude-opus-5 until checked on the Nous price list"
     }
   },
   "budget_usd": {
@@ -85,5 +90,63 @@
     "max_new_per_reel": 8,
     "max_pick": 6,
     "_note": "T123 (Hesham approved the cost 2026-11-02): each new library picture is described once by the vision model; each reel makes one small text call to pick matching files. Set enabled false to switch off."
+  },
+  "roles": {
+    "_note": "One place that decides which AI does which job (Hesham 2026-11-02, T136). Change model or effort here; effort = how long it thinks (low/medium/high). The 'models' list below is built from these roles. The 'models' list is built from these roles.",
+    "word_fix": {
+      "model": "anthropic/claude-haiku-5.5",
+      "effort": "low",
+      "note": "fixes mistakes in the raw words"
+    },
+    "proofread": {
+      "model": "anthropic/claude-haiku-5.5",
+      "effort": "low",
+      "note": "second check of the words"
+    },
+    "shot_log": {
+      "model": "anthropic/claude-sonnet-5.5",
+      "effort": "low",
+      "note": "looks at key frames"
+    },
+    "story": {
+      "model": "anthropic/claude-sonnet-5.5",
+      "effort": "medium",
+      "note": "picks the story and hooks"
+    },
+    "tighten": {
+      "model": "anthropic/claude-sonnet-5.5",
+      "effort": "medium",
+      "note": "cuts weak lines"
+    },
+    "broll": {
+      "model": "anthropic/claude-sonnet-5.5",
+      "effort": "low",
+      "note": "matches library pictures"
+    },
+    "outline": {
+      "model": "anthropic/claude-opus-5.5",
+      "effort": "high",
+      "note": "(T130) hook, steps, recap, concept"
+    },
+    "director": {
+      "model": "anthropic/claude-sonnet-5.5",
+      "effort": "medium",
+      "note": "first plan of the visuals"
+    },
+    "repair": {
+      "model": "anthropic/claude-opus-5.5",
+      "effort": "medium",
+      "note": "fixes a plan that breaks rules; also the revision after the critic"
+    },
+    "critic": {
+      "model": "anthropic/claude-sonnet-5.5",
+      "effort": "low",
+      "note": "(T134) looks at the draft and scores it"
+    },
+    "cover": {
+      "model": "anthropic/claude-sonnet-5.5",
+      "effort": "low",
+      "note": "(T128+) picks the cover frame and words"
+    }
   }
 }

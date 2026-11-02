@@ -1803,11 +1803,11 @@
    "phase": "P19",
    "title": "Roles config: every AI job (outline, story, tighten, director, critic, cover, shot log) gets its own model + effort in config/project.json, changeable in Settings",
    "owner": "Claude",
-   "status": "todo",
+   "status": "review",
    "depends": [],
    "done_when": "One place decides which model does which job; Settings page shows it.",
    "notes": "Hesham 2026-11-02: enhance structure, AI models, creativity, accept higher cost. Estimate: scripts/cost_estimate.py.",
-   "evidence": "",
+   "evidence": "config/project.json roles; scripts/lib/config.py role(); scripts/reel.py eff(); 298 tests OK",
    "updated": "2026-11-02"
   },
   {

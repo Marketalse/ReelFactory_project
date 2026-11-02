@@ -11,7 +11,7 @@ from lib import director, tighten, transcript as tr          # noqa: E402
 
 CFG = json.load(open(os.path.join(ROOT, "config", "project.json")))
 P = CFG["prices_per_mtok"]
-H, S, O = "anthropic/claude-haiku-5.5", "anthropic/claude-sonnet-5.5", "anthropic/claude-opus-5"
+H, S, O = "anthropic/claude-haiku-5.5", "anthropic/claude-sonnet-5.5", "anthropic/claude-opus-5.5"
 IMG = 800            # tokens per 540 px still (same number the money guard uses)
 THINK = {"low": 1500, "medium": 5000, "high": 12000}      # typical thinking tokens added to the answer, by effort
 
@@ -49,7 +49,7 @@ def scenario(raw_s, story_s, name):
         add("B-roll match (AI)", S, call(S, 1500 + 6 * IMG, 700, "low"), "when new pictures exist")
         add("director (plan)", S, call(S, tok(len(director.PROMPT)) + tr_story + 3500, 3500, "medium"), "step by step layout + highlights")
         add("LOOK at the result (new) x2 rounds", S, 2 * call(S, 10 * IMG + 1500, 700, "low"), "10 pictures of the draft, scored")
-        add("revision after the look (new)", S, call(S, tok(len(director.PROMPT)) + tr_story + 5000, 3000, "medium"), "one fix round")
+        add("revision after the look (new)", O, call(O, tok(len(director.PROMPT)) + tr_story + 5000, 3000, "medium"), "one fix round")
         add("cover design (new)", S, call(S, 3 * IMG + 1200, 700, "low"), "picks the best face frame + layout")
     return rows
 

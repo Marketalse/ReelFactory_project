@@ -24,8 +24,21 @@ BRAND = _load("brand.json")
 RULES = _load("rules.json")
 GLOSSARY = _load("glossary.json")
 
+ROLES = {k: v for k, v in PROJECT.get("roles", {}).items() if not k.startswith("_")}
 MODELS = PROJECT["models"]
+_LEGACY = {"transcript_fix": "word_fix", "selects": "story", "director": "director", "director_fallback": "repair", "vision": "shot_log"}
+for _k, _r in _LEGACY.items():                      # the old names follow the roles
+    if _r in ROLES:
+        MODELS[_k] = ROLES[_r]["model"]
 BUDGET = PROJECT["budget_usd"]
+
+
+def role(name, default_effort="low"):
+    """(model, effort) for one AI job, from config/project.json -> roles."""
+    r = ROLES.get(name)
+    if not r:
+        raise SystemExit(f"No role '{name}' in config/project.json -> roles")
+    return r["model"], r.get("effort", default_effort)
 
 
 def price(model):
