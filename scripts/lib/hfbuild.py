@@ -74,12 +74,10 @@ def stamp(block, inst_id, dur, groups_html="", values=None):
     return src.replace("__ID__", inst_id).replace("__DUR__", _num(dur)).replace("<!--GROUPS-->", groups_html)
 
 
-def caption_groups(words, keyword_idx, inst_id, t_offset=0.0, max_words=None, gap=0.15, hold=0.35, stops=()):
-    """Group transcript words (reel time) into caption groups of up to max_words; returns HTML.
-    words: [{"text","start","end"}] already on the reel timeline. keyword_idx: indices into words.
-    stops: times where a full-screen card or the CTA begins; a caption never stays on screen past one."""
+def caption_events(words, t_offset=0.0, max_words=None, gap=0.15, hold=0.35, stops=()):
+    """The ONE rule that decides how words become caption groups and when each group is on screen.
+    Returns [{"idx": [word indices], "start", "end"}] in reel time. Used by the renderer and by the visual plan."""
     max_words = max_words or cfg.RULES["captions"]["max_words"]
-    kw = set(keyword_idx or [])
     groups, cur = [], []
     for i, w in enumerate(words):
         if cur and (len(cur) >= max_words or w["start"] - words[cur[-1]]["end"] >= gap):
@@ -98,6 +96,18 @@ def caption_groups(words, keyword_idx, inst_id, t_offset=0.0, max_words=None, ga
         stop = min([t for t in stops if t > s + 1e-3], default=None)
         if stop is not None:
             e = min(e, stop)
+        out.append({"idx": g, "start": s, "end": e})
+    return out
+
+
+def caption_groups(words, keyword_idx, inst_id, t_offset=0.0, max_words=None, gap=0.15, hold=0.35, stops=()):
+    """Group transcript words (reel time) into caption groups of up to max_words; returns HTML.
+    words: [{"text","start","end"}] already on the reel timeline. keyword_idx: indices into words.
+    stops: times where a full-screen card or the CTA begins; a caption never stays on screen past one."""
+    kw = set(keyword_idx or [])
+    out = []
+    for n, ev in enumerate(caption_events(words, t_offset, max_words, gap, hold, stops)):
+        s, e, g = ev["start"], ev["end"], ev["idx"]
         spans = "".join(
             f'<span class="{inst_id}-w{" " + inst_id + "-kw" if i in kw else ""}" data-t="{_num(max(s, words[i]["start"] - t_offset))}">'
             f'{html.escape(words[i]["text"])}</span>' for i in g)
