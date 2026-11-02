@@ -6,11 +6,11 @@
 
 The HyperFrames CLI version is pinned in config/project.json -> tools.hyperframes.
 """
-import argparse, glob, json, os, re, shutil, subprocess, sys
+import argparse, glob, json, os, re, shutil, subprocess, sys, time
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from lib import config as cfg       # noqa: E402
-from lib import hfbuild             # noqa: E402
+from lib import hfbuild, render_guard   # noqa: E402
 import qa_check                     # noqa: E402
 
 HF = ["npx", "--yes", f"hyperframes@{cfg.PROJECT.get('tools', {}).get('hyperframes', '0.8.226')}"]
@@ -78,6 +78,12 @@ def snapshot(project, total):
 
 
 def render(project, out_path, quality):
+    """One render. A temporary failure (browser crash, timeout...) is retried ONCE; a full disk or a broken plan never is."""
+    res, _ = render_guard.retry_once(lambda: _render_once(project, out_path, quality), RenderError)
+    return res
+
+
+def _render_once(project, out_path, quality):
     code, out, err = run(HF + ["render", "--quality", quality, "-o", out_path], project, 3600)
     if code or not os.path.exists(out_path) or os.path.getsize(out_path) == 0:
         log = os.path.join(os.path.dirname(os.path.abspath(out_path)), "render_error.log")
@@ -235,22 +241,60 @@ def make_cover(job):
         return {"error": str(e)[:300]}
 
 
+def save_qa(job, qa, final=False):
+    json.dump(qa, open(os.path.join(job, "qa_final.json" if final else "qa.json"), "w"), indent=1, ensure_ascii=False)
+
+
+def extra_qa(job, video, qa, tl, width=None):
+    """Stage 6 checks on top of qa_check: the file itself (size, codec, plays to the end), sound vs words, silence, and whether
+    captions and cards are really visible. Real defects go to qa['errors'], the rest to qa['warnings']. Never raises."""
+    info = {}
+    try:
+        e, w, info = render_guard.verify_video(video, tl["duration"], width)
+        qa["errors"] += e; qa["warnings"] += w
+    except Exception as ex:                                  # noqa: BLE001 - a checker bug must not stop a good reel
+        qa["warnings"].append(f"file check skipped: {ex}")
+    try:
+        edl = json.load(open(os.path.join(job, "edl.json"), encoding="utf-8"))
+        e, w, m = render_guard.sync_and_silence(video, edl["words"], tl.get("caption_gaps", []))
+        qa["errors"] += e; qa["warnings"] += w; qa.setdefault("metrics", {})["sync"] = m
+    except Exception as ex:                                  # noqa: BLE001
+        qa["warnings"].append(f"sound sync check skipped: {ex}")
+    try:
+        vp = json.load(open(os.path.join(job, "visual_plan.json"), encoding="utf-8"))
+        qa["warnings"] += render_guard.caption_checks(video, vp)
+    except (OSError, ValueError):
+        pass
+    except Exception as ex:                                  # noqa: BLE001
+        qa["warnings"].append(f"caption visibility check skipped: {ex}")
+    return info
+
+
 def draft(job):
     project = os.path.join(job, "hyperframes")
     tl = json.load(open(os.path.join(job, "timeline.json"), encoding="utf-8"))
+    problems = render_guard.preflight(job, project)
+    if problems:
+        raise RenderError("not ready to render: " + "; ".join(problems[:5]))
     warnings = check(project)
     sheet = snapshot(project, tl["duration"])
     os.makedirs(os.path.join(job, "review"), exist_ok=True)
+    t0 = time.time()
     full = render(project, os.path.join(job, "review", "_draft_full.mp4"), "draft")
     verify(full, tl["duration"])
     even_sound(full)
     qa = qa_check.run(job, full, final=False, project=project)
+    info = extra_qa(job, full, qa, tl)
     small = os.path.join(job, "review", "draft_540p.mp4")
     r = subprocess.run(["ffmpeg", "-hide_banner", "-loglevel", "error", "-y", "-i", full, "-vf", "scale=540:-2",
                         "-c:v", "libx264", "-crf", "28", "-preset", "veryfast", "-c:a", "aac", "-b:a", "128k", small], capture_output=True, text=True)
     if r.returncode:
         raise RenderError("draft downscale failed: " + explain(r.stdout, r.stderr))
+    e540, w540, i540 = render_guard.verify_video(small, tl["duration"], 540, 960)
+    qa["errors"] += [f"draft file: {x}" for x in e540]; qa["warnings"] += [f"draft file: {x}" for x in w540]
     os.remove(full)
+    save_qa(job, qa)
+    render_guard.write_manifest(job, "draft", small, "draft", dict(info, **{"review_copy": i540}), qa, round(time.time() - t0, 1))
     if sheet and os.path.exists(sheet):
         shutil.copy(sheet, os.path.join(job, "review", "contact_sheet.jpg"))
     pkg = edit_package(job, project)
@@ -273,14 +317,21 @@ def final(job, platforms=None):
         project = compile_job(job, "instagram", final=True)
     except hfbuild.BuildError as e:
         raise RenderError(str(e))
+    problems = render_guard.preflight(job, project)
+    if problems:
+        raise RenderError("not ready to render: " + "; ".join(problems[:5]))
     check(project)
     path = os.path.join(job, "final", f"reel_v{v}.mp4")
     if os.path.exists(path):
         raise RenderError(f"{path} exists; never overwritten")
+    t0 = time.time()
     render(project, path, "high")
     verify(path, tl["duration"])
     even_sound(path)
     qa = qa_check.run(job, path, final=True, project=project)
+    info = extra_qa(job, path, qa, tl, 1080)
+    save_qa(job, qa, True)
+    render_guard.write_manifest(job, "final", path, "high", info, qa, round(time.time() - t0, 1))
     if qa["errors"]:
         bad = path.replace(".mp4", "_QA_FAILED.mp4"); os.rename(path, bad)
         raise RenderError("final video failed QA (kept as " + os.path.basename(bad) + "): " + "; ".join(qa["errors"][:4]))
