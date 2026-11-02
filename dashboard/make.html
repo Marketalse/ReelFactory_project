@@ -673,6 +673,24 @@ async function waitCover(p){
   }
 }
 
+/* ---------------------------------------------------------------- QA report and versions */
+function qaBlock(p){
+  const q=p.qa; if(!q) return "";
+  const col=q.verdict==="Passed"?"var(--lime)":q.verdict==="Needs attention"?"var(--coral)":"var(--violet)";
+  const li=(arr,mark)=>arr.map(t=>`<li class="small">${mark} ${esc(t)}</li>`).join("");
+  return `<details style="border-top:1px solid var(--line);padding-top:14px"><summary><b>Quality check:</b> <span style="color:${col}">${esc(q.verdict)}</span> <span class="small" style="color:var(--muted)">(${q.errors.length} to fix, ${q.warnings.length+q.notes.length} to look at)</span></summary>
+    <ul style="list-style:none;margin:8px 0 0;padding:0;display:grid;gap:4px">${li(q.errors,"❌")}${li(q.warnings,"⚠️")}${li(q.notes,"👀")}${(q.errors.length+q.warnings.length+q.notes.length)?"":'<li class="small">✅ Nothing to fix.</li>'}</ul>
+    ${q.technical?`<p class="small" style="margin:8px 0 0;color:var(--muted)">File: ${esc(q.technical)}</p>`:""}</details>`;
+}
+function versionsBlock(p){
+  const v=p.versions||[]; if(v.length<2) return "";
+  const last=v[v.length-1].n;
+  return `<details style="border-top:1px solid var(--line);padding-top:14px"><summary><b>Versions</b> <span class="small" style="color:var(--muted)">(${v.length} drafts kept)</span></summary>
+    <div style="display:grid;gap:8px;margin-top:8px">${v.slice().reverse().map(x=>`<div class="small" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+      <b>Version ${x.n}</b><span style="color:var(--muted)">${esc(x.time)} · ${esc(x.note||"")}</span>
+      <a href="${backend.mediaUrl(p.job,"review/versions/v"+x.n+".mp4")}" target="_blank" rel="noopener">Watch</a>
+      ${x.n===last?'<span style="color:var(--lime)">current</span>':`<button class="btn" data-ver="${x.n}" style="padding:4px 10px">Use this version</button>`}</div>`).join("")}</div></details>`;
+}
 /* ---------------------------------------------------------------- ready-to-post score */
 function readyBlock(p){
   const r=p.ready_score; if(!r||r.score==null) return "";
@@ -743,9 +761,15 @@ function showResult(p){
           ${p.handles_set?"":`<div class="warn">Your Instagram and TikTok handles aren't set yet, and the final videos need them on the last card. Send them to Claude once, then come back and approve.</div>`}
           <div class="row"><button class="btn primary" id="approve" ${p.handles_set?"":"disabled"}>Approve &amp; make final video</button></div>
         </div>
+        ${qaBlock(p)}
+        ${versionsBlock(p)}
         ${readyBlock(p)}
         ${p.feedback&&p.feedback.length?`<details><summary class="small">Your earlier comments (${p.feedback.length})</summary><div class="history" style="margin-top:6px">${p.feedback.map(f=>`<div>${esc(f.time)} · ${esc(f.fix)}</div>`).join("")}</div></details>`:""}
       </div></div>`;
+    R.querySelectorAll("[data-ver]").forEach(b=>b.onclick=async ()=>{
+      b.disabled=true; const r=await backend.useVersion(job,+b.dataset.ver); if(!r.ok){ b.disabled=false; return toast("Couldn't switch version", r.message, "error"); }
+      toast("Version restored", r.message, "ok"); showTrack(job,false); watch(job);
+    });
     $("#sendFix").onclick=async ()=>{
       const t=$("#fixText").value.trim(); if(!t){ toast("Write what to change first", "For example: “make the hook shorter”. Then click Send changes.", "error"); $("#fixText").focus(); return; }
       const r=await backend.fix(job,t); if(!r.ok) return toast("Couldn't send your changes", r.message, "error");
@@ -864,6 +888,7 @@ const RealBackend = {
   start(slug){ return this.post("start",{slug}); },
   fix(job,text){ return this.post("fix",{job,text}); },
   approve(job){ return this.post("approve",{job}); },
+  useVersion(job,n){ return this.post("use_version",{job,n}); },
   resume(job){ return this.post("resume",{job}); },
   reveal(job){ return this.post("reveal",{job}); },
   mediaUrl(job, path){ return "/media/"+encodeURIComponent(job)+"/"+path.split("/").map(encodeURIComponent).join("/"); },
@@ -923,6 +948,7 @@ const DemoBackend = (()=>{
     async resume(job){ return this.fix(job,"(try again)"); },
     async reveal(){ return {ok:false,message:"Finder can't be opened in demo mode."}; },
     async post(){ return {ok:false,message:"Not available in demo mode."}; },
+    async useVersion(){ return {ok:false,message:"Not available in demo mode."}; },
     async coverUpload(){ throw new Error("Not available in demo mode."); },
     mediaUrl(job){ const j=jobs[job]; const f=j&&j.files.find(f=>!/\.(avi|mkv)$/i.test(f.name)); if(!f) return ""; return (f._url=f._url||URL.createObjectURL(f)); },
     watch(ref, onUpdate){

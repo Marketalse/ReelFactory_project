@@ -54,6 +54,8 @@ class SingleFinalTests(unittest.TestCase):
                  mock.patch.object(render, "render", side_effect=fake_render), mock.patch.object(render, "verify"), \
                  mock.patch.object(render, "even_sound"), mock.patch.object(render.qa_check, "run", return_value={"errors": []}), \
                  mock.patch.object(render, "make_cover", side_effect=fake_cover), \
+                 mock.patch.object(render.render_guard, "preflight", return_value=[]), mock.patch.object(render, "extra_qa", return_value={}), \
+                 mock.patch.object(render.render_guard, "write_manifest"), \
                  mock.patch.object(render, "capcut_layers", side_effect=AssertionError("no CapCut step")):
                 outs = render.final(job, ["instagram", "tiktok"])
             self.assertEqual(order, ["video:reel_v2.mp4", "cover"])

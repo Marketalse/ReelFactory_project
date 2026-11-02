@@ -178,6 +178,19 @@ def rebuild(job):
     return _run(job, [jd, "--rebuild"])
 
 
+def use_version(job, n):
+    """Go back to an earlier draft (its plan and preview become the current ones). Nothing is deleted."""
+    jd, msg = _editor_job(job)
+    if not jd:
+        return False, msg
+    sys.path.insert(0, os.path.join(ROOT, "scripts"))
+    from lib import versions
+    try:
+        return versions.restore(jd, int(n))
+    except (TypeError, ValueError):
+        return False, "unknown version"
+
+
 def approve(job):
     if not JOB.match(job or "") or not os.path.exists(os.path.join(JOBS, job, "review", "draft_540p.mp4")):
         return False, "no draft to approve"
@@ -187,7 +200,7 @@ def approve(job):
 def media_path(rel):
     """Only drafts, contact sheets and finals inside jobs/ may be served."""
     m = re.match(r"^(\d{4}-\d{2}-\d{2}-[a-z0-9-]+)/(review/draft_540p\.mp4|review/contact_sheet\.jpg|final/[A-Za-z0-9_.-]+\.mp4"
-                 r"|proxy\.mp4|review/cover\.jpg|final/cover_v\d+\.jpg|edit_package/(?:1_video\.mp4|2_graphics\.mov|captions_ar\.srt))$", rel or "")
+                 r"|review/versions/v\d+\.mp4|proxy\.mp4|review/cover\.jpg|final/cover_v\d+\.jpg|edit_package/(?:1_video\.mp4|2_graphics\.mov|captions_ar\.srt))$", rel or "")
     if not m:
         return None
     p = os.path.realpath(os.path.join(JOBS, rel))
@@ -537,6 +550,13 @@ def progress(ref):
         out["draft"] = f"{job}/review/draft_540p.mp4"
         out["draft_mtime"] = int(os.path.getmtime(os.path.join(jd, "review", "draft_540p.mp4")))
     out["feedback"] = jj.get("feedback_history", [])
+    if jd and out.get("state") in ("ready", "final"):
+        try:
+            sys.path.insert(0, os.path.join(ROOT, "scripts"))
+            from lib import versions
+            out["qa"] = versions.summary(jd); out["versions"] = versions.listing(jd)
+        except Exception:                           # noqa: BLE001
+            pass
     out["handles_set"] = _handles_set()
     if jd and out.get("state") in ("ready", "final"):
         out["ready_score"] = ready_score(job)
