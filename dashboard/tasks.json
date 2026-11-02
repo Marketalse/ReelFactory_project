@@ -1116,6 +1116,48 @@
       "notes": "",
       "evidence": "dashboard/it_agent.py, tests/test_it_agent.py (12 tests), AGENTS.md section 11, docs/DECISIONS.md 2026-11-02",
       "updated": "2026-11-02"
+    },
+    {
+      "id": "T81",
+      "phase": "P8",
+      "title": "Timeline from raw footage: upload clips, see them as a video track (thumbnails + waveform), split, trim, delete and reorder by hand",
+      "owner": "Claude",
+      "status": "todo",
+      "depends": [
+        "T79"
+      ],
+      "done_when": "Upload 3 clips, split one, trim, delete a piece, drag to reorder, save: the reel is made from MY sequence (no AI story pick).",
+      "notes": "Asked by Hesham 2026-11-02: a real timeline like Premiere/After Effects, footage first, AI button to check and cut.",
+      "evidence": "",
+      "updated": "2026-11-02"
+    },
+    {
+      "id": "T82",
+      "phase": "P8",
+      "title": "AI button 'Check my cuts': AI reviews my sequence and marks on the timeline where cuts should be (pauses, retakes, weak parts); I accept or reject each",
+      "owner": "Claude",
+      "status": "todo",
+      "depends": [
+        "T81"
+      ],
+      "done_when": "Markers appear on the timeline with a plain reason; Accept / Reject per marker and Accept all; nothing changes until I accept.",
+      "notes": "Asked by Hesham 2026-11-02: a real timeline like Premiere/After Effects, footage first, AI button to check and cut.",
+      "evidence": "",
+      "updated": "2026-11-02"
+    },
+    {
+      "id": "T83",
+      "phase": "P8",
+      "title": "AI button 'Auto-edit': AI cuts, arranges and adds cards/zooms while I watch it happen on the timeline; one-click Undo",
+      "owner": "Claude",
+      "status": "todo",
+      "depends": [
+        "T82"
+      ],
+      "done_when": "Press the button: edits appear on the timeline step by step, everything can be undone, cost shown before it runs and capped.",
+      "notes": "Asked by Hesham 2026-11-02: a real timeline like Premiere/After Effects, footage first, AI button to check and cut.",
+      "evidence": "",
+      "updated": "2026-11-02"
     }
   ],
   "log": [
