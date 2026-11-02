@@ -108,6 +108,11 @@
    "id": "P18",
    "name": "NEXT · Reach the reference quality (Format Packs)",
    "goal": "A designed look like the two Higgsfield reels: persistent frame, steps, recap diagram, icons, theme colours"
+  },
+  {
+   "id": "P19",
+   "name": "NEXT · Foundation upgrade (structure, models, cost)",
+   "goal": "One clear structure, a strong model per job, a cost you can see and set"
   }
  ],
  "tasks": [
@@ -1790,6 +1795,78 @@
    "depends": [],
    "done_when": "Give a video, get a pack draft you can approve.",
    "notes": "From the quality-gap report 2026-11-02 (docs/DECISIONS.md). Starts when Hesham says go.",
+   "evidence": "",
+   "updated": "2026-11-02"
+  },
+  {
+   "id": "T136",
+   "phase": "P19",
+   "title": "Roles config: every AI job (outline, story, tighten, director, critic, cover, shot log) gets its own model + effort in config/project.json, changeable in Settings",
+   "owner": "Claude",
+   "status": "todo",
+   "depends": [],
+   "done_when": "One place decides which model does which job; Settings page shows it.",
+   "notes": "Hesham 2026-11-02: enhance structure, AI models, creativity, accept higher cost. Estimate: scripts/cost_estimate.py.",
+   "evidence": "",
+   "updated": "2026-11-02"
+  },
+  {
+   "id": "T137",
+   "phase": "P19",
+   "title": "Pipeline as one list of steps (each step: inputs, outputs, cost, model) so new steps (outline, critic) plug in without editing reel.py",
+   "owner": "Claude",
+   "status": "todo",
+   "depends": [],
+   "done_when": "Adding the outline step needs no change to the runner.",
+   "notes": "Hesham 2026-11-02: enhance structure, AI models, creativity, accept higher cost. Estimate: scripts/cost_estimate.py.",
+   "evidence": "",
+   "updated": "2026-11-02"
+  },
+  {
+   "id": "T138",
+   "phase": "P19",
+   "title": "Cost screen: real cost per step per reel (from cost.json) + this-month total + estimate before you press Start",
+   "owner": "Claude",
+   "status": "todo",
+   "depends": [],
+   "done_when": "Make a reel page shows estimate; Reels page shows real cost per step.",
+   "notes": "Hesham 2026-11-02: enhance structure, AI models, creativity, accept higher cost. Estimate: scripts/cost_estimate.py.",
+   "evidence": "",
+   "updated": "2026-11-02"
+  },
+  {
+   "id": "T139",
+   "phase": "P19",
+   "title": "Cost tiers: Draft (cheap), Standard, Premium (strong models + critic loop), chosen per reel",
+   "owner": "Claude",
+   "status": "todo",
+   "depends": [],
+   "done_when": "Each reel can be run at a tier; caps follow the tier.",
+   "notes": "Hesham 2026-11-02: enhance structure, AI models, creativity, accept higher cost. Estimate: scripts/cost_estimate.py.",
+   "evidence": "",
+   "updated": "2026-11-02"
+  },
+  {
+   "id": "T140",
+   "phase": "P19",
+   "title": "Raise caps to fit the new design (needs Hesham's written number)",
+   "owner": "Hesham",
+   "status": "todo",
+   "depends": [],
+   "done_when": "per-reel stop, warn and monthly stop in config match the approved numbers.",
+   "notes": "Hesham 2026-11-02: enhance structure, AI models, creativity, accept higher cost. Estimate: scripts/cost_estimate.py.",
+   "evidence": "",
+   "updated": "2026-11-02"
+  },
+  {
+   "id": "T141",
+   "phase": "P19",
+   "title": "Run the same real clip at today's settings and at Premium and compare cost + result side by side",
+   "owner": "Claude",
+   "status": "todo",
+   "depends": [],
+   "done_when": "Two reels, two real cost.json files, one comparison table.",
+   "notes": "Hesham 2026-11-02: enhance structure, AI models, creativity, accept higher cost. Estimate: scripts/cost_estimate.py.",
    "evidence": "",
    "updated": "2026-11-02"
   }
