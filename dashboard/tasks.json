@@ -405,7 +405,7 @@
         "T24"
       ],
       "done_when": "All 8 marked approved",
-      "notes": "Parked: give look feedback as comments on a draft. Parked 2026-11-02: your real reels already show every block. Give look feedback as comments on a draft.",
+      "notes": "The 5 new blocks (T47) are also ready to look at: add --new-blocks to the sample command. Look feedback can still be given as comments on a real draft. Parked: give look feedback as comments on a draft. Parked 2026-11-02: your real reels already show every block. Give look feedback as comments on a draft.",
       "evidence": "",
       "updated": "2026-11-02"
     },
@@ -721,7 +721,7 @@
       ],
       "done_when": "",
       "notes": "Built 2026-11-02: name_tag, info_card, number_graph, before_after, tier_list (templates + registry + AI editor + tests).",
-      "evidence": "templates/blocks/{name_tag,info_card,number_graph,before_after,tier_list}.html, registry.json, tests/test_safe_zones.py (all blocks inside the safe zone)",
+      "evidence": "templates/blocks/{name_tag,info_card,number_graph,before_after,tier_list}.html, registry.json, tests/test_safe_zones.py (all blocks inside the safe zone); I looked at a rendered picture of each block (all inside the safe zone, bar fills to the spoken percentage). Sample reel on your Mac: python3 scripts/block_samples.py --video jobs/<reel>/proxy.mp4 --new-blocks",
       "updated": "2026-11-02"
     },
     {
@@ -1486,6 +1486,12 @@
       "who": "Claude",
       "task": "T59,T61,T48",
       "change": "T59 bake-off built → review; T61 finding recorded; T48 blocked on Mac test"
+    },
+    {
+      "time": "2026-11-02T22:30",
+      "who": "Claude",
+      "task": "T47",
+      "change": "new-block sample reel (--new-blocks); number graph made robust"
     }
   ]
 }

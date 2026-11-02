@@ -18,7 +18,7 @@
 <script>
 const tl = gsap.timeline({ paused: true });
 const D = __DUR__;
-const vars = window.__hyperframes.getVariables();
+const vars = (window.__hyperframes && window.__hyperframes.getVariables()) || {};
 const pct = Math.max(0, Math.min(100, parseFloat(vars.percent) || 0));
 tl.fromTo("#__ID__-value", { scale: 0.6, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.4, ease: "back.out(2)" }, 0.05);
 tl.fromTo("#__ID__-fill", { width: "0%" }, { width: pct + "%", duration: Math.min(1.0, D * 0.5), ease: "power3.out" }, 0.2);
