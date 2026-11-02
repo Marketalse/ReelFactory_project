@@ -50,6 +50,20 @@ class MediaCheckTests(unittest.TestCase):
             self.assertIn(word, w)
         self.assertEqual(self.by["d_low.mp4"]["role"], "b-roll"); self.assertTrue(self.by["d_low.mp4"]["use"])
 
+    def test_footage_scan_black_scenes_and_speech(self):
+        d = self.d
+        subprocess.run(["ffmpeg", "-v", "error", "-y", "-f", "lavfi", "-i", "color=c=black:s=540x960:r=30:d=5", "-f", "lavfi", "-i", "sine=f=440:d=5",
+                        "-c:v", "libx264", "-pix_fmt", "yuv420p", "-c:a", "aac", "-shortest", os.path.join(d, "g_black.mp4")], check=True)
+        subprocess.run(["ffmpeg", "-v", "error", "-y", "-f", "lavfi", "-i", "testsrc2=size=540x960:rate=30:duration=3",
+                        "-f", "lavfi", "-i", "smptebars=size=540x960:rate=30:duration=3", "-filter_complex", "[0][1]concat=n=2:v=1:a=0",
+                        "-pix_fmt", "yuv420p", os.path.join(d, "h_cut.mp4")], check=True)
+        black = mc.analyze(os.path.join(d, "g_black.mp4"))
+        self.assertTrue(black.get("unusable")); self.assertEqual(black["verdict"], "fail")
+        cut = mc.analyze(os.path.join(d, "h_cut.mp4"))["scan"]
+        self.assertTrue(any(2.5 <= t <= 3.5 for t in cut["scene_changes"]), cut)
+        self.assertTrue(self.by["a.mp4"]["speech_segments"])
+        self.assertIn(self.by["a.mp4"]["scan"]["motion"], ("steady", "some movement", "lots of movement"))
+
     def test_originals_untouched(self):
         before = mc.sha256(os.path.join(self.d, "a.mp4"))
         mc.analyze(os.path.join(self.d, "a.mp4"))
