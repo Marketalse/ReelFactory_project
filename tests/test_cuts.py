@@ -99,6 +99,45 @@ class RhythmAutoFixTests(unittest.TestCase):
         self.assertEqual(added, 0); self.assertEqual(err, ["card too long"])
 
 
+class WordlessStretchTests(unittest.TestCase):
+    """A stretch of the reel with no spoken words (speech the transcriber missed, a silent part): the zoom fix must still work."""
+    def run_case(self, lo, hi, total=88):
+        words, t = [], 0.3
+        while t < total:
+            if not (lo < t < hi):
+                words.append({"text": "كلمة", "start": round(t, 2), "end": round(t + 0.3, 2)})
+            t += 0.4
+        dur = words[-1]["end"]; segs = [{"src_in": 0.0, "src_out": dur, "t_in": 0.0, "t_out": dur}]
+        plan = {"hook": {"line1": "عنوان", "line2": "سطر"}, "keyword_ids": [], "punch_ins": [], "cta": {}, "cover": {}, "moments": []}
+        def resolve(p):
+            tl, err, warn = director.resolve(p, words, dur, logos=[])
+            if not err:
+                err = director.check_rhythm(tl, director.face_cuts(tl, segs))
+            return tl, err, warn
+        return director.fix_rhythm(plan, words, resolve)
+
+    def test_nine_seconds_without_words_get_zooms_by_time(self):
+        plan, tl, err, warn, n = self.run_case(40.5, 50.2)
+        self.assertEqual(err, []); self.assertTrue(any("at_time" in p for p in plan["punch_ins"]))
+
+    def test_very_long_wordless_stretch_and_a_normal_reel(self):
+        self.assertEqual(self.run_case(10, 80)[2], []); self.assertEqual(self.run_case(0, 0)[2], [])
+
+    def test_zooms_never_touch_each_other(self):
+        plan, tl, err, warn, n = self.run_case(20, 60)
+        starts = sorted(t for t, _ in tl["punch_ins"])
+        self.assertTrue(all(b - a >= director.PUNCH_LEN + 0.3 for a, b in zip(starts, starts[1:])), starts)       # touching zooms merge into one and change nothing
+
+    def test_a_try_that_changes_nothing_is_undone_and_another_spot_tried(self):
+        calls = []
+        def resolve(p):
+            calls.append(len(p.get("punch_ins", [])))
+            return {}, ["nothing changes on screen from 10.0s to 20.0s (10.0s > 3.5s): add a punch_in or a moment there"], []
+        plan, tl, err, warn, n = director.fix_rhythm({}, [{"text": "a", "start": float(i), "end": i + .3} for i in range(30)], resolve)
+        self.assertEqual(n, 0); self.assertEqual(plan.get("punch_ins", []), [])               # nothing was left behind
+        self.assertLess(len(calls), 40)                                                         # and it gave up instead of looping
+
+
 class OverlapAutoFixTests(unittest.TestCase):
     def test_overlapping_moments_fixed_for_free(self):
         words = [{"text": f"w{i}", "start": round(i * 0.45, 2), "end": round(i * 0.45 + 0.38, 2)} for i in range(120)]

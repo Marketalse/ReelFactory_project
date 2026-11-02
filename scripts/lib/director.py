@@ -286,7 +286,13 @@ def resolve(plan, edl_words, duration, *, logos=(), platform_handle="@handle", r
             err.append(f"{a['id']} and {b['id']}: two full-screen moments back to back; put face time between them")
 
     for k, p in enumerate(plan.get("punch_ins") or []):
-        t = at(p.get("at_word"), f"punch_ins[{k}]")
+        if "at_word" not in p and "at_time" in p:                  # a zoom placed by time (the automatic rhythm fix uses it where no word helps)
+            t = p.get("at_time")
+            if not isinstance(t, (int, float)) or not HOOK_DUR <= t <= duration - 0.4:
+                err.append(f"punch_ins[{k}]: at_time {t!r} is outside the reel"); continue
+            t = float(t)
+        else:
+            t = at(p.get("at_word"), f"punch_ins[{k}]")
         sc = p.get("scale", 1.25)
         if not isinstance(sc, (int, float)) or not 1.1 <= sc <= 1.5:
             err.append(f"punch_ins[{k}]: scale {sc!r} must be 1.1-1.5"); continue
@@ -400,28 +406,60 @@ def longest_still(timeline, cuts):
 STILL_ERR = re.compile(r"nothing changes on screen from ([\d.]+)s to ([\d.]+)s")
 
 
+PUNCH_LEN = 1.6          # a punch-in zooms for this long, then returns (face_cuts uses the same number)
+
+
+def _gap(err):
+    m = STILL_ERR.search(err[0]) if err else None
+    return (float(m.group(1)), float(m.group(2))) if m else None
+
+
 def fix_rhythm(plan, words, resolve, max_add=None):
-    """FREE, no AI. While the only problem left is 'nothing changes on screen for too long', add a quick zoom (punch-in)
-    on the word nearest the middle of that stretch, then check again. Bounded: at most about one zoom per 3 s.
-    resolve(plan) -> (timeline, errors, warnings). Returns (plan, timeline, errors, warnings, added)."""
+    """FREE, no AI. While the only problem left is 'nothing changes on screen for too long', add a quick zoom (punch-in) in that stretch.
+    A zoom on a word changes the picture when it starts AND when it ends 1.6 s later, so any word whose start or end lands inside the
+    stretch helps (nearest the middle first). A stretch with no useful word (speech the transcriber missed, a silent part) gets a zoom
+    anchored by TIME in its middle. A try that changes nothing is undone and another spot is tried. Bounded: at most about one zoom
+    per 3 s of reel. resolve(plan) -> (timeline, errors, warnings). Returns (plan, timeline, errors, warnings, added)."""
     plan = json.loads(json.dumps(plan))
     if max_add is None:                                         # about one zoom per 3 s of reel at the very most
         max_add = 4 + int((words[-1].get("end", words[-1].get("start", 0)) if words else 0) / 3)
-    added = 0
+    added, stuck, tried = 0, 0, set()
     tl, err, warn = resolve(plan)
-    while err and added < max_add and all(STILL_ERR.search(x) for x in err):
-        m = STILL_ERR.search(err[0])
-        a, b = float(m.group(1)), float(m.group(2))
+    while err and added < max_add and stuck < 12 and all(STILL_ERR.search(x) for x in err):
+        a, b = _gap(err)
         mid = (a + b) / 2
-        have = {p.get("at_word") for p in plan.get("punch_ins") or []}
-        inside = [i for i, w in enumerate(words) if a + 0.4 <= w["start"] <= b - 0.4 and i not in have]
-        pool = inside or [i for i, w in enumerate(words) if i not in have]
-        if not pool:
-            break
-        k = min(pool, key=lambda i: abs(words[i]["start"] - mid))
-        plan.setdefault("punch_ins", []).append({"at_word": k, "scale": 1.25})
-        added += 1
-        tl, err, warn = resolve(plan)
+        starts = []                                             # where the zooms already in the plan begin
+        for p in plan.get("punch_ins") or []:
+            if "at_word" in p and isinstance(p["at_word"], int) and 0 <= p["at_word"] < len(words):
+                starts.append(max(0.0, words[p["at_word"]]["start"] - 0.05))
+            elif "at_time" in p:
+                starts.append(float(p["at_time"]))
+        free = lambda t0: all(t0 >= s0 + PUNCH_LEN + 0.35 or t0 + PUNCH_LEN + 0.35 <= s0 for s0 in starts)   # zooms that touch merge into one: no visible change
+        have = {p.get("at_word") for p in plan.get("punch_ins") or [] if "at_word" in p}
+        cands = []
+        for i, w in enumerate(words):
+            if i in have or ("w", i) in tried:
+                continue
+            t0 = max(0.0, w["start"] - 0.05)
+            hits = [abs(x - mid) for x in (t0, t0 + PUNCH_LEN) if a + 0.4 <= x <= b - 0.4]
+            if hits and free(t0):
+                cands.append((min(hits), i))
+        if cands:
+            k = min(cands)[1]; new, key = {"at_word": k, "scale": 1.25}, ("w", k)
+        else:                                                   # no word helps here: anchor the zoom by time in the middle of the stretch
+            t0 = next((round(mid - PUNCH_LEN / 2 + d, 2) for d in (0, -0.5, 0.5, -1.0, 1.0, -1.5, 1.5)
+                       if a + 0.3 <= mid - PUNCH_LEN / 2 + d and mid + PUNCH_LEN / 2 + d <= b - 0.3 and free(mid - PUNCH_LEN / 2 + d)), None)
+            if t0 is None or ("t", t0) in tried:
+                break
+            key, new = ("t", t0), {"at_time": t0, "scale": 1.25}
+        plan.setdefault("punch_ins", []).append(new)
+        tl2, err2, warn2 = resolve(plan)
+        g2 = _gap(err2) if err2 and all(STILL_ERR.search(x) for x in err2) else None
+        tried.add(key)
+        if g2 and abs(g2[0] - a) < 0.05 and abs(g2[1] - b) < 0.05:      # nothing changed: undo it and try another spot
+            plan["punch_ins"].pop(); stuck += 1
+            continue
+        added += 1; tl, err, warn = tl2, err2, warn2
     return plan, tl, err, warn, added
 
 
