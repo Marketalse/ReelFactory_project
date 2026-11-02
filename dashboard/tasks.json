@@ -1,6 +1,6 @@
 {
  "project": "Reel Factory",
- "version": 20,
+ "version": 21,
  "owners": [
   "Hesham",
   "Claude",
@@ -165,9 +165,9 @@
    "status": "in_progress",
    "depends": [],
    "done_when": "",
-   "notes": "Hesham 2026-11-01: build it together, starting from his 11 best reels (references/own/best_reels.md).",
+   "notes": "Music: you add trending music when posting (decided). Still needed: your 11 best reels in Google Drive to learn your sound-effect style.",
    "evidence": "",
-   "updated": "2026-11-01"
+   "updated": "2026-11-02"
   },
   {
    "id": "T10",
@@ -219,15 +219,15 @@
   },
   {
    "id": "T14",
-   "phase": "P0",
+   "phase": "P7",
    "title": "Approve the committee design + $0.45 warning",
    "owner": "Hesham",
    "status": "todo",
    "depends": [],
    "done_when": "",
-   "notes": "After T60 (models chosen), so committee costs use the final prices.",
+   "notes": "Parked 2026-11-02: autopilot works without it. Revisit with the self-learning step (T76).",
    "evidence": "",
-   "updated": "2026-11-01"
+   "updated": "2026-11-02"
   },
   {
    "id": "T15",
@@ -357,13 +357,13 @@
     "T20"
    ],
    "done_when": "",
-   "notes": "Waits for the music/SFX library (T09). Also add loudness levelling to -14 LUFS here: QA warns that test audio sits at -18.9 LUFS, and iPhone voice is often quiet too.",
+   "notes": "Waits for your best reels (T13): learn your sound-effect style, then pick free-to-use effects.",
    "evidence": "",
-   "updated": "2026-11-01"
+   "updated": "2026-11-02"
   },
   {
    "id": "T24",
-   "phase": "P2",
+   "phase": "P7",
    "title": "On the Mac: render the block samples on real footage",
    "owner": "Claude",
    "status": "todo",
@@ -371,13 +371,13 @@
     "T22"
    ],
    "done_when": "sample_draft.mp4 rendered from your real proxy, plus the snapshot contact sheet, in jobs/_samples/blocks",
-   "notes": "cd ~/Desktop/ReelFactory_project && git pull && python3 scripts/block_samples.py --video jobs/<IMG_0020 job>/proxy.mp4 --start 0  |  cd jobs/_samples/blocks && npx --yes hyperframes@0.8.226 check && npx --yes hyperframes@0.8.226 snapshot --at 0,3.5,6,9,12.6,14.5,16,19 && npx --yes hyperframes@0.8.226 render --quality draft -o sample_draft.mp4  |  Put the contact-sheet path and the MP4 path in evidence. Free (no paid calls). Reassigned from Hermes (v2: Hermes optional).",
+   "notes": "Parked 2026-11-02: your real reels already show every block. Give look feedback as comments on a draft.",
    "evidence": "",
-   "updated": "2026-11-01"
+   "updated": "2026-11-02"
   },
   {
    "id": "T25",
-   "phase": "P2",
+   "phase": "P7",
    "title": "Approve each block look (or send fixes)",
    "owner": "Hesham",
    "status": "todo",
@@ -385,9 +385,9 @@
     "T24"
    ],
    "done_when": "All 8 marked approved",
-   "notes": "",
+   "notes": "Parked 2026-11-02: your real reels already show every block. Give look feedback as comments on a draft.",
    "evidence": "",
-   "updated": "2026-11-01"
+   "updated": "2026-11-02"
   },
   {
    "id": "T26",
@@ -420,7 +420,7 @@
   },
   {
    "id": "T28",
-   "phase": "P3",
+   "phase": "P7",
    "title": "Story choice (Sonnet) with Script-critic scores at Gate 1",
    "owner": "Claude",
    "status": "todo",
@@ -428,9 +428,9 @@
     "T27"
    ],
    "done_when": "",
-   "notes": "Story options use Sonnet; a take already <= 95 s is used whole (no cost). Script-critic scores wait for the committee approval (T14).",
+   "notes": "Parked 2026-11-02: autopilot works without it. Revisit with the self-learning step (T76).",
    "evidence": "",
-   "updated": "2026-11-01"
+   "updated": "2026-11-02"
   },
   {
    "id": "T29",
@@ -550,7 +550,7 @@
   },
   {
    "id": "T37",
-   "phase": "P4",
+   "phase": "P7",
    "title": "Committee: script, visual, audience critics + chair + report",
    "owner": "Claude",
    "status": "todo",
@@ -559,9 +559,9 @@
     "T35"
    ],
    "done_when": "",
-   "notes": "",
+   "notes": "Parked 2026-11-02: autopilot works without it. Revisit with the self-learning step (T76).",
    "evidence": "",
-   "updated": "2026-11-01"
+   "updated": "2026-11-02"
   },
   {
    "id": "T38",
@@ -624,33 +624,33 @@
    "phase": "P6",
    "title": "Run 3 real clips end to end",
    "owner": "Claude",
-   "status": "todo",
+   "status": "review",
    "depends": [
     "T38",
     "T39"
    ],
    "done_when": "3 drafts + committee reports",
-   "notes": " Reassigned from Hermes (v2: Hermes optional).",
-   "evidence": "",
-   "updated": "2026-11-01"
+   "notes": "",
+   "evidence": "Real reels made end to end on the Mac: smuggling, img-0061-2, stock-tips (jobs/).",
+   "updated": "2026-11-02"
   },
   {
    "id": "T43",
    "phase": "P6",
    "title": "Review the 3 reels: approve or fix",
    "owner": "Hesham",
-   "status": "todo",
+   "status": "review",
    "depends": [
     "T42"
    ],
    "done_when": "",
-   "notes": "",
+   "notes": "You approved real reels and posted stock-tips. Mark done if you're happy.",
    "evidence": "",
-   "updated": "2026-11-01"
+   "updated": "2026-11-02"
   },
   {
    "id": "T44",
-   "phase": "P6",
+   "phase": "P8",
    "title": "A/B Director Haiku vs Sonnet on the 3 clips; pick one",
    "owner": "Hesham",
    "status": "todo",
@@ -658,23 +658,23 @@
     "T42"
    ],
    "done_when": "",
-   "notes": "",
+   "notes": "Do together with the model bake-off (T59).",
    "evidence": "",
-   "updated": "2026-11-01"
+   "updated": "2026-11-02"
   },
   {
    "id": "T45",
    "phase": "P6",
    "title": "Post, then fill 'How did it do?' on the final page 2 and 7 days later",
    "owner": "Hesham",
-   "status": "todo",
+   "status": "in_progress",
    "depends": [
     "T43"
    ],
    "done_when": "",
-   "notes": " Now done on the page: open the reel → How did it do? (2026-11-01).",
+   "notes": "stock-tips: Instagram 2-day results saved. Add the 7-day numbers too.",
    "evidence": "",
-   "updated": "2026-11-01"
+   "updated": "2026-11-02"
   },
   {
    "id": "T46",
@@ -728,9 +728,9 @@
     "T45"
    ],
    "done_when": "",
-   "notes": "",
+   "notes": "Merged into T76 (self-learning from your results).",
    "evidence": "",
-   "updated": "2026-11-01"
+   "updated": "2026-11-02"
   },
   {
    "id": "T50",
@@ -1080,6 +1080,18 @@
    "evidence": "branch v2: reels_api.save_performance/performance/performance_csv, make.html How did it do?, index.html Results, tests PerformanceTests",
    "notes": "Step 1 of T76.",
    "updated": "2026-11-01"
+  },
+  {
+   "id": "T78",
+   "phase": "P8",
+   "title": "Ready-to-post score (0-100) with tips, on the draft and final pages + Results",
+   "owner": "Claude",
+   "status": "review",
+   "depends": [],
+   "done_when": "Score and tips show on a real draft",
+   "notes": "Checks what keeps people watching (hook speed, title, length, rhythm, captions, sound…). Not a view prediction.",
+   "evidence": "scripts/ready_score.py, tests/test_ready_score.py",
+   "updated": "2026-11-02"
   }
  ],
  "log": [
@@ -1340,6 +1352,12 @@
    "who": "Claude",
    "task": "T19",
    "change": "status → review"
+  },
+  {
+   "time": "2026-11-02 09:00",
+   "who": "Claude",
+   "task": "board",
+   "change": "Tidied: committee + block-sample tasks parked in P7; real-reel tasks moved to review; T78 added"
   }
  ]
 }

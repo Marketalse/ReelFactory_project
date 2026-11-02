@@ -35,6 +35,12 @@ The draft plays on the page.
 - **Final preview**: watch it, click **Download final video**. Still want a change? Type it in **Want changes?** and click
   **Send changes**: a new draft is made; approve it again for a new final video (the old one stays saved).
 
+## Ready-to-post score
+Every draft and final shows a **score out of 100** with up to 3 tips (for example "your first word comes at 1.3 s").
+It checks what keeps people watching: a fast start, a title on the first frame, length, something changing every
+few seconds, captions, sound, cards and zooms. It is **not** a prediction of views. Follow a tip by typing it into
+**Want changes?**. The Results page shows each reel's score next to its real numbers.
+
 ## Cover image (thumbnail)
 After the final video, a **cover image** is suggested (your title on top, you underneath, in your brand style). Click **Download cover**.
 - **Upload my own cover**: pick a finished image; it's used as is (cropped to vertical).

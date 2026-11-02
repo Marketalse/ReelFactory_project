@@ -87,3 +87,11 @@ One line per decision. Newest at the bottom. If a later decision changes an earl
 - Settings → Backup: one ZIP of the small text files (jobs/*: job, plan, transcript, results, cost, report, logs; config; lessons; task board; expenses; briefs) into the Google Drive for desktop or iCloud Drive folder on the Mac → "Reel Factory backup". Never videos, images, audio or keys. Newest 30 kept.
 - Automatic once a day while the dashboard runs (can be switched off). Nothing is uploaded by us: the Drive/iCloud app syncs the folder.
 - A real database (e.g. Supabase) waits until results come in automatically or more than one device/person needs the data.
+
+## 2026-11-02 · Ready-to-post score instead of an outside "virality predictor"
+- Reviewed github.com/juanls1/TikTok-Virality-Predictor: trained only on 1,000 already-trending English TikToks from Dec 2020 (no flops), 99% of its targets sit near 0 so its low error is meaningless, Windows-only, text model missing, no licence. Not used.
+- Built `scripts/ready_score.py`: 0-100 from 10 checks on the reel's own files (first word ≤0.5 s, title from frame 0, 40-60 s, longest still ≤2.6 s, highlighted keywords, captions = speech, loudness, no black/frozen, cards + zooms, cover on finals). Up to 3 concrete tips. Shown on the draft and final pages; saved in jobs/<job>/ready_score.json and next to the real numbers on Results/CSV so the checks can be re-weighted from Hesham's own results later (T76). Free, local, not a view prediction.
+
+## 2026-11-02 · Task board in plain words
+- "Review" shows as "Built, needs your OK"; a task whose dependency is built is no longer shown as waiting. Summary: Built so far %, Needs your OK (Show them / Mark all done), Your turn, Claude next, Parked for later, plus "How to read this board".
+- Committee and block-sample tasks parked in P7 (autopilot works without them); real-reel tasks (T42, T43) moved to review with evidence.
