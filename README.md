@@ -5,6 +5,14 @@ You upload, comment on the draft, approve, download. Nothing is ever posted for 
 
 **Start here:** double-click `Reel Factory.command` (or turn on auto-start once), then read `HOW_TO.md`.
 
+## Dashboard links (bookmark these)
+Reel Factory must be running (auto-start on, or double-click `Reel Factory.command`). Then, in your browser:
+| Link | Page |
+|---|---|
+| http://127.0.0.1:8765 | **Make a reel**: upload, watch the draft, comment, approve, download, cover, score, results, Settings |
+| http://127.0.0.1:8765/index.html | **Control**: all reels, task board, spend, results, activity |
+These links work only on your Mac (nothing is on the internet).
+
 ## The main folder
 | | What it is |
 |---|---|
