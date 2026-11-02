@@ -153,3 +153,6 @@ T98 (quick re-render) investigated on a real render here: HyperFrames 0.8.226 CA
 | Publishing integrations | P2 | NOT planned: AGENTS.md rule 8, Reel Factory never publishes or schedules posts | |
 | Performance intelligence | P2 | manual results box built (T77); learning from them = T76 (later, reminder 2026-11-08) | |
 Pipeline redesign (parallel stages, one shared understanding of the footage): T101 (overlap, measured) and T102 (one `content_intel.json`).
+
+## 2026-11-02 — Board cleanup (Hesham)
+Removed from the plan: T12 (separate takes or multi-camera; filename order is used), T13 (best reels in Google Drive) and T09 (music and sound library answer: he adds trending music when posting). Kept: T14 (cost OK for paid critics), T45 (7-day results). T56: the Nous portal monthly limit is **$35** (was suggested at $20) for better quality. Reel Factory's own caps in config/project.json are unchanged ($1 per reel, $50 per month); the portal's $35 will stop first. Changing those caps needs his written approval here.

@@ -188,18 +188,6 @@
    "updated": "2026-11-01"
   },
   {
-   "id": "T09",
-   "phase": "P10",
-   "title": "Answer: music + SFX library",
-   "owner": "Hesham",
-   "status": "in_progress",
-   "depends": [],
-   "done_when": "",
-   "notes": "Answer after T13. Music: you add trending music when posting (decided). Still needed: your 11 best reels in Google Drive to learn your sound-effect style.",
-   "evidence": "",
-   "updated": "2026-11-02"
-  },
-  {
    "id": "T10",
    "phase": "P0",
    "title": "Answer: never-show list (or 'nothing')",
@@ -221,30 +209,6 @@
    "done_when": "",
    "notes": "Answered 2026-11-02.",
    "evidence": "config/glossary.json: page → بيج, store → متجر (confirmed)",
-   "updated": "2026-11-02"
-  },
-  {
-   "id": "T12",
-   "phase": "P10",
-   "title": "Answer: clips = separate takes or multi-camera? filename order OK?",
-   "owner": "Hesham",
-   "status": "todo",
-   "depends": [],
-   "done_when": "",
-   "notes": "Needs your answer: separate takes or multi-camera?",
-   "evidence": "",
-   "updated": "2026-11-02"
-  },
-  {
-   "id": "T13",
-   "phase": "P10",
-   "title": "Send 2–3 of your best previous reels (references/own)",
-   "owner": "Hesham",
-   "status": "in_progress",
-   "depends": [],
-   "done_when": "",
-   "notes": "Needs the best reel videos in the Google Drive folder. 11 links received 2026-11-01 (references/own/best_reels.md). Waiting for the video files (Instagram is blocked from the cloud).",
-   "evidence": "",
    "updated": "2026-11-02"
   },
   {
@@ -383,7 +347,6 @@
    "owner": "Claude",
    "status": "review",
    "depends": [
-    "T09",
     "T20"
    ],
    "done_when": "",
@@ -426,7 +389,6 @@
    "owner": "Claude",
    "status": "review",
    "depends": [
-    "T12",
     "T16"
    ],
    "done_when": "",
@@ -570,9 +532,7 @@
    "title": "energy.py: measure your best reels → target rates",
    "owner": "Claude",
    "status": "review",
-   "depends": [
-    "T13"
-   ],
+   "depends": [],
    "done_when": "",
    "notes": "Tool built 2026-11-02. Real target numbers appear when your best reel videos are in references/own (T13).",
    "evidence": "scripts/energy.py + tests/test_energy.py (known test video: 2 picture changes, longest hold, first sound, loudness). Run: python3 scripts/energy.py references/own/*.mp4 --save",
@@ -857,7 +817,7 @@
   {
    "id": "T56",
    "phase": "P10",
-   "title": "Nous portal: name the key 'Reel Factory' and set a monthly limit (suggest $20) if the portal offers one",
+   "title": "Nous portal: name the key 'Reel Factory' and set a monthly limit of $35 (Hesham, 2026-11-02: more room for better quality) if the portal offers one",
    "owner": "Hesham",
    "status": "todo",
    "depends": [
@@ -865,7 +825,7 @@
    ],
    "done_when": "Portal shows the key with its limit",
    "evidence": "",
-   "notes": "2 minutes in the Nous portal. Second safety net on top of Reel Factory's own caps ($1/reel, $50/month).",
+   "notes": "2 minutes in the Nous portal. Second safety net next to Reel Factory's own caps ($1/reel, $50/month in config/project.json: unchanged; the portal's $35 will stop first).",
    "updated": "2026-11-02"
   },
   {
@@ -1422,11 +1382,11 @@
    "phase": "P14",
    "title": "P1 · Hook picker: on the draft page choose one of the 3 hooks (curiosity / problem / direct); it makes a new draft with that opening",
    "owner": "Claude",
-   "status": "todo",
+   "status": "review",
    "depends": [],
    "done_when": "Draft page lists the 3 hooks from your own words; clicking one sends 'use this opening' and makes a new draft.",
-   "notes": "",
-   "evidence": "",
+   "notes": "Built 2026-11-02. Picks one of the 3 hooks (his own words, checked) as the opening title card; free rebuild, no AI.",
+   "evidence": "dashboard/reels_api.py (use_hook), dashboard/make.html (Opening title block), tests/test_hook_picker.py",
    "updated": "2026-11-02"
   },
   {
