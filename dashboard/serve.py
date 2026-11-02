@@ -256,6 +256,7 @@ class H(SimpleHTTPRequestHandler):
             fn = {"start": lambda: reels_api.start(body.get("slug")), "resume": lambda: reels_api.resume(body.get("job")),
                   "fix": lambda: reels_api.fix(body.get("job"), body.get("text")), "approve": lambda: reels_api.approve(body.get("job")),
                   "reveal": lambda: reels_api.reveal(body.get("job")),
+                  "use_version": lambda: reels_api.use_version(body.get("job"), body.get("n")),
                   "cover_reset": lambda: reels_api.cover_reset(body.get("job")),
                   "performance": lambda: reels_api.save_performance(body.get("job"), body.get("data")),
                   "check": lambda: reels_api.check_name(body.get("slug"), body.get("session")),

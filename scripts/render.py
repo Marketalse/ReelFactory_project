@@ -10,7 +10,7 @@ import argparse, glob, json, os, re, shutil, subprocess, sys, time
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from lib import config as cfg       # noqa: E402
-from lib import hfbuild, render_guard   # noqa: E402
+from lib import hfbuild, render_guard, versions   # noqa: E402
 import qa_check                     # noqa: E402
 
 HF = ["npx", "--yes", f"hyperframes@{cfg.PROJECT.get('tools', {}).get('hyperframes', '0.8.226')}"]
@@ -297,6 +297,11 @@ def draft(job):
     render_guard.write_manifest(job, "draft", small, "draft", dict(info, **{"review_copy": i540}), qa, round(time.time() - t0, 1))
     if sheet and os.path.exists(sheet):
         shutil.copy(sheet, os.path.join(job, "review", "contact_sheet.jpg"))
+    try:                                               # keep this draft as a version + write the plain-words QA report
+        versions.save(job)
+        versions.write_report(job)
+    except Exception as ex:                            # noqa: BLE001 - bookkeeping never stops a good reel
+        print(f"   versions/QA report skipped: {ex}")
     pkg = edit_package(job, project)
     sc = ready(job)
     return {"ready_score": sc and sc["score"], "draft": small, "contact_sheet": os.path.join(job, "review", "contact_sheet.jpg") if sheet else None,
