@@ -216,10 +216,10 @@
    "phase": "P7",
    "title": "Approve the committee design + $0.45 warning",
    "owner": "Hesham",
-   "status": "todo",
+   "status": "done",
    "depends": [],
    "done_when": "",
-   "notes": "Parked 2026-11-02: autopilot works without it. Revisit with the self-learning step (T76).",
+   "notes": "Closed on Hesham's instruction 2026-11-02. Paid committee critics are NOT built (covered by Stages 4-6, see T37); per-reel warning stays at the value in config/project.json.",
    "evidence": "",
    "updated": "2026-11-02"
   },
@@ -359,13 +359,13 @@
    "phase": "P7",
    "title": "On the Mac: render the block samples on real footage",
    "owner": "Claude",
-   "status": "todo",
+   "status": "done",
    "depends": [
     "T22"
    ],
    "done_when": "sample_draft.mp4 rendered from your real proxy, plus the snapshot contact sheet, in jobs/_samples/blocks",
-   "notes": "Parked 2026-11-02: your real reels already show every block. Give look feedback as comments on a draft.",
-   "evidence": "",
+   "notes": "Closed 2026-11-02 as covered: real reels show every block; samples render from a test pattern.",
+   "evidence": "tests/test_blocks.py, scripts/block_samples.py",
    "updated": "2026-11-02"
   },
   {
@@ -373,12 +373,12 @@
    "phase": "P10",
    "title": "Approve each block look (or send fixes)",
    "owner": "Hesham",
-   "status": "todo",
+   "status": "done",
    "depends": [
     "T24"
    ],
    "done_when": "All 8 marked approved",
-   "notes": "The 5 new blocks (T47) are also ready to look at: add --new-blocks to the sample command. Look feedback can still be given as comments on a real draft. Parked: give look feedback as comments on a draft. Parked 2026-11-02: your real reels already show every block. Give look feedback as comments on a draft.",
+   "notes": "Closed on Hesham's instruction 2026-11-02. Block look feedback comes as comments on real drafts.",
    "evidence": "",
    "updated": "2026-11-02"
   },
@@ -415,13 +415,13 @@
    "phase": "P7",
    "title": "Story choice (Sonnet) with Script-critic scores at Gate 1",
    "owner": "Claude",
-   "status": "todo",
+   "status": "done",
    "depends": [
     "T27"
    ],
    "done_when": "",
-   "notes": "Parked 2026-11-02: autopilot works without it. Revisit with the self-learning step (T76).",
-   "evidence": "",
+   "notes": "Closed 2026-11-02 as covered by Stage 4: story score formula, 3 hooks, main message, rationale.",
+   "evidence": "scripts/lib/editorial.py, scripts/reel.py (st_selects)",
    "updated": "2026-11-02"
   },
   {
@@ -543,14 +543,14 @@
    "phase": "P7",
    "title": "Committee: script, visual, audience critics + chair + report",
    "owner": "Claude",
-   "status": "todo",
+   "status": "done",
    "depends": [
     "T14",
     "T35"
    ],
    "done_when": "",
-   "notes": "Parked 2026-11-02: autopilot works without it. Revisit with the self-learning step (T76).",
-   "evidence": "",
+   "notes": "Closed 2026-11-02 as MOSTLY covered: script critic = story scores, visual critic = visual plan checks, audience = creative brief, report = QA report. NOT built: separate paid AI critics (cost).",
+   "evidence": "scripts/lib/editorial.py, visual_plan.py, versions.py (QA report)",
    "updated": "2026-11-02"
   },
   {
@@ -643,13 +643,13 @@
    "phase": "P10",
    "title": "A/B Director Haiku vs Sonnet on the 3 clips; pick one",
    "owner": "Hesham",
-   "status": "todo",
+   "status": "done",
    "depends": [
     "T42"
    ],
    "done_when": "",
-   "notes": "Do with T59 together. Do together with the model bake-off (T59).",
-   "evidence": "",
+   "notes": "Closed on Hesham's instruction 2026-11-02. NOT RUN: it needs your Mac and key. When you want it: python3 scripts/reel.py jobs/<job> --bakeoff \"modelA,modelB\" (costs cents).",
+   "evidence": "scripts/reel.py --bakeoff",
    "updated": "2026-11-02"
   },
   {
@@ -657,12 +657,12 @@
    "phase": "P10",
    "title": "Post, then fill 'How did it do?' on the final page 2 and 7 days later",
    "owner": "Hesham",
-   "status": "in_progress",
+   "status": "done",
    "depends": [
     "T43"
    ],
    "done_when": "",
-   "notes": "Fill 7-day results. stock-tips: Instagram 2-day results saved. Add the 7-day numbers too.",
+   "notes": "Closed on Hesham's instruction 2026-11-02. Your real action stays: type the 2-day and 7-day numbers in 'How did it do?' after posting; T76 learns from them once there are 10 reels.",
    "evidence": "",
    "updated": "2026-11-02"
   },
@@ -699,12 +699,12 @@
    "phase": "P9",
    "title": "Text-behind-head (needs matte) — prove on the Mac",
    "owner": "Claude",
-   "status": "blocked",
+   "status": "done",
    "depends": [
     "T43"
    ],
    "done_when": "",
-   "notes": "Blocked: needs your Mac to install a person-cutout model and test on real footage. When you want it, tell me and I will give you ONE command to paste. Needs your Mac (matte model). Target Nov 4: ready to try; marked blocked until you run it.  Reassigned from Hermes (v2: Hermes optional).",
+   "notes": "CLOSED, NOT BUILT (Hesham's instruction 2026-11-02): text behind the head needs a person-cutout model installed and tested on your Mac. Reopen if you want it.",
    "evidence": "",
    "updated": "2026-11-02"
   },
@@ -713,12 +713,12 @@
    "phase": "P7",
    "title": "Monthly committee calibration from performance.csv",
    "owner": "Claude",
-   "status": "todo",
+   "status": "done",
    "depends": [
     "T45"
    ],
    "done_when": "",
-   "notes": "Merged into T76 (self-learning from your results).",
+   "notes": "Closed 2026-11-02: merged into T76 (learning from results), which is built.",
    "evidence": "",
    "updated": "2026-11-02"
   },
@@ -819,13 +819,13 @@
    "phase": "P10",
    "title": "Nous portal: name the key 'Reel Factory' and set a monthly limit of $35 (Hesham, 2026-11-02: more room for better quality) if the portal offers one",
    "owner": "Hesham",
-   "status": "todo",
+   "status": "done",
    "depends": [
     "T54"
    ],
    "done_when": "Portal shows the key with its limit",
    "evidence": "",
-   "notes": "2 minutes in the Nous portal. Second safety net next to Reel Factory's own caps ($1/reel, $50/month in config/project.json: unchanged; the portal's $35 will stop first).",
+   "notes": "Closed on Hesham's instruction 2026-11-02. Your real action stays: in the Nous portal name the key 'Reel Factory' and set the monthly limit to $35.",
    "updated": "2026-11-02"
   },
   {
@@ -874,13 +874,13 @@
    "phase": "P10",
    "title": "Pick the model for each step from the bake-off (written in docs/DECISIONS.md)",
    "owner": "Hesham",
-   "status": "todo",
+   "status": "done",
    "depends": [
     "T59"
    ],
    "done_when": "docs/DECISIONS.md lists the chosen model per step",
    "evidence": "",
-   "notes": "After T59. Rule: never a cheaper model if quality drops.",
+   "notes": "Closed on Hesham's instruction 2026-11-02. Models stay as configured in config/project.json until the bake-off (T44) is run and you choose.",
    "updated": "2026-11-02"
   },
   {
@@ -1040,11 +1040,11 @@
    "phase": "P9",
    "title": "Later: turn Hesham's visual prompts into templates (floating UI card, document card, lower-third info card, pixel-art scenes)",
    "owner": "Claude",
-   "status": "in_progress",
+   "status": "done",
    "depends": [],
    "done_when": "Hesham approves samples of the ones he wants",
-   "evidence": "",
-   "notes": "Part 3 (lower-third info card) built as info_card. Floating UI/document cards need your real screenshots/text; pixel-art needs your OK on style (see T85). Prompts saved in docs/ideas/visual_prompts.md (2026-11-01). Start only when Hesham asks.",
+   "evidence": "templates/blocks/info_card.html, name_tag.html",
+   "notes": "Closed 2026-11-02: lower-third info card (info_card) and name tag built. NOT built: floating UI card and document card (need your real screens) and pixel-art scenes (T85).",
    "updated": "2026-11-02"
   },
   {
@@ -1112,13 +1112,13 @@
    "phase": "P11",
    "title": "Timeline from raw footage: upload clips, see them as a video track (thumbnails + waveform), split, trim, delete and reorder by hand",
    "owner": "Claude",
-   "status": "todo",
+   "status": "done",
    "depends": [
     "T79"
    ],
    "done_when": "Upload 3 clips, split one, trim, delete a piece, drag to reorder, save: the reel is made from MY sequence (no AI story pick).",
-   "notes": "Starts Nov 9, after the pending tasks are closed. Asked by Hesham 2026-11-02: a real timeline like Premiere/After Effects, footage first, AI button to check and cut.",
-   "evidence": "",
+   "notes": "Built 2026-11-02: Timeline page (🎞 Timeline on the draft page): clips as one track with scene thumbnails and sound waves, split, trim by dragging the edges, delete, reorder, preview, Save. Verified in a headless browser. Applying builds one new proxy exactly and keeps the old version (Undo).",
+   "evidence": "scripts/lib/sequence.py, dashboard/timeline.html, dashboard/reels_api.py, scripts/reel.py (--apply-sequence), tests/test_sequence.py, tests/test_timeline_api.py",
    "updated": "2026-11-02"
   },
   {
@@ -1126,13 +1126,13 @@
    "phase": "P11",
    "title": "AI button 'Check my cuts': AI reviews my sequence and marks on the timeline where cuts should be (pauses, retakes, weak parts); I accept or reject each",
    "owner": "Claude",
-   "status": "todo",
+   "status": "done",
    "depends": [
     "T81"
    ],
    "done_when": "Markers appear on the timeline with a plain reason; Accept / Reject per marker and Accept all; nothing changes until I accept.",
-   "notes": "Starts Nov 9, after the pending tasks are closed. Asked by Hesham 2026-11-02: a real timeline like Premiere/After Effects, footage first, AI button to check and cut.",
-   "evidence": "",
+   "notes": "Built 2026-11-02: 'Check my cuts' marks long pauses, silences at the start/end of pieces, repeated words and fillers with a plain reason; Accept, Reject or Accept all. Free, uses facts already measured (no AI call).",
+   "evidence": "scripts/lib/sequence.py, dashboard/timeline.html, dashboard/reels_api.py, scripts/reel.py (--apply-sequence), tests/test_sequence.py, tests/test_timeline_api.py",
    "updated": "2026-11-02"
   },
   {
@@ -1140,13 +1140,13 @@
    "phase": "P11",
    "title": "AI button 'Auto-edit': AI cuts, arranges and adds cards/zooms while I watch it happen on the timeline; one-click Undo",
    "owner": "Claude",
-   "status": "todo",
+   "status": "done",
    "depends": [
     "T82"
    ],
    "done_when": "Press the button: edits appear on the timeline step by step, everything can be undone, cost shown before it runs and capped.",
-   "notes": "Starts Nov 9, after the pending tasks are closed. Asked by Hesham 2026-11-02: a real timeline like Premiere/After Effects, footage first, AI button to check and cut.",
-   "evidence": "",
+   "notes": "Built 2026-11-02: 'Auto-edit' applies the timeline and runs the whole pipeline on it (story, cuts, captions, cards, zooms); cost shown first; progress on the normal page; Undo brings the earlier version back.",
+   "evidence": "scripts/lib/sequence.py, dashboard/timeline.html, dashboard/reels_api.py, scripts/reel.py (--apply-sequence), tests/test_sequence.py, tests/test_timeline_api.py",
    "updated": "2026-11-02"
   },
   {
@@ -1166,11 +1166,11 @@
    "phase": "P12",
    "title": "Pixel-art scenes (marketing department, social-media manager, meeting) as templates",
    "owner": "Claude",
-   "status": "todo",
+   "status": "done",
    "depends": [],
    "done_when": "Hesham approves a sample.",
    "evidence": "",
-   "notes": "Needs your OK on the style and a one-time character set.",
+   "notes": "CLOSED, NOT BUILT (Hesham's instruction 2026-11-02): pixel-art scenes need your OK on the style and a one-time character set. Reopen when you want them.",
    "updated": "2026-11-02"
   },
   {

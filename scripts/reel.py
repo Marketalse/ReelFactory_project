@@ -21,7 +21,7 @@ import argparse, base64, glob, json, os, re, shutil, subprocess, sys, threading,
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from lib import config as cfg   # noqa: E402  (all settings live in config/*.json)
-from lib import transcript as tr, edl as edlmod, director, speech_intel, editorial, visual_plan, brand_memory, creative_brief, content_intel, frames_dedup, learning, doctor   # noqa: E402
+from lib import transcript as tr, edl as edlmod, director, speech_intel, editorial, visual_plan, brand_memory, creative_brief, content_intel, frames_dedup, learning, doctor, sequence   # noqa: E402
 from lib.hfbuild import BuildError   # noqa: E402
 
 ROOT = cfg.ROOT
@@ -738,6 +738,7 @@ def main():
     ap.add_argument("--fix", help="Gate 2: re-plan with this feedback")
     ap.add_argument("--bakeoff", help="T59: compare these models (comma separated) with the current ones on this reel; costs cents")
     ap.add_argument("--rebuild", action="store_true", help="new draft from the manual edit (Edit page); no AI, no spend")
+    ap.add_argument("--apply-sequence", action="store_true", help="T81/T83: build the new footage from the timeline sequence, then run the whole pipeline on it")
     ap.add_argument("--doctor", action="store_true", help="T84: ask the AI doctor why this reel stopped (about 1 cent); it only proposes, never acts")
     a = ap.parse_args()
     a.img_tok = {1080: 2800, 720: 1300, 540: 800, 384: 420}.get(a.width, 800)
@@ -809,6 +810,12 @@ def main():
             jsave(os.path.join(job, "job.json"), j)
             print("FINAL:", *outs, sep="\n  ")
         else:
+            if a.apply_sequence:
+                t0 = time.time()
+                ok, msg = sequence.apply(job, sequence.load(job))
+                print(f"{'timeline':11s} {'ok ' if ok else 'FAILED'} {time.time() - t0:5.1f}s  {msg}")
+                if not ok:
+                    raise Stop(msg)
             if run_stages(c, a, job):
                 print(f"\nGATE 2: watch {os.path.join(job, 'review', 'draft_540p.mp4')}\n"
                       f"  approve:  python3 scripts/reel.py {os.path.relpath(job, ROOT)} --approve\n"

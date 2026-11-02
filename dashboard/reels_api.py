@@ -178,6 +178,71 @@ def rebuild(job):
     return _run(job, [jd, "--rebuild"])
 
 
+def _seq_job(job):
+    if not JOB.match(job or "") or not os.path.isdir(os.path.join(JOBS, job)):
+        return None, "unknown reel"
+    if job in _running or _running:
+        return None, "a reel is being made right now; use the timeline when it's finished"
+    return os.path.join(JOBS, job), ""
+
+
+def timeline(job):
+    """(ok, data|message) for the timeline page (T81)."""
+    if not JOB.match(job or "") or not os.path.isdir(os.path.join(JOBS, job)):
+        return False, "unknown reel"
+    jd = os.path.join(JOBS, job)
+    sys.path.insert(0, os.path.join(ROOT, "scripts"))
+    from lib import sequence
+    if not sequence.clips(jd):
+        return False, "this reel has no footage pieces yet: upload clips first"
+    d = sequence.state(jd); d["job"] = job
+    return True, d
+
+
+def timeline_save(job, seq):
+    jd, msg = _seq_job(job)
+    if not jd:
+        return False, msg, None
+    sys.path.insert(0, os.path.join(ROOT, "scripts"))
+    from lib import sequence
+    return sequence.save(jd, seq or {})
+
+
+def timeline_check(job, seq):
+    """Check my cuts (T82): markers with plain reasons. Free."""
+    jd, msg = _seq_job(job)
+    if not jd:
+        return False, msg
+    sys.path.insert(0, os.path.join(ROOT, "scripts"))
+    from lib import sequence
+    clean, err = sequence.validate(jd, seq or sequence.load(jd))
+    if err:
+        return False, "; ".join(err[:2])
+    return True, sequence.check_cuts(jd, clean)
+
+
+def timeline_apply(job, seq):
+    """Auto-edit (T83): save the sequence, then build the new footage and run the whole pipeline on it in the background."""
+    jd, msg = _seq_job(job)
+    if not jd:
+        return False, msg
+    sys.path.insert(0, os.path.join(ROOT, "scripts"))
+    from lib import sequence
+    ok, m, _ = sequence.save(jd, seq or {})
+    if not ok:
+        return False, m
+    return _run(job, [jd, "--apply-sequence"])
+
+
+def timeline_undo(job):
+    jd, msg = _seq_job(job)
+    if not jd:
+        return False, msg
+    sys.path.insert(0, os.path.join(ROOT, "scripts"))
+    from lib import sequence
+    return sequence.undo(jd)
+
+
 def make_variation(job, sel_id):
     """Make another version of this reel from one of the other candidate stories (T106). Returns (ok, new job name | message)."""
     if not JOB.match(job or "") or not os.path.isdir(os.path.join(JOBS, job)):
@@ -249,7 +314,7 @@ def approve(job):
 def media_path(rel):
     """Only drafts, contact sheets and finals inside jobs/ may be served."""
     m = re.match(r"^(\d{4}-\d{2}-\d{2}-[a-z0-9-]+)/(review/draft_540p\.mp4|review/contact_sheet\.jpg|final/[A-Za-z0-9_.-]+\.mp4"
-                 r"|review/versions/v\d+\.mp4|proxy\.mp4|review/cover\.jpg|final/cover_v\d+\.jpg|edit_package/(?:1_video\.mp4|2_graphics\.mov|captions_ar\.srt))$", rel or "")
+                 r"|review/versions/v\d+\.mp4|c\d\d/proxy\.mp4|thumbs/c\d\d_s\d\d\.jpg|proxy\.mp4|review/cover\.jpg|final/cover_v\d+\.jpg|edit_package/(?:1_video\.mp4|2_graphics\.mov|captions_ar\.srt))$", rel or "")
     if not m:
         return None
     p = os.path.realpath(os.path.join(JOBS, rel))

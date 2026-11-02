@@ -1,0 +1,228 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Reel Factory · Timeline</title>
+<style>
+:root{--bg:#16181f;--panel:#1f222b;--panel2:#272b36;--panel3:#313644;--line:#3a4052;--text:#eef0f5;--muted:#a3aabb;--dim:#737b90;
+  --lime:#B6FF00;--violet:#7D53FF;--coral:#FF6B4A;--amber:#ffb020;--blue:#5aa2ff;--teal:#3cc7b4;
+  --font:-apple-system,BlinkMacSystemFont,"Segoe UI","Readex Pro",Roboto,"Noto Sans Arabic",sans-serif;color-scheme:dark}
+*{box-sizing:border-box}html,body{margin:0;height:100%}
+body{background:var(--bg);color:var(--text);font:13.5px/1.45 var(--font);overflow:hidden}
+button,input{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--lime);outline-offset:1px}
+.app{display:grid;grid-template-rows:auto minmax(0,1fr) auto;height:100vh}
+.top{display:flex;align-items:center;gap:10px;padding:8px 14px;border-bottom:1px solid var(--line);background:var(--panel);flex-wrap:wrap}
+.top .brand{font-weight:700}.top .brand b{color:var(--lime)}.top .sp{flex:1}
+.btn{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:6px 11px;cursor:pointer;white-space:nowrap;text-decoration:none;color:var(--text)}
+.btn:hover{background:var(--panel3)}.btn:disabled{opacity:.45;cursor:default}
+.btn.primary{background:var(--lime);color:#141414;border-color:var(--lime);font-weight:650}
+.btn.violet{background:var(--violet);border-color:var(--violet);font-weight:600}
+.status{font-size:12.5px;color:var(--muted)}.status.dirty{color:var(--amber)}.status.ok{color:var(--lime)}.status.err{color:var(--coral)}
+.mid{display:grid;grid-template-columns:minmax(260px,420px) minmax(0,1fr);min-height:0}
+.pane{display:flex;flex-direction:column;min-height:0;background:var(--panel);border-right:1px solid var(--line)}
+.ph{padding:8px 12px;border-bottom:1px solid var(--line);font-weight:600}
+.mon{background:#0d0e12;position:relative;flex:1 1 52%;min-height:180px;overflow:hidden}
+.mon video{position:absolute;inset:8px;width:calc(100% - 16px);height:calc(100% - 16px);object-fit:contain;border-radius:8px;background:#000}
+.ctl{display:flex;gap:6px;flex-wrap:wrap;padding:8px 12px;border-top:1px solid var(--line);align-items:center}
+.time{font:12px ui-monospace,Menlo,monospace;color:var(--muted)}
+.scroll{overflow:auto;min-height:0;flex:1 1 30%;padding:10px 12px}
+.mk{display:grid;gap:4px;padding:8px;border:1px solid var(--line);border-radius:8px;margin-bottom:8px;background:var(--panel2)}
+.mk .why{font-size:13px}.mk .when{font:11.5px ui-monospace,Menlo,monospace;color:var(--dim)}
+.mk .row{display:flex;gap:6px}.mk.pause{border-left:3px solid var(--amber)}.mk.silence{border-left:3px solid var(--blue)}.mk.repeat,.mk.filler{border-left:3px solid var(--coral)}
+.tl{border-top:1px solid var(--line);background:var(--panel);padding:8px 12px 12px}
+.tlbar{display:flex;gap:8px;align-items:center;margin-bottom:6px;flex-wrap:wrap}
+.wrap{overflow-x:auto;overflow-y:hidden;position:relative;padding-bottom:6px}
+.ruler{height:18px;position:relative;font:10.5px ui-monospace,Menlo,monospace;color:var(--dim);cursor:pointer}
+.ruler i{position:absolute;top:0;border-left:1px solid var(--line);padding-left:3px;height:18px;font-style:normal}
+.track{display:flex;height:88px;position:relative;cursor:pointer}
+.seg{position:relative;height:100%;border:0;border-right:2px solid var(--bg);border-radius:6px;overflow:hidden;background:var(--panel2);flex:none}
+.seg.sel{outline:2px solid var(--lime);outline-offset:-2px}
+.seg .th{position:absolute;top:0;height:44px;background-size:cover;background-position:center;opacity:.9}
+.seg canvas{position:absolute;left:0;bottom:0;width:100%;height:36px}
+.seg .nm{position:absolute;left:6px;top:3px;font-size:11.5px;text-shadow:0 1px 2px #000;pointer-events:none;white-space:nowrap}
+.seg .h{position:absolute;top:0;bottom:0;width:9px;cursor:ew-resize;background:rgba(182,255,0,.0)}
+.seg .h:hover,.seg.sel .h{background:rgba(182,255,0,.45)}
+.seg .h.l{left:0}.seg .h.r{right:0}
+.seg .mkb{position:absolute;bottom:0;height:36px;background:rgba(255,107,74,.38);border-left:1px solid var(--coral);border-right:1px solid var(--coral);pointer-events:none}
+.head{position:absolute;top:0;bottom:0;width:2px;background:var(--lime);pointer-events:none}
+.empty{padding:20px;color:var(--muted)}
+#toast{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);background:var(--panel3);border:1px solid var(--line);border-radius:10px;padding:9px 14px;display:none;z-index:9}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="top">
+    <span class="brand">Reel <b>Factory</b> · Timeline</span><span class="status" id="name"></span><span class="sp"></span>
+    <span class="status" id="status"></span>
+    <button class="btn" id="undo" disabled title="Go back to the version before the last timeline change">↩ Undo timeline change</button>
+    <button class="btn" id="save">Save</button>
+    <button class="btn violet" id="check" title="Free: marks pauses, silences and false starts with a reason. You accept or reject each one.">✨ Check my cuts</button>
+    <button class="btn primary" id="auto" title="Builds new footage from this timeline and makes the reel from it">▶ Auto-edit</button>
+    <a class="btn" id="back" href="make.html">← Back</a>
+  </div>
+  <div class="mid">
+    <div class="pane">
+      <div class="ph">Preview <span class="time" id="tcur">0:00.0 / 0:00.0</span></div>
+      <div class="mon"><video id="vid" controls playsinline preload="metadata"></video></div>
+      <div class="ctl">
+        <button class="btn" id="split" title="Cut the piece under the playhead in two (S)">✂ Split here</button>
+        <button class="btn" id="del" title="Remove the selected piece (Delete)">🗑 Delete piece</button>
+        <button class="btn" id="left" title="Move the selected piece earlier ([)">◀</button>
+        <button class="btn" id="right" title="Move the selected piece later (])">▶</button>
+      </div>
+      <div class="ph" style="border-top:1px solid var(--line)">Suggested cuts <span class="time" id="mcount"></span></div>
+      <div class="scroll" id="marks"><div class="empty">Press “Check my cuts”. Nothing is cut until you accept it.</div></div>
+    </div>
+    <div class="pane" style="border-right:0">
+      <div class="ph">How it works</div>
+      <div class="scroll"><p style="margin-top:0">Your footage is one track. Click a piece to select it, drag its left or right edge to trim, <b>Split</b> at the playhead to cut it, <b>Delete</b> to remove a piece, ◀ ▶ to reorder.</p>
+        <p><b>Check my cuts</b> proposes cuts (long pauses, silences, repeated words). <b>Accept</b> or <b>Reject</b> each one, or accept all.</p>
+        <p><b>Auto-edit</b> builds new footage from this timeline, then the editor picks the story, cuts the pauses, adds captions, cards and zooms and makes a draft. It costs about the same as a new reel. Your earlier version is kept: <b>Undo</b> brings it back.</p>
+        <p class="status" id="info"></p></div>
+    </div>
+  </div>
+  <div class="tl">
+    <div class="tlbar"><b>Timeline</b><span class="time" id="total"></span><span class="sp" style="flex:1"></span>
+      <button class="btn" id="zout">−</button><span class="time">zoom</span><button class="btn" id="zin">+</button></div>
+    <div class="wrap" id="wrap"><div class="ruler" id="ruler"></div><div class="track" id="track"></div><div class="head" id="head"></div></div>
+  </div>
+</div>
+<div id="toast"></div>
+<script>
+const JOB=new URLSearchParams(location.search).get("job")||"";
+const $=s=>document.querySelector(s);
+const esc=s=>String(s==null?"":s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+let S=null, clips={}, seq=[], sel=null, ph=0, pps=40, dirty=false, markers=[], uid=1, playing=false, curSrc="";
+const MIN=0.3;
+const fmt=t=>{t=Math.max(0,t);const m=Math.floor(t/60);return m+":"+(t%60).toFixed(1).padStart(4,"0");};
+function toast(m,ms=3200){const t=$("#toast");t.textContent=m;t.style.display="block";clearTimeout(toast.h);toast.h=setTimeout(()=>t.style.display="none",ms);}
+function status(m,c){const e=$("#status");e.textContent=m;e.className="status "+(c||"");}
+async function api(path,body){
+  const r=await fetch(path,body?{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)}:{cache:"no-store"});
+  const d=await r.json().catch(()=>({ok:false,message:"The dashboard didn't answer."}));
+  if(!r.ok&&d.ok!==true) throw new Error(d.message||"Something went wrong");
+  return d;
+}
+const media=p=>"/media/"+encodeURIComponent(JOB)+"/"+p.split("/").map(encodeURIComponent).join("/");
+const len=s=>s.out-s.in;
+const total=()=>seq.reduce((a,s)=>a+len(s),0);
+function starts(){let t=0;return seq.map(s=>{const a=t;t+=len(s);return a;});}
+function segAt(t){const st=starts();for(let i=0;i<seq.length;i++){if(t<st[i]+len(seq[i])-1e-6||i===seq.length-1) return {i,s:seq[i],t0:st[i]};}return null;}
+function setDirty(){dirty=true;status("Not saved yet","dirty");}
+
+/* ---------------- drawing */
+function render(){
+  const tr=$("#track"), st=starts(); tr.innerHTML="";
+  seq.forEach((s,i)=>{
+    const c=clips[s.clip]||{}, w=Math.max(8,len(s)*pps);
+    const d=document.createElement("div"); d.className="seg"+(s.id===sel?" sel":""); d.style.width=w+"px"; d.dataset.id=s.id;
+    (c.scenes||[]).forEach(sc=>{ const a=Math.max(sc.start,s.in), b=Math.min(sc.end,s.out); if(b>a&&sc.thumb){ const t=document.createElement("div"); t.className="th";
+      t.style.left=((a-s.in)*pps)+"px"; t.style.width=((b-a)*pps)+"px"; t.style.backgroundImage=`url(${media("thumbs/"+sc.thumb)})`; d.appendChild(t); }});
+    const cv=document.createElement("canvas"); cv.width=Math.min(4000,Math.round(w)); cv.height=36; d.appendChild(cv); drawWave(cv,c,s);
+    const nm=document.createElement("div"); nm.className="nm"; nm.textContent=(c.name||s.clip)+" · "+len(s).toFixed(1)+"s"; d.appendChild(nm);
+    markers.filter(m=>m.clip===s.clip&&m.out>s.in&&m.in<s.out).forEach(m=>{ const b=document.createElement("div"); b.className="mkb";
+      b.style.left=((Math.max(m.in,s.in)-s.in)*pps)+"px"; b.style.width=((Math.min(m.out,s.out)-Math.max(m.in,s.in))*pps)+"px"; d.appendChild(b); });
+    ["l","r"].forEach(k=>{ const h=document.createElement("div"); h.className="h "+k; h.dataset.g=k; d.appendChild(h); });
+    tr.appendChild(d);
+  });
+  tr.style.width=(total()*pps)+"px";
+  const rl=$("#ruler"); rl.style.width=tr.style.width; rl.innerHTML=""; const step=pps>=80?1:pps>=40?2:pps>=20?5:10;
+  for(let t=0;t<=total();t+=step){ const i=document.createElement("i"); i.style.left=(t*pps)+"px"; i.textContent=fmt(t); rl.appendChild(i); }
+  placeHead(); $("#total").textContent=fmt(total())+" · "+seq.length+" piece"+(seq.length===1?"":"s");
+  $("#tcur").textContent=fmt(ph)+" / "+fmt(total());
+  $("#del").disabled=!sel||seq.length<2; const idx=seq.findIndex(s=>s.id===sel);
+  $("#left").disabled=idx<1; $("#right").disabled=idx<0||idx>=seq.length-1; $("#split").disabled=!seq.length;
+}
+function drawWave(cv,c,s){
+  const w=c.waveform; if(!w||!w.peaks||!w.peaks.length) return; const ctx=cv.getContext("2d"); ctx.fillStyle="rgba(182,255,0,.75)";
+  const a=Math.floor(s.in*w.per_s), b=Math.ceil(s.out*w.per_s), n=Math.max(1,b-a);
+  for(let x=0;x<cv.width;x++){ const k=a+Math.floor(x/cv.width*n); const v=(w.peaks[k]||0)/100; const h=Math.max(1,v*34); ctx.fillRect(x,36-h,1,h); }
+}
+function headX(){ const st=starts(); const g=segAt(ph); if(!g) return 0; return ph*pps; }
+function placeHead(){ const h=$("#head"); h.style.left=(headX())+"px"; h.style.top=$("#ruler").offsetHeight+"px"; h.style.height=$("#track").offsetHeight+"px"; }
+function renderMarks(){
+  const box=$("#marks"); $("#mcount").textContent=markers.length?markers.length+" found":"";
+  if(!markers.length){ box.innerHTML='<div class="empty">'+(box.dataset.checked?"Nothing to cut: your timeline looks clean. ✅":"Press “Check my cuts”. Nothing is cut until you accept it.")+"</div>"; return; }
+  box.innerHTML='<div style="margin-bottom:8px"><button class="btn primary" id="accAll">Accept all ('+markers.length+')</button></div>'+markers.map(m=>`<div class="mk ${esc(m.kind)}" data-m="${esc(m.id)}">
+    <div class="why">${esc(m.why)}</div><div class="when">${esc((clips[m.clip]||{}).name||m.clip)} · ${m.in.toFixed(1)}–${m.out.toFixed(1)} s (${(m.out-m.in).toFixed(1)} s)</div>
+    <div class="row"><button class="btn" data-a="go">Show</button><button class="btn primary" data-a="acc">Accept cut</button><button class="btn" data-a="rej">Reject</button></div></div>`).join("");
+  $("#accAll").onclick=()=>{ [...markers].sort((a,b)=>b.in-a.in).forEach(m=>cutRange(m.clip,m.in,m.out)); markers=[]; setDirty(); render(); renderMarks(); toast("All suggested cuts applied. Undo is not needed: nothing is final until you click Auto-edit."); };
+  box.querySelectorAll("[data-m]").forEach(el=>{ const m=markers.find(x=>x.id===el.dataset.m);
+    el.querySelector('[data-a="acc"]').onclick=()=>{ cutRange(m.clip,m.in,m.out); markers=markers.filter(x=>x!==m); setDirty(); render(); renderMarks(); };
+    el.querySelector('[data-a="rej"]').onclick=()=>{ markers=markers.filter(x=>x!==m); render(); renderMarks(); };
+    el.querySelector('[data-a="go"]').onclick=()=>{ const st=starts(); const i=seq.findIndex(s=>s.clip===m.clip&&m.out>s.in&&m.in<s.out); if(i>=0){ sel=seq[i].id; seek(st[i]+Math.max(0,m.in-seq[i].in)); render(); } };
+  });
+}
+
+/* ---------------- editing operations (same rules as the server) */
+function cutRange(clip,a,b){
+  const out=[]; seq.forEach(s=>{ if(s.clip!==clip||b<=s.in||a>=s.out){ out.push(s); return; }
+    const L={...s,out:Math.max(s.in,a)}, R={...s,id:"s"+(++uid),in:Math.min(s.out,b)};
+    [L,R].forEach(x=>{ if(x.out-x.in>=MIN) out.push(x); }); });
+  seq=out; if(!seq.find(s=>s.id===sel)) sel=seq[0]&&seq[0].id;
+}
+function splitHere(){ const g=segAt(ph); if(!g) return; const s=g.s, t=s.in+(ph-g.t0);
+  if(t<s.in+MIN||t>s.out-MIN) return toast("Move the playhead further from the edge of the piece first.");
+  const i=seq.indexOf(s); seq.splice(i,1,{...s,out:+t.toFixed(3)},{...s,id:"s"+(++uid),in:+t.toFixed(3)}); markers=[]; setDirty(); render(); }
+function delSel(){ if(seq.length<2||!sel) return; const i=seq.findIndex(s=>s.id===sel); seq.splice(i,1); sel=(seq[Math.min(i,seq.length-1)]||{}).id; markers=[]; setDirty(); render(); seek(Math.min(ph,total())); }
+function move(d){ const i=seq.findIndex(s=>s.id===sel), j=i+d; if(i<0||j<0||j>=seq.length) return; [seq[i],seq[j]]=[seq[j],seq[i]]; setDirty(); render(); }
+
+/* ---------------- preview (plays the pieces one after another from the clips' working copies) */
+const vid=$("#vid");
+function loadAt(g,clipT,play){
+  const src=media(clips[g.s.clip].proxy);
+  const go=()=>{ vid.currentTime=clipT; if(play) vid.play().catch(()=>{}); };
+  if(curSrc!==src){ curSrc=src; vid.src=src; vid.addEventListener("loadedmetadata",go,{once:true}); } else go();
+}
+function seek(t){ ph=Math.max(0,Math.min(total(),t)); const g=segAt(ph); if(!g) return; sel=sel||g.s.id; loadAt(g,g.s.in+(ph-g.t0),playing); placeHead(); $("#tcur").textContent=fmt(ph)+" / "+fmt(total()); }
+vid.addEventListener("play",()=>{playing=true;}); vid.addEventListener("pause",()=>{playing=false;});
+vid.addEventListener("timeupdate",()=>{
+  const g=segAt(ph); if(!g||!playing) return;
+  const s=g.s; if(vid.currentTime>=s.out-0.03){ const st=starts(); const nx=g.i+1; if(nx<seq.length){ ph=st[nx]; sel=seq[nx].id; loadAt({s:seq[nx],i:nx,t0:st[nx]},seq[nx].in,true); render(); } else { vid.pause(); } return; }
+  ph=g.t0+Math.max(0,vid.currentTime-s.in); $("#tcur").textContent=fmt(ph)+" / "+fmt(total()); placeHead();
+});
+
+/* ---------------- mouse: select, playhead, trim */
+$("#track").addEventListener("pointerdown",e=>{
+  const segEl=e.target.closest(".seg"); if(!segEl) return; const id=segEl.dataset.id, s=seq.find(x=>x.id===id); sel=id;
+  const rect=segEl.getBoundingClientRect(), g=e.target.dataset.g;
+  if(g){ // trim
+    e.preventDefault(); const x0=e.clientX, in0=s.in, out0=s.out, d=(clips[s.clip]||{}).duration||out0;
+    const mv=ev=>{ const dt=(ev.clientX-x0)/pps; if(g==="l") s.in=Math.max(0,Math.min(out0-MIN,+(in0+dt).toFixed(2))); else s.out=Math.min(d,Math.max(in0+MIN,+(out0+dt).toFixed(2))); render(); };
+    const up=()=>{ removeEventListener("pointermove",mv); removeEventListener("pointerup",up); markers=[]; setDirty(); render(); };
+    addEventListener("pointermove",mv); addEventListener("pointerup",up); return;
+  }
+  const st=starts(), i=seq.indexOf(s); seek(st[i]+(e.clientX-rect.left)/pps); render();
+});
+$("#ruler").addEventListener("click",e=>{ const r=$("#ruler").getBoundingClientRect(); seek((e.clientX-r.left)/pps); });
+$("#zin").onclick=()=>{ pps=Math.min(200,pps*1.5); render(); }; $("#zout").onclick=()=>{ pps=Math.max(6,pps/1.5); render(); };
+$("#split").onclick=splitHere; $("#del").onclick=delSel; $("#left").onclick=()=>move(-1); $("#right").onclick=()=>move(1);
+addEventListener("keydown",e=>{ if(/input|textarea/i.test(e.target.tagName)) return;
+  if(e.key==="s"||e.key==="S") splitHere(); else if(e.key==="Delete"||e.key==="Backspace") delSel(); else if(e.key==="[") move(-1); else if(e.key==="]") move(1); });
+
+/* ---------------- server actions */
+const body=()=>({job:JOB,sequence:{segments:seq.map(s=>({id:s.id,clip:s.clip,in:s.in,out:s.out}))}});
+async function save(){ try{ const r=await api("/api/timeline/save",body()); dirty=false; status("Saved","ok"); toast(r.message); return true; }catch(e){ status(e.message,"err"); toast(e.message,6000); return false; } }
+$("#save").onclick=save;
+$("#check").onclick=async()=>{ $("#check").disabled=true; try{ const r=await api("/api/timeline/check",body()); markers=r.markers||[]; $("#marks").dataset.checked="1"; render(); renderMarks();
+    toast(markers.length?markers.length+" suggested cuts. Nothing is cut until you accept.":"Nothing to cut: it looks clean."); }catch(e){ toast(e.message,6000); } $("#check").disabled=false; };
+$("#auto").onclick=async()=>{
+  if(!confirm("Auto-edit builds new footage from this timeline and makes the reel from it (story, cuts, captions, cards, zooms).\n\nIt costs about the same as a new reel and takes a few minutes. Your earlier version is kept: you can undo.\n\nContinue?")) return;
+  try{ await api("/api/timeline/apply",body()); location.href="make.html?job="+encodeURIComponent(JOB); }catch(e){ toast(e.message,7000); } };
+$("#undo").onclick=async()=>{ if(!confirm("Go back to the version before the last timeline change? The timeline's own result is kept aside, nothing is deleted.")) return;
+  try{ const r=await api("/api/timeline/undo",{job:JOB}); toast(r.message); setTimeout(()=>location.reload(),900); }catch(e){ toast(e.message,6000); } };
+addEventListener("beforeunload",e=>{ if(dirty){ e.preventDefault(); e.returnValue=""; } });
+
+/* ---------------- start */
+(async()=>{
+  $("#name").textContent=JOB; $("#back").href="make.html?job="+encodeURIComponent(JOB);
+  try{ S=await api("/api/timeline?job="+encodeURIComponent(JOB)); }catch(e){ $("#marks").innerHTML='<div class="empty">'+esc(e.message)+"</div>"; status(e.message,"err"); return; }
+  S.clips.forEach(c=>clips[c.id]=c); seq=S.sequence.segments.map(s=>({id:s.id,clip:s.clip,in:s.in,out:s.out})); uid=seq.length+1; sel=seq[0]&&seq[0].id;
+  $("#undo").disabled=!S.can_undo; $("#info").textContent=S.applied?"This timeline was already applied once to this reel.":"";
+  render(); seek(0); status("Saved","ok");
+})();
+</script>
+</body>
+</html>
