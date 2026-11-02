@@ -1,0 +1,21 @@
+<html data-composition-variables='[{"id":"text","type":"string","label":"Big word","default":"التسويق","maxLength":14},{"id":"matte","type":"string","label":"Cutout video (made automatically)","default":""},{"id":"top","type":"number","label":"Text height (made automatically)","default":520}]'>
+<template>
+<style>
+#root{position:absolute;inset:0;pointer-events:none;background:rgba(36,40,52,.42)}
+#__ID__-txt{position:absolute;left:var(--text-x);width:var(--text-w);top:__VAR_top__px;text-align:center;direction:rtl;font-family:var(--font);font-size:__SIZE_text__px;font-weight:700;line-height:1.05;color:var(--lime);white-space:nowrap;text-shadow:0 10px 40px rgba(0,0,0,.35)}
+#__ID__-cut{position:absolute;left:0;top:0;width:1080px;height:1920px}
+</style>
+<div id="root" data-composition-id="__ID__" data-width="1080" data-height="1920" data-layout-allow-overlap>
+  <div id="__ID__-txt" class="clip" data-start="0" data-duration="__DUR__" data-var-text="text">.</div>
+  <video id="__ID__-cut" class="clip" src="__VAR_matte__" data-start="0" data-duration="__DUR__" data-has-audio="false" muted playsinline></video>
+</div>
+<script>
+const tl = gsap.timeline({ paused: true });
+const D = __DUR__;
+tl.fromTo("#__ID__-txt", { scale: 1.25, opacity: 0, y: 40 }, { scale: 1, opacity: 1, y: 0, duration: 0.45, ease: "power3.out" }, 0.05);
+tl.to("#__ID__-txt", { scale: 1.06, duration: D - 0.7, ease: "sine.inOut" }, 0.5);
+tl.to("#__ID__-txt", { opacity: 0, duration: 0.25, ease: "power2.in" }, D - 0.28);
+window.__timelines["__ID__"] = tl;
+</script>
+</template>
+</html>

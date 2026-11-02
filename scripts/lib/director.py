@@ -16,7 +16,7 @@ from . import config as cfg
 from .hfbuild import REGISTRY, check_values, BuildError
 
 FULL_SCREEN = {"text_card", "flash", "number_graph", "before_after", "tier_list", "pixel_scene"}          # the face is hidden: captions pause
-DIRECTOR_BLOCKS = ["text_card", "split", "flash", "logo_card", "name_tag", "info_card", "number_graph", "before_after", "tier_list", "ui_card", "doc_card", "pixel_scene"]   # what the Director may place as moments
+DIRECTOR_BLOCKS = ["text_card", "split", "flash", "logo_card", "name_tag", "info_card", "number_graph", "before_after", "tier_list", "ui_card", "doc_card", "pixel_scene", "text_behind"]   # what the Director may place as moments
 DIGITS = re.compile(r"[0-9][0-9,.]*")
 
 
@@ -272,6 +272,10 @@ def resolve(plan, edl_words, duration, *, logos=(), platform_handle="@handle", r
     fmax = r["moments"]["flash"]["max_per_reel"]
     if counts.get("flash", 0) > fmax:
         err.append(f"{counts['flash']} flashes; maximum {fmax}")
+    for bk, n_ in counts.items():                                 # any other block with a per-reel maximum (e.g. text_behind)
+        mx = r["moments"].get(bk, {}).get("max_per_reel")
+        if bk != "flash" and mx and n_ > mx:
+            err.append(f"{n_} {bk} moments; maximum {mx} per reel")
 
     # overlaps between moments (all moment blocks occupy the screen)
     ms = sorted([s for s in scenes if s["block"] in DIRECTOR_BLOCKS], key=lambda s: s["t_in"])
@@ -319,6 +323,9 @@ def face_cuts(timeline, segments):
     splits = [(s["t_in"], s["t_out"]) for s in timeline["scenes"] if s["block"] == "split"]
     for a, b in splits:
         cuts_at.update((a, b))
+    behind = [(s["t_in"], s["t_out"]) for s in timeline["scenes"] if s["block"] == "text_behind"]     # the cutout needs the plain, unzoomed picture
+    for a, b in behind:
+        cuts_at.update((a, b))
     pts = sorted(t for t in cuts_at if 0 <= t <= timeline["duration"])
     out = []
     for a, b in zip(pts, pts[1:]):
@@ -331,6 +338,8 @@ def face_cuts(timeline, segments):
         for t, sc in punch:
             if t <= a + 1e-6 < t + 1.6:
                 scale = sc
+        if any(x <= a + 1e-6 < y2 for x, y2 in behind):
+            scale = 1.0
         y = 480 if any(x <= a + 1e-6 < y2 for x, y2 in splits) else 0
         out.append({"id": f"seg{len(out)}", "t_in": round(a, 3), "t_out": round(b, 3),
                     "src_in": round(seg["src_in"] + (a - seg["t_in"]), 3), "scale": scale,

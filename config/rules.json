@@ -59,6 +59,11 @@
     },
     "pixel_scene": {
       "min_gap_s": 10
+    },
+    "text_behind": {
+      "min_gap_s": 10,
+      "max_per_reel": 2,
+      "requires": "face in the middle of the frame (checked from the shot log)"
     }
   },
   "sfx": {

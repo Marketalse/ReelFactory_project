@@ -52,6 +52,7 @@ FIT = {  # block -> {value: (largest px, smallest px)}: one-line text sized from
     "flash": {"word": (260, 90)},
     "split": {"value": (230, 96)},
     "number_graph": {"value": (230, 96)},
+    "text_behind": {"text": (230, 80)},
 }
 GLYPH_EM = 0.62          # average Readex Pro bold glyph width in em (Arabic and digits), with margin
 
@@ -71,6 +72,10 @@ def stamp(block, inst_id, dur, groups_html="", values=None):
     for key, (big, small) in FIT.get(block, {}).items():
         v = (values or {}).get(key) or spec["inputs"][key].get("default") or ""
         src = src.replace(f"__SIZE_{key}__", str(fit_size(v, big, small)))
+    full = {k: v.get("default", "") for k, v in spec["inputs"].items()}
+    full.update(values or {})
+    for key, v in full.items():                                  # asset paths and numbers that must be in the file text itself (video src, positions)
+        src = src.replace(f"__VAR_{key}__", html.escape(str(v if v is not None else ""), quote=True))
     return src.replace("__ID__", inst_id).replace("__DUR__", _num(dur)).replace("<!--GROUPS-->", groups_html)
 
 

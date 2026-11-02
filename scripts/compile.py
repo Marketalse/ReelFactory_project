@@ -8,7 +8,7 @@ Reads timeline.json + edl.json (written by reel.py) and writes jobs/<job>/hyperf
 import argparse, json, os, shutil, sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from lib import config as cfg       # noqa: E402
+from lib import config as cfg, matte       # noqa: E402
 from lib import hfbuild, director   # noqa: E402
 
 
@@ -19,6 +19,12 @@ def handle_for(platform, final):
             raise hfbuild.BuildError(f"No {platform} handle in config/brand.json -> handles.{platform}. Set it before the final render.")
         return "@your_handle"
     return h
+
+
+def _behind_top(text, face_cy):
+    """Text height so the head covers only the lower ~38% of the letters (still readable). Head top is about 0.11 of the frame above the face centre."""
+    size = hfbuild.fit_size(text, 230, 80)
+    return int(max(250, (face_cy - 0.11) * 1920 - 0.62 * size * 1.05))
 
 
 def compile_job(job, platform="instagram", final=False, out=None, layer="full"):
@@ -37,6 +43,30 @@ def compile_job(job, platform="instagram", final=False, out=None, layer="full"):
     cap_kw = [k for k, i in enumerate(keep) if i in kw]
     scenes.append({"id": "caps", "block": "captions", "t_in": 0.0, "t_out": tl["duration"], "values": {},
                    "groups_html": hfbuild.caption_groups(cap_words, cap_kw, "caps", stops=[a for a, _ in tl["caption_gaps"]])})
+    # text behind the head (T119): the person cutout is made here (local AI model, cached); a moment that can't get one is dropped, not fatal
+    behind = [s for s in scenes if s["block"] == "text_behind"]
+    dropped = []
+    if behind and layer != "video":
+        shots = []
+        try:
+            shots = json.load(open(os.path.join(job, "shot_log.json"), encoding="utf-8"))
+        except (OSError, ValueError):
+            pass
+        for s in behind:
+            try:
+                if not matte.face_ok(shots):
+                    raise matte.MatteError("the face is not in the middle of the frame")
+                src = matte.cutout(job, edl, s["t_in"], s["t_out"], final)
+                os.makedirs(os.path.join(out, "assets"), exist_ok=True)
+                shutil.copy(src, os.path.join(out, "assets", f"matte_{s['id']}.webm"))
+                s["values"] = dict(s.get("values") or {}, matte=f"assets/matte_{s['id']}.webm", top=_behind_top(s["values"].get("text", ""), tl.get("face_cy", 0.38)))
+            except matte.MatteError as e:
+                print(f"   text behind the head dropped at {s['t_in']:.1f}s: {e}")
+                scenes.remove(s); dropped.append(s["id"])
+        tl = dict(tl, scenes=[x for x in tl["scenes"] if x["block"] != "text_behind" or any(y["id"] == x["id"] for y in scenes)])
+    elif behind:
+        dropped = [s["id"] for s in behind]
+        scenes = [s for s in scenes if s["block"] != "text_behind"]
     cuts = director.face_cuts(tl, edl["segments"])
     # logos used by this reel
     src_logos = os.path.join(job, "assets")
@@ -49,7 +79,7 @@ def compile_job(job, platform="instagram", final=False, out=None, layer="full"):
         scenes = []
     hfbuild.build_project(out, duration=tl["duration"], face_cuts=[] if layer == "graphics" else cuts, scenes=scenes,
                           video_src=os.path.join(job, "proxy.mp4"), transparent=layer == "graphics")
-    json.dump({"platform": platform, "final": final, "face_cuts": cuts, "caption_words": len(cap_words)},
+    json.dump({"platform": platform, "final": final, "face_cuts": cuts, "caption_words": len(cap_words), "dropped_scenes": dropped},
               open(os.path.join(out, "compile_info.json"), "w"), indent=1)
     return out
 

@@ -1584,11 +1584,11 @@
    "phase": "P16",
    "title": "Text behind the head (needs a person-cutout model on your Mac)",
    "owner": "Claude",
-   "status": "todo",
+   "status": "done",
    "depends": [],
    "done_when": "Proven on a real reel.",
-   "notes": "Was T48. Needs your Mac.",
-   "evidence": "",
+   "notes": "Built 2026-11-02: text behind the head with a free on-device person cutout (HyperFrames remove-background); proven on a real render with your face (viewed). ~2 fps on a plain CPU (about 45 s for a 3 s moment at full size, half size for drafts, cached); falls back by dropping only that moment. Done on Hesham's instruction.",
+   "evidence": "scripts/lib/matte.py, templates/blocks/text_behind.html, scripts/compile.py, scripts/lib/director.py, tests/test_text_behind.py",
    "updated": "2026-11-02"
   },
   {
@@ -1596,11 +1596,11 @@
    "phase": "P16",
    "title": "Pixel-art scenes (marketing department, social-media manager, meeting)",
    "owner": "Claude",
-   "status": "todo",
+   "status": "done",
    "depends": [],
    "done_when": "You approve a sample.",
-   "notes": "Was T85. Needs your style OK + a one-time character set.",
-   "evidence": "",
+   "notes": "Built 2026-11-02: pixel_scene with 3 scenes (marketing department, social media manager, team meeting), drawn in code in the brand colours (no image credits spent); viewed in a real HyperFrames snapshot. Done on Hesham's instruction.",
+   "evidence": "templates/blocks/pixel_scene.html, templates/blocks/registry.json, tests/test_safe_zones.py",
    "updated": "2026-11-02"
   },
   {
@@ -1608,11 +1608,11 @@
    "phase": "P16",
    "title": "Floating UI card and document card templates",
    "owner": "Claude",
-   "status": "todo",
+   "status": "done",
    "depends": [],
    "done_when": "You approve samples.",
-   "notes": "Part of T75. Needs your real screens.",
-   "evidence": "",
+   "notes": "Built 2026-11-02: ui_card (floating app window with a screenshot from the reel's assets) and doc_card (paper sheet with a highlighted phrase); viewed in a real snapshot. Add your own screenshots to library/broll/ and the picture matching (T123) offers them. Done on Hesham's instruction.",
+   "evidence": "templates/blocks/ui_card.html, templates/blocks/doc_card.html, tests/test_safe_zones.py",
    "updated": "2026-11-02"
   },
   {
@@ -1632,11 +1632,11 @@
    "phase": "P16",
    "title": "Smart B-roll by what is IN the picture (vision AI)",
    "owner": "Claude",
-   "status": "todo",
+   "status": "done",
    "depends": [],
    "done_when": "Only if you approve the cost.",
-   "notes": "Part of T105; the free name matching is built.",
-   "evidence": "",
+   "notes": "Built 2026-11-02: new library pictures are described once by the vision AI (cached), one small text call per reel picks the ones that fit. Cents per reel; money guard applies; off switch in config/project.json -> broll_ai.enabled. Done on Hesham's instruction.",
+   "evidence": "scripts/lib/broll_ai.py, scripts/reel.py (broll_ai_step), config/project.json (broll_ai), tests/test_broll_ai.py",
    "updated": "2026-11-02"
   }
  ],

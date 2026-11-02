@@ -314,6 +314,11 @@ def extra_qa(job, video, qa, tl, width=None):
         qa["warnings"].append(f"sound sync check skipped: {ex}")
     try:
         vp = json.load(open(os.path.join(job, "visual_plan.json"), encoding="utf-8"))
+        try:                                                 # moments the compile step dropped are not expected on screen
+            gone = set(json.load(open(os.path.join(job, "hyperframes", "compile_info.json"), encoding="utf-8")).get("dropped_scenes", []))
+            vp["graphics"] = [g for g in vp.get("graphics", []) if g.get("id") not in gone]
+        except (OSError, ValueError):
+            pass
         qa["warnings"] += render_guard.caption_checks(video, vp)
     except (OSError, ValueError):
         pass

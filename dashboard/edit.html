@@ -223,7 +223,8 @@ const clone=o=>JSON.parse(JSON.stringify(o));
 const JOB=new URLSearchParams(location.search).get("job")||"";
 const LABEL={text_card:"Text card",split:"Number / point card",flash:"Flash word",logo_card:"Logo card"};
 const FIELD={kicker:"Small line above",headline:"Headline",sub:"Line below",value:"Number (as you said it)",label:"Label",word:"Word",
-             name_a:"Name",name_b:"Second name",joiner:"Between",logo_a:"Logo",logo_b:"Second logo",line1:"Line 1 (white)",line2:"Line 2 (green)"};
+             name_a:"Name",name_b:"Second name",joiner:"Between",logo_a:"Logo",logo_b:"Second logo",line1:"Line 1 (white)",line2:"Line 2 (green)",
+             title:"Title",highlight:"Highlighted phrase",note:"Small note",scene:"Scene",text:"Big word (behind your head)",caption:"Line under",image:"Screenshot"};
 let S=null;                 // last server state (derived from E)
 let E=null;                 // the edit being worked on
 let undo=[], redo=[], dirty=false, savedOnce=false;
@@ -342,7 +343,7 @@ function renderProps(){
     $("#propSub").textContent=LABEL[m.block]||m.block;
     h+=`<h3>${esc(LABEL[m.block]||m.block)}</h3><p class="hint">Starts at ${sc?fmt(sc.t_in):"?"} on the word “${esc((S.words.find(w=>w.i===m.at_src)||{}).text||"")}”. Drag it on the timeline to move it; drag its left or right edge to make it shorter or longer.</p>`;
     h+=`<div class="field"><label>Type</label><select data-k="block">${Object.keys(LABEL).filter(k=>S.blocks[k]).map(k=>`<option value="${k}"${k===m.block?" selected":""}>${LABEL[k]}</option>`).join("")}</select></div>`;
-    for(const [k,spec] of Object.entries(b.inputs)) h+=fieldHtml(k,spec,m.values[k],"v.");
+    for(const [k,spec] of Object.entries(b.inputs)) if(spec.type!=="generated") h+=fieldHtml(k,spec,m.values[k],"v.");
     h+=`<div class="field"><label>Length<span>${(+m.duration).toFixed(1)} s</span></label><input type="range" data-k="duration" min="${dBounds(m.block).min}" max="${dBounds(m.block).max}" step="0.1" value="${m.duration}"></div>`;
     h+=`<div class="row"><button class="btn" id="pDel">🗑 Delete card</button><button class="btn" id="pGo">Go to it</button></div>`;
   } else if(it&&it.kind==="zoom"&&E.punch_ins[it.i]){

@@ -530,7 +530,7 @@
           "required": true
         },
         "image": {
-          "type": "string",
+          "type": "asset",
           "default": "",
           "help": "optional screenshot file from the reel's assets/ (no file = a simple dashboard drawing)"
         }
@@ -624,6 +624,43 @@
       ],
       "sfx": {
         "in": "pop"
+      }
+    },
+    "text_behind": {
+      "kind": "scene",
+      "label": "Text behind the head (big word, the head covers part of it)",
+      "file": "text_behind.html",
+      "layer": 26,
+      "purpose": "ONE big punchy word he says, shown huge BEHIND his head: his head and shoulders stay in front of the letters (made with an automatic person cutout). Use for the single most important keyword. Maximum 2 per reel. It needs a clear face in the middle of the frame and no zoom during it (the editor removes the zoom by itself).",
+      "inputs": {
+        "text": {
+          "type": "string",
+          "maxLength": 14,
+          "help": "one short word (or two), exactly as he says it",
+          "required": true
+        },
+        "matte": {
+          "type": "generated",
+          "help": "the person cutout video, made by the compile step",
+          "default": ""
+        },
+        "top": {
+          "type": "generated",
+          "help": "text height in px, set from the face position",
+          "default": 520
+        }
+      },
+      "duration_s": {
+        "min": 2.0,
+        "max": 3.5
+      },
+      "rules": [
+        "max 2 per reel",
+        "min 10 s between",
+        "needs the face in the middle of the frame"
+      ],
+      "sfx": {
+        "in": "hit"
       }
     }
   }
