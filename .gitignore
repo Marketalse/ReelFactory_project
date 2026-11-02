@@ -40,3 +40,6 @@ dashboard/.runs/
 *.webm
 *.mkv
 *.m4v
+!library/broll/
+library/broll/*
+!library/broll/README.md

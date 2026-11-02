@@ -1,0 +1,47 @@
+{
+ "licence": "Own work made by the project's script. No third-party sound, nothing to credit or pay.",
+ "sounds": [
+  {
+   "name": "whoosh",
+   "file": "whoosh.wav",
+   "use": "A layout change: a card slides in or out",
+   "seconds": 0.5,
+   "source": "made by scripts/make_sfx.py from ffmpeg tone/noise generators; own work, free to use in any video"
+  },
+  {
+   "name": "pop",
+   "file": "pop.wav",
+   "use": "A key word lands (max 1 per 3 s)",
+   "seconds": 0.1,
+   "source": "made by scripts/make_sfx.py from ffmpeg tone/noise generators; own work, free to use in any video"
+  },
+  {
+   "name": "ding",
+   "file": "ding.wav",
+   "use": "A spoken number appears",
+   "seconds": 0.7,
+   "source": "made by scripts/make_sfx.py from ffmpeg tone/noise generators; own work, free to use in any video"
+  },
+  {
+   "name": "click",
+   "file": "click.wav",
+   "use": "A small tap on a title or tag",
+   "seconds": 0.04,
+   "source": "made by scripts/make_sfx.py from ffmpeg tone/noise generators; own work, free to use in any video"
+  },
+  {
+   "name": "hit",
+   "file": "hit.wav",
+   "use": "The title lands on the first frame",
+   "seconds": 0.35,
+   "source": "made by scripts/make_sfx.py from ffmpeg tone/noise generators; own work, free to use in any video"
+  },
+  {
+   "name": "rise",
+   "file": "rise.wav",
+   "use": "Build-up before a payoff",
+   "seconds": 0.8,
+   "source": "made by scripts/make_sfx.py from ffmpeg tone/noise generators; own work, free to use in any video"
+  }
+ ]
+}

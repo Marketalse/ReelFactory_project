@@ -27,7 +27,7 @@
       "min_gap_s": 3
     },
     "name_tag": {
-      "min_gap_s": 5
+      "min_gap_s": 6
     },
     "text_card": {
       "min_gap_s": 10
@@ -37,6 +37,18 @@
     },
     "counter": {
       "requires": "number actually spoken"
+    },
+    "info_card": {
+      "min_gap_s": 6
+    },
+    "number_graph": {
+      "min_gap_s": 8
+    },
+    "before_after": {
+      "min_gap_s": 8
+    },
+    "tier_list": {
+      "min_gap_s": 10
     }
   },
   "sfx": {

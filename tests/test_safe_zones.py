@@ -28,6 +28,8 @@ def sample_values(block):
         vals["value"] = "12,500,000"
     if block == "flash":
         vals["word"] = "الاستراتيجية"
+    if block == "number_graph":
+        vals["value"] = "12,500,000"; vals["percent"] = "100"
     if block == "cta_card":
         vals["handle"] = "@hesham_alshakarchi"; vals["keyword"] = "علقلي متجر"
     return vals

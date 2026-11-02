@@ -1,6 +1,6 @@
 {
   "project": "Reel Factory",
-  "version": 23,
+  "version": 24,
   "owners": [
     "Hesham",
     "Claude",
@@ -58,6 +58,26 @@
       "id": "P8",
       "name": "Independent + smarter",
       "goal": "Runs on its own Nous key without Hermes, spend governed in the Nous portal, cheaper where quality allows, learns from Hesham's comments"
+    },
+    {
+      "id": "P9",
+      "name": "NOW · Close the pending tasks (Nov 2–4)",
+      "goal": "Claude finishes every task that doesn't need you. Main priority."
+    },
+    {
+      "id": "P10",
+      "name": "YOUR TURN · Answers and the full test (Nov 4–7)",
+      "goal": "Your short answers + one full reel test from upload to final video"
+    },
+    {
+      "id": "P11",
+      "name": "NEXT · Timeline editor (from Nov 9)",
+      "goal": "Upload footage to a real timeline, AI Check my cuts, AI Auto-edit"
+    },
+    {
+      "id": "P12",
+      "name": "LATER · Ideas, no date yet",
+      "goal": "Only after the pending tasks and the timeline are done"
     }
   ],
   "tasks": [
@@ -159,13 +179,13 @@
     },
     {
       "id": "T09",
-      "phase": "P0",
+      "phase": "P10",
       "title": "Answer: music + SFX library",
       "owner": "Hesham",
       "status": "in_progress",
       "depends": [],
       "done_when": "",
-      "notes": "Music: you add trending music when posting (decided). Still needed: your 11 best reels in Google Drive to learn your sound-effect style.",
+      "notes": "Answer after T13. Music: you add trending music when posting (decided). Still needed: your 11 best reels in Google Drive to learn your sound-effect style.",
       "evidence": "",
       "updated": "2026-11-02"
     },
@@ -195,27 +215,27 @@
     },
     {
       "id": "T12",
-      "phase": "P0",
+      "phase": "P10",
       "title": "Answer: clips = separate takes or multi-camera? filename order OK?",
       "owner": "Hesham",
       "status": "todo",
       "depends": [],
       "done_when": "",
-      "notes": "",
+      "notes": "Needs your answer: separate takes or multi-camera?",
       "evidence": "",
-      "updated": "2026-11-01"
+      "updated": "2026-11-02"
     },
     {
       "id": "T13",
-      "phase": "P0",
+      "phase": "P10",
       "title": "Send 2–3 of your best previous reels (references/own)",
       "owner": "Hesham",
       "status": "in_progress",
       "depends": [],
       "done_when": "",
-      "notes": "11 links received 2026-11-01 (references/own/best_reels.md). Waiting for the video files (Instagram is blocked from the cloud).",
+      "notes": "Needs the best reel videos in the Google Drive folder. 11 links received 2026-11-01 (references/own/best_reels.md). Waiting for the video files (Instagram is blocked from the cloud).",
       "evidence": "",
-      "updated": "2026-11-01"
+      "updated": "2026-11-02"
     },
     {
       "id": "T14",
@@ -348,17 +368,17 @@
     },
     {
       "id": "T23",
-      "phase": "P2",
+      "phase": "P9",
       "title": "SFX catalog + licence file from the chosen library",
       "owner": "Claude",
-      "status": "todo",
+      "status": "review",
       "depends": [
         "T09",
         "T20"
       ],
       "done_when": "",
-      "notes": "Waits for your best reels (T13): learn your sound-effect style, then pick free-to-use effects.",
-      "evidence": "",
+      "notes": "Built 2026-11-02. Your best reels (T13) will only tune WHEN sounds play, not which files.",
+      "evidence": "scripts/make_sfx.py, style/sfx/catalog.json, tests/test_sfx.py: whoosh, pop, ding, click, rise made with ffmpeg; own work, no licence needed. Files are rebuilt by the script (audio is not kept in git).",
       "updated": "2026-11-02"
     },
     {
@@ -377,7 +397,7 @@
     },
     {
       "id": "T25",
-      "phase": "P7",
+      "phase": "P10",
       "title": "Approve each block look (or send fixes)",
       "owner": "Hesham",
       "status": "todo",
@@ -385,7 +405,7 @@
         "T24"
       ],
       "done_when": "All 8 marked approved",
-      "notes": "Parked 2026-11-02: your real reels already show every block. Give look feedback as comments on a draft.",
+      "notes": "The 5 new blocks (T47) are also ready to look at: add --new-blocks to the sample command. Look feedback can still be given as comments on a real draft. Parked: give look feedback as comments on a draft. Parked 2026-11-02: your real reels already show every block. Give look feedback as comments on a draft.",
       "evidence": "",
       "updated": "2026-11-02"
     },
@@ -536,17 +556,17 @@
     },
     {
       "id": "T36",
-      "phase": "P4",
+      "phase": "P9",
       "title": "energy.py: measure your best reels → target rates",
       "owner": "Claude",
-      "status": "todo",
+      "status": "review",
       "depends": [
         "T13"
       ],
       "done_when": "",
-      "notes": "",
-      "evidence": "",
-      "updated": "2026-11-01"
+      "notes": "Tool built 2026-11-02. Real target numbers appear when your best reel videos are in references/own (T13).",
+      "evidence": "scripts/energy.py + tests/test_energy.py (known test video: 2 picture changes, longest hold, first sound, loudness). Run: python3 scripts/energy.py references/own/*.mp4 --save",
+      "updated": "2026-11-02"
     },
     {
       "id": "T37",
@@ -650,7 +670,7 @@
     },
     {
       "id": "T44",
-      "phase": "P8",
+      "phase": "P10",
       "title": "A/B Director Haiku vs Sonnet on the 3 clips; pick one",
       "owner": "Hesham",
       "status": "todo",
@@ -658,13 +678,13 @@
         "T42"
       ],
       "done_when": "",
-      "notes": "Do together with the model bake-off (T59).",
+      "notes": "Do with T59 together. Do together with the model bake-off (T59).",
       "evidence": "",
       "updated": "2026-11-02"
     },
     {
       "id": "T45",
-      "phase": "P6",
+      "phase": "P10",
       "title": "Post, then fill 'How did it do?' on the final page 2 and 7 days later",
       "owner": "Hesham",
       "status": "in_progress",
@@ -672,51 +692,51 @@
         "T43"
       ],
       "done_when": "",
-      "notes": "stock-tips: Instagram 2-day results saved. Add the 7-day numbers too.",
+      "notes": "Fill 7-day results. stock-tips: Instagram 2-day results saved. Add the 7-day numbers too.",
       "evidence": "",
       "updated": "2026-11-02"
     },
     {
       "id": "T46",
-      "phase": "P7",
+      "phase": "P9",
       "title": "B-roll library from your logos/screenshots/refs",
       "owner": "Claude",
-      "status": "todo",
+      "status": "review",
       "depends": [
         "T43"
       ],
       "done_when": "",
-      "notes": "",
-      "evidence": "",
-      "updated": "2026-11-01"
+      "notes": "Built 2026-11-02. Add your logos/screenshots to library/broll on your Mac.",
+      "evidence": "scripts/lib/broll.py, library/broll/README.md, tests/test_broll.py. Drop images named after what they show (instagram.svg); said in a reel = copied into that reel.",
+      "updated": "2026-11-02"
     },
     {
       "id": "T47",
-      "phase": "P7",
+      "phase": "P9",
       "title": "Extra blocks: name_tag, number_graph, before_after, tier_list",
       "owner": "Claude",
-      "status": "todo",
+      "status": "review",
       "depends": [
         "T43"
       ],
       "done_when": "",
-      "notes": "",
-      "evidence": "",
-      "updated": "2026-11-01"
+      "notes": "Built 2026-11-02: name_tag, info_card, number_graph, before_after, tier_list (templates + registry + AI editor + tests).",
+      "evidence": "templates/blocks/{name_tag,info_card,number_graph,before_after,tier_list}.html, registry.json, tests/test_safe_zones.py (all blocks inside the safe zone); I looked at a rendered picture of each block (all inside the safe zone, bar fills to the spoken percentage). Sample reel on your Mac: python3 scripts/block_samples.py --video jobs/<reel>/proxy.mp4 --new-blocks",
+      "updated": "2026-11-02"
     },
     {
       "id": "T48",
-      "phase": "P7",
+      "phase": "P9",
       "title": "Text-behind-head (needs matte) — prove on the Mac",
       "owner": "Claude",
-      "status": "todo",
+      "status": "blocked",
       "depends": [
         "T43"
       ],
       "done_when": "",
-      "notes": " Reassigned from Hermes (v2: Hermes optional).",
+      "notes": "Blocked: needs your Mac to install a person-cutout model and test on real footage. When you want it, tell me and I will give you ONE command to paste. Needs your Mac (matte model). Target Nov 4: ready to try; marked blocked until you run it.  Reassigned from Hermes (v2: Hermes optional).",
       "evidence": "",
-      "updated": "2026-11-01"
+      "updated": "2026-11-02"
     },
     {
       "id": "T49",
@@ -826,7 +846,7 @@
     },
     {
       "id": "T56",
-      "phase": "P8",
+      "phase": "P10",
       "title": "Nous portal: name the key 'Reel Factory' and set a monthly limit (suggest $20) if the portal offers one",
       "owner": "Hesham",
       "status": "todo",
@@ -835,8 +855,8 @@
       ],
       "done_when": "Portal shows the key with its limit",
       "evidence": "",
-      "notes": "Second safety net on top of Reel Factory's own caps ($1/reel, $50/month).",
-      "updated": "2026-11-01"
+      "notes": "2 minutes in the Nous portal. Second safety net on top of Reel Factory's own caps ($1/reel, $50/month).",
+      "updated": "2026-11-02"
     },
     {
       "id": "T57",
@@ -866,22 +886,22 @@
     },
     {
       "id": "T59",
-      "phase": "P8",
+      "phase": "P9",
       "title": "Cheaper-model bake-off on the real transcript: word fix, story pick, director — current vs 2 cheaper Nous models",
       "owner": "Claude",
-      "status": "todo",
+      "status": "review",
       "depends": [
         "T54",
         "T58"
       ],
       "done_when": "Side-by-side report: quality notes + cost per step",
-      "evidence": "",
-      "notes": "Costs cents. Only uses footage Hesham already recorded.",
-      "updated": "2026-11-01"
+      "evidence": "scripts/reel.py --bakeoff + tests/test_bakeoff.py (pretend AI). Runs the 3 AI steps on a real reel with each model in scratch folders and writes jobs/_bakeoff/<reel>/report.md. Your reel is never touched.",
+      "notes": "Ready 2026-11-02. To run (costs cents, needs your key): python3 scripts/reel.py jobs/<your-reel> --bakeoff \"model-a,model-b\" . Model names: python3 scripts/models_refresh.py lists what Nous offers. Then you pick per step (T60).",
+      "updated": "2026-11-02"
     },
     {
       "id": "T60",
-      "phase": "P8",
+      "phase": "P10",
       "title": "Pick the model for each step from the bake-off (written in docs/DECISIONS.md)",
       "owner": "Hesham",
       "status": "todo",
@@ -890,12 +910,12 @@
       ],
       "done_when": "docs/DECISIONS.md lists the chosen model per step",
       "evidence": "",
-      "notes": "Rule: never a cheaper model if quality drops.",
-      "updated": "2026-11-01"
+      "notes": "After T59. Rule: never a cheaper model if quality drops.",
+      "updated": "2026-11-02"
     },
     {
       "id": "T61",
-      "phase": "P8",
+      "phase": "P9",
       "title": "Cut tokens: shorter prompts, cache the fixed parts (glossary, block catalogue) where the route supports it",
       "owner": "Claude",
       "status": "todo",
@@ -904,8 +924,8 @@
       ],
       "done_when": "Same output with fewer tokens per reel (measured in cost.json)",
       "evidence": "",
-      "notes": "",
-      "updated": "2026-11-01"
+      "notes": "Waiting for the bake-off result (T59/T60). Finding: ~95% of a reel's AI cost is the footage description (20 pictures, ~14,600 tokens, $0.052 of $0.055). Fewer or smaller pictures is the big saving, but it can hurt face/logo detection, so it must be compared in the bake-off first. Target Nov 4: safe token cuts; the rest after T60.",
+      "updated": "2026-11-02"
     },
     {
       "id": "T62",
@@ -1047,27 +1067,27 @@
     },
     {
       "id": "T75",
-      "phase": "P7",
+      "phase": "P9",
       "title": "Later: turn Hesham's visual prompts into templates (floating UI card, document card, lower-third info card, pixel-art scenes)",
       "owner": "Claude",
-      "status": "todo",
+      "status": "in_progress",
       "depends": [],
       "done_when": "Hesham approves samples of the ones he wants",
       "evidence": "",
-      "notes": "Prompts saved in docs/ideas/visual_prompts.md (2026-11-01). Start only when Hesham asks.",
-      "updated": "2026-11-01"
+      "notes": "Part 3 (lower-third info card) built as info_card. Floating UI/document cards need your real screenshots/text; pixel-art needs your OK on style (see T85). Prompts saved in docs/ideas/visual_prompts.md (2026-11-01). Start only when Hesham asks.",
+      "updated": "2026-11-02"
     },
     {
       "id": "T76",
-      "phase": "P7",
+      "phase": "P12",
       "title": "Later: self-learning editor: track how each posted reel performs (manual or Instagram/TikTok API) and learn what editing works",
       "owner": "Claude",
       "status": "todo",
       "depends": [],
       "done_when": "Hesham agrees the plan; then: performance entered for 10+ reels and the first learned rules appear in lessons.md",
       "evidence": "",
-      "notes": "Step 1 (manual results box + Results page + CSV) built on v2, 2026-11-01. Step 2 = linked Instagram/TikTok accounts + learning rules (from 5 reels). Reminder 2026-11-08.",
-      "updated": "2026-11-01"
+      "notes": "Reminder Nov 8 to decide the plan. Step 1 (manual results box + Results page + CSV) built on v2, 2026-11-01. Step 2 = linked Instagram/TikTok accounts + learning rules (from 5 reels). Reminder 2026-11-08.",
+      "updated": "2026-11-02"
     },
     {
       "id": "T77",
@@ -1115,6 +1135,72 @@
       "done_when": "Banner shows problems; stuck or hiccup reels are retried at most 2 times; key/credit errors are only reported; Settings switch turns it off.",
       "notes": "",
       "evidence": "dashboard/it_agent.py, tests/test_it_agent.py (12 tests), AGENTS.md section 11, docs/DECISIONS.md 2026-11-02",
+      "updated": "2026-11-02"
+    },
+    {
+      "id": "T81",
+      "phase": "P11",
+      "title": "Timeline from raw footage: upload clips, see them as a video track (thumbnails + waveform), split, trim, delete and reorder by hand",
+      "owner": "Claude",
+      "status": "todo",
+      "depends": [
+        "T79"
+      ],
+      "done_when": "Upload 3 clips, split one, trim, delete a piece, drag to reorder, save: the reel is made from MY sequence (no AI story pick).",
+      "notes": "Starts Nov 9, after the pending tasks are closed. Asked by Hesham 2026-11-02: a real timeline like Premiere/After Effects, footage first, AI button to check and cut.",
+      "evidence": "",
+      "updated": "2026-11-02"
+    },
+    {
+      "id": "T82",
+      "phase": "P11",
+      "title": "AI button 'Check my cuts': AI reviews my sequence and marks on the timeline where cuts should be (pauses, retakes, weak parts); I accept or reject each",
+      "owner": "Claude",
+      "status": "todo",
+      "depends": [
+        "T81"
+      ],
+      "done_when": "Markers appear on the timeline with a plain reason; Accept / Reject per marker and Accept all; nothing changes until I accept.",
+      "notes": "Starts Nov 9, after the pending tasks are closed. Asked by Hesham 2026-11-02: a real timeline like Premiere/After Effects, footage first, AI button to check and cut.",
+      "evidence": "",
+      "updated": "2026-11-02"
+    },
+    {
+      "id": "T83",
+      "phase": "P11",
+      "title": "AI button 'Auto-edit': AI cuts, arranges and adds cards/zooms while I watch it happen on the timeline; one-click Undo",
+      "owner": "Claude",
+      "status": "todo",
+      "depends": [
+        "T82"
+      ],
+      "done_when": "Press the button: edits appear on the timeline step by step, everything can be undone, cost shown before it runs and capped.",
+      "notes": "Starts Nov 9, after the pending tasks are closed. Asked by Hesham 2026-11-02: a real timeline like Premiere/After Effects, footage first, AI button to check and cut.",
+      "evidence": "",
+      "updated": "2026-11-02"
+    },
+    {
+      "id": "T84",
+      "phase": "P12",
+      "title": "AI doctor for the IT helper: reads an error and PROPOSES a fix; you approve before anything changes",
+      "owner": "Claude",
+      "status": "todo",
+      "depends": [],
+      "done_when": "Hesham approves a sample.",
+      "evidence": "",
+      "notes": "Only after the timeline. Never acts alone.",
+      "updated": "2026-11-02"
+    },
+    {
+      "id": "T85",
+      "phase": "P12",
+      "title": "Pixel-art scenes (marketing department, social-media manager, meeting) as templates",
+      "owner": "Claude",
+      "status": "todo",
+      "depends": [],
+      "done_when": "Hesham approves a sample.",
+      "evidence": "",
+      "notes": "Needs your OK on the style and a one-time character set.",
       "updated": "2026-11-02"
     }
   ],
@@ -1382,6 +1468,30 @@
       "who": "Claude",
       "task": "board",
       "change": "Tidied: committee + block-sample tasks parked in P7; real-reel tasks moved to review; T78 added"
+    },
+    {
+      "time": "2026-11-02T20:00",
+      "who": "Claude",
+      "task": "-",
+      "change": "Board re-ordered into dated phases: NOW close pending (Nov 2-4), YOUR TURN (Nov 4-7), NEXT timeline (Nov 9+), LATER ideas. T47 built → review."
+    },
+    {
+      "time": "2026-11-02T21:00",
+      "who": "Claude",
+      "task": "T23,T36,T46",
+      "change": "built → review: own SFX set, energy.py measuring tool, B-roll library"
+    },
+    {
+      "time": "2026-11-02T22:00",
+      "who": "Claude",
+      "task": "T59,T61,T48",
+      "change": "T59 bake-off built → review; T61 finding recorded; T48 blocked on Mac test"
+    },
+    {
+      "time": "2026-11-02T22:30",
+      "who": "Claude",
+      "task": "T47",
+      "change": "new-block sample reel (--new-blocks); number graph made robust"
     }
   ]
 }

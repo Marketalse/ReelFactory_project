@@ -30,7 +30,11 @@ def plan(e):
         vals = {"text_card": {"kicker": "القاعدة 1", "headline": "شغلك كله خدمة زبائن"},
                 "split": {"value": num or "خدمة", "label": "طلب تخسره"},
                 "flash": {"word": num or "ركز"},
-                "logo_card": {"logo_a": "store.svg", "name_a": "Store"}}[b]
+                "logo_card": {"logo_a": "store.svg", "name_a": "Store"},
+            "name_tag": {"name": "هشام", "role": "مسوّق"}, "info_card": {"headline": "الرد السريع يبيع"},
+            "number_graph": {"value": num or "70", "label": "من الزبائن", "percent": ""},
+            "before_after": {"before": "رد بعد يومين", "after": "رد خلال دقيقة"},
+            "tier_list": {"title": "ترتيب", "tier_s": "واتساب", "tier_a": "انستغرام"}}[b]
         moments.append({"block": b, "at_word": random.randint(0, n - 1), "duration": round(random.uniform(0.5, 6.5), 2), "values": vals})
     return {"hook": {"line1": "حاط بيج وما حاط رقم؟", "line2": "شنو تتصور؟"},
             "keyword_ids": random.sample(range(n), min(n, random.randint(0, 6))), "moments": moments,

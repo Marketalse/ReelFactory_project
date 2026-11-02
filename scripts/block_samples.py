@@ -38,9 +38,10 @@ def main():
     ap.add_argument("--video", help="a proxy.mp4 (1080x1920) of Hesham talking")
     ap.add_argument("--start", type=float, default=0.0, help="where in the proxy to start (seconds)")
     ap.add_argument("--test-pattern", action="store_true", help="no footage: use a generated test video")
+    ap.add_argument("--new-blocks", action="store_true", help="sample reel of the 5 newer blocks (name tag, info card, number graph, before/after, tier list)")
     ap.add_argument("--out", default=os.path.join(cfg.ROOT, "jobs", "_samples", "blocks"))
     a = ap.parse_args()
-    D = 21.0
+    D = 24.0 if a.new_blocks else 21.0
     os.makedirs(a.out, exist_ok=True)
     if a.video:
         video = os.path.abspath(a.video)
@@ -71,6 +72,10 @@ def main():
         words.append({"text": w, "start": t, "end": t + 0.3}); t += 0.36
         if w in ("يسوي", "زبائن", "مزحة"): t += 0.3       # natural pauses
     kw = [i for i, w in enumerate(words) if w["text"] in ("بيج", "customer", "300", "تخسر", "تابعني")]
+    if a.new_blocks:                                  # more words so the captions run the whole sample
+        t = 0.15; words = []
+        for w in (SAMPLE * 2):
+            words.append({"text": w, "start": t, "end": t + 0.3}); t += 0.36
     cap_words = [w for w in words if w["start"] < D - 0.4]
     scenes = [
         dict(id="hook", block="hook_two_tone", t_in=0, t_out=2.6, values={"line1": "حاط بيج وما حاط رقم تواصل؟", "line2": "شنو تتصور؟"}),
@@ -87,6 +92,19 @@ def main():
     keep = [w for w in cap_words if not any(s <= w["start"] < e for s, e in full)]
     kw2 = [keep.index(w) for w in keep if w in [cap_words[i] for i in kw]]
     scenes[-1]["groups_html"] = hfbuild.caption_groups(keep, kw2, "caps")
+    if a.new_blocks:
+        face_cuts = [face(0, 0, 3.0), face(1, 3.0, 3.5, scale=1.28, cy=0.36), face(2, 3.5, D)]
+        scenes = [
+            dict(id="hook", block="hook_two_tone", t_in=0, t_out=2.6, values={"line1": "حاط بيج وما حاط رقم تواصل؟", "line2": "شنو تتصور؟"}),
+            dict(id="tag1", block="name_tag", t_in=3.0, t_out=5.5, values={"name": "هشام الشكرجي", "role": "مسوّق في أربيل"}),
+            dict(id="info1", block="info_card", t_in=6.0, t_out=9.5, values={"kicker": "القاعدة 1", "headline": "الرد السريع يبيع", "caption": "الزبون ما ينتظر ساعات"}),
+            dict(id="num1", block="number_graph", t_in=10.0, t_out=13.5, values={"value": "70%", "label": "من الزبائن يشترون بعد الرد", "percent": "70"}),
+            dict(id="ba1", block="before_after", t_in=14.0, t_out=18.0, values={"before_label": "قبل", "before": "رد بعد يومين", "after_label": "بعد", "after": "رد خلال دقيقة"}),
+            dict(id="tier1", block="tier_list", t_in=18.5, t_out=D - 0.2, values={"title": "أفضل قنوات الرد", "tier_s": "واتساب", "tier_a": "انستغرام", "tier_b": "تيك توك", "tier_c": ""}),
+        ]
+        full = [(10.0, 13.5), (14.0, 18.0), (18.5, D - 0.2)]
+        keep = [w for w in cap_words if not any(s_ <= w["start"] < e_ for s_, e_ in full)]
+        scenes.append(dict(id="caps", block="captions", t_in=0, t_out=D, values={}, groups_html=hfbuild.caption_groups(keep, [], "caps")))
     idx = hfbuild.build_project(a.out, duration=D, face_cuts=face_cuts, scenes=scenes, video_src=video)
     print("built", idx)
     print("next:  cd", a.out, "&& npx hyperframes check && npx hyperframes snapshot --at 0.3,3.5,6,9,12.6,14.5,16,19")

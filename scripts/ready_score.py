@@ -12,7 +12,7 @@ import json, os, sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from lib import config as cfg, director  # noqa: E402
 
-CONTENT = {"text_card", "split", "flash", "logo_card"}
+CONTENT = {"text_card", "split", "flash", "logo_card", "info_card", "number_graph", "before_after", "tier_list"}
 
 
 def _j(p, default=None):

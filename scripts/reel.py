@@ -17,7 +17,7 @@ Money: a paid call is refused when this job's spend + its worst case would pass 
 budget_usd.per_reel_stop), or when the month would pass budget_usd.monthly_stop. Only text and small stills leave
 the Mac, never audio or video.
 """
-import argparse, base64, glob, json, os, re, subprocess, sys, time, urllib.request, urllib.error
+import argparse, base64, glob, json, os, re, shutil, subprocess, sys, time, urllib.request, urllib.error
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from lib import config as cfg   # noqa: E402  (all settings live in config/*.json)
@@ -352,6 +352,12 @@ def st_plan(c):
     out = os.path.join(c.job, "timeline.json")
     if os.path.exists(out) and not c.a.replan: return "cached"
     e = jload(os.path.join(c.job, "edl.json")); words = e["words"]
+    try:                                            # logos/screenshots from library/broll whose name he said
+        from lib import broll
+        got = broll.attach(c.job, words)
+        if got: print("   b-roll attached from library/broll:", ", ".join(got))
+    except Exception as ex:                         # noqa: BLE001 - the library is a bonus, never a reason to stop a reel
+        print("   b-roll library skipped:", ex)
     brief = open(os.path.join(c.job, "brief.md"), encoding="utf-8").read() if os.path.exists(os.path.join(c.job, "brief.md")) else ""
     job = jload(os.path.join(c.job, "job.json"), {})
     feedback = c.a.fix or ""
@@ -504,6 +510,56 @@ def notify(msg, job=None):
         pass
 
 
+def bakeoff(job, models, a):
+    """T59: run the three AI steps (word fix, story pick, director) with the current models and with each candidate on THIS
+    reel's real data, in scratch folders (jobs/_bakeoff/...). Your reel is never touched. Writes report.md: cost + result per model.
+    Costs cents; every call still goes through the budget guard. It never changes config/project.json: choosing is up to Hesham (T60)."""
+    global M_FIX, M_SEL, M_DIR
+    base = os.path.basename(job); out = os.path.join(ROOT, "jobs", "_bakeoff", base); os.makedirs(out, exist_ok=True)
+    cur = {"fix": M_FIX, "selects": M_SEL, "plan": M_DIR}
+    keep_a = (a.select, a.fresh_selects, a.replan); a.select, a.fresh_selects, a.replan = "auto", True, False
+    rows = []
+    try:
+        for label, pick in [("current", cur)] + [(m, {"fix": m, "selects": m, "plan": m}) for m in models]:
+            d = os.path.join(out, re.sub(r"[^a-z0-9]+", "-", label.lower()).strip("-")); os.makedirs(d, exist_ok=True)
+            for f in ("job.json", "brief.md", "transcript_asr.json", "transcript.json", "edl.json", "shot_log.json", "chosen_select.json"):
+                if os.path.exists(os.path.join(job, f)): shutil.copy(os.path.join(job, f), os.path.join(d, f))
+            for f in ("selects.json", "timeline.json", "scene_plan.json", "transcript_fix_meta.json", "cost.json", "proxy.mp4"):
+                if os.path.lexists(os.path.join(d, f)): os.remove(os.path.join(d, f))
+            if os.path.exists(os.path.join(job, "proxy.mp4")): os.symlink(os.path.join(job, "proxy.mp4"), os.path.join(d, "proxy.mp4"))
+            if os.path.isdir(os.path.join(job, "assets")) and not os.path.exists(os.path.join(d, "assets")):
+                shutil.copytree(os.path.join(job, "assets"), os.path.join(d, "assets"))
+            res = {"model": label, "steps": {}}
+            for step, fn_ in (("fix", st_fix), ("selects", st_selects), ("plan", st_plan)):
+                M_FIX, M_SEL, M_DIR = pick["fix"], pick["selects"], pick["plan"]
+                c = Ctx(d, a); before = c.spent(); t0 = time.time()
+                real = os.path.join(job, "transcript.json")
+                try:
+                    msg = fn_(c); ok = True
+                except Stop as e:
+                    msg = "STOP: " + str(e); ok = False
+                except Exception as e:                      # noqa: BLE001 - one model failing must not end the comparison
+                    msg = f"ERROR: {e}"; ok = False
+                if step == "fix" and os.path.exists(real):   # later steps use the REAL fixed transcript: one step = one model
+                    shutil.copy(real, os.path.join(d, "transcript.json"))
+                res["steps"][step] = {"ok": ok, "cost": round(c.spent() - before, 4), "seconds": round(time.time() - t0, 1), "result": msg}
+                print(f"   bakeoff {label[:34]:34s} {step:8s} {'ok ' if ok else 'BAD'} ${c.spent() - before:.4f}  {msg[:90]}")
+            rows.append(res)
+    finally:
+        M_FIX, M_SEL, M_DIR = cur["fix"], cur["selects"], cur["plan"]
+        a.select, a.fresh_selects, a.replan = keep_a
+    lines = [f"# Model bake-off: {base}", "", "Same real reel, each model on its own copy. Nothing in your reel changed.", "",
+             "| Model | Word fix | Story pick | Director plan | Total cost |", "|---|---|---|---|---|"]
+    for r in rows:
+        cell = lambda k: (("ok " if r["steps"][k]["ok"] else "FAILED ") + f"${r['steps'][k]['cost']:.4f} · " + r["steps"][k]["result"])[:120]
+        lines.append(f"| {r['model']} | {cell('fix')} | {cell('selects')} | {cell('plan')} | ${sum(x['cost'] for x in r['steps'].values()):.4f} |")
+    lines += ["", "Pick per step in docs/DECISIONS.md (T60). Rule: never a cheaper model if quality drops."]
+    with open(os.path.join(out, "report.md"), "w", encoding="utf-8") as f:
+        f.write("\n".join(lines) + "\n")
+    jsave(os.path.join(out, "report.json"), rows)
+    return os.path.join(out, "report.md")
+
+
 FUNCS = {"ingest": st_ingest, "transcribe": st_transcribe, "fix": st_fix, "review": st_review, "selects": st_selects,
          "edl": st_edl, "keyframes": st_keyframes, "shotlog": st_shotlog, "plan": st_plan, "compile": st_compile,
          "draft": st_draft, "report": st_report}
@@ -519,6 +575,7 @@ def main():
     ap.add_argument("--skip-review", action="store_true", help="skip Gate 0 for this reel")
     ap.add_argument("--approve", action="store_true", help="Gate 2: render the final video and the cover suggestion")
     ap.add_argument("--fix", help="Gate 2: re-plan with this feedback")
+    ap.add_argument("--bakeoff", help="T59: compare these models (comma separated) with the current ones on this reel; costs cents")
     ap.add_argument("--rebuild", action="store_true", help="new draft from the manual edit (Edit page); no AI, no spend")
     a = ap.parse_args()
     a.img_tok = {1080: 2800, 720: 1300, 540: 800, 384: 420}.get(a.width, 800)
@@ -549,7 +606,11 @@ def main():
     print(f"JOB {os.path.basename(job)} | budget ${a.budget:.2f} | spent so far ${c.spent():.4f}")
     t_all = time.time(); status = "ok"
     try:
-        if a.rebuild:
+        if a.bakeoff:
+            if not os.path.exists(os.path.join(job, "edl.json")):
+                raise Stop("bake-off needs a finished reel (with edl.json): make a draft first")
+            print("REPORT:", bakeoff(job, [m.strip() for m in a.bakeoff.split(",") if m.strip()], a))
+        elif a.rebuild:
             if not os.path.exists(os.path.join(job, "timeline.json")):
                 raise Stop("nothing to rebuild yet: make a draft first")
             a.replan = True                                  # re-render the draft
