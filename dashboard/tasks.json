@@ -1250,6 +1250,18 @@
    "notes": "Built 2026-11-02. Not built: speaker labels, meaning-based importance, Kurdish engine (see docs/DECISIONS.md).",
    "evidence": "scripts/lib/speech_intel.py, tests/test_speech_intel.py",
    "updated": "2026-11-02"
+  },
+  {
+   "id": "T90",
+   "phase": "P9",
+   "title": "Stage 4 upgrade: story score formula, 3 hooks per story (his own words), main message + audience, editorial.json with rationale and confidence flags",
+   "owner": "Claude",
+   "status": "review",
+   "depends": [],
+   "done_when": "After a reel: jobs/<job>/editorial.json exists and report.md has 'Story and cuts'.",
+   "notes": "Built 2026-11-02. Not built: alternative full drafts per style, per-style pacing presets (cost; need your OK).",
+   "evidence": "scripts/lib/editorial.py, scripts/reel.py, tests/test_editorial.py",
+   "updated": "2026-11-02"
   }
  ],
  "log": [

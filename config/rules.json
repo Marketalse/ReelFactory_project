@@ -88,5 +88,15 @@
       1500
     ],
     "never_below_y": 1500
+  },
+  "story_score": {
+    "_note": "S = 0.30 relevance + 0.25 clarity + 0.20 delivery + 0.15 novelty + 0.10 narrative fit. Proposed starting weights, not proven predictors; change here (they are re-scaled to add up to 1).",
+    "weights": {
+      "relevance": 0.3,
+      "clarity": 0.25,
+      "delivery": 0.2,
+      "novelty": 0.15,
+      "fit": 0.1
+    }
   }
 }
