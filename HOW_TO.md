@@ -35,6 +35,23 @@ The draft plays on the page.
 - **Final preview**: watch it, click **Download final video**. Still want a change? Type it in **Want changes?** and click
   **Send changes**: a new draft is made; approve it again for a new final video (the old one stays saved).
 
+## Edit it yourself (like Premiere)
+On a draft or a final, click **✂ Edit it yourself**. The editor has four parts:
+- **Transcript (left)**: every word you said. Click a word to jump there; click and drag to select words.
+  **Delete** (or ✂ Cut) removes them from the video; **↺ Restore** brings back cut words, including the "umm"s and
+  repeats that were removed automatically (shown in grey). **★ Highlight** makes words green in the captions.
+  **Double-click** a word to fix its spelling.
+- **Preview (middle)**: plays your video with the cuts, title, cards, captions and zooms, so you can check timing.
+  It's a close-enough preview; switch to **Last draft video** to see the real one.
+- **Properties (right)**: change the title, or the text and length of the selected card or zoom. Red items must be
+  fixed before saving (for example a headline that's too long).
+- **Timeline (bottom)**: tracks for Cards, Title, Zooms, You (the video pieces), Voice and Words. Drag a card to move
+  it (it snaps to your words), drag its right edge to make it longer, click it and press **Delete** to remove it.
+  **＋ Card** and **＋ Zoom** add one at the red playhead.
+Keys: **Space** play/pause · **← →** word by word · **⌘Z** undo · **⇧⌘Z** redo · **⌘S** save.
+**Save & make new draft** makes a new draft from your edit in a few minutes, with **no AI cost**. Every save keeps
+the previous version in the reel's `edits/` folder.
+
 ## Ready-to-post score
 Every draft and final shows a **score out of 100** with up to 3 tips (for example "your first word comes at 1.3 s").
 It checks what keeps people watching: a fast start, a title on the first frame, length, something changing every

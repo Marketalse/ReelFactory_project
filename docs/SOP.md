@@ -25,6 +25,7 @@ Every run is written to `jobs/<job>/run.log`; `job.json → status` is updated b
 | 9 | Compile | `scripts/compile.py`: approved blocks only; talking-head cuts with alternating zoom on jump cuts, punch-ins, face moves down under split cards; captions pause under full-screen cards. | $0 | works |
 | 10 | Draft | `scripts/render.py --draft`: HyperFrames check (errors stop), contact sheet, `review/draft_540p.mp4`, `edit_package/` (captions_ar.srt, hyperframes/), `report.md`. | $0 | works |
 | 11 | QA + Committee | **QA (works):** `scripts/qa_check.py` on every draft and final: length, black frames, frozen picture, audio, loudness, captions = speech, numbers on screen were said, no placeholder text. Errors stop before Gate 2. **Committee:** script/visual/audience critics. | QA $0; committee ~$0.10–0.20 | QA works; committee awaits approval (T14) |
+| 11b | Manual edit (optional) | Edit page: cut/restore words, fix spellings, move/add/remove cards and zooms; `reel.py --rebuild` makes a new draft. | $0 | works |
 | — | **Gate 2** | Watch the draft; `--approve` or `--fix "what to change"` (re-plans with your words, keeps everything else). | — | works |
 | 12 | Final | `--approve`: ONE high-quality 1080×1920 video for both platforms (`final/reel_vN.mp4`, never overwritten), sound levelled, duration and QA checked. Comments on the final make a new draft → approve again → vN+1. | $0 | works |
 | 12b | Cover | After the final video: `scripts/cover.py` suggests `review/cover.jpg` (title + a frame of him, brand style). He can upload his own or a photo. | $0 | works |

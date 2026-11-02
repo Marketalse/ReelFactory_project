@@ -111,6 +111,9 @@ class H(SimpleHTTPRequestHandler):
             return self.send_json(200, settings_api.version())
         if self.path.startswith("/api/health"):
             return self.send_json(200, settings_api.health())
+        if self.path.startswith("/api/editor"):
+            ok, data = reels_api.editor(q.get("job", ""))
+            return self.send_json(200 if ok else 409, data if ok else {"ok": False, "message": data})
         if self.path.startswith("/api/backup"):
             return self.send_json(200, backup_api.status())
         if self.path.startswith("/api/root"):
@@ -212,6 +215,25 @@ class H(SimpleHTTPRequestHandler):
             if not ok:
                 self.close_connection = True               # the unread body must not be parsed as the next request
             return self.send_json(200 if ok else 409, {"ok": ok, "message": msg})
+        if self.path.startswith("/api/editor/"):
+            try:
+                n = int(self.headers.get("Content-Length", 0))
+                if n > 2_000_000:
+                    raise ValueError("too big")
+                body = json.loads(self.rfile.read(n).decode("utf-8") or "{}")
+            except Exception:
+                return self.send_json(400, {"ok": False, "message": "bad request"})
+            action = self.path.split("/")[3].split("?")[0]
+            if action == "preview":
+                ok, data = reels_api.editor(body.get("job"), body.get("edit") or {})
+                return self.send_json(200 if ok else 409, data if ok else {"ok": False, "message": data})
+            if action == "save":
+                ok, msg, notes = reels_api.editor_save(body.get("job"), body.get("edit") or {})
+                return self.send_json(200 if ok else 409, {"ok": ok, "message": msg, "notes": notes})
+            if action == "rebuild":
+                ok, msg = reels_api.rebuild(body.get("job"))
+                return self.send_json(200 if ok else 409, {"ok": ok, "message": msg})
+            return self.send_json(404, {"ok": False, "message": "unknown action"})
         if self.path.startswith("/api/reels/"):
             try:
                 n = int(self.headers.get("Content-Length", 0))

@@ -1,6 +1,6 @@
 {
  "project": "Reel Factory",
- "version": 22,
+ "version": 23,
  "owners": [
   "Hesham",
   "Claude",
@@ -1091,6 +1091,18 @@
    "done_when": "Score and tips show on a real draft",
    "notes": "Checks what keeps people watching (hook speed, title, length, rhythm, captions, sound…). Not a view prediction.",
    "evidence": "scripts/ready_score.py, tests/test_ready_score.py",
+   "updated": "2026-11-02"
+  },
+  {
+   "id": "T79",
+   "phase": "P8",
+   "title": "Edit page: Premiere-style manual editing (transcript cut/restore, timeline cards/zooms, live preview, free rebuild)",
+   "owner": "Claude",
+   "status": "review",
+   "depends": [],
+   "done_when": "Hesham cuts words and moves a card on a real reel, and the new draft shows it",
+   "notes": "Open a draft → ✂ Edit it yourself. Save & make new draft costs nothing.",
+   "evidence": "dashboard/edit.html, scripts/lib/manual_edit.py, tests/test_manual_edit.py",
    "updated": "2026-11-02"
   }
  ],
