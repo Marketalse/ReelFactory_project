@@ -915,6 +915,13 @@ async function settingsPost(action, body){
   catch(e){ return {ok:false,message:"The dashboard didn't answer."}; }
 }
 function keyMsg(r){ const m=$("#keyMsg"); m.textContent=r.message||""; m.className="kmsg "+(r.ok&&!/refused|couldn't|error/i.test(r.message)?"ok":"err"); }
+async function checkUpdate(){
+  try{ const v=await (await fetch("/api/version?check=1",{cache:"no-store"})).json();
+    const b=$("#settingsBtn"); if(!b) return;
+    b.textContent=v.update_ready?"Settings · Update ready":"Settings"; b.classList.toggle("warn",!!v.update_ready);
+    const m=$("#updMsg"); if(v.update_ready && m && !m.textContent){ m.textContent="A new version is ready. Click “Get the latest version”."; m.className="kmsg ok"; }
+  }catch(e){}
+}
 async function loadVersion(){
   try{ const v=await (await fetch("/api/version",{cache:"no-store"})).json();
     $("#verLine").textContent=`Version ${v.version}${v.branch&&v.branch!=="main"?" ("+v.branch+")":""}. `+(v.autostart?"Starts by itself when you log in.":"To have it start by itself, double-click “Turn on auto-start.command” once (in your project folder).");
@@ -983,6 +990,7 @@ async function boot(){
 }
 boot();
 loadIt(); setInterval(loadIt, 60000);
+checkUpdate(); setInterval(checkUpdate, 600000);
 </script>
 </body>
 </html>

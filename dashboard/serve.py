@@ -109,7 +109,10 @@ class H(SimpleHTTPRequestHandler):
         if self.path.startswith("/api/events"):
             return self.stream_progress(q.get("ref", ""), notify=q.get("notify") == "1")
         if self.path.startswith("/api/version"):
-            return self.send_json(200, settings_api.version())
+            v = settings_api.version()
+            if q.get("check") == "1":
+                v["update_ready"] = settings_api.update_ready()
+            return self.send_json(200, v)
         if self.path.startswith("/api/health"):
             return self.send_json(200, settings_api.health())
         if self.path.startswith("/api/editor"):

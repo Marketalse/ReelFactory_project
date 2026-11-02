@@ -375,11 +375,13 @@ def longest_still(timeline, cuts):
 STILL_ERR = re.compile(r"nothing changes on screen from ([\d.]+)s to ([\d.]+)s")
 
 
-def fix_rhythm(plan, words, resolve, max_add=8):
+def fix_rhythm(plan, words, resolve, max_add=None):
     """FREE, no AI. While the only problem left is 'nothing changes on screen for too long', add a quick zoom (punch-in)
-    on the word nearest the middle of that stretch, then check again. Bounded: at most `max_add` zooms.
+    on the word nearest the middle of that stretch, then check again. Bounded: at most about one zoom per 3 s.
     resolve(plan) -> (timeline, errors, warnings). Returns (plan, timeline, errors, warnings, added)."""
     plan = json.loads(json.dumps(plan))
+    if max_add is None:                                         # about one zoom per 3 s of reel at the very most
+        max_add = 4 + int((words[-1].get("end", words[-1].get("start", 0)) if words else 0) / 3)
     added = 0
     tl, err, warn = resolve(plan)
     while err and added < max_add and all(STILL_ERR.search(x) for x in err):
