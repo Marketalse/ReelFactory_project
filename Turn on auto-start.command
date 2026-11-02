@@ -28,7 +28,17 @@ if curl -s --max-time 2 http://127.0.0.1:8765/api/reels | grep -q '"busy": \[\]'
 fi
 launchctl bootout "gui/$(id -u)/$LABEL" 2>/dev/null
 launchctl bootstrap "gui/$(id -u)" "$PLIST" && echo "Auto-start is ON." || { echo "Couldn't turn on auto-start. Send a screenshot of this window to Claude."; exit 1; }
-for i in 1 2 3 4 5 6 7 8 9 10; do curl -s --max-time 1 -o /dev/null http://127.0.0.1:8765/api/reels && break; sleep 1; done
-open http://127.0.0.1:8765/
-echo "Reel Factory now starts by itself when you log in. Bookmark the page that just opened (Cmd+D)."
-echo "You can close this window."
+OK=""
+for i in $(seq 1 30); do [ "$(curl -s --max-time 1 -o /dev/null -w '%{http_code}' http://127.0.0.1:8765/api/reels)" = "200" ] && { OK=1; break; }; sleep 1; done
+if [ -n "$OK" ]; then
+  open http://127.0.0.1:8765/
+  echo "Reel Factory now starts by itself when you log in, and restarts by itself if it ever stops."
+  echo "Bookmark the page that just opened (Cmd+D). You can close this window."
+else
+  echo ""
+  echo "PROBLEM: auto-start is on, but the dashboard didn't start. Send Claude a screenshot of this window."
+  echo "------ auto-start log ------"
+  tail -n 15 "$HOME/.reelfactory/dashboard.log" 2>/dev/null
+  echo "------ what is using port 8765 ------"
+  lsof -nP -i tcp:8765 -sTCP:LISTEN 2>/dev/null || echo "(nothing)"
+fi
