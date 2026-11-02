@@ -258,6 +258,7 @@ class H(SimpleHTTPRequestHandler):
                   "reveal": lambda: reels_api.reveal(body.get("job")),
                   "use_version": lambda: reels_api.use_version(body.get("job"), body.get("n")),
                   "use_hook": lambda: reels_api.use_hook(body.get("job"), body.get("n")),
+                  "ask_doctor": lambda: reels_api.ask_doctor(body.get("job")),
                   "cover_reset": lambda: reels_api.cover_reset(body.get("job")),
                   "performance": lambda: reels_api.save_performance(body.get("job"), body.get("data")),
                   "check": lambda: reels_api.check_name(body.get("slug"), body.get("session")),

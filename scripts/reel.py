@@ -21,7 +21,7 @@ import argparse, base64, glob, json, os, re, shutil, subprocess, sys, threading,
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from lib import config as cfg   # noqa: E402  (all settings live in config/*.json)
-from lib import transcript as tr, edl as edlmod, director, speech_intel, editorial, visual_plan, brand_memory, creative_brief, content_intel   # noqa: E402
+from lib import transcript as tr, edl as edlmod, director, speech_intel, editorial, visual_plan, brand_memory, creative_brief, content_intel, frames_dedup, learning, doctor   # noqa: E402
 from lib.hfbuild import BuildError   # noqa: E402
 
 ROOT = cfg.ROOT
@@ -304,13 +304,21 @@ def st_shotlog(c):
     out = os.path.join(c.job, "shot_log.json")
     if os.path.exists(out): return "cached"
     man = jload(os.path.join(c.job, "keyframes.json"))
-    content = [{"type": "text", "text": SHOT_PROMPT.format(n=man["count"])}]
-    for f in man["frames"]:
+    frames = man["frames"]
+    try:                                              # pay only for frames that look different (T61)
+        frames = frames_dedup.distinct(man["frames"], c.job)
+        if len(frames) < len(man["frames"]):
+            print(f"   shot log: sending {len(frames)} of {len(man['frames'])} frames (the rest look the same)")
+    except Exception as ex:                           # noqa: BLE001 - never block the reel for a saving
+        print("   frame saving skipped:", ex)
+        frames = man["frames"]
+    content = [{"type": "text", "text": SHOT_PROMPT.format(n=len(frames))}]
+    for f in frames:
         content.append({"type": "text", "text": "t=%.2f" % f["t"]})
         b = base64.b64encode(open(os.path.join(c.job, f["file"]), "rb").read()).decode()
         content.append({"type": "image_url", "image_url": {"url": "data:image/jpeg;base64," + b}})
     log = parse_json(c.llm("shotlog", M_VIS, content, 9000, "low"))
-    if len(log) != man["count"]: raise Stop(f"shot log returned {len(log)} rows for {man['count']} frames")
+    if len(log) != len(frames): raise Stop(f"shot log returned {len(log)} rows for {len(frames)} frames")
     jsave(out, log); return f"{len(log)} rows"
 
 SELECTS_PROMPT = """You are the story editor of an Iraqi short-form (Reels) channel run by Hesham, a marketer-entrepreneur in Erbil. From this transcript of ONE raw take, propose exactly 3 candidate stories, each a continuous source range of {lmin}-{lmax} seconds that could stand alone as a reel. Each must start on a strong spoken hook taken from the speaker's OWN words, hold one idea, and end on a natural close. Prefer ranges that begin/end at pauses. Do not invent content.
@@ -421,6 +429,8 @@ def st_plan(c):
     try:
         h = brand_memory.hint()                     # what his approved reels looked like (only after 2+ approvals)
         if h: brief += "\n\nBRAND MEMORY: " + h
+        h = learning.hint()                         # patterns in his posted results (only with 10+ reels with results)
+        if h: brief += "\n\n" + h
     except Exception:                               # noqa: BLE001
         pass
     prompt = director.build_prompt(words, e["duration"], brief, job_logos(c), feedback, director.taste())
@@ -728,6 +738,7 @@ def main():
     ap.add_argument("--fix", help="Gate 2: re-plan with this feedback")
     ap.add_argument("--bakeoff", help="T59: compare these models (comma separated) with the current ones on this reel; costs cents")
     ap.add_argument("--rebuild", action="store_true", help="new draft from the manual edit (Edit page); no AI, no spend")
+    ap.add_argument("--doctor", action="store_true", help="T84: ask the AI doctor why this reel stopped (about 1 cent); it only proposes, never acts")
     a = ap.parse_args()
     a.img_tok = {1080: 2800, 720: 1300, 540: 800, 384: 420}.get(a.width, 800)
     a.rekey = False; a.replan = bool(a.fix)
@@ -738,7 +749,8 @@ def main():
         if r.returncode: sys.exit("ingest failed")
         inp = sorted(glob.glob(os.path.join(ROOT, "jobs", "*-" + a.slug)))[-1]
     job = os.path.abspath(inp)
-    sys.stdout = Tee(os.path.join(job, "run.log"), sys.stdout)
+    if not a.doctor:                                   # the doctor's question must not rewrite the reel's own run log (its stop message stays)
+        sys.stdout = Tee(os.path.join(job, "run.log"), sys.stdout)
     print(f"\n===== run {time.strftime('%Y-%m-%d %H:%M:%S')} | {' '.join(sys.argv[1:])}")
     c = Ctx(job, a)
     force = set(filter(None, a.force.split(",")))
@@ -761,6 +773,12 @@ def main():
             if not os.path.exists(os.path.join(job, "edl.json")):
                 raise Stop("bake-off needs a finished reel (with edl.json): make a draft first")
             print("REPORT:", bakeoff(job, [m.strip() for m in a.bakeoff.split(",") if m.strip()], a))
+        elif a.doctor:
+            tail = [l for l in open(os.path.join(job, "run.log"), encoding="utf-8", errors="replace").read().splitlines()[-40:]] if os.path.exists(os.path.join(job, "run.log")) else []
+            stop = next((l for l in reversed(tail) if l.startswith(("STOP:", "CRASH", "RENDER STOPPED", "FAILED", "INGEST FAILED"))), tail[-1] if tail else "")
+            ans = doctor.clean_answer(parse_json(c.llm("doctor", M_FIX, [{"type": "text", "text": doctor.build_prompt(stop, "\n".join(tail))}], 900, "low")))
+            doctor.save(job, ans)
+            print("DOCTOR:", ans["explanation"])
         elif a.rebuild:
             if not os.path.exists(os.path.join(job, "timeline.json")):
                 raise Stop("nothing to rebuild yet: make a draft first")
@@ -809,7 +827,7 @@ def main():
             c.cost["logged"] = c.spent(); jsave(c.cost_path, c.cost)
         print(f"TOTAL this job ${c.spent():.4f} | wall {time.time() - t_all:.0f}s")
         st = jload(os.path.join(job, "job.json"), {}).get("status", "")
-        notify({"preview_ready": "Draft ready: open the dashboard to watch it", "rendered": "Final videos ready"}.get(st)
+        if not a.doctor: notify({"preview_ready": "Draft ready: open the dashboard to watch it", "rendered": "Final videos ready"}.get(st)
                or (f"Stopped: see run.log ({os.path.basename(job)})" if status != "ok" else f"{os.path.basename(job)}: {st}"), job)
 
 if __name__ == "__main__":

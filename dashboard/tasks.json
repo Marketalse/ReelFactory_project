@@ -888,13 +888,13 @@
    "phase": "P9",
    "title": "Cut tokens: shorter prompts, cache the fixed parts (glossary, block catalogue) where the route supports it",
    "owner": "Claude",
-   "status": "todo",
+   "status": "done",
    "depends": [
     "T60"
    ],
    "done_when": "Same output with fewer tokens per reel (measured in cost.json)",
-   "evidence": "",
-   "notes": "Waiting for the bake-off result (T59/T60). Finding: ~95% of a reel's AI cost is the footage description (20 pictures, ~14,600 tokens, $0.052 of $0.055). Fewer or smaller pictures is the big saving, but it can hurt face/logo detection, so it must be compared in the bake-off first. Target Nov 4: safe token cuts; the rest after T60.",
+   "evidence": "scripts/lib/frames_dedup.py, scripts/reel.py (st_shotlog), tests/test_frames_dedup.py",
+   "notes": "Built 2026-11-02: the shot log sends only frames that look different (at least every 8 s, at least 8 frames). Provider prompt caching not used (route does not support it). Marked done on Hesham's instruction.",
    "updated": "2026-11-02"
   },
   {
@@ -1052,11 +1052,11 @@
    "phase": "P12",
    "title": "Later: self-learning editor: track how each posted reel performs (manual or Instagram/TikTok API) and learn what editing works",
    "owner": "Claude",
-   "status": "todo",
+   "status": "done",
    "depends": [],
    "done_when": "Hesham agrees the plan; then: performance entered for 10+ reels and the first learned rules appear in lessons.md",
-   "evidence": "",
-   "notes": "Reminder Nov 8 to decide the plan. Step 1 (manual results box + Results page + CSV) built on v2, 2026-11-01. Step 2 = linked Instagram/TikTok accounts + learning rules (from 5 reels). Reminder 2026-11-08.",
+   "evidence": "scripts/lib/learning.py, dashboard/reels_api.py, scripts/reel.py, tests/test_learning.py",
+   "notes": "Built 2026-11-02: with 10+ reels with results it finds clear patterns (max 3 lessons, labelled 'a pattern, not proof') and gives the director one line. Off switch in ~/.reelfactory/learned.json. Marked done on Hesham's instruction.",
    "updated": "2026-11-02"
   },
   {
@@ -1154,11 +1154,11 @@
    "phase": "P12",
    "title": "AI doctor for the IT helper: reads an error and PROPOSES a fix; you approve before anything changes",
    "owner": "Claude",
-   "status": "todo",
+   "status": "done",
    "depends": [],
    "done_when": "Hesham approves a sample.",
-   "evidence": "",
-   "notes": "Only after the timeline. Never acts alone.",
+   "evidence": "scripts/lib/doctor.py, scripts/reel.py (--doctor), dashboard (Ask the AI doctor), tests/test_doctor.py",
+   "notes": "Built 2026-11-02: free table of known causes + optional AI question (about 1 cent, inside reel.py under the money guard). It only proposes; secrets removed first. Marked done on Hesham's instruction.",
    "updated": "2026-11-02"
   },
   {

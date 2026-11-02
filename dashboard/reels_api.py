@@ -178,6 +178,15 @@ def rebuild(job):
     return _run(job, [jd, "--rebuild"])
 
 
+def ask_doctor(job):
+    """The user clicked "Ask the AI doctor": one cheap question about why the reel stopped. It only proposes (T84)."""
+    if not JOB.match(job or "") or not os.path.isdir(os.path.join(JOBS, job)):
+        return False, "unknown reel"
+    if job in _running:
+        return False, "this reel is being made right now"
+    return _run(job + "-doctor", [os.path.join(JOBS, job), "--doctor"])
+
+
 def use_hook(job, n):
     """Hook picker (T103): put one of the three hooks (his own words) on the opening title card, then rebuild the draft.
     Free: no AI. The words come from editorial.json and were checked to be in his transcript."""
@@ -576,6 +585,13 @@ def progress(ref):
         out["draft"] = f"{job}/review/draft_540p.mp4"
         out["draft_mtime"] = int(os.path.getmtime(os.path.join(jd, "review", "draft_540p.mp4")))
     out["feedback"] = jj.get("feedback_history", [])
+    if jd and out.get("state") in ("stopped", "paused"):
+        try:
+            sys.path.insert(0, os.path.join(ROOT, "scripts"))
+            from lib import doctor
+            out["doctor"] = {"known": doctor.known(out.get("message")), "ai": doctor.load(jd)}
+        except Exception:                           # noqa: BLE001
+            pass
     if jd and out.get("state") in ("ready", "final"):
         try:
             sys.path.insert(0, os.path.join(ROOT, "scripts"))
@@ -749,6 +765,12 @@ def save_performance(job, data):
     d["entries"] = [e for e in d.get("entries", []) if (e.get("platform"), e.get("when")) != (platform, when)] + [entry]
     tmp = p + ".tmp"
     json.dump(d, open(tmp, "w", encoding="utf-8"), indent=1); os.replace(tmp, p)
+    try:                                              # re-learn from all results (T76); never blocks saving
+        sys.path.insert(0, os.path.join(ROOT, "scripts"))
+        from lib import learning
+        learning.update(performance())
+    except Exception:                                 # noqa: BLE001
+        pass
     return True, "Saved. Thanks: every result teaches Reel Factory what works."
 
 

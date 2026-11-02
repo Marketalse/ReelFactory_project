@@ -843,9 +843,20 @@ function showResult(p){
     const hint = /handle/i.test(p.message||"") ? "Your Instagram and TikTok handles aren't set yet. Send them to Claude, then click Try again." :
                  /budget|monthly|cap/i.test(p.message||"") ? "The spending limit was reached. Nothing more was spent. Tell Claude if you want to raise the limit." :
                  "Click Try again: it continues where it stopped and never pays twice for finished steps. If it stops again, copy the message and send it to Claude.";
-    R.innerHTML=`<div class="err"><b>${p.state==="paused"?"Interrupted":"Stopped"}</b><p style="margin:4px 0 0">${esc(hint)}</p>${p.message?`<code id="stopMsg">${esc(p.message)}</code>`:""}</div>
+    const dk=p.doctor&&p.doctor.known, da=p.doctor&&p.doctor.ai;
+    const doctorBox=`<div style="margin-top:12px;display:grid;gap:6px">
+      ${dk?`<div class="small"><b>Likely cause:</b> ${esc(dk.title)}<ul style="margin:4px 0 0;padding-left:18px">${dk.steps.map(x=>`<li>${esc(x)}</li>`).join("")}</ul></div>`:""}
+      ${da?`<div class="small"><b>AI doctor (a suggestion only, nothing was changed):</b> ${esc(da.explanation)}<ul style="margin:4px 0 0;padding-left:18px">${(da.steps||[]).map(x=>`<li>${esc(x)}</li>`).join("")}</ul><span style="color:var(--muted)">Risk: ${esc(da.risk)} · ${da.needs==="claude"?"send this to Claude":"you can do this yourself"}</span></div>`:""}
+    </div>`;
+    R.innerHTML=`<div class="err"><b>${p.state==="paused"?"Interrupted":"Stopped"}</b><p style="margin:4px 0 0">${esc(hint)}</p>${p.message?`<code id="stopMsg">${esc(p.message)}</code>`:""}${p.job?doctorBox:""}</div>
       <div class="row" style="margin-top:14px"><button class="btn primary" id="retry">Try again</button>${p.message?'<button class="btn" id="copyMsg">Copy message</button>':""}
+      ${p.job&&p.message?'<button class="btn" id="askDoctor" title="One cheap AI question (about 1 cent). It only suggests; it changes nothing.">Ask the AI doctor</button>':""}
       ${p.draft?'<button class="btn ghost" id="seeDraft">See the last draft</button>':""}</div>`;
+    const ad=$("#askDoctor"); if(ad) ad.onclick=async ()=>{
+      ad.disabled=true; ad.textContent="Asking…"; const r=await backend.askDoctor(p.job);
+      if(!r.ok){ ad.disabled=false; ad.textContent="Ask the AI doctor"; return toast("Couldn't ask the doctor", r.message, "error"); }
+      toast("Asked the AI doctor", "Its suggestion appears here in about 20 seconds.", "ok"); watch(p.job);
+    };
     $("#retry").onclick=async ()=>{
       const r = !p.job ? await backend.start(p.slug) : p.last_mode==="final" ? await backend.approve(p.job) : await backend.resume(p.job);
       if(!r.ok) return toast("Couldn't start again", r.message, "error");
@@ -920,6 +931,7 @@ const RealBackend = {
   approve(job){ return this.post("approve",{job}); },
   useVersion(job,n){ return this.post("use_version",{job,n}); },
   useHook(job,n){ return this.post("use_hook",{job,n}); },
+  askDoctor(job){ return this.post("ask_doctor",{job}); },
   resume(job){ return this.post("resume",{job}); },
   reveal(job){ return this.post("reveal",{job}); },
   mediaUrl(job, path){ return "/media/"+encodeURIComponent(job)+"/"+path.split("/").map(encodeURIComponent).join("/"); },
@@ -981,6 +993,7 @@ const DemoBackend = (()=>{
     async post(){ return {ok:false,message:"Not available in demo mode."}; },
     async useVersion(){ return {ok:false,message:"Not available in demo mode."}; },
     async useHook(){ return {ok:false,message:"Not available in demo mode."}; },
+    async askDoctor(){ return {ok:false,message:"Not available in demo mode."}; },
     async coverUpload(){ throw new Error("Not available in demo mode."); },
     mediaUrl(job){ const j=jobs[job]; const f=j&&j.files.find(f=>!/\.(avi|mkv)$/i.test(f.name)); if(!f) return ""; return (f._url=f._url||URL.createObjectURL(f)); },
     watch(ref, onUpdate){
