@@ -1406,11 +1406,11 @@
    "phase": "P12",
    "title": "P2 · Smart B-roll suggestions: suggest library clips/screenshots that match what is being said (needs AI picture matching = cost)",
    "owner": "Claude",
-   "status": "todo",
+   "status": "done",
    "depends": [],
    "done_when": "Parked until you approve the cost; today B-roll attaches by file name you say.",
-   "notes": "",
-   "evidence": "",
+   "notes": "Built 2026-11-02 (free): library files now match attached Arabic letters (بال، وال...), contained names and one-letter spelling differences, with the time they fit. Matching by what is IN the picture (AI) not built: it costs money. Marked done on Hesham's instruction.",
+   "evidence": "scripts/lib/broll.py (suggest/match), tests/test_broll.py",
    "updated": "2026-11-02"
   },
   {
@@ -1418,11 +1418,11 @@
    "phase": "P12",
    "title": "P2 · Multiple reel variations from one source (educational / fast / storytelling): each is a full extra plan and render, about the cost of another reel",
    "owner": "Claude",
-   "status": "todo",
+   "status": "done",
    "depends": [],
    "done_when": "Parked until you approve the cost.",
-   "notes": "",
-   "evidence": "",
+   "notes": "Built 2026-11-02: 'Other versions' on the draft page makes a separate reel from another candidate story; cost shown and confirmed first; shares the footage (no extra disk); first reel untouched. Marked done on Hesham's instruction.",
+   "evidence": "scripts/lib/variations.py, dashboard (Other versions), tests/test_variations.py",
    "updated": "2026-11-02"
   },
   {

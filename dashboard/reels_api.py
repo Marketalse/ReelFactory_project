@@ -178,6 +178,22 @@ def rebuild(job):
     return _run(job, [jd, "--rebuild"])
 
 
+def make_variation(job, sel_id):
+    """Make another version of this reel from one of the other candidate stories (T106). Returns (ok, new job name | message)."""
+    if not JOB.match(job or "") or not os.path.isdir(os.path.join(JOBS, job)):
+        return False, "unknown reel"
+    if _running:
+        return False, f"busy: {', '.join(_running)} is still running; one reel at a time"
+    sys.path.insert(0, os.path.join(ROOT, "scripts"))
+    from lib import variations
+    try:
+        name = variations.prepare(JOBS, job, sel_id)
+    except ValueError as e:
+        return False, str(e)
+    ok, msg = _run(name, [os.path.join(JOBS, name)])
+    return (True, name) if ok else (False, msg)
+
+
 def ask_doctor(job):
     """The user clicked "Ask the AI doctor": one cheap question about why the reel stopped. It only proposes (T84)."""
     if not JOB.match(job or "") or not os.path.isdir(os.path.join(JOBS, job)):
@@ -597,6 +613,8 @@ def progress(ref):
             sys.path.insert(0, os.path.join(ROOT, "scripts"))
             from lib import versions
             out["qa"] = versions.summary(jd); out["versions"] = versions.listing(jd)
+            from lib import variations
+            out["alternatives"] = variations.alternatives(jd); out["variation_cost"] = variations.estimate(jd)
             ed = _j(os.path.join(jd, "editorial.json"), {}) or {}
             out["hooks"] = [{"type": h.get("type"), "line": h.get("line")} for h in ed.get("hooks", []) if h.get("found")]
             out["hook_now"] = ed.get("hook_on_screen") or (_j(os.path.join(jd, "scene_plan.json"), {}) or {}).get("hook")
