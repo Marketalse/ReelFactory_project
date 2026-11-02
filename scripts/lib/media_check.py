@@ -23,15 +23,26 @@ def sha256(path, block=1 << 20):
     return h.hexdigest()
 
 
+PROBE_ERROR = ""
+
+
 def probe(path):
-    r = _run(["ffprobe", "-v", "error", "-show_entries",
-              "format=duration,size,bit_rate,format_name:stream=index,codec_type,codec_name,width,height,r_frame_rate,avg_frame_rate,pix_fmt,sample_rate,channels:stream_tags=rotate:stream_side_data=rotation",
-              "-of", "json", path])
+    """ffprobe's full report (the same plain call ingest.sh uses, which works on every ffmpeg version). None if unreadable;
+    PROBE_ERROR then holds ffprobe's own first line, to show why."""
+    global PROBE_ERROR
+    PROBE_ERROR = ""
+    try:
+        r = _run(["ffprobe", "-v", "error", "-print_format", "json", "-show_format", "-show_streams", path])
+    except (OSError, subprocess.SubprocessError) as e:
+        PROBE_ERROR = str(e)[:120]
+        return None
     if r.returncode or not r.stdout.strip():
+        PROBE_ERROR = (r.stderr or "").strip().splitlines()[-1][:120] if (r.stderr or "").strip() else f"exit code {r.returncode}"
         return None
     try:
         return json.loads(r.stdout)
     except ValueError:
+        PROBE_ERROR = "unreadable ffprobe answer"
         return None
 
 
@@ -141,7 +152,7 @@ def analyze(path, fast=False):
             raise ValueError("the file is empty (0 bytes): upload it again")
         info = probe(path)
         if not info:
-            raise ValueError("can't be read as a video or audio file (damaged, or not a media file)")
+            raise ValueError("can't be read as a video or audio file (damaged, or not a media file)" + (f" [{PROBE_ERROR}]" if PROBE_ERROR else ""))
         streams = info.get("streams") or []
         v = next((s for s in streams if s.get("codec_type") == "video"), None)
         a = next((s for s in streams if s.get("codec_type") == "audio"), None)
