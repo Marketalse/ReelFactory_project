@@ -216,6 +216,16 @@ def capcut_layers(job, platform="instagram"):
     return out
 
 
+def ready(job, final=False):
+    """Ready-to-post score (scripts/ready_score.py). Never stops the reel."""
+    try:
+        import ready_score
+        return ready_score.score(job, final)
+    except Exception as e:              # noqa: BLE001
+        print(f"   ready-to-post score not made: {e}")
+        return None
+
+
 def make_cover(job):
     """The cover image (review/cover.jpg). A cover problem never stops the reel: it is reported instead."""
     import cover as cov
@@ -244,7 +254,8 @@ def draft(job):
     if sheet and os.path.exists(sheet):
         shutil.copy(sheet, os.path.join(job, "review", "contact_sheet.jpg"))
     pkg = edit_package(job, project)
-    return {"draft": small, "contact_sheet": os.path.join(job, "review", "contact_sheet.jpg") if sheet else None,
+    sc = ready(job)
+    return {"ready_score": sc and sc["score"], "draft": small, "contact_sheet": os.path.join(job, "review", "contact_sheet.jpg") if sheet else None,
             "edit_package": pkg, "check_warnings": warnings, "qa": qa}
 
 
@@ -279,6 +290,7 @@ def final(job, platforms=None):
         outs.append(cover["cover"])
     elif isinstance(cover, dict) and cover.get("error"):
         print(f"   cover not made: {cover['error']}")
+    ready(job, final=True)
     return outs
 
 

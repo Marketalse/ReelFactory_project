@@ -25,6 +25,7 @@ nav button.on{background:var(--violet);border-color:var(--violet)}
 main{padding:18px 20px 60px;max-width:1500px;margin:0 auto}
 #banner{display:none;margin:12px 20px 0;padding:12px 14px;border-radius:10px;background:#3a2620;border:1px solid var(--coral);color:#ffd8cf}
 #banner code{background:#0003;padding:1px 6px;border-radius:4px}
+.sm{font-size:12.5px;color:var(--muted);margin-top:3px;line-height:1.35}
 .summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin-bottom:18px}
 .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px}
 .big{font-size:28px;font-weight:700}
@@ -153,7 +154,7 @@ th{color:var(--muted);font-weight:500}
 
 <script>
 const COLORS={todo:'var(--todo)',in_progress:'var(--prog)',review:'var(--review)',blocked:'var(--blocked)',done:'var(--done)'};
-const NAMES={todo:'To do',in_progress:'In progress',review:'Review',blocked:'Blocked',done:'Done'};
+const NAMES={todo:'To do',in_progress:'In progress',review:'Built, needs your OK',blocked:'Blocked',done:'Done'};
 const MONTHLY_CAP=50;
 let D=null, view='reels', editing=null, R=null, typing={};
 const $=s=>document.querySelector(s);
@@ -188,7 +189,8 @@ function fillSelects(){
   $('#e_phase').innerHTML=p.map(x=>`<option value="${x.id}">${esc(x.id+' · '+x.name)}</option>`).join('');
 }
 const byId=id=>D.tasks.find(t=>t.id===id);
-const waiting=t=>t.status!=='done'&&(t.depends||[]).some(d=>{const x=byId(d);return x&&x.status!=='done'});
+const finished=x=>x&&(x.status==='done'||x.status==='review');   // built work counts, even before Hesham's OK
+const waiting=t=>t.status!=='done'&&(t.depends||[]).some(d=>{const x=byId(d);return x&&!finished(x)});
 function shown(){
   const o=$('#fOwner').value,s=$('#fStatus').value,q=$('#fText').value.toLowerCase();
   return D.tasks.filter(t=>(!o||t.owner===o)&&(!s||t.status===s)&&(!q||(t.title+' '+t.notes+' '+t.id).toLowerCase().includes(q)));
@@ -204,15 +206,34 @@ function stackBar(list){
   return '<div class="bar">'+Object.keys(NAMES).map(s=>`<i style="width:${100*list.filter(t=>t.status===s).length/n}%;background:${COLORS[s]}"></i>`).join('')+'</div>';
 }
 function summary(){
-  const all=D.tasks, done=all.filter(t=>t.status==='done').length, pct=all.length?Math.round(100*done/all.length):0;
-  const ready=o=>all.filter(t=>t.owner===o&&t.status!=='done'&&!waiting(t));
-  const cur=(D.phases||[]).find(p=>all.some(t=>t.phase===p.id&&t.status!=='done'));
+  const all=D.tasks, done=all.filter(t=>t.status==='done').length, rev=all.filter(t=>t.status==='review');
+  const built=done+rev.length, pct=all.length?Math.round(100*built/all.length):0;
+  const open=o=>all.filter(t=>t.owner===o&&['todo','in_progress','blocked'].includes(t.status)&&t.phase!=='P7'&&!waiting(t));
+  const later=all.filter(t=>t.phase==='P7'&&t.status!=='done'&&t.status!=='review').length;
+  const list=r=>r.slice(0,3).map(t=>`<div class="sm">• ${esc(t.title)}</div>`).join('')+(r.length>3?`<div class="sm">+ ${r.length-3} more</div>`:'');
+  const me=open('Hesham'), cl=open('Claude');
   $('#summary').innerHTML=`
-   <div class="card"><div class="label">Overall</div><div class="big">${pct}%</div>${stackBar(all)}<div class="label" style="margin-top:6px">${done} of ${all.length} tasks done</div></div>
-   <div class="card"><div class="label">Current phase</div><div class="big" style="font-size:20px">${cur?esc(cur.id+' · '+cur.name):'All done'}</div><div class="label" style="margin-top:6px">${cur?esc(cur.goal):''}</div></div>
-   ${['Hesham','Claude','Hermes'].map(o=>{const r=ready(o);return `<div class="card"><div class="label own-${o}">${o} — ready now</div><div class="big">${r.length}</div><div style="font-size:12px;color:var(--muted);margin-top:4px">${r[0]?'Next: '+esc(r[0].id+' '+r[0].title):'Nothing waiting'}</div></div>`}).join('')}
-   <div class="card"><div class="label">Blocked / in review</div><div class="big">${all.filter(t=>t.status==='blocked').length} / ${all.filter(t=>t.status==='review').length}</div></div>`;
+   <div class="card"><div class="label">Built so far</div><div class="big">${pct}%</div>${stackBar(all)}<div class="sm" style="margin-top:6px">${built} of ${all.length} tasks built · ${done} marked done by you</div></div>
+   <div class="card"><div class="label" style="color:var(--review)">Needs your OK</div><div class="big">${rev.length}</div><div class="sm">Finished and working. Check them, then set them to Done.</div>
+     <div class="row" style="margin-top:8px;gap:6px;display:flex;flex-wrap:wrap"><button class="btn" id="showRev">Show them</button>${rev.length?'<button class="btn" id="allDone">Mark all done</button>':''}</div></div>
+   <div class="card"><div class="label own-Hesham">Your turn</div><div class="big">${me.length}</div>${list(me)||'<div class="sm">Nothing for you right now</div>'}</div>
+   <div class="card"><div class="label own-Claude">Claude next</div><div class="big">${cl.length}</div>${list(cl)||'<div class="sm">Nothing waiting</div>'}</div>
+   <div class="card"><div class="label">Parked for later</div><div class="big">${later}</div><div class="sm">Ideas kept for later (phase P7). Nothing to do now.</div></div>
+   <details class="card howto" style="grid-column:1/-1"><summary><b>How to read this board</b></summary>
+     <div class="sm" style="margin-top:8px;display:grid;gap:4px">
+       <div><b>To do</b>: not started. <b>In progress</b>: being worked on. <b>Blocked</b>: stuck, waiting for an answer.</div>
+       <div><b>Built, needs your OK</b>: Claude finished it and it works. Only you set <b>Done</b>, after you've checked it (or trust it): click <b>Mark all done</b>, or change one in the Plan table.</div>
+       <div><b>Your turn</b>: questions only you can answer or things only you can do on your Mac. <b>Claude next</b>: what Claude can start now.</div>
+       <div><b>⏳ waits on</b>: that task can't start until the one it names is built.</div>
+       <div>Phases: P0 your answers · P1 clean-up · P2 visuals · P3 making reels · P4 quality checks · P5 costs · P6 real reels · P7 later · P8 independent + smarter.</div>
+     </div></details>`;
   $('#ver').textContent='board v'+(D.version??'—');
+  $('#showRev').onclick=()=>{view='table';$('#fStatus').value='review';document.querySelectorAll('nav button').forEach(x=>x.classList.toggle('on',x.dataset.v==='table'));render()};
+  const ad=$('#allDone'); if(ad) ad.onclick=async()=>{
+    if(!confirm(`Mark all ${rev.length} built tasks as Done? (Only if you're happy with how Reel Factory works now.)`))return;
+    rev.forEach(t=>{t.status='done';t.updated=now().slice(0,10);logc(t,'marked done (all built work accepted)')});
+    await persist(rev.length+' tasks marked done');
+  };
 }
 function renderMap(){
   const list=shown();
@@ -284,11 +305,11 @@ async function renderResults(){
     <div class="card"><div class="label">Reels with results</div><div class="big">${withData}</div><div class="label">${withData<5?`Learning starts at 5 reels (${5-withData} to go)`:'Enough to start learning'}</div></div>
     <div class="card"><div class="label">Add results</div><p style="margin:6px 0 0;color:var(--muted)">Open a finished reel on the <a href="/" style="color:var(--lime)">Make a reel</a> page → "How did it do?"</p></div>
     <div class="card"><div class="label">All results</div><p style="margin:6px 0 0"><a href="/api/performance.csv" style="color:var(--lime)">Download as a spreadsheet (CSV)</a></p></div></div>
-    <div class="card"><table><tr><th>Reel</th><th>Where / when</th><th>Views</th><th>Avg watched</th><th>To the end</th><th>Saves /1k</th><th>Shares /1k</th><th>Length</th><th>Cards</th><th>Zooms</th><th>Title</th></tr>
+    <div class="card"><table><tr><th>Reel</th><th>Where / when</th><th>Views</th><th>Avg watched</th><th>To the end</th><th>Saves /1k</th><th>Shares /1k</th><th>Length</th><th>Cards</th><th>Zooms</th><th title="Ready-to-post score (0-100)">Score</th><th>Title</th></tr>
     ${rows.map(({r,e})=>`<tr><td>${esc(r.job)}</td><td>${e?(e.platform==='tiktok'?'TikTok':'Instagram')+' · '+(W[e.when]||e.when):'<span style="color:var(--muted)">no results yet</span>'}</td>
       <td>${e?n(e.views):''}</td><td>${e&&e.watch_pct!=null?e.watch_pct+'%':''}</td><td>${e&&e.full_pct!=null?e.full_pct+'%':''}</td>
       <td>${e&&e.saves_per_1k!=null?e.saves_per_1k:''}</td><td>${e&&e.shares_per_1k!=null?e.shares_per_1k:''}</td>
-      <td>${r.facts.length_s?Math.round(r.facts.length_s)+' s':''}</td><td>${r.facts.moments}</td><td>${r.facts.zooms}</td><td dir="auto">${esc(r.facts.hook)}</td></tr>`).join('')||'<tr><td colspan=11>No finished reels yet.</td></tr>'}</table></div>`;
+      <td>${r.facts.length_s?Math.round(r.facts.length_s)+' s':''}</td><td>${r.facts.moments}</td><td>${r.facts.zooms}</td><td>${r.facts.ready_score??'—'}</td><td dir="auto">${esc(r.facts.hook)}</td></tr>`).join('')||'<tr><td colspan=12>No finished reels yet.</td></tr>'}</table></div>`;
 }
 function renderLog(){
   $('#v-log').innerHTML=`<div class="card"><table><tr><th>When</th><th>Who</th><th>Task</th><th>Change</th></tr>${(D.log||[]).slice().reverse().slice(0,300).map(l=>`<tr><td>${esc(l.time)}</td><td class="own-${esc(l.who)}">${esc(l.who)}</td><td>${esc(l.task)}</td><td>${esc(l.change)}</td></tr>`).join('')}</table></div>`;

@@ -650,6 +650,22 @@ async function waitCover(p){
   }
 }
 
+/* ---------------------------------------------------------------- ready-to-post score */
+function readyBlock(p){
+  const r=p.ready_score; if(!r||r.score==null) return "";
+  const col = r.grade==="ready" ? "var(--lime)" : r.grade==="good" ? "var(--violet)" : "var(--coral)";
+  return `<div style="border-top:1px solid var(--line);padding-top:14px;display:grid;gap:8px">
+    <div style="display:flex;gap:14px;align-items:center">
+      <div style="font-size:34px;font-weight:700;color:${col};line-height:1">${r.score}<span style="font-size:15px;color:var(--muted)">/100</span></div>
+      <div><b>Ready-to-post score</b><div class="small" style="color:${col}">${esc(r.verdict)}</div></div>
+    </div>
+    ${(r.top_tips||[]).length?`<ul style="margin:0;padding-left:18px;display:grid;gap:4px">${r.top_tips.map(t=>`<li class="small">${esc(t)}</li>`).join("")}</ul>`:""}
+    <details><summary class="small">See all 10 checks</summary>
+      <ul style="list-style:none;margin:6px 0 0;padding:0;display:grid;gap:4px">${(r.checks||[]).map(c=>`<li class="small"><span aria-hidden="true">${c.ok?"✅":"▫️"}</span> ${esc(c.label)}: <b>${c.points}/${c.max}</b>${c.value?` <span style="color:var(--muted)">(${esc(c.value)})</span>`:""}</li>`).join("")}</ul>
+    </details>
+    <p class="small" style="margin:0;color:var(--muted)">${esc(r.note||"")}</p>
+  </div>`;
+}
 /* ---------------------------------------------------------------- how did it do? (results after posting) */
 const PERF=[["views","Views"],["avg_watch_s","Average watch time (seconds)"],["full_pct","Watched to the end (%)"],["likes","Likes"],["comments","Comments"],["shares","Shares"],["saves","Saves"],["follows","New follows"]];
 const WHEN_TXT={"48h":"2 days after posting","7d":"7 days after posting","30d":"30 days after posting"};
@@ -704,6 +720,7 @@ function showResult(p){
           ${p.handles_set?"":`<div class="warn">Your Instagram and TikTok handles aren't set yet, and the final videos need them on the last card. Send them to Claude once, then come back and approve.</div>`}
           <div class="row"><button class="btn primary" id="approve" ${p.handles_set?"":"disabled"}>Approve &amp; make final video</button></div>
         </div>
+        ${readyBlock(p)}
         ${p.feedback&&p.feedback.length?`<details><summary class="small">Your earlier comments (${p.feedback.length})</summary><div class="history" style="margin-top:6px">${p.feedback.map(f=>`<div>${esc(f.time)} · ${esc(f.fix)}</div>`).join("")}</div></details>`:""}
       </div></div>`;
     $("#sendFix").onclick=async ()=>{
@@ -729,6 +746,7 @@ function showResult(p){
         <textarea id="fixText" dir="auto" placeholder="Write your editing comments: “remove the second card”, “bigger captions”. Wrong word? Write: wrong => right"></textarea>
         <p class="small" style="margin:0">Sending changes makes a new draft. Approve it again to get the new final video. This one stays saved.</p>
         <div class="row"><button class="btn violet" id="sendFix">Send changes</button></div>
+        ${readyBlock(p)}
         ${coverBlock(p)}
         ${perfBlock(p)}
         ${p.feedback&&p.feedback.length?`<details><summary class="small">Your earlier comments (${p.feedback.length})</summary><div class="history" style="margin-top:6px">${p.feedback.map(f=>`<div>${esc(f.time)} · ${esc(f.fix)}</div>`).join("")}</div></details>`:""}

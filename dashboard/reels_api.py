@@ -462,7 +462,26 @@ def progress(ref):
         out["draft_mtime"] = int(os.path.getmtime(os.path.join(jd, "review", "draft_540p.mp4")))
     out["feedback"] = jj.get("feedback_history", [])
     out["handles_set"] = _handles_set()
+    if jd and out.get("state") in ("ready", "final"):
+        out["ready_score"] = ready_score(job)
     return out
+
+
+def ready_score(job):
+    """The reel's ready-to-post score; made again when the draft, final or cover is newer than it."""
+    jd = os.path.join(JOBS, job)
+    p = os.path.join(jd, "ready_score.json")
+    srcs = [os.path.join(jd, f) for f in ("qa.json", "qa_final.json", "timeline.json", "review/cover.jpg")]
+    newest = max([os.path.getmtime(f) for f in srcs if os.path.exists(f)] or [0])
+    if not os.path.exists(p) or os.path.getmtime(p) < newest:
+        try:
+            sys.path.insert(0, os.path.join(ROOT, "scripts"))
+            import ready_score as rs
+            final = (_j(os.path.join(jd, "job.json"), {}) or {}).get("status") == "rendered"
+            return rs.score(jd, final)
+        except Exception:                   # noqa: BLE001
+            return None
+    return _j(p)
 
 
 def _handles_set():
@@ -618,12 +637,13 @@ def edit_facts(job):
     for s in scenes:
         if s.get("block") not in ("hook_two_tone", "captions", "cta_card"):
             kinds[s["block"]] = kinds.get(s["block"], 0) + 1
-    zooms = sum(1 for f in tl.get("frames", []) if isinstance(f, (list, tuple)) and len(f) > 1 and f[1] and f[1] > 1.01)
+    zooms = len(tl.get("punch_ins") or []) or sum(1 for f in tl.get("frames", []) if isinstance(f, (list, tuple)) and len(f) > 1 and f[1] and f[1] > 1.01)
     dur = tl.get("duration") or 0
     return {"length_s": round(dur, 1), "hook": " / ".join(x for x in (hook.get("line1"), hook.get("line2")) if x),
             "hook_chars": len((hook.get("line1") or "") + (hook.get("line2") or "")),
             "moments": sum(kinds.values()), "moment_kinds": kinds, "zooms": zooms,
-            "own_cover": any(os.path.exists(os.path.join(jd, "cover", n + e)) for n in ("photo", "own") for e in COVER_EXT)}
+            "own_cover": any(os.path.exists(os.path.join(jd, "cover", n + e)) for n in ("photo", "own") for e in COVER_EXT),
+            "ready_score": (_j(os.path.join(jd, "ready_score.json"), {}) or {}).get("score")}
 
 
 def performance(job=None):
@@ -654,7 +674,7 @@ def performance(job=None):
 
 def performance_csv():
     cols = ["job", "platform", "when", "views", "avg_watch_s", "watch_pct", "full_pct", "likes", "comments", "shares", "saves",
-            "follows", "saves_per_1k", "shares_per_1k", "length_s", "hook_chars", "moments", "zooms", "own_cover", "hook"]
+            "follows", "saves_per_1k", "shares_per_1k", "length_s", "hook_chars", "moments", "zooms", "own_cover", "ready_score", "hook"]
     lines = [",".join(cols)]
     for r in performance():
         for e in r["entries"]:
