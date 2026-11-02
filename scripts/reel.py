@@ -17,7 +17,7 @@ Money: a paid call is refused when this job's spend + its worst case would pass 
 budget_usd.per_reel_stop), or when the month would pass budget_usd.monthly_stop. Only text and small stills leave
 the Mac, never audio or video.
 """
-import argparse, base64, glob, json, os, re, shutil, subprocess, sys, time, urllib.request, urllib.error
+import argparse, base64, glob, json, os, re, shutil, subprocess, sys, threading, time, urllib.request, urllib.error
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from lib import config as cfg   # noqa: E402  (all settings live in config/*.json)
@@ -108,6 +108,8 @@ class Ctx:
         self.cost_path = os.path.join(job, "cost.json")
         self.cost = jload(self.cost_path, {"calls": []})
         self.timing = jload(os.path.join(job, "timing.json"), {})
+        self._lock = threading.RLock()       # the shot log and the director plan may run side by side (T101)
+        self._reserved = 0.0                 # worst-case cost of calls in flight: the budget guard counts them too
 
     def spent(self): return sum(c["cost"] for c in self.cost["calls"])
 
@@ -118,29 +120,37 @@ class Ctx:
         est_in = est_in_tokens or int(chars / 2.6 + imgs * (self.a.img_tok))
         pin, pout = cfg.price(model)
         worst = est_in * pin / 1e6 + max_tokens * pout / 1e6
-        if self.spent() + worst > self.a.budget:
-            raise Stop(f"BUDGET GUARD: {stage} worst case ${worst:.3f} + spent ${self.spent():.3f} > budget ${self.a.budget:.2f}. "
-                       f"Raise --budget only with Hesham's approval.")
-        month = cfg.month_spent() + (self.spent() - self.cost.get("logged", 0.0))
-        if month + worst > cfg.BUDGET["monthly_stop"]:
-            raise Stop(f"MONTHLY CAP: this month ${month:.2f} + worst case ${worst:.3f} > ${cfg.BUDGET['monthly_stop']:.2f}. "
-                       f"Change budget_usd.monthly_stop in config/project.json only with Hesham's approval.")
-        if self.spent() + worst > cfg.BUDGET["per_reel_warn"] and not getattr(self, "_warned", False):
-            self._warned = True
-            print(f"   WARNING: this job may pass the ${cfg.BUDGET['per_reel_warn']:.2f} per-reel warning level")
-        base, key = nous()
-        body = {"model": model, "max_tokens": max_tokens, "reasoning": {"effort": effort},
-                "messages": [{"role": "user", "content": content}]}
-        req = urllib.request.Request(base + "/chat/completions", data=json.dumps(body).encode(),
-                                     headers={"Authorization": "Bearer " + key, "Content-Type": "application/json"})
-        t0 = time.time()
-        d = post_with_retry(req, stage)
-        dt = time.time() - t0
+        with self._lock:
+            held = self.spent() + self._reserved                      # money spent + worst case of calls already in flight
+            if held + worst > self.a.budget:
+                raise Stop(f"BUDGET GUARD: {stage} worst case ${worst:.3f} + spent ${held:.3f} > budget ${self.a.budget:.2f}. "
+                           f"Raise --budget only with Hesham's approval.")
+            month = cfg.month_spent() + (held - self.cost.get("logged", 0.0))
+            if month + worst > cfg.BUDGET["monthly_stop"]:
+                raise Stop(f"MONTHLY CAP: this month ${month:.2f} + worst case ${worst:.3f} > ${cfg.BUDGET['monthly_stop']:.2f}. "
+                           f"Change budget_usd.monthly_stop in config/project.json only with Hesham's approval.")
+            if held + worst > cfg.BUDGET["per_reel_warn"] and not getattr(self, "_warned", False):
+                self._warned = True
+                print(f"   WARNING: this job may pass the ${cfg.BUDGET['per_reel_warn']:.2f} per-reel warning level")
+            self._reserved += worst
+        try:                                   # the worst case stays reserved only while the call is in flight
+            base, key = nous()
+            body = {"model": model, "max_tokens": max_tokens, "reasoning": {"effort": effort},
+                    "messages": [{"role": "user", "content": content}]}
+            req = urllib.request.Request(base + "/chat/completions", data=json.dumps(body).encode(),
+                                         headers={"Authorization": "Bearer " + key, "Content-Type": "application/json"})
+            t0 = time.time()
+            d = post_with_retry(req, stage)
+            dt = time.time() - t0
+        finally:
+            with self._lock:
+                self._reserved -= worst
         u = d["usage"]
         rec = {"stage": stage, "model": model, "in": u["prompt_tokens"], "out": u["completion_tokens"],
                "reasoning": (u.get("completion_tokens_details") or {}).get("reasoning_tokens"),
                "cost": u.get("cost", 0.0), "seconds": round(dt, 1), "finish": d["choices"][0].get("finish_reason")}
-        self.cost["calls"].append(rec); jsave(self.cost_path, self.cost)
+        with self._lock:
+            self.cost["calls"].append(rec); jsave(self.cost_path, self.cost)
         print(f"   [{stage}] {model.split('/')[1]} in={rec['in']} out={rec['out']} think={rec['reasoning']} ${rec['cost']:.4f} {dt:.0f}s")
         if rec["finish"] == "length":
             if not _retry and max_tokens < 24000:      # answer was cut off: try once more with double room (budget guard still applies)
@@ -448,6 +458,7 @@ def st_plan(c):
     jsave(os.path.join(c.job, "scene_plan.json"), plan)
     jsave(os.path.join(c.job, "validation.json"), {"errors": err, "warnings": warn, "attempts": [m for m, _ in attempts]})
     if err: raise Stop("plan still breaks the rules after repair: " + "; ".join(err[:4]))
+    join_shots(c)                                   # the shot log may still be running next to this step
     shots = jload(os.path.join(c.job, "shot_log.json")) or []
     faces = sorted(r["face"]["y"] + r["face"]["h"] * 0.45 for r in shots if r.get("face"))
     tl["face_cy"] = round(faces[len(faces) // 2], 3) if faces else 0.36
@@ -647,6 +658,64 @@ FUNCS = {"ingest": st_ingest, "transcribe": st_transcribe, "fix": st_fix, "revie
          "draft": st_draft, "report": st_report}
 
 
+def join_shots(c):
+    """Wait for the shot log that was started next to the plan (T101); a failure in it surfaces here. -> its message or None."""
+    th = getattr(c, "shot_thread", None)
+    if th is None:
+        return None
+    th.join()
+    c.shot_thread = None
+    box = c.shot_box
+    if "err" in box:
+        raise box["err"]
+    c.timing["shotlog"] = box.get("seconds"); jsave(os.path.join(c.job, "timing.json"), c.timing)
+    set_status(c, "shotlog")
+    print(f"{'shotlog':11s} ok  {box.get('seconds', 0):5.1f}s  (ran next to the plan)  {box.get('msg')}")
+    return box.get("msg")
+
+
+def can_overlap_shotlog(c, a):
+    """The shot log (vision AI) and the director plan do not need each other, so they may run side by side. Only when BOTH
+    have to run (neither cached) and nobody asked to stop after the shot log."""
+    if a.stop_after in ("shotlog", "keyframes"):
+        return False
+    done = lambda f: os.path.exists(os.path.join(c.job, f))
+    return not done("shot_log.json") and (not done("timeline.json") or bool(getattr(a, "replan", False)))
+
+
+def run_stages(c, a, job):
+    """All pipeline stages in order. Returns True when every stage ran (False when it stopped early on --stop-after)."""
+    try:
+        for s in STAGES:
+            if s == "shotlog" and can_overlap_shotlog(c, a):
+                box = {}
+                def work(box=box):
+                    t0 = time.time()
+                    try:
+                        box["msg"] = FUNCS["shotlog"](c)
+                    except BaseException as e:             # noqa: BLE001 - re-raised in the main thread by join_shots
+                        box["err"] = e
+                    box["seconds"] = round(time.time() - t0, 1)
+                c.shot_box = box; c.shot_thread = threading.Thread(target=work, name="shotlog")
+                c.shot_thread.start()
+                print(f"{'shotlog':11s} started (runs at the same time as the plan)")
+                continue
+            t0 = time.time(); before = c.spent()
+            msg = FUNCS[s](c)
+            c.timing[s] = round(time.time() - t0, 1); jsave(os.path.join(job, "timing.json"), c.timing)
+            set_status(c, s)
+            print(f"{s:11s} ok  {time.time() - t0:5.1f}s  +${c.spent() - before:.4f}  {msg}")
+            if s == "plan":
+                join_shots(c)                               # the plan has finished: collect the shot log too
+            if a.stop_after == s:
+                return False
+        return True
+    finally:
+        th = getattr(c, "shot_thread", None)
+        if th is not None:
+            th.join()                                       # never leave a paid call running behind our back
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("input"); ap.add_argument("--slug"); ap.add_argument("--select"); ap.add_argument("--stop-after", choices=STAGES)
@@ -722,14 +791,7 @@ def main():
             jsave(os.path.join(job, "job.json"), j)
             print("FINAL:", *outs, sep="\n  ")
         else:
-            for s in STAGES:
-                t0 = time.time(); before = c.spent()
-                msg = FUNCS[s](c)
-                c.timing[s] = round(time.time() - t0, 1); jsave(os.path.join(job, "timing.json"), c.timing)
-                set_status(c, s)
-                print(f"{s:11s} ok  {time.time() - t0:5.1f}s  +${c.spent() - before:.4f}  {msg}")
-                if a.stop_after == s: break
-            else:
+            if run_stages(c, a, job):
                 print(f"\nGATE 2: watch {os.path.join(job, 'review', 'draft_540p.mp4')}\n"
                       f"  approve:  python3 scripts/reel.py {os.path.relpath(job, ROOT)} --approve\n"
                       f"  or fix:   python3 scripts/reel.py {os.path.relpath(job, ROOT)} --fix \"what to change\"")

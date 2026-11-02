@@ -1358,11 +1358,11 @@
    "phase": "P14",
    "title": "Pipeline overlap: map what depends on what, overlap the free steps that can run together, and measure",
    "owner": "Claude",
-   "status": "todo",
+   "status": "review",
    "depends": [],
    "done_when": "A short written map in docs/DECISIONS.md with measured stage times; overlap built only where it saves real time.",
-   "notes": "",
-   "evidence": "",
+   "notes": "Done 2026-11-02. Measured: render is ~85-90% of the draft; check/snapshot/QA overlap not worth it. Built: shot log and director plan run side by side (saves 30-60 s per fresh reel). Budget guard counts calls in flight.",
+   "evidence": "scripts/reel.py (run_stages, join_shots, Ctx budget reservation), tests/test_overlap.py, docs/DECISIONS.md (measurements)",
    "updated": "2026-11-02"
   },
   {
@@ -1427,14 +1427,14 @@
   },
   {
    "id": "T107",
-   "phase": "P12",
+   "phase": "P14",
    "title": "P2 · Learn from rejected drafts: remember which version you went back from and why, as lessons for the next reel",
    "owner": "Claude",
-   "status": "todo",
+   "status": "review",
    "depends": [],
    "done_when": "After a 'Use this version' or 'Send changes', one line lands in lessons for the director.",
-   "notes": "",
-   "evidence": "",
+   "notes": "Built 2026-11-02. Going back to an earlier draft records the change he rejected as taste for the next reels.",
+   "evidence": "scripts/lib/versions.py (restore), scripts/lib/director.py (taste), tests/test_versions.py",
    "updated": "2026-11-02"
   }
  ],

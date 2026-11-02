@@ -29,6 +29,21 @@ class VersionTests(unittest.TestCase):
         self.assertTrue(os.path.exists(os.path.join(d, "review", "versions", "v2.mp4")))                # nothing deleted
         self.assertIn("went back to version 1", json.load(open(os.path.join(d, "job.json")))["feedback_history"][-1]["fix"])
 
+    def test_going_back_remembers_the_rejected_change_as_taste(self):
+        import tempfile as _t
+        from lib import director
+        root = _t.mkdtemp(); d = os.path.join(root, "jobs", "2026-11-02-x"); os.makedirs(os.path.join(d, "review"))
+        open(os.path.join(d, "review", "draft_540p.mp4"), "wb").write(b"a")
+        for n, x in (("timeline.json", {"duration": 5, "scenes": []}), ("edl.json", {}), ("qa.json", {"errors": [], "warnings": []}), ("job.json", {"feedback_history": []})):
+            json.dump(x, open(os.path.join(d, n), "w"))
+        v.save(d, "first draft")
+        open(os.path.join(d, "review", "draft_540p.mp4"), "wb").write(b"b"); v.save(d, "remove all the cards")
+        self.assertTrue(v.restore(d, 1)[0])
+        hist = json.load(open(os.path.join(d, "job.json")))["feedback_history"]
+        self.assertEqual(hist[-1]["rejected"], "remove all the cards")
+        taste = director.taste(root, skip_job="other")
+        self.assertIn("did not like the result of", taste); self.assertIn("remove all the cards", taste)
+
     def test_unknown_version_and_missing_draft(self):
         d = job(); v.save(d)
         self.assertFalse(v.restore(d, 9)[0])
