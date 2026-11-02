@@ -110,6 +110,8 @@ def taste(root=None, skip_job=None, limit=12):
         except (OSError, ValueError):
             continue
         for h in hist:
+            if h.get("rejected"):                      # he went back to an earlier draft: the change he asked for did not work for him
+                notes.append((h.get("time", ""), f"He did not like the result of: \"{str(h['rejected'])[:120]}\" (he went back to an earlier draft)"))
             for line in str(h.get("fix", "")).splitlines():
                 line = line.strip()
                 if line and "=>" not in line and not line.startswith("(") and len(line) > 3:

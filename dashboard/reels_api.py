@@ -178,6 +178,96 @@ def rebuild(job):
     return _run(job, [jd, "--rebuild"])
 
 
+def _seq_job(job):
+    if not JOB.match(job or "") or not os.path.isdir(os.path.join(JOBS, job)):
+        return None, "unknown reel"
+    if job in _running or _running:
+        return None, "a reel is being made right now; use the timeline when it's finished"
+    return os.path.join(JOBS, job), ""
+
+
+def timeline(job):
+    """(ok, data|message) for the timeline page (T81)."""
+    if not JOB.match(job or "") or not os.path.isdir(os.path.join(JOBS, job)):
+        return False, "unknown reel"
+    jd = os.path.join(JOBS, job)
+    sys.path.insert(0, os.path.join(ROOT, "scripts"))
+    from lib import sequence
+    if not sequence.clips(jd):
+        return False, "this reel has no footage pieces yet: upload clips first"
+    d = sequence.state(jd); d["job"] = job
+    return True, d
+
+
+def timeline_save(job, seq):
+    jd, msg = _seq_job(job)
+    if not jd:
+        return False, msg, None
+    sys.path.insert(0, os.path.join(ROOT, "scripts"))
+    from lib import sequence
+    return sequence.save(jd, seq or {})
+
+
+def timeline_check(job, seq):
+    """Check my cuts (T82): markers with plain reasons. Free."""
+    jd, msg = _seq_job(job)
+    if not jd:
+        return False, msg
+    sys.path.insert(0, os.path.join(ROOT, "scripts"))
+    from lib import sequence
+    clean, err = sequence.validate(jd, seq or sequence.load(jd))
+    if err:
+        return False, "; ".join(err[:2])
+    return True, sequence.check_cuts(jd, clean)
+
+
+def timeline_apply(job, seq):
+    """Auto-edit (T83): save the sequence, then build the new footage and run the whole pipeline on it in the background."""
+    jd, msg = _seq_job(job)
+    if not jd:
+        return False, msg
+    sys.path.insert(0, os.path.join(ROOT, "scripts"))
+    from lib import sequence
+    ok, m, _ = sequence.save(jd, seq or {})
+    if not ok:
+        return False, m
+    return _run(job, [jd, "--apply-sequence"])
+
+
+def timeline_undo(job):
+    jd, msg = _seq_job(job)
+    if not jd:
+        return False, msg
+    sys.path.insert(0, os.path.join(ROOT, "scripts"))
+    from lib import sequence
+    return sequence.undo(jd)
+
+
+def make_variation(job, sel_id):
+    """Make another version of this reel from one of the other candidate stories (T106). Returns (ok, new job name | message)."""
+    if not JOB.match(job or "") or not os.path.isdir(os.path.join(JOBS, job)):
+        return False, "unknown reel"
+    if _running:
+        return False, f"busy: {', '.join(_running)} is still running; one reel at a time"
+    sys.path.insert(0, os.path.join(ROOT, "scripts"))
+    from lib import variations
+    try:
+        name = variations.prepare(JOBS, job, sel_id)
+    except ValueError as e:
+        return False, str(e)
+    ok, msg = _run(name, [os.path.join(JOBS, name)])
+    return (True, name) if ok else (False, msg)
+
+
+def ask_doctor(job):
+    """The user clicked "Ask the AI doctor": one cheap question about why the reel stopped. It only proposes (T84)."""
+    if not JOB.match(job or "") or not os.path.isdir(os.path.join(JOBS, job)):
+        return False, "unknown reel"
+    if job in _running:
+        return False, "this reel is being made right now"
+    return _run(job + "-doctor", [os.path.join(JOBS, job), "--doctor"])
+
+
 def use_hook(job, n):
     """Hook picker (T103): put one of the three hooks (his own words) on the opening title card, then rebuild the draft.
     Free: no AI. The words come from editorial.json and were checked to be in his transcript."""
@@ -224,7 +314,7 @@ def approve(job):
 def media_path(rel):
     """Only drafts, contact sheets and finals inside jobs/ may be served."""
     m = re.match(r"^(\d{4}-\d{2}-\d{2}-[a-z0-9-]+)/(review/draft_540p\.mp4|review/contact_sheet\.jpg|final/[A-Za-z0-9_.-]+\.mp4"
-                 r"|review/versions/v\d+\.mp4|proxy\.mp4|review/cover\.jpg|final/cover_v\d+\.jpg|edit_package/(?:1_video\.mp4|2_graphics\.mov|captions_ar\.srt))$", rel or "")
+                 r"|review/versions/v\d+\.mp4|c\d\d/proxy\.mp4|thumbs/c\d\d_s\d\d\.jpg|proxy\.mp4|review/cover\.jpg|final/cover_v\d+\.jpg|edit_package/(?:1_video\.mp4|2_graphics\.mov|captions_ar\.srt))$", rel or "")
     if not m:
         return None
     p = os.path.realpath(os.path.join(JOBS, rel))
@@ -576,11 +666,20 @@ def progress(ref):
         out["draft"] = f"{job}/review/draft_540p.mp4"
         out["draft_mtime"] = int(os.path.getmtime(os.path.join(jd, "review", "draft_540p.mp4")))
     out["feedback"] = jj.get("feedback_history", [])
+    if jd and out.get("state") in ("stopped", "paused"):
+        try:
+            sys.path.insert(0, os.path.join(ROOT, "scripts"))
+            from lib import doctor
+            out["doctor"] = {"known": doctor.known(out.get("message")), "ai": doctor.load(jd)}
+        except Exception:                           # noqa: BLE001
+            pass
     if jd and out.get("state") in ("ready", "final"):
         try:
             sys.path.insert(0, os.path.join(ROOT, "scripts"))
             from lib import versions
             out["qa"] = versions.summary(jd); out["versions"] = versions.listing(jd)
+            from lib import variations
+            out["alternatives"] = variations.alternatives(jd); out["variation_cost"] = variations.estimate(jd)
             ed = _j(os.path.join(jd, "editorial.json"), {}) or {}
             out["hooks"] = [{"type": h.get("type"), "line": h.get("line")} for h in ed.get("hooks", []) if h.get("found")]
             out["hook_now"] = ed.get("hook_on_screen") or (_j(os.path.join(jd, "scene_plan.json"), {}) or {}).get("hook")
@@ -749,6 +848,12 @@ def save_performance(job, data):
     d["entries"] = [e for e in d.get("entries", []) if (e.get("platform"), e.get("when")) != (platform, when)] + [entry]
     tmp = p + ".tmp"
     json.dump(d, open(tmp, "w", encoding="utf-8"), indent=1); os.replace(tmp, p)
+    try:                                              # re-learn from all results (T76); never blocks saving
+        sys.path.insert(0, os.path.join(ROOT, "scripts"))
+        from lib import learning
+        learning.update(performance())
+    except Exception:                                 # noqa: BLE001
+        pass
     return True, "Saved. Thanks: every result teaches Reel Factory what works."
 
 

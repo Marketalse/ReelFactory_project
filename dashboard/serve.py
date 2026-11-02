@@ -118,6 +118,9 @@ class H(SimpleHTTPRequestHandler):
             return self.send_json(200, v)
         if self.path.startswith("/api/health"):
             return self.send_json(200, settings_api.health())
+        if self.path.startswith("/api/timeline"):
+            ok, data = reels_api.timeline(q.get("job", ""))
+            return self.send_json(200 if ok else 409, data if ok else {"ok": False, "message": data})
         if self.path.startswith("/api/editor"):
             ok, data = reels_api.editor(q.get("job", ""))
             return self.send_json(200 if ok else 409, data if ok else {"ok": False, "message": data})
@@ -227,6 +230,29 @@ class H(SimpleHTTPRequestHandler):
             if not ok:
                 self.close_connection = True               # the unread body must not be parsed as the next request
             return self.send_json(200 if ok else 409, {"ok": ok, "message": msg})
+        if self.path.startswith("/api/timeline/"):
+            try:
+                n = int(self.headers.get("Content-Length", 0))
+                if n > 2_000_000:
+                    raise ValueError("too big")
+                body = json.loads(self.rfile.read(n).decode("utf-8") or "{}")
+            except Exception:
+                return self.send_json(400, {"ok": False, "message": "bad request"})
+            action = self.path.split("/")[3].split("?")[0]
+            job, seq = body.get("job"), body.get("sequence")
+            if action == "save":
+                ok, msg, clean = reels_api.timeline_save(job, seq)
+                return self.send_json(200 if ok else 409, {"ok": ok, "message": msg, "sequence": clean})
+            if action == "check":
+                ok, data = reels_api.timeline_check(job, seq)
+                return self.send_json(200 if ok else 409, {"ok": ok, "markers": data} if ok else {"ok": False, "message": data})
+            if action == "apply":
+                ok, msg = reels_api.timeline_apply(job, seq)
+                return self.send_json(200 if ok else 409, {"ok": ok, "message": msg})
+            if action == "undo":
+                ok, msg = reels_api.timeline_undo(job)
+                return self.send_json(200 if ok else 409, {"ok": ok, "message": msg})
+            return self.send_json(404, {"ok": False, "message": "unknown action"})
         if self.path.startswith("/api/editor/"):
             try:
                 n = int(self.headers.get("Content-Length", 0))
@@ -258,6 +284,8 @@ class H(SimpleHTTPRequestHandler):
                   "reveal": lambda: reels_api.reveal(body.get("job")),
                   "use_version": lambda: reels_api.use_version(body.get("job"), body.get("n")),
                   "use_hook": lambda: reels_api.use_hook(body.get("job"), body.get("n")),
+                  "ask_doctor": lambda: reels_api.ask_doctor(body.get("job")),
+                  "variation": lambda: reels_api.make_variation(body.get("job"), body.get("id")),
                   "cover_reset": lambda: reels_api.cover_reset(body.get("job")),
                   "performance": lambda: reels_api.save_performance(body.get("job"), body.get("data")),
                   "check": lambda: reels_api.check_name(body.get("slug"), body.get("session")),

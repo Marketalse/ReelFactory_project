@@ -707,6 +707,14 @@ function hooksBlock(p){
       <button class="btn" data-hook="${i}" style="padding:4px 10px">Use this title</button></div>`).join("")}</div>
     <p class="small" style="margin:8px 0 0;color:var(--muted)">Free and quick: no AI is used, a new draft is made with this title.</p></details>`;
 }
+function variationsBlock(p){
+  const a=p.alternatives||[]; if(!a.length) return "";
+  return `<details style="border-top:1px solid var(--line);padding-top:14px"><summary><b>Other versions</b> <span class="small" style="color:var(--muted)">(${a.length} more stories from the same footage)</span></summary>
+    <div style="display:grid;gap:8px;margin-top:8px">${a.map(x=>`<div class="small" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+      <b>${esc(x.label||"Another story")}</b><span style="color:var(--muted)">${x.seconds?x.seconds+" s":""}${x.style?" · "+esc(x.style):""}${x.score!=null?" · score "+esc(x.score):""}</span>
+      <button class="btn" data-alt="${esc(x.id)}" style="padding:4px 10px">Make this version (about $${(p.variation_cost||0.05).toFixed(2)})</button></div>`).join("")}</div>
+    <p class="small" style="margin:8px 0 0;color:var(--muted)">A separate reel; this one stays as it is. The cost is shown first and the spending limits still apply.</p></details>`;
+}
 function versionsBlock(p){
   const v=p.versions||[]; if(v.length<2) return "";
   const last=v[v.length-1].n;
@@ -780,18 +788,24 @@ function showResult(p){
         <p class="small" style="margin:0">This is a quick preview (lower quality). When you approve, your final video is made in high quality, then a cover image.</p>
         <label for="fixText" style="font-weight:600">Want changes?</label>
         <textarea id="fixText" dir="auto" placeholder="Tell it like you'd tell an editor: “hook shorter”, “remove the flash”, “bigger captions”. Wrong word? Write: wrong => right"></textarea>
-        <div class="row"><button class="btn violet" id="sendFix">Send changes</button><a class="btn" href="edit.html?job=${encodeURIComponent(job)}" style="text-decoration:none">✂ Edit it yourself</a></div>
+        <div class="row"><button class="btn violet" id="sendFix">Send changes</button><a class="btn" href="edit.html?job=${encodeURIComponent(job)}" style="text-decoration:none">✂ Edit it yourself</a><a class="btn" href="timeline.html?job=${encodeURIComponent(job)}" style="text-decoration:none">🎞 Timeline</a></div>
         <div style="border-top:1px solid var(--line);padding-top:14px;display:grid;gap:10px">
           <b>Happy with it?</b>
           ${p.handles_set?"":`<div class="warn">Your Instagram and TikTok handles aren't set yet, and the final videos need them on the last card. Send them to Claude once, then come back and approve.</div>`}
           <div class="row"><button class="btn primary" id="approve" ${p.handles_set?"":"disabled"}>Approve &amp; make final video</button></div>
         </div>
         ${hooksBlock(p)}
+        ${variationsBlock(p)}
         ${qaBlock(p)}
         ${versionsBlock(p)}
         ${readyBlock(p)}
         ${p.feedback&&p.feedback.length?`<details><summary class="small">Your earlier comments (${p.feedback.length})</summary><div class="history" style="margin-top:6px">${p.feedback.map(f=>`<div>${esc(f.time)} · ${esc(f.fix)}</div>`).join("")}</div></details>`:""}
       </div></div>`;
+    R.querySelectorAll("[data-alt]").forEach(b=>b.onclick=async ()=>{
+      if(!confirm(`Make another version from this story?\nIt costs about $${(p.variation_cost||0.05).toFixed(2)} and takes a few minutes. Your current reel stays as it is.`)) return;
+      b.disabled=true; const r=await backend.variation(job,b.dataset.alt); if(!r.ok){ b.disabled=false; return toast("Couldn't start", r.message, "error"); }
+      toast("Making another version", "It appears as a new reel in your list.", "ok"); showTrack(r.message,false); watch(r.message);
+    });
     R.querySelectorAll("[data-hook]").forEach(b=>b.onclick=async ()=>{
       b.disabled=true; const r=await backend.useHook(job,+b.dataset.hook); if(!r.ok){ b.disabled=false; return toast("Couldn't change the title", r.message, "error"); }
       toast("New title", "Making a new draft with this opening title.", "ok"); showTrack(job,false); watch(job);
@@ -822,7 +836,7 @@ function showResult(p){
         <label for="fixText" style="font-weight:600">Want changes?</label>
         <textarea id="fixText" dir="auto" placeholder="Write your editing comments: “remove the second card”, “bigger captions”. Wrong word? Write: wrong => right"></textarea>
         <p class="small" style="margin:0">Sending changes makes a new draft. Approve it again to get the new final video. This one stays saved.</p>
-        <div class="row"><button class="btn violet" id="sendFix">Send changes</button><a class="btn" href="edit.html?job=${encodeURIComponent(job)}" style="text-decoration:none">✂ Edit it yourself</a></div>
+        <div class="row"><button class="btn violet" id="sendFix">Send changes</button><a class="btn" href="edit.html?job=${encodeURIComponent(job)}" style="text-decoration:none">✂ Edit it yourself</a><a class="btn" href="timeline.html?job=${encodeURIComponent(job)}" style="text-decoration:none">🎞 Timeline</a></div>
         ${readyBlock(p)}
         ${coverBlock(p)}
         ${perfBlock(p)}
@@ -843,9 +857,20 @@ function showResult(p){
     const hint = /handle/i.test(p.message||"") ? "Your Instagram and TikTok handles aren't set yet. Send them to Claude, then click Try again." :
                  /budget|monthly|cap/i.test(p.message||"") ? "The spending limit was reached. Nothing more was spent. Tell Claude if you want to raise the limit." :
                  "Click Try again: it continues where it stopped and never pays twice for finished steps. If it stops again, copy the message and send it to Claude.";
-    R.innerHTML=`<div class="err"><b>${p.state==="paused"?"Interrupted":"Stopped"}</b><p style="margin:4px 0 0">${esc(hint)}</p>${p.message?`<code id="stopMsg">${esc(p.message)}</code>`:""}</div>
+    const dk=p.doctor&&p.doctor.known, da=p.doctor&&p.doctor.ai;
+    const doctorBox=`<div style="margin-top:12px;display:grid;gap:6px">
+      ${dk?`<div class="small"><b>Likely cause:</b> ${esc(dk.title)}<ul style="margin:4px 0 0;padding-left:18px">${dk.steps.map(x=>`<li>${esc(x)}</li>`).join("")}</ul></div>`:""}
+      ${da?`<div class="small"><b>AI doctor (a suggestion only, nothing was changed):</b> ${esc(da.explanation)}<ul style="margin:4px 0 0;padding-left:18px">${(da.steps||[]).map(x=>`<li>${esc(x)}</li>`).join("")}</ul><span style="color:var(--muted)">Risk: ${esc(da.risk)} · ${da.needs==="claude"?"send this to Claude":"you can do this yourself"}</span></div>`:""}
+    </div>`;
+    R.innerHTML=`<div class="err"><b>${p.state==="paused"?"Interrupted":"Stopped"}</b><p style="margin:4px 0 0">${esc(hint)}</p>${p.message?`<code id="stopMsg">${esc(p.message)}</code>`:""}${p.job?doctorBox:""}</div>
       <div class="row" style="margin-top:14px"><button class="btn primary" id="retry">Try again</button>${p.message?'<button class="btn" id="copyMsg">Copy message</button>':""}
+      ${p.job&&p.message?'<button class="btn" id="askDoctor" title="One cheap AI question (about 1 cent). It only suggests; it changes nothing.">Ask the AI doctor</button>':""}
       ${p.draft?'<button class="btn ghost" id="seeDraft">See the last draft</button>':""}</div>`;
+    const ad=$("#askDoctor"); if(ad) ad.onclick=async ()=>{
+      ad.disabled=true; ad.textContent="Asking…"; const r=await backend.askDoctor(p.job);
+      if(!r.ok){ ad.disabled=false; ad.textContent="Ask the AI doctor"; return toast("Couldn't ask the doctor", r.message, "error"); }
+      toast("Asked the AI doctor", "Its suggestion appears here in about 20 seconds.", "ok"); watch(p.job);
+    };
     $("#retry").onclick=async ()=>{
       const r = !p.job ? await backend.start(p.slug) : p.last_mode==="final" ? await backend.approve(p.job) : await backend.resume(p.job);
       if(!r.ok) return toast("Couldn't start again", r.message, "error");
@@ -920,6 +945,8 @@ const RealBackend = {
   approve(job){ return this.post("approve",{job}); },
   useVersion(job,n){ return this.post("use_version",{job,n}); },
   useHook(job,n){ return this.post("use_hook",{job,n}); },
+  askDoctor(job){ return this.post("ask_doctor",{job}); },
+  variation(job,id){ return this.post("variation",{job,id}); },
   resume(job){ return this.post("resume",{job}); },
   reveal(job){ return this.post("reveal",{job}); },
   mediaUrl(job, path){ return "/media/"+encodeURIComponent(job)+"/"+path.split("/").map(encodeURIComponent).join("/"); },
@@ -981,6 +1008,8 @@ const DemoBackend = (()=>{
     async post(){ return {ok:false,message:"Not available in demo mode."}; },
     async useVersion(){ return {ok:false,message:"Not available in demo mode."}; },
     async useHook(){ return {ok:false,message:"Not available in demo mode."}; },
+    async askDoctor(){ return {ok:false,message:"Not available in demo mode."}; },
+    async variation(){ return {ok:false,message:"Not available in demo mode."}; },
     async coverUpload(){ throw new Error("Not available in demo mode."); },
     mediaUrl(job){ const j=jobs[job]; const f=j&&j.files.find(f=>!/\.(avi|mkv)$/i.test(f.name)); if(!f) return ""; return (f._url=f._url||URL.createObjectURL(f)); },
     watch(ref, onUpdate){

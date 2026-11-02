@@ -69,7 +69,11 @@ def restore(job, n):
     shutil.copy2(mp4, os.path.join(job, "review", "draft_540p.mp4"))
     jp = os.path.join(job, "job.json")
     j = _jl(jp, {}) or {}
-    j.setdefault("feedback_history", []).append({"time": time.strftime("%Y-%m-%d %H:%M"), "fix": f"(went back to version {n})"})
+    left = rows[-1] if rows[-1]["n"] != n else None             # the version he is leaving = the one he did not like (T107)
+    entry = {"time": time.strftime("%Y-%m-%d %H:%M"), "fix": f"(went back to version {n})"}
+    if left and left.get("note") and not str(left["note"]).startswith("("):
+        entry["rejected"] = str(left["note"])[:160]
+    j.setdefault("feedback_history", []).append(entry)
     json.dump(j, open(jp, "w", encoding="utf-8"), indent=1, ensure_ascii=False)
     return True, f"Version {n} is the current draft. Approve it to make its final video."
 

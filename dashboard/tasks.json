@@ -120,82 +120,82 @@
    "phase": "P0",
    "title": "Back up the whole Reel-Factory folder (zip) before any change",
    "owner": "Hesham",
-   "status": "review",
+   "status": "done",
    "depends": [],
    "done_when": "Reel-Factory-backup-2026-11-01.zip exists outside the project folder",
-   "notes": "Keep it outside the project folder; never run Reel Factory.command from it.",
+   "notes": "Keep it outside the project folder; never run Reel Factory.command from it. Marked done on Hesham's instruction 2026-11-02.",
    "evidence": "Hesham: downloaded a backup copy of the project (2026-11-01)",
-   "updated": "2026-11-01"
+   "updated": "2026-11-02"
   },
   {
    "id": "T04",
    "phase": "P0",
    "title": "Create an empty PRIVATE GitHub repo and send owner/name to Claude",
    "owner": "Hesham",
-   "status": "review",
+   "status": "done",
    "depends": [],
    "done_when": "Claude has attached the repo",
-   "notes": "Repo created under Marketalse and attached to Claude. Mark Done when you have checked it.",
+   "notes": "Repo created under Marketalse and attached to Claude. Mark Done when you have checked it. Marked done on Hesham's instruction 2026-11-02.",
    "evidence": "https://github.com/Marketalse/ReelFactory_project",
-   "updated": "2026-11-01"
+   "updated": "2026-11-02"
   },
   {
    "id": "T05",
    "phase": "P0",
    "title": "Run the Mac check command and send the output",
    "owner": "Hesham",
-   "status": "review",
+   "status": "done",
    "depends": [],
    "done_when": "node/ffmpeg/hyperframes/python versions + doctor output sent",
-   "notes": "Replaced by Settings → health checks on the dashboard (key, ffmpeg, node, npx, disk). Nothing to send.",
+   "notes": "Replaced by Settings → health checks on the dashboard (key, ffmpeg, node, npx, disk). Nothing to send. Marked done on Hesham's instruction 2026-11-02.",
    "evidence": "",
-   "updated": "2026-11-01"
+   "updated": "2026-11-02"
   },
   {
    "id": "T06",
    "phase": "P0",
    "title": "Answer: which editor (CapCut / DaVinci / Premiere / Final Cut)",
    "owner": "Hesham",
-   "status": "review",
+   "status": "done",
    "depends": [],
    "done_when": "",
-   "notes": "Answered: CapCut (HyperFrames app for bigger edits).",
+   "notes": "Answered: CapCut (HyperFrames app for bigger edits). Marked done on Hesham's instruction 2026-11-02.",
    "evidence": "docs/DECISIONS.md 2026-11-01: editor = CapCut",
-   "updated": "2026-11-01"
+   "updated": "2026-11-02"
   },
   {
    "id": "T07",
    "phase": "P0",
    "title": "Answer: Instagram + TikTok handles",
    "owner": "Hesham",
-   "status": "review",
+   "status": "done",
    "depends": [],
    "done_when": "",
-   "notes": "Needed before Approve: the final CTA card shows them. Send them to Claude in chat.",
+   "notes": "Needed before Approve: the final CTA card shows them. Send them to Claude in chat. Marked done on Hesham's instruction 2026-11-02.",
    "evidence": "config/brand.json handles: instagram + tiktok = @hesham_alshakarchi",
-   "updated": "2026-11-01"
+   "updated": "2026-11-02"
   },
   {
    "id": "T08",
    "phase": "P0",
    "title": "Answer: CTA wording corrections",
    "owner": "Hesham",
-   "status": "review",
+   "status": "done",
    "depends": [],
    "done_when": "",
-   "notes": "Hesham 2026-11-01: no CTA for now. Keep reels clean (attention first, not sales). End card switched off: config/brand.json cta.enabled=false. Turn back on when the strategy changes.",
+   "notes": "Hesham 2026-11-01: no CTA for now. Keep reels clean (attention first, not sales). End card switched off: config/brand.json cta.enabled=false. Turn back on when the strategy changes. Marked done on Hesham's instruction 2026-11-02.",
    "evidence": "config/brand.json cta.enabled=false; tests/test_p3.py CleanEndingTests",
-   "updated": "2026-11-01"
+   "updated": "2026-11-02"
   },
   {
    "id": "T10",
    "phase": "P0",
    "title": "Answer: never-show list (or 'nothing')",
    "owner": "Hesham",
-   "status": "review",
+   "status": "done",
    "depends": [],
    "done_when": "",
-   "notes": "Answered 2026-11-02: nothing.",
+   "notes": "Answered 2026-11-02: nothing. Marked done on Hesham's instruction 2026-11-02.",
    "evidence": "config/brand.json never_show = [] (nothing)",
    "updated": "2026-11-02"
   },
@@ -204,10 +204,10 @@
    "phase": "P0",
    "title": "Answer: glossary page/بيج, store/متجر",
    "owner": "Hesham",
-   "status": "review",
+   "status": "done",
    "depends": [],
    "done_when": "",
-   "notes": "Answered 2026-11-02.",
+   "notes": "Answered 2026-11-02. Marked done on Hesham's instruction 2026-11-02.",
    "evidence": "config/glossary.json: page → بيج, store → متجر (confirmed)",
    "updated": "2026-11-02"
   },
@@ -216,10 +216,10 @@
    "phase": "P7",
    "title": "Approve the committee design + $0.45 warning",
    "owner": "Hesham",
-   "status": "todo",
+   "status": "done",
    "depends": [],
    "done_when": "",
-   "notes": "Parked 2026-11-02: autopilot works without it. Revisit with the self-learning step (T76).",
+   "notes": "Closed on Hesham's instruction 2026-11-02. Paid committee critics are NOT built (covered by Stages 4-6, see T37); per-reel warning stays at the value in config/project.json.",
    "evidence": "",
    "updated": "2026-11-02"
   },
@@ -228,129 +228,129 @@
    "phase": "P1",
    "title": "Repo skeleton: folders, .gitignore (media ignored), README",
    "owner": "Claude",
-   "status": "review",
+   "status": "done",
    "depends": [
     "T04"
    ],
    "done_when": "Repo has the target folder tree",
-   "notes": "Skeleton, .gitignore, README, DECISIONS, docs, configs and dashboard pushed to branch restructure-p1. Your existing code is not in yet (comes from the Mac).",
+   "notes": "Skeleton, .gitignore, README, DECISIONS, docs, configs and dashboard pushed to branch restructure-p1. Your existing code is not in yet (comes from the Mac). Marked done on Hesham's instruction 2026-11-02.",
    "evidence": "branch restructure-p1",
-   "updated": "2026-11-01"
+   "updated": "2026-11-02"
   },
   {
    "id": "T16",
    "phase": "P1",
    "title": "Move config into config/ (project, brand, rules, glossary)",
    "owner": "Claude",
-   "status": "review",
+   "status": "done",
    "depends": [
     "T15",
     "T50"
    ],
    "done_when": "reel.py reads config/; no hard-coded models/prices",
-   "notes": "reel.py + keyframes.py read config/*.json (models, prices, caps, ASR, brand, story length). Fixed crash: reel.py still loaded model/models.json, which moved to archive. Director = Haiku with Sonnet fallback; selects = Sonnet. Monthly cap enforced; run.log written. 12 offline tests pass.",
+   "notes": "reel.py + keyframes.py read config/*.json (models, prices, caps, ASR, brand, story length). Fixed crash: reel.py still loaded model/models.json, which moved to archive. Director = Haiku with Sonnet fallback; selects = Sonnet. Monthly cap enforced; run.log written. 12 offline tests pass. Marked done on Hesham's instruction 2026-11-02.",
    "evidence": "branch p1-config-docs: scripts/lib/config.py, scripts/reel.py, tests/test_pipeline.py",
-   "updated": "2026-11-01"
+   "updated": "2026-11-02"
   },
   {
    "id": "T17",
    "phase": "P1",
    "title": "Archive the 8 status files, old plan, v0 files; remove Telegram everywhere",
    "owner": "Claude",
-   "status": "review",
+   "status": "done",
    "depends": [
     "T15",
     "T50"
    ],
    "done_when": "archive/ holds them; grep 'telegram' finds nothing active",
-   "notes": "Old files are in archive/ (T50). Telegram removed from active docs; remaining mentions only record the removal decision.",
+   "notes": "Old files are in archive/ (T50). Telegram removed from active docs; remaining mentions only record the removal decision. Marked done on Hesham's instruction 2026-11-02.",
    "evidence": "branch p1-config-docs",
-   "updated": "2026-11-01"
+   "updated": "2026-11-02"
   },
   {
    "id": "T18",
    "phase": "P1",
    "title": "Slim AGENTS.md (≤150 lines) + rewrite docs/SOP.md to match the code",
    "owner": "Claude",
-   "status": "review",
+   "status": "done",
    "depends": [
     "T15",
     "T50"
    ],
    "done_when": "One rulebook, no contradictions",
-   "notes": "AGENTS.md ~70 lines, one rulebook. docs/SOP.md marks each stage works/coming with its task number.",
+   "notes": "AGENTS.md ~70 lines, one rulebook. docs/SOP.md marks each stage works/coming with its task number. Marked done on Hesham's instruction 2026-11-02.",
    "evidence": "AGENTS.md, docs/SOP.md on branch p1-config-docs",
-   "updated": "2026-11-01"
+   "updated": "2026-11-02"
   },
   {
    "id": "T19",
    "phase": "P1",
    "title": "On the Mac: pull, run the tests, and do the first real transcription (whisper large-v3)",
    "owner": "Hesham",
-   "status": "review",
+   "status": "done",
    "depends": [
     "T16",
     "T17",
     "T18"
    ],
    "done_when": "Tests pass on the Mac and the IMG_0020 job stops at Gate 0 with transcript_review.txt written",
-   "notes": "Done another way: Hesham ran the real reel on the Mac himself (T34).",
+   "notes": "Done another way: Hesham ran the real reel on the Mac himself (T34). Marked done on Hesham's instruction 2026-11-02.",
    "evidence": "Mac run: transcription of the smuggling reel finished (stopped later at the word-fix step, a key problem)",
-   "updated": "2026-11-01"
+   "updated": "2026-11-02"
   },
   {
    "id": "T20",
    "phase": "P2",
    "title": "Block registry (registry.json) — single authority for all blocks",
    "owner": "Claude",
-   "status": "review",
+   "status": "done",
    "depends": [
     "T16"
    ],
    "done_when": "Director prompt + validator generated from it",
-   "notes": "8 blocks with inputs, limits, layers, SFX. Builder rejects bad values naming the field. Tested.",
+   "notes": "8 blocks with inputs, limits, layers, SFX. Builder rejects bad values naming the field. Tested. Marked done on Hesham's instruction 2026-11-02.",
    "evidence": "templates/blocks/registry.json",
-   "updated": "2026-11-01"
+   "updated": "2026-11-02"
   },
   {
    "id": "T21",
    "phase": "P2",
    "title": "Base template: brand variables, Readex Pro, root timeline, finishing pass",
    "owner": "Claude",
-   "status": "review",
+   "status": "done",
    "depends": [
     "T20"
    ],
    "done_when": "",
-   "notes": "Brand colours/font as CSS variables from config/brand.json; Readex Pro embedded; GSAP vendored (no network at render). Finishing pass (grain/vignette) comes with render.py via hyperframes media-treatment.",
+   "notes": "Brand colours/font as CSS variables from config/brand.json; Readex Pro embedded; GSAP vendored (no network at render). Finishing pass (grain/vignette) comes with render.py via hyperframes media-treatment. Marked done on Hesham's instruction 2026-11-02.",
    "evidence": "scripts/lib/hfbuild.py (root template), templates/vendor/gsap.min.js",
-   "updated": "2026-11-01"
+   "updated": "2026-11-02"
   },
   {
    "id": "T22",
    "phase": "P2",
    "title": "8 blocks: face_cut, captions, hook_two_tone, text_card, split, flash, logo_card, cta_card",
    "owner": "Claude",
-   "status": "review",
+   "status": "done",
    "depends": [
     "T21"
    ],
    "done_when": "Each renders from sample JSON",
-   "notes": "7 block files + face_cut generated by the builder. Rendered on a test pattern in the cloud: hyperframes check passes clean, MP4 renders in ~70 s without GPU. Real-footage look still needs T24.",
+   "notes": "7 block files + face_cut generated by the builder. Rendered on a test pattern in the cloud: hyperframes check passes clean, MP4 renders in ~70 s without GPU. Real-footage look still needs T24. Marked done on Hesham's instruction 2026-11-02.",
    "evidence": "templates/blocks/*.html; sample render jobs/_samples (21.0 s, 1080x1920, check: 0 errors 0 warnings)",
-   "updated": "2026-11-01"
+   "updated": "2026-11-02"
   },
   {
    "id": "T23",
    "phase": "P9",
    "title": "SFX catalog + licence file from the chosen library",
    "owner": "Claude",
-   "status": "review",
+   "status": "done",
    "depends": [
     "T20"
    ],
    "done_when": "",
-   "notes": "Built 2026-11-02. Your best reels (T13) will only tune WHEN sounds play, not which files.",
+   "notes": "Built 2026-11-02. Your best reels (T13) will only tune WHEN sounds play, not which files. Marked done on Hesham's instruction 2026-11-02.",
    "evidence": "scripts/make_sfx.py, style/sfx/catalog.json, tests/test_sfx.py: whoosh, pop, ding, click, rise made with ffmpeg; own work, no licence needed. Files are rebuilt by the script (audio is not kept in git).",
    "updated": "2026-11-02"
   },
@@ -359,13 +359,13 @@
    "phase": "P7",
    "title": "On the Mac: render the block samples on real footage",
    "owner": "Claude",
-   "status": "todo",
+   "status": "done",
    "depends": [
     "T22"
    ],
    "done_when": "sample_draft.mp4 rendered from your real proxy, plus the snapshot contact sheet, in jobs/_samples/blocks",
-   "notes": "Parked 2026-11-02: your real reels already show every block. Give look feedback as comments on a draft.",
-   "evidence": "",
+   "notes": "Closed 2026-11-02 as covered: real reels show every block; samples render from a test pattern.",
+   "evidence": "tests/test_blocks.py, scripts/block_samples.py",
    "updated": "2026-11-02"
   },
   {
@@ -373,12 +373,12 @@
    "phase": "P10",
    "title": "Approve each block look (or send fixes)",
    "owner": "Hesham",
-   "status": "todo",
+   "status": "done",
    "depends": [
     "T24"
    ],
    "done_when": "All 8 marked approved",
-   "notes": "The 5 new blocks (T47) are also ready to look at: add --new-blocks to the sample command. Look feedback can still be given as comments on a real draft. Parked: give look feedback as comments on a draft. Parked 2026-11-02: your real reels already show every block. Give look feedback as comments on a draft.",
+   "notes": "Closed on Hesham's instruction 2026-11-02. Block look feedback comes as comments on real drafts.",
    "evidence": "",
    "updated": "2026-11-02"
   },
@@ -387,41 +387,41 @@
    "phase": "P3",
    "title": "Ingest a folder of clips → one joined proxy + map to originals",
    "owner": "Claude",
-   "status": "review",
+   "status": "done",
    "depends": [
     "T16"
    ],
    "done_when": "",
-   "notes": "Folder of clips joined in filename order (+clip_map.json); logos copied with SVG cleaning; refs/brief copied. Tested with 2 clips.",
+   "notes": "Folder of clips joined in filename order (+clip_map.json); logos copied with SVG cleaning; refs/brief copied. Tested with 2 clips. Marked done on Hesham's instruction 2026-11-02.",
    "evidence": "scripts/ingest_folder.py; branch p3-pipeline; e2e rehearsal in the cloud (2 test clips -> Gate 0 -> Gate 1 -> draft -> Gate 2), 27 offline tests",
-   "updated": "2026-11-01"
+   "updated": "2026-11-02"
   },
   {
    "id": "T27",
    "phase": "P3",
    "title": "Transcription whisper large-v3 (local) + Gate 0 (now automatic)",
    "owner": "Claude",
-   "status": "review",
+   "status": "done",
    "depends": [
     "T26"
    ],
    "done_when": "",
-   "notes": "large-v3-turbo is not offered by hyperframes transcribe; large-v3 used. Gate 0 runs automatically (autopilot).",
+   "notes": "large-v3-turbo is not offered by hyperframes transcribe; large-v3 used. Gate 0 runs automatically (autopilot). Marked done on Hesham's instruction 2026-11-02.",
    "evidence": "scripts/lib/transcript.py; branch p3-pipeline; e2e rehearsal in the cloud (2 test clips -> Gate 0 -> Gate 1 -> draft -> Gate 2), 27 offline tests",
-   "updated": "2026-11-01"
+   "updated": "2026-11-02"
   },
   {
    "id": "T28",
    "phase": "P7",
    "title": "Story choice (Sonnet) with Script-critic scores at Gate 1",
    "owner": "Claude",
-   "status": "todo",
+   "status": "done",
    "depends": [
     "T27"
    ],
    "done_when": "",
-   "notes": "Parked 2026-11-02: autopilot works without it. Revisit with the self-learning step (T76).",
-   "evidence": "",
+   "notes": "Closed 2026-11-02 as covered by Stage 4: story score formula, 3 hooks, main message, rationale.",
+   "evidence": "scripts/lib/editorial.py, scripts/reel.py (st_selects)",
    "updated": "2026-11-02"
   },
   {
@@ -429,112 +429,112 @@
    "phase": "P3",
    "title": "edl.py: cut pauses/fillers/retakes, re-time words",
    "owner": "Claude",
-   "status": "review",
+   "status": "done",
    "depends": [
     "T27"
    ],
    "done_when": "",
-   "notes": "Pauses > 0.35 s, filler sounds, false starts (same 3 words restarted within 6 s) removed; words re-timed. Test take: 48.0 s -> 43.8 s.",
+   "notes": "Pauses > 0.35 s, filler sounds, false starts (same 3 words restarted within 6 s) removed; words re-timed. Test take: 48.0 s -> 43.8 s. Marked done on Hesham's instruction 2026-11-02.",
    "evidence": "scripts/lib/edl.py; branch p3-pipeline; e2e rehearsal in the cloud (2 test clips -> Gate 0 -> Gate 1 -> draft -> Gate 2), 27 offline tests",
-   "updated": "2026-11-01"
+   "updated": "2026-11-02"
   },
   {
    "id": "T30",
    "phase": "P3",
    "title": "Director (Haiku → Sonnet fallback): moments cued to spoken words",
    "owner": "Claude",
-   "status": "review",
+   "status": "done",
    "depends": [
     "T20",
     "T29"
    ],
    "done_when": "",
-   "notes": "Director anchors each block to a spoken word number; code resolves times and checks every rule with named errors; Haiku repair then Sonnet repair, else stop. Verified the repair loop in the rehearsal.",
+   "notes": "Director anchors each block to a spoken word number; code resolves times and checks every rule with named errors; Haiku repair then Sonnet repair, else stop. Verified the repair loop in the rehearsal. Marked done on Hesham's instruction 2026-11-02.",
    "evidence": "scripts/lib/director.py; branch p3-pipeline; e2e rehearsal in the cloud (2 test clips -> Gate 0 -> Gate 1 -> draft -> Gate 2), 27 offline tests",
-   "updated": "2026-11-01"
+   "updated": "2026-11-02"
   },
   {
    "id": "T31",
    "phase": "P3",
    "title": "compile.py: plan → HyperFrames project from blocks only",
    "owner": "Claude",
-   "status": "review",
+   "status": "done",
    "depends": [
     "T22",
     "T30"
    ],
    "done_when": "",
-   "notes": "Approved blocks only; alternating zoom on jump cuts; punch-ins; face moves down under split; captions pause under full-screen cards; logos copied.",
+   "notes": "Approved blocks only; alternating zoom on jump cuts; punch-ins; face moves down under split; captions pause under full-screen cards; logos copied. Marked done on Hesham's instruction 2026-11-02.",
    "evidence": "scripts/compile.py; branch p3-pipeline; e2e rehearsal in the cloud (2 test clips -> Gate 0 -> Gate 1 -> draft -> Gate 2), 27 offline tests",
-   "updated": "2026-11-01"
+   "updated": "2026-11-02"
   },
   {
    "id": "T32",
    "phase": "P3",
    "title": "render.py: draft 540p + edit package + final per platform",
    "owner": "Claude",
-   "status": "review",
+   "status": "done",
    "depends": [
     "T31",
     "T06"
    ],
    "done_when": "",
-   "notes": "Draft: check -> contact sheet -> 540p draft -> edit package (clean_cut.mp4, captions_ar.srt, hyperframes/). Final: one file per platform, versioned, duration checked; refuses until handles are set (T07). Missing: graphics alpha layer + fcpxml (T51).",
+   "notes": "Draft: check -> contact sheet -> 540p draft -> edit package (clean_cut.mp4, captions_ar.srt, hyperframes/). Final: one file per platform, versioned, duration checked; refuses until handles are set (T07). Missing: graphics alpha layer + fcpxml (T51). Marked done on Hesham's instruction 2026-11-02.",
    "evidence": "scripts/render.py; branch p3-pipeline; e2e rehearsal in the cloud (2 test clips -> Gate 0 -> Gate 1 -> draft -> Gate 2), 27 offline tests",
-   "updated": "2026-11-01"
+   "updated": "2026-11-02"
   },
   {
    "id": "T33",
    "phase": "P3",
    "title": "run.log + job.json status written by code; resume without paying twice",
    "owner": "Claude",
-   "status": "review",
+   "status": "done",
    "depends": [
     "T26"
    ],
    "done_when": "",
-   "notes": "job.json status written after each stage; run.log for every run; crash and stop reasons recorded.",
+   "notes": "job.json status written after each stage; run.log for every run; crash and stop reasons recorded. Marked done on Hesham's instruction 2026-11-02.",
    "evidence": "branch p3-pipeline; e2e rehearsal in the cloud (2 test clips -> Gate 0 -> Gate 1 -> draft -> Gate 2), 27 offline tests",
-   "updated": "2026-11-01"
+   "updated": "2026-11-02"
   },
   {
    "id": "T34",
    "phase": "P3",
    "title": "First real reel on the Mac via the upload page (job: smuggling)",
    "owner": "Hesham",
-   "status": "review",
+   "status": "done",
    "depends": [
     "T19",
     "T25"
    ],
    "done_when": "Draft plays on the upload page; Hesham comments or approves",
-   "notes": "Real reel end to end on the Mac after fixes #15-#19.",
+   "notes": "Real reel end to end on the Mac after fixes #15-#19. Marked done on Hesham's instruction 2026-11-02.",
    "evidence": "Mac: job 2026-11-01-img-0061-2 reached draft and final videos (Instagram, TikTok, CapCut files)",
-   "updated": "2026-11-01"
+   "updated": "2026-11-02"
   },
   {
    "id": "T35",
    "phase": "P4",
    "title": "qa_check.py: freeze, black, loudness, duration, caption coverage, banned text",
    "owner": "Claude",
-   "status": "review",
+   "status": "done",
    "depends": [
     "T31"
    ],
    "done_when": "",
-   "notes": "Free checks on every draft and final: length, black frames (incl. first frame), frozen picture, audio present, loudness, captions = speech, numbers on screen were said, no placeholder text, handle set for finals. Errors stop before Gate 2; a failing final is kept as *_QA_FAILED.mp4.",
+   "notes": "Free checks on every draft and final: length, black frames (incl. first frame), frozen picture, audio present, loudness, captions = speech, numbers on screen were said, no placeholder text, handle set for finals. Errors stop before Gate 2; a failing final is kept as *_QA_FAILED.mp4. Marked done on Hesham's instruction 2026-11-02.",
    "evidence": "scripts/qa_check.py, tests/test_qa.py (6 tests), e2e rehearsal: QA passed, captions 87/87, 0 errors",
-   "updated": "2026-11-01"
+   "updated": "2026-11-02"
   },
   {
    "id": "T36",
    "phase": "P9",
    "title": "energy.py: measure your best reels → target rates",
    "owner": "Claude",
-   "status": "review",
+   "status": "done",
    "depends": [],
    "done_when": "",
-   "notes": "Tool built 2026-11-02. Real target numbers appear when your best reel videos are in references/own (T13).",
+   "notes": "Tool built 2026-11-02. Real target numbers appear when your best reel videos are in references/own (T13). Marked done on Hesham's instruction 2026-11-02.",
    "evidence": "scripts/energy.py + tests/test_energy.py (known test video: 2 picture changes, longest hold, first sound, loudness). Run: python3 scripts/energy.py references/own/*.mp4 --save",
    "updated": "2026-11-02"
   },
@@ -543,14 +543,14 @@
    "phase": "P7",
    "title": "Committee: script, visual, audience critics + chair + report",
    "owner": "Claude",
-   "status": "todo",
+   "status": "done",
    "depends": [
     "T14",
     "T35"
    ],
    "done_when": "",
-   "notes": "Parked 2026-11-02: autopilot works without it. Revisit with the self-learning step (T76).",
-   "evidence": "",
+   "notes": "Closed 2026-11-02 as MOSTLY covered: script critic = story scores, visual critic = visual plan checks, audience = creative brief, report = QA report. NOT built: separate paid AI critics (cost).",
+   "evidence": "scripts/lib/editorial.py, visual_plan.py, versions.py (QA report)",
    "updated": "2026-11-02"
   },
   {
@@ -558,69 +558,69 @@
    "phase": "P4",
    "title": "QA catches broken reels and passes good ones",
    "owner": "Claude",
-   "status": "review",
+   "status": "done",
    "depends": [
     "T37"
    ],
    "done_when": "",
-   "notes": "Proven with generated videos in the cloud instead of on the Mac.",
+   "notes": "Proven with generated videos in the cloud instead of on the Mac. Marked done on Hesham's instruction 2026-11-02.",
    "evidence": "tests/test_qa.py: black, frozen, no audio, wrong length, unsaid number, placeholder, caption mismatch, handle",
-   "updated": "2026-11-01"
+   "updated": "2026-11-02"
   },
   {
    "id": "T39",
    "phase": "P5",
    "title": "lib/llm.py: per-job + monthly cap guard, logs every call",
    "owner": "Claude",
-   "status": "review",
+   "status": "done",
    "depends": [
     "T16"
    ],
    "done_when": "",
-   "notes": "Per-reel + monthly guard now in reel.py (Ctx.llm), tested. Moving it into lib/llm.py comes with the committee work.",
+   "notes": "Per-reel + monthly guard now in reel.py (Ctx.llm), tested. Moving it into lib/llm.py comes with the committee work. Marked done on Hesham's instruction 2026-11-02.",
    "evidence": "scripts/reel.py LLM guard: per-reel warn/stop and monthly cap checked before every call; real cost logged to cost.json + expenses.json",
-   "updated": "2026-11-01"
+   "updated": "2026-11-02"
   },
   {
    "id": "T40",
    "phase": "P5",
    "title": "Fix ledger: no 200-row deletion, correct categories, 'stopped' status",
    "owner": "Claude",
-   "status": "review",
+   "status": "done",
    "depends": [
     "T16"
    ],
    "done_when": "",
-   "notes": "Category descriptions are only labels; left as is.",
+   "notes": "Category descriptions are only labels; left as is. Marked done on Hesham's instruction 2026-11-02.",
    "evidence": "reel.py logs run status (ok/stopped/crashed) in the ledger note; add_expense.py no longer deletes rows",
-   "updated": "2026-11-01"
+   "updated": "2026-11-02"
   },
   {
    "id": "T41",
    "phase": "P5",
    "title": "Update cost model (selects, repair, committee)",
    "owner": "Claude",
-   "status": "review",
+   "status": "done",
    "depends": [
     "T37"
    ],
    "done_when": "",
-   "notes": "Superseded: the Spend tab shows real cost per step, model and reel (dashboard/index.html); old calculator archived in archive/planning-2026-11-01/.",
+   "notes": "Superseded: the Spend tab shows real cost per step, model and reel (dashboard/index.html); old calculator archived in archive/planning-2026-11-01/. Marked done on Hesham's instruction 2026-11-02.",
    "evidence": "",
-   "updated": "2026-11-01"
+   "updated": "2026-11-02"
   },
   {
    "id": "T42",
    "phase": "P6",
    "title": "Run 3 real clips end to end",
    "owner": "Claude",
-   "status": "review",
+   "status": "done",
    "depends": [
     "T38",
     "T39"
    ],
    "done_when": "3 drafts + committee reports",
-   "notes": "",
+   "notes": "Marked done on Hesham's instruction 2026-11-02.",
    "evidence": "Real reels made end to end on the Mac: smuggling, img-0061-2, stock-tips (jobs/).",
    "updated": "2026-11-02"
   },
@@ -629,12 +629,12 @@
    "phase": "P6",
    "title": "Review the 3 reels: approve or fix",
    "owner": "Hesham",
-   "status": "review",
+   "status": "done",
    "depends": [
     "T42"
    ],
    "done_when": "",
-   "notes": "You approved real reels and posted stock-tips. Mark done if you're happy.",
+   "notes": "You approved real reels and posted stock-tips. Mark done if you're happy. Marked done on Hesham's instruction 2026-11-02.",
    "evidence": "",
    "updated": "2026-11-02"
   },
@@ -643,13 +643,13 @@
    "phase": "P10",
    "title": "A/B Director Haiku vs Sonnet on the 3 clips; pick one",
    "owner": "Hesham",
-   "status": "todo",
+   "status": "done",
    "depends": [
     "T42"
    ],
    "done_when": "",
-   "notes": "Do with T59 together. Do together with the model bake-off (T59).",
-   "evidence": "",
+   "notes": "Closed on Hesham's instruction 2026-11-02. NOT RUN: it needs your Mac and key. When you want it: python3 scripts/reel.py jobs/<job> --bakeoff \"modelA,modelB\" (costs cents).",
+   "evidence": "scripts/reel.py --bakeoff",
    "updated": "2026-11-02"
   },
   {
@@ -657,12 +657,12 @@
    "phase": "P10",
    "title": "Post, then fill 'How did it do?' on the final page 2 and 7 days later",
    "owner": "Hesham",
-   "status": "in_progress",
+   "status": "done",
    "depends": [
     "T43"
    ],
    "done_when": "",
-   "notes": "Fill 7-day results. stock-tips: Instagram 2-day results saved. Add the 7-day numbers too.",
+   "notes": "Closed on Hesham's instruction 2026-11-02. Your real action stays: type the 2-day and 7-day numbers in 'How did it do?' after posting; T76 learns from them once there are 10 reels.",
    "evidence": "",
    "updated": "2026-11-02"
   },
@@ -671,12 +671,12 @@
    "phase": "P9",
    "title": "B-roll library from your logos/screenshots/refs",
    "owner": "Claude",
-   "status": "review",
+   "status": "done",
    "depends": [
     "T43"
    ],
    "done_when": "",
-   "notes": "Built 2026-11-02. Add your logos/screenshots to library/broll on your Mac.",
+   "notes": "Built 2026-11-02. Add your logos/screenshots to library/broll on your Mac. Marked done on Hesham's instruction 2026-11-02.",
    "evidence": "scripts/lib/broll.py, library/broll/README.md, tests/test_broll.py. Drop images named after what they show (instagram.svg); said in a reel = copied into that reel.",
    "updated": "2026-11-02"
   },
@@ -685,12 +685,12 @@
    "phase": "P9",
    "title": "Extra blocks: name_tag, number_graph, before_after, tier_list",
    "owner": "Claude",
-   "status": "review",
+   "status": "done",
    "depends": [
     "T43"
    ],
    "done_when": "",
-   "notes": "Built 2026-11-02: name_tag, info_card, number_graph, before_after, tier_list (templates + registry + AI editor + tests).",
+   "notes": "Built 2026-11-02: name_tag, info_card, number_graph, before_after, tier_list (templates + registry + AI editor + tests). Marked done on Hesham's instruction 2026-11-02.",
    "evidence": "templates/blocks/{name_tag,info_card,number_graph,before_after,tier_list}.html, registry.json, tests/test_safe_zones.py (all blocks inside the safe zone); I looked at a rendered picture of each block (all inside the safe zone, bar fills to the spoken percentage). Sample reel on your Mac: python3 scripts/block_samples.py --video jobs/<reel>/proxy.mp4 --new-blocks",
    "updated": "2026-11-02"
   },
@@ -699,12 +699,12 @@
    "phase": "P9",
    "title": "Text-behind-head (needs matte) — prove on the Mac",
    "owner": "Claude",
-   "status": "blocked",
+   "status": "done",
    "depends": [
     "T43"
    ],
    "done_when": "",
-   "notes": "Blocked: needs your Mac to install a person-cutout model and test on real footage. When you want it, tell me and I will give you ONE command to paste. Needs your Mac (matte model). Target Nov 4: ready to try; marked blocked until you run it.  Reassigned from Hermes (v2: Hermes optional).",
+   "notes": "CLOSED, NOT BUILT (Hesham's instruction 2026-11-02): text behind the head needs a person-cutout model installed and tested on your Mac. Reopen if you want it.",
    "evidence": "",
    "updated": "2026-11-02"
   },
@@ -713,12 +713,12 @@
    "phase": "P7",
    "title": "Monthly committee calibration from performance.csv",
    "owner": "Claude",
-   "status": "todo",
+   "status": "done",
    "depends": [
     "T45"
    ],
    "done_when": "",
-   "notes": "Merged into T76 (self-learning from your results).",
+   "notes": "Closed 2026-11-02: merged into T76 (learning from results), which is built.",
    "evidence": "",
    "updated": "2026-11-02"
   },
@@ -727,105 +727,105 @@
    "phase": "P1",
    "title": "Import existing code from the Mac (archive/planning-2026-11-01/import_from_old.sh), commit, push",
    "owner": "Hermes",
-   "status": "review",
+   "status": "done",
    "depends": [
     "T04"
    ],
    "done_when": "reel.py, keyframes.py, ingest.sh, cost model, fonts, lessons and old docs (in archive/) are in the repo on GitHub",
-   "notes": "Imported by Hesham: 60 files incl. reel.py, ingest.sh, keyframes.py, cost model, fonts, lessons, archive.",
+   "notes": "Imported by Hesham: 60 files incl. reel.py, ingest.sh, keyframes.py, cost model, fonts, lessons, archive. Marked done on Hesham's instruction 2026-11-02.",
    "evidence": "commit c130081 on main",
-   "updated": "2026-11-01"
+   "updated": "2026-11-02"
   },
   {
    "id": "T51",
    "phase": "P3",
    "title": "Edit package for CapCut: 1_video.mp4 + transparent 2_graphics.mov + captions_ar.srt",
    "owner": "Claude",
-   "status": "review",
+   "status": "done",
    "depends": [
     "T32"
    ],
    "done_when": "graphics_alpha.mov lines up with clean_cut.mp4 in DaVinci/Final Cut via timeline.fcpxml",
-   "notes": "No .fcpxml: CapCut has no supported import format (DECISIONS).",
+   "notes": "No .fcpxml: CapCut has no supported import format (DECISIONS). Marked done on Hesham's instruction 2026-11-02.",
    "evidence": "PR #8 capcut-layers (merged); rehearsal: both layers 43.8 s",
-   "updated": "2026-11-01"
+   "updated": "2026-11-02"
   },
   {
    "id": "T52",
    "phase": "P3",
    "title": "Autopilot: Reels page (Make reel / Send changes / Approve), automatic gates, notifications",
    "owner": "Claude",
-   "status": "review",
+   "status": "done",
    "depends": [],
    "done_when": "Hesham makes a reel without Terminal: drop clips, click, comment or approve",
    "evidence": "branch autopilot: dashboard/reels_api.py, Reels page, Reel Factory.command, 34 tests, API + browser tested with a fake project",
-   "notes": "Word fixes via comments 'old => new'. One reel runs at a time. Media served only from jobs/ drafts and finals.",
-   "updated": "2026-11-01"
+   "notes": "Word fixes via comments 'old => new'. One reel runs at a time. Media served only from jobs/ drafts and finals. Marked done on Hesham's instruction 2026-11-02.",
+   "updated": "2026-11-02"
   },
   {
    "id": "T67",
    "phase": "P3",
    "title": "Upload page: drop video, live step progress, review, download (dashboard home)",
    "owner": "Claude",
-   "status": "review",
+   "status": "done",
    "depends": [],
    "done_when": "Hesham makes a reel without Finder or Terminal",
    "evidence": "PR #9 upload-page + PR #10 launcher restart (merged); 44 tests; browser-tested with a fake pipeline",
-   "notes": "Demo mode when opened without the server.",
-   "updated": "2026-11-01"
+   "notes": "Demo mode when opened without the server. Marked done on Hesham's instruction 2026-11-02.",
+   "updated": "2026-11-02"
   },
   {
    "id": "T53",
    "phase": "P8",
    "title": "Own Nous API key for Reel Factory (~/.reelfactory/nous_api_key), Hermes login only as fallback",
    "owner": "Claude",
-   "status": "review",
+   "status": "done",
    "depends": [],
    "done_when": "Reels run with the project's own key",
    "evidence": "PR #11 own-api-key; tests/test_auth.py",
-   "notes": "Key never in git; order: RF_API_KEY → own key file → Hermes.",
-   "updated": "2026-11-01"
+   "notes": "Key never in git; order: RF_API_KEY → own key file → Hermes. Marked done on Hesham's instruction 2026-11-02.",
+   "updated": "2026-11-02"
   },
   {
    "id": "T54",
    "phase": "P8",
    "title": "Save the new key on the Mac (HOW_TO → Your API key) and finish one reel on it",
    "owner": "Hesham",
-   "status": "review",
+   "status": "done",
    "depends": [
     "T53"
    ],
    "done_when": "A reel passes the word-fix step using the own key",
    "evidence": "Key saved on the Mac (\"KEY WORKS\"); first reel finished on it",
-   "notes": "Hesham: mark done if you agree.",
-   "updated": "2026-11-01"
+   "notes": "Hesham: mark done if you agree. Marked done on Hesham's instruction 2026-11-02.",
+   "updated": "2026-11-02"
   },
   {
    "id": "T55",
    "phase": "P8",
    "title": "Remove the Hermes fallback; clear message on the upload page if the key file is missing",
    "owner": "Claude",
-   "status": "review",
+   "status": "done",
    "depends": [
     "T54"
    ],
    "done_when": "No code reads ~/.hermes; missing key = plain message with the fix",
    "evidence": "branch v2: config.auth has no Hermes fallback; Settings shows \"AI key: not saved yet\" with a paste box",
-   "notes": "Same work as T69.",
-   "updated": "2026-11-01"
+   "notes": "Same work as T69. Marked done on Hesham's instruction 2026-11-02.",
+   "updated": "2026-11-02"
   },
   {
    "id": "T56",
    "phase": "P10",
    "title": "Nous portal: name the key 'Reel Factory' and set a monthly limit of $35 (Hesham, 2026-11-02: more room for better quality) if the portal offers one",
    "owner": "Hesham",
-   "status": "todo",
+   "status": "done",
    "depends": [
     "T54"
    ],
    "done_when": "Portal shows the key with its limit",
    "evidence": "",
-   "notes": "2 minutes in the Nous portal. Second safety net next to Reel Factory's own caps ($1/reel, $50/month in config/project.json: unchanged; the portal's $35 will stop first).",
+   "notes": "Closed on Hesham's instruction 2026-11-02. Your real action stays: in the Nous portal name the key 'Reel Factory' and set the monthly limit to $35.",
    "updated": "2026-11-02"
   },
   {
@@ -833,40 +833,40 @@
    "phase": "P8",
    "title": "Provider errors handled smartly: 401/402 → 'key or credit' message; 429/5xx → wait and retry once, then stop",
    "owner": "Claude",
-   "status": "review",
+   "status": "done",
    "depends": [],
    "done_when": "Each error shows a plain-language fix on the upload page; retry tested with a fake server",
    "evidence": "branch smart-errors: post_with_retry + explain_http in scripts/reel.py; tests/test_errors.py",
-   "notes": "Smarter execution: no lost runs from a brief provider hiccup.",
-   "updated": "2026-11-01"
+   "notes": "Smarter execution: no lost runs from a brief provider hiccup. Marked done on Hesham's instruction 2026-11-02.",
+   "updated": "2026-11-02"
   },
   {
    "id": "T58",
    "phase": "P8",
    "title": "Model catalogue refresh: script reads the Nous model list + prices into config/project.json",
    "owner": "Claude",
-   "status": "review",
+   "status": "done",
    "depends": [
     "T55"
    ],
    "done_when": "One command updates prices; cost estimates match the portal",
    "evidence": "branch v2: scripts/models_refresh.py (report; --write updates prices only, never models); tests/test_models_refresh.py",
-   "notes": "Not run against the live Nous list yet (needs the key: run on the Mac).",
-   "updated": "2026-11-01"
+   "notes": "Not run against the live Nous list yet (needs the key: run on the Mac). Marked done on Hesham's instruction 2026-11-02.",
+   "updated": "2026-11-02"
   },
   {
    "id": "T59",
    "phase": "P9",
    "title": "Cheaper-model bake-off on the real transcript: word fix, story pick, director — current vs 2 cheaper Nous models",
    "owner": "Claude",
-   "status": "review",
+   "status": "done",
    "depends": [
     "T54",
     "T58"
    ],
    "done_when": "Side-by-side report: quality notes + cost per step",
    "evidence": "scripts/reel.py --bakeoff + tests/test_bakeoff.py (pretend AI). Runs the 3 AI steps on a real reel with each model in scratch folders and writes jobs/_bakeoff/<reel>/report.md. Your reel is never touched.",
-   "notes": "Ready 2026-11-02. To run (costs cents, needs your key): python3 scripts/reel.py jobs/<your-reel> --bakeoff \"model-a,model-b\" . Model names: python3 scripts/models_refresh.py lists what Nous offers. Then you pick per step (T60).",
+   "notes": "Ready 2026-11-02. To run (costs cents, needs your key): python3 scripts/reel.py jobs/<your-reel> --bakeoff \"model-a,model-b\" . Model names: python3 scripts/models_refresh.py lists what Nous offers. Then you pick per step (T60). Marked done on Hesham's instruction 2026-11-02.",
    "updated": "2026-11-02"
   },
   {
@@ -874,13 +874,13 @@
    "phase": "P10",
    "title": "Pick the model for each step from the bake-off (written in docs/DECISIONS.md)",
    "owner": "Hesham",
-   "status": "todo",
+   "status": "done",
    "depends": [
     "T59"
    ],
    "done_when": "docs/DECISIONS.md lists the chosen model per step",
    "evidence": "",
-   "notes": "After T59. Rule: never a cheaper model if quality drops.",
+   "notes": "Closed on Hesham's instruction 2026-11-02. Models stay as configured in config/project.json until the bake-off (T44) is run and you choose.",
    "updated": "2026-11-02"
   },
   {
@@ -888,13 +888,13 @@
    "phase": "P9",
    "title": "Cut tokens: shorter prompts, cache the fixed parts (glossary, block catalogue) where the route supports it",
    "owner": "Claude",
-   "status": "todo",
+   "status": "done",
    "depends": [
     "T60"
    ],
    "done_when": "Same output with fewer tokens per reel (measured in cost.json)",
-   "evidence": "",
-   "notes": "Waiting for the bake-off result (T59/T60). Finding: ~95% of a reel's AI cost is the footage description (20 pictures, ~14,600 tokens, $0.052 of $0.055). Fewer or smaller pictures is the big saving, but it can hurt face/logo detection, so it must be compared in the bake-off first. Target Nov 4: safe token cuts; the rest after T60.",
+   "evidence": "scripts/lib/frames_dedup.py, scripts/reel.py (st_shotlog), tests/test_frames_dedup.py",
+   "notes": "Built 2026-11-02: the shot log sends only frames that look different (at least every 8 s, at least 8 frames). Provider prompt caching not used (route does not support it). Marked done on Hesham's instruction.",
    "updated": "2026-11-02"
   },
   {
@@ -902,149 +902,149 @@
    "phase": "P8",
    "title": "Spend page: cost per step and per model, this month vs portal, projection to month end",
    "owner": "Claude",
-   "status": "review",
+   "status": "done",
    "depends": [
     "T55"
    ],
    "done_when": "Spend page answers 'where does the money go?'",
    "evidence": "branch v2: /api/spend + Spend page (by step, by model, per reel, month-end estimate); tests/test_dashboard.py SpendTests",
-   "notes": "",
-   "updated": "2026-11-01"
+   "notes": "Marked done on Hesham's instruction 2026-11-02.",
+   "updated": "2026-11-02"
   },
   {
    "id": "T63",
    "phase": "P8",
    "title": "Learning loop: after each approved reel, turn Hesham's comments into ≤3 lessons and feed them to the Director",
    "owner": "Claude",
-   "status": "review",
+   "status": "done",
    "depends": [
     "T34"
    ],
    "done_when": "Next draft avoids last reel's fixed issues; lessons.md grows",
    "evidence": "branch v2: director.taste() feeds Hesham's taste lessons + earlier comments into every plan; tests/test_taste.py",
-   "notes": "Lessons are added after reels (lessons.md); comments are read automatically.",
-   "updated": "2026-11-01"
+   "notes": "Lessons are added after reels (lessons.md); comments are read automatically. Marked done on Hesham's instruction 2026-11-02.",
+   "updated": "2026-11-02"
   },
   {
    "id": "T64",
    "phase": "P8",
    "title": "Notifications open the dashboard (not Script Editor) when clicked",
    "owner": "Claude",
-   "status": "review",
+   "status": "done",
    "depends": [],
    "done_when": "Clicking 'Draft ready' opens the reel page",
    "evidence": "branch smart-errors: browser notifications in make.html (click opens the reel); Mac notification skipped while a tab watches",
-   "notes": "",
-   "updated": "2026-11-01"
+   "notes": "Marked done on Hesham's instruction 2026-11-02.",
+   "updated": "2026-11-02"
   },
   {
    "id": "T65",
    "phase": "P8",
    "title": "Hermes role: optional helper for development tasks only; update AGENTS.md, README, HERMES_TASKS.md",
    "owner": "Claude",
-   "status": "review",
+   "status": "done",
    "depends": [
     "T55"
    ],
    "done_when": "Docs say reels never depend on Hermes",
    "evidence": "branch v2: AGENTS.md, README.md, HERMES_TASKS.md say Hermes is optional, development only",
-   "notes": "",
-   "updated": "2026-11-01"
+   "notes": "Marked done on Hesham's instruction 2026-11-02.",
+   "updated": "2026-11-02"
   },
   {
    "id": "T68",
    "phase": "P3",
    "title": "Fix: face pieces shorter than 0.3 s stopped the reel (compile refused the plan)",
    "owner": "Claude",
-   "status": "review",
+   "status": "done",
    "depends": [],
    "done_when": "The smuggling reel passes compile on the Mac",
    "evidence": "branch fix-short-cuts: director.absorb_short + tests/test_cuts.py; crash messages show the real error on the page",
-   "notes": "Found on the first real reel (smuggling).",
-   "updated": "2026-11-01"
+   "notes": "Found on the first real reel (smuggling). Marked done on Hesham's instruction 2026-11-02.",
+   "updated": "2026-11-02"
   },
   {
    "id": "T69",
    "phase": "P8",
    "title": "v2: Fully independent of Hermes (own key from Settings, own ffmpeg copy, health checks)",
    "owner": "Claude",
-   "status": "review",
+   "status": "done",
    "depends": [],
    "done_when": "Settings shows all ✅ on the Mac and a reel runs with no ~/.hermes files used",
    "evidence": "branch v2: config.auth/adopt_ffmpeg, dashboard/settings_api.py, tests/test_auth.py, test_settings.py, test_ffmpeg_path.py",
-   "notes": "Built on branch v2; main (v1) untouched. Backup branch backup-v1-working.",
-   "updated": "2026-11-01"
+   "notes": "Built on branch v2; main (v1) untouched. Backup branch backup-v1-working. Marked done on Hesham's instruction 2026-11-02.",
+   "updated": "2026-11-02"
   },
   {
    "id": "T70",
    "phase": "P8",
    "title": "v2: Better sound (voice clean-up + -14 LUFS on every video)",
    "owner": "Claude",
-   "status": "review",
+   "status": "done",
    "depends": [],
    "done_when": "Next reel's QA shows loudness about -14 LUFS, no warning",
    "evidence": "branch v2: render.even_sound, config/project.json sound, tests/test_sound.py",
-   "notes": "Built on branch v2; main (v1) untouched. Backup branch backup-v1-working.",
-   "updated": "2026-11-01"
+   "notes": "Built on branch v2; main (v1) untouched. Backup branch backup-v1-working. Marked done on Hesham's instruction 2026-11-02.",
+   "updated": "2026-11-02"
   },
   {
    "id": "T71",
    "phase": "P8",
    "title": "v2: Auto-start at login + one-click update in Settings",
    "owner": "Claude",
-   "status": "review",
+   "status": "done",
    "depends": [],
    "done_when": "Mac opens Reel Factory after login without the .command; Update button gets new versions",
    "evidence": "branch v2: Turn on/off auto-start.command, scripts/autostart.sh, /api/settings/update (tested on a copy: pulled and restarted)",
-   "notes": "Built on branch v2; main (v1) untouched. Backup branch backup-v1-working.",
-   "updated": "2026-11-01"
+   "notes": "Built on branch v2; main (v1) untouched. Backup branch backup-v1-working. Marked done on Hesham's instruction 2026-11-02.",
+   "updated": "2026-11-02"
   },
   {
    "id": "T72",
    "phase": "P8",
    "title": "v2: Smarter edits (AI editor remembers taste + earlier comments)",
    "owner": "Claude",
-   "status": "review",
+   "status": "done",
    "depends": [],
    "done_when": "Second reel's plan follows a comment given on the first reel",
    "evidence": "branch v2: director.taste, tests/test_taste.py",
-   "notes": "Built on branch v2; main (v1) untouched. Backup branch backup-v1-working.",
-   "updated": "2026-11-01"
+   "notes": "Built on branch v2; main (v1) untouched. Backup branch backup-v1-working. Marked done on Hesham's instruction 2026-11-02.",
+   "updated": "2026-11-02"
   },
   {
    "id": "T73",
    "phase": "P8",
    "title": "Cover image (thumbnail) with every reel + upload your own photo or cover",
    "owner": "Claude",
-   "status": "review",
+   "status": "done",
    "depends": [],
    "done_when": "Hesham downloads a cover he'd post, from a real reel",
    "evidence": "branch v2: scripts/cover.py, tests/test_cover.py, page: Cover image box (Download / Use my photo / Use my own cover / Back to automatic), Extras → Cover photo",
-   "notes": "Look copied from Hesham's STOCK reference, 2026-11-01.",
-   "updated": "2026-11-01"
+   "notes": "Look copied from Hesham's STOCK reference, 2026-11-01. Marked done on Hesham's instruction 2026-11-02.",
+   "updated": "2026-11-02"
   },
   {
    "id": "T74",
    "phase": "P8",
    "title": "Safe zones: all text and cards inside the Instagram/TikTok safe box (Hesham's guide)",
    "owner": "Claude",
-   "status": "review",
+   "status": "done",
    "depends": [],
    "done_when": "Hesham checks a sample and a real reel on his phone: nothing hidden under buttons or captions",
    "evidence": "style/SAFE_ZONES.md, config/rules.json safe_zone, AGENTS.md §5, templates moved, tests/test_safe_zones.py (longest text, every template + cover), scripts/safe_zone_preview.py",
-   "notes": "Stricter of both platforms: x 108-920, y 250-1500, text ≤780 px, captions y 1200-1450, hook/cover title in the feed square. Also fixed: captions vanished in real renders (visibility tween), now guarded by a test.",
-   "updated": "2026-11-01"
+   "notes": "Stricter of both platforms: x 108-920, y 250-1500, text ≤780 px, captions y 1200-1450, hook/cover title in the feed square. Also fixed: captions vanished in real renders (visibility tween), now guarded by a test. Marked done on Hesham's instruction 2026-11-02.",
+   "updated": "2026-11-02"
   },
   {
    "id": "T75",
    "phase": "P9",
    "title": "Later: turn Hesham's visual prompts into templates (floating UI card, document card, lower-third info card, pixel-art scenes)",
    "owner": "Claude",
-   "status": "in_progress",
+   "status": "done",
    "depends": [],
    "done_when": "Hesham approves samples of the ones he wants",
-   "evidence": "",
-   "notes": "Part 3 (lower-third info card) built as info_card. Floating UI/document cards need your real screenshots/text; pixel-art needs your OK on style (see T85). Prompts saved in docs/ideas/visual_prompts.md (2026-11-01). Start only when Hesham asks.",
+   "evidence": "templates/blocks/info_card.html, name_tag.html",
+   "notes": "Closed 2026-11-02: lower-third info card (info_card) and name tag built. NOT built: floating UI card and document card (need your real screens) and pixel-art scenes (T85).",
    "updated": "2026-11-02"
   },
   {
@@ -1052,11 +1052,11 @@
    "phase": "P12",
    "title": "Later: self-learning editor: track how each posted reel performs (manual or Instagram/TikTok API) and learn what editing works",
    "owner": "Claude",
-   "status": "todo",
+   "status": "done",
    "depends": [],
    "done_when": "Hesham agrees the plan; then: performance entered for 10+ reels and the first learned rules appear in lessons.md",
-   "evidence": "",
-   "notes": "Reminder Nov 8 to decide the plan. Step 1 (manual results box + Results page + CSV) built on v2, 2026-11-01. Step 2 = linked Instagram/TikTok accounts + learning rules (from 5 reels). Reminder 2026-11-08.",
+   "evidence": "scripts/lib/learning.py, dashboard/reels_api.py, scripts/reel.py, tests/test_learning.py",
+   "notes": "Built 2026-11-02: with 10+ reels with results it finds clear patterns (max 3 lessons, labelled 'a pattern, not proof') and gives the director one line. Off switch in ~/.reelfactory/learned.json. Marked done on Hesham's instruction.",
    "updated": "2026-11-02"
   },
   {
@@ -1064,22 +1064,22 @@
    "phase": "P8",
    "title": "Reel results by hand: 'How did it do?' box on each finished reel + Results page + CSV",
    "owner": "Claude",
-   "status": "review",
+   "status": "done",
    "depends": [],
    "done_when": "Hesham saves results for his first posted reel",
    "evidence": "branch v2: reels_api.save_performance/performance/performance_csv, make.html How did it do?, index.html Results, tests PerformanceTests",
-   "notes": "Step 1 of T76.",
-   "updated": "2026-11-01"
+   "notes": "Step 1 of T76. Marked done on Hesham's instruction 2026-11-02.",
+   "updated": "2026-11-02"
   },
   {
    "id": "T78",
    "phase": "P8",
    "title": "Ready-to-post score (0-100) with tips, on the draft and final pages + Results",
    "owner": "Claude",
-   "status": "review",
+   "status": "done",
    "depends": [],
    "done_when": "Score and tips show on a real draft",
-   "notes": "Checks what keeps people watching (hook speed, title, length, rhythm, captions, sound…). Not a view prediction.",
+   "notes": "Checks what keeps people watching (hook speed, title, length, rhythm, captions, sound…). Not a view prediction. Marked done on Hesham's instruction 2026-11-02.",
    "evidence": "scripts/ready_score.py, tests/test_ready_score.py",
    "updated": "2026-11-02"
   },
@@ -1088,10 +1088,10 @@
    "phase": "P8",
    "title": "Edit page: Premiere-style manual editing (transcript cut/restore, timeline cards/zooms, live preview, free rebuild)",
    "owner": "Claude",
-   "status": "review",
+   "status": "done",
    "depends": [],
    "done_when": "Hesham cuts words and moves a card on a real reel, and the new draft shows it",
-   "notes": "Open a draft → ✂ Edit it yourself. Save & make new draft costs nothing.",
+   "notes": "Open a draft → ✂ Edit it yourself. Save & make new draft costs nothing. Marked done on Hesham's instruction 2026-11-02.",
    "evidence": "dashboard/edit.html, scripts/lib/manual_edit.py, tests/test_manual_edit.py",
    "updated": "2026-11-02"
   },
@@ -1100,10 +1100,10 @@
    "phase": "P8",
    "title": "IT helper: watches for problems, tells you in plain words, presses Try again on a stuck reel (safe, bounded)",
    "owner": "Claude",
-   "status": "review",
+   "status": "done",
    "depends": [],
    "done_when": "Banner shows problems; stuck or hiccup reels are retried at most 2 times; key/credit errors are only reported; Settings switch turns it off.",
-   "notes": "",
+   "notes": "Marked done on Hesham's instruction 2026-11-02.",
    "evidence": "dashboard/it_agent.py, tests/test_it_agent.py (12 tests), AGENTS.md section 11, docs/DECISIONS.md 2026-11-02",
    "updated": "2026-11-02"
   },
@@ -1112,13 +1112,13 @@
    "phase": "P11",
    "title": "Timeline from raw footage: upload clips, see them as a video track (thumbnails + waveform), split, trim, delete and reorder by hand",
    "owner": "Claude",
-   "status": "todo",
+   "status": "done",
    "depends": [
     "T79"
    ],
    "done_when": "Upload 3 clips, split one, trim, delete a piece, drag to reorder, save: the reel is made from MY sequence (no AI story pick).",
-   "notes": "Starts Nov 9, after the pending tasks are closed. Asked by Hesham 2026-11-02: a real timeline like Premiere/After Effects, footage first, AI button to check and cut.",
-   "evidence": "",
+   "notes": "Built 2026-11-02: Timeline page (🎞 Timeline on the draft page): clips as one track with scene thumbnails and sound waves, split, trim by dragging the edges, delete, reorder, preview, Save. Verified in a headless browser. Applying builds one new proxy exactly and keeps the old version (Undo).",
+   "evidence": "scripts/lib/sequence.py, dashboard/timeline.html, dashboard/reels_api.py, scripts/reel.py (--apply-sequence), tests/test_sequence.py, tests/test_timeline_api.py",
    "updated": "2026-11-02"
   },
   {
@@ -1126,13 +1126,13 @@
    "phase": "P11",
    "title": "AI button 'Check my cuts': AI reviews my sequence and marks on the timeline where cuts should be (pauses, retakes, weak parts); I accept or reject each",
    "owner": "Claude",
-   "status": "todo",
+   "status": "done",
    "depends": [
     "T81"
    ],
    "done_when": "Markers appear on the timeline with a plain reason; Accept / Reject per marker and Accept all; nothing changes until I accept.",
-   "notes": "Starts Nov 9, after the pending tasks are closed. Asked by Hesham 2026-11-02: a real timeline like Premiere/After Effects, footage first, AI button to check and cut.",
-   "evidence": "",
+   "notes": "Built 2026-11-02: 'Check my cuts' marks long pauses, silences at the start/end of pieces, repeated words and fillers with a plain reason; Accept, Reject or Accept all. Free, uses facts already measured (no AI call).",
+   "evidence": "scripts/lib/sequence.py, dashboard/timeline.html, dashboard/reels_api.py, scripts/reel.py (--apply-sequence), tests/test_sequence.py, tests/test_timeline_api.py",
    "updated": "2026-11-02"
   },
   {
@@ -1140,13 +1140,13 @@
    "phase": "P11",
    "title": "AI button 'Auto-edit': AI cuts, arranges and adds cards/zooms while I watch it happen on the timeline; one-click Undo",
    "owner": "Claude",
-   "status": "todo",
+   "status": "done",
    "depends": [
     "T82"
    ],
    "done_when": "Press the button: edits appear on the timeline step by step, everything can be undone, cost shown before it runs and capped.",
-   "notes": "Starts Nov 9, after the pending tasks are closed. Asked by Hesham 2026-11-02: a real timeline like Premiere/After Effects, footage first, AI button to check and cut.",
-   "evidence": "",
+   "notes": "Built 2026-11-02: 'Auto-edit' applies the timeline and runs the whole pipeline on it (story, cuts, captions, cards, zooms); cost shown first; progress on the normal page; Undo brings the earlier version back.",
+   "evidence": "scripts/lib/sequence.py, dashboard/timeline.html, dashboard/reels_api.py, scripts/reel.py (--apply-sequence), tests/test_sequence.py, tests/test_timeline_api.py",
    "updated": "2026-11-02"
   },
   {
@@ -1154,11 +1154,11 @@
    "phase": "P12",
    "title": "AI doctor for the IT helper: reads an error and PROPOSES a fix; you approve before anything changes",
    "owner": "Claude",
-   "status": "todo",
+   "status": "done",
    "depends": [],
    "done_when": "Hesham approves a sample.",
-   "evidence": "",
-   "notes": "Only after the timeline. Never acts alone.",
+   "evidence": "scripts/lib/doctor.py, scripts/reel.py (--doctor), dashboard (Ask the AI doctor), tests/test_doctor.py",
+   "notes": "Built 2026-11-02: free table of known causes + optional AI question (about 1 cent, inside reel.py under the money guard). It only proposes; secrets removed first. Marked done on Hesham's instruction.",
    "updated": "2026-11-02"
   },
   {
@@ -1166,11 +1166,11 @@
    "phase": "P12",
    "title": "Pixel-art scenes (marketing department, social-media manager, meeting) as templates",
    "owner": "Claude",
-   "status": "todo",
+   "status": "done",
    "depends": [],
    "done_when": "Hesham approves a sample.",
    "evidence": "",
-   "notes": "Needs your OK on the style and a one-time character set.",
+   "notes": "CLOSED, NOT BUILT (Hesham's instruction 2026-11-02): pixel-art scenes need your OK on the style and a one-time character set. Reopen when you want them.",
    "updated": "2026-11-02"
   },
   {
@@ -1178,10 +1178,10 @@
    "phase": "P9",
    "title": "Stage 1 upgrade: every file checked on its own, duplicates found, bad files skipped (not the whole batch), uploads resume after a drop, 'Your files' panel",
    "owner": "Claude",
-   "status": "review",
+   "status": "done",
    "depends": [],
    "done_when": "Upload 3 files incl. one broken and one copy: broken one is reported, copy is skipped, the rest are made; a dropped upload continues from where it stopped.",
-   "notes": "Built 2026-11-02. Not built yet: face / camera-movement detection and uploading several files at the same time (local uploads are already fast).",
+   "notes": "Built 2026-11-02. Not built yet: face / camera-movement detection and uploading several files at the same time (local uploads are already fast). Marked done on Hesham's instruction 2026-11-02.",
    "evidence": "scripts/lib/media_check.py, scripts/ingest_folder.py, dashboard/reels_api.py (resumable upload), dashboard/make.html (retry + Your files panel), tests/test_media_check.py, tests/test_dashboard.py",
    "updated": "2026-11-02"
   },
@@ -1190,10 +1190,10 @@
    "phase": "P9",
    "title": "Edit page: stretch and shrink clips freely (0.5 s up to 3x the old limit), trim from the left or right edge, never over a neighbour",
    "owner": "Claude",
-   "status": "review",
+   "status": "done",
    "depends": [],
    "done_when": "Drag either edge of a card on the timeline: it gets shorter or longer and stays valid.",
-   "notes": "Built 2026-11-02.",
+   "notes": "Built 2026-11-02. Marked done on Hesham's instruction 2026-11-02.",
    "evidence": "dashboard/edit.html, scripts/lib/director.py (relaxed), tests/test_cuts.py",
    "updated": "2026-11-02"
   },
@@ -1202,10 +1202,10 @@
    "phase": "P9",
    "title": "Stage 2 upgrade: parallel prep, normalised timestamps, virtual timeline (media index), scene thumbnails; Stage 1 check wired into ingest",
    "owner": "Claude",
-   "status": "review",
+   "status": "done",
    "depends": [],
    "done_when": "Upload 2+ clips: the reel runs, and jobs/<job>/media_index.json + thumbs/ exist.",
-   "notes": "Built 2026-11-02. Dropped from the plan by Hesham: external-mic sync and noise reduction.",
+   "notes": "Built 2026-11-02. Dropped from the plan by Hesham: external-mic sync and noise reduction. Marked done on Hesham's instruction 2026-11-02.",
    "evidence": "scripts/ingest_folder.py, scripts/ingest.sh, scripts/lib/media_index.py, tests/test_ingest_stage2.py",
    "updated": "2026-11-02"
   },
@@ -1214,10 +1214,10 @@
    "phase": "P9",
    "title": "Stage 3 upgrade: language mix, delivery analysis, 4 separate speech scores, low-confidence words (speech_intel.json)",
    "owner": "Claude",
-   "status": "review",
+   "status": "done",
    "depends": [],
    "done_when": "After a reel's word-fix step, jobs/<job>/speech_intel.json exists and report.md has a 'Speech' section.",
-   "notes": "Built 2026-11-02. Dropped from the plan by Hesham: speaker labels and Kurdish Sorani transcription.",
+   "notes": "Built 2026-11-02. Dropped from the plan by Hesham: speaker labels and Kurdish Sorani transcription. Marked done on Hesham's instruction 2026-11-02.",
    "evidence": "scripts/lib/speech_intel.py, tests/test_speech_intel.py",
    "updated": "2026-11-02"
   },
@@ -1226,10 +1226,10 @@
    "phase": "P9",
    "title": "Stage 4 upgrade: story score formula, 3 hooks per story (his own words), main message + audience, editorial.json with rationale and confidence flags",
    "owner": "Claude",
-   "status": "review",
+   "status": "done",
    "depends": [],
    "done_when": "After a reel: jobs/<job>/editorial.json exists and report.md has 'Story and cuts'.",
-   "notes": "Built 2026-11-02. Not built: alternative full drafts per style, per-style pacing presets (cost; need your OK).",
+   "notes": "Built 2026-11-02. Not built: alternative full drafts per style, per-style pacing presets (cost; need your OK). Marked done on Hesham's instruction 2026-11-02.",
    "evidence": "scripts/lib/editorial.py, scripts/reel.py, tests/test_editorial.py",
    "updated": "2026-11-02"
   },
@@ -1238,10 +1238,10 @@
    "phase": "P9",
    "title": "Stage 5 upgrade: visual_plan.json (caption timing, roles, zones, animations, checks) + Brand Memory (learns the look of approved reels)",
    "owner": "Claude",
-   "status": "review",
+   "status": "done",
    "depends": [],
    "done_when": "After a reel's compile step jobs/<job>/visual_plan.json exists; after 2 approvals the director gets a BRAND MEMORY line.",
-   "notes": "Built 2026-11-02. Dropped from the plan by Hesham: smart reframing / subject tracking and several saved brand profiles.",
+   "notes": "Built 2026-11-02. Dropped from the plan by Hesham: smart reframing / subject tracking and several saved brand profiles. Marked done on Hesham's instruction 2026-11-02.",
    "evidence": "scripts/lib/visual_plan.py, scripts/lib/brand_memory.py, tests/test_visual_plan.py",
    "updated": "2026-11-02"
   },
@@ -1250,10 +1250,10 @@
    "phase": "P13",
    "title": "Before rendering: check the plan and that every file it needs exists (clips, logos, fonts, sounds), with a plain-words list of what is missing",
    "owner": "Claude",
-   "status": "review",
+   "status": "done",
    "depends": [],
    "done_when": "Starting a render with a missing file stops in 2 seconds and names the file.",
-   "notes": "Built 2026-11-02.",
+   "notes": "Built 2026-11-02. Marked done on Hesham's instruction 2026-11-02.",
    "evidence": "scripts/lib/render_guard.py (preflight), tests/test_render_guard.py",
    "updated": "2026-11-02"
   },
@@ -1262,10 +1262,10 @@
    "phase": "P13",
    "title": "Same settings every time: save a render recipe (tool versions, size, frame rate, codec, input file fingerprints) and export metadata next to every video",
    "owner": "Claude",
-   "status": "review",
+   "status": "done",
    "depends": [],
    "done_when": "jobs/<job>/render_manifest.json exists for every draft and final; the same inputs give the same recipe.",
-   "notes": "Built 2026-11-02. jobs/<job>/render_manifest_draft.json and _final.json.",
+   "notes": "Built 2026-11-02. jobs/<job>/render_manifest_draft.json and _final.json. Marked done on Hesham's instruction 2026-11-02.",
    "evidence": "scripts/lib/render_guard.py (write_manifest), tests/test_render_guard.py",
    "updated": "2026-11-02"
   },
@@ -1274,10 +1274,10 @@
    "phase": "P13",
    "title": "Check the finished video file: size 1080x1920 (draft 540x960), 9:16, frame rate, codec, length, plays to the very end (no corrupted part)",
    "owner": "Claude",
-   "status": "review",
+   "status": "done",
    "depends": [],
    "done_when": "A broken or wrongly sized file is rejected with the reason.",
-   "notes": "Built 2026-11-02. Errors: size/9:16/length/no sound/corrupted. Warnings: codec, pixel format, fps.",
+   "notes": "Built 2026-11-02. Errors: size/9:16/length/no sound/corrupted. Warnings: codec, pixel format, fps. Marked done on Hesham's instruction 2026-11-02.",
    "evidence": "scripts/lib/render_guard.py (verify_video), tests/test_render_guard.py",
    "updated": "2026-11-02"
   },
@@ -1286,10 +1286,10 @@
    "phase": "P13",
    "title": "Check sound and picture stay in sync, plus silence gaps and audio peaks, by comparing speech in the video with the planned word times",
    "owner": "Claude",
-   "status": "review",
+   "status": "done",
    "depends": [],
    "done_when": "A reel where the voice drifts more than 0.1 s from the words is flagged with the time.",
-   "notes": "Built 2026-11-02.",
+   "notes": "Built 2026-11-02. Marked done on Hesham's instruction 2026-11-02.",
    "evidence": "scripts/lib/render_guard.py (sync_and_silence), tests/test_render_guard.py",
    "updated": "2026-11-02"
   },
@@ -1298,10 +1298,10 @@
    "phase": "P13",
    "title": "Check captions and text on the finished video: nothing clipped, nothing outside the safe area, nothing hidden behind a card or face, and the video matches the plan (cards appear when planned)",
    "owner": "Claude",
-   "status": "review",
+   "status": "done",
    "depends": [],
    "done_when": "Sample frames at every caption and card: the report lists any clipped or hidden text with its time.",
-   "notes": "Built 2026-11-02. Warnings only (looks at real frames; can be wrong on busy backgrounds).",
+   "notes": "Built 2026-11-02. Warnings only (looks at real frames; can be wrong on busy backgrounds). Marked done on Hesham's instruction 2026-11-02.",
    "evidence": "scripts/lib/render_guard.py (caption_checks), tests/test_render_guard.py",
    "updated": "2026-11-02"
   },
@@ -1310,10 +1310,10 @@
    "phase": "P13",
    "title": "Retry the render automatically when the failure is temporary (browser crash, out of memory, timeout, disk full), only the render step, never the whole reel",
    "owner": "Claude",
-   "status": "review",
+   "status": "done",
    "depends": [],
    "done_when": "A crashed render restarts once by itself; the message says what happened and what you can do.",
-   "notes": "Built 2026-11-02. One retry, temporary failures only.",
+   "notes": "Built 2026-11-02. One retry, temporary failures only. Marked done on Hesham's instruction 2026-11-02.",
    "evidence": "scripts/lib/render_guard.py (retry_once), scripts/render.py",
    "updated": "2026-11-02"
   },
@@ -1322,10 +1322,10 @@
    "phase": "P13",
    "title": "Quick re-render after small edits: keep already-rendered pieces and redo only the parts that changed (captions, titles, effects)",
    "owner": "Claude",
-   "status": "review",
+   "status": "done",
    "depends": [],
    "done_when": "Changing one caption re-renders in a fraction of the full time. First check whether HyperFrames allows rendering in pieces; if not, tell you before building.",
-   "notes": "Built 2026-11-02 (Hesham said yes). Drafts only; final stays a whole render. Real test: 1 of 4 pieces re-rendered, 44 s instead of 64 s. Falls back to a whole render on any doubt.",
+   "notes": "Built 2026-11-02 (Hesham said yes). Drafts only; final stays a whole render. Real test: 1 of 4 pieces re-rendered, 44 s instead of 64 s. Falls back to a whole render on any doubt. Marked done on Hesham's instruction 2026-11-02.",
    "evidence": "scripts/lib/segcache.py, scripts/render.py (draft_render), tests/test_segcache.py (10 tests) + a real render test",
    "updated": "2026-11-02"
   },
@@ -1334,10 +1334,10 @@
    "phase": "P13",
    "title": "QA report page + versions: one clear report per draft in the dashboard, keep each draft as a version, and let you compare and pick a version or ask for changes; the editable project state is saved with it",
    "owner": "Claude",
-   "status": "review",
+   "status": "done",
    "depends": [],
    "done_when": "Dashboard shows 'QA report' and 'Versions' for a reel; you can approve any version.",
-   "notes": "Built 2026-11-02. Quality check + Versions on the draft page.",
+   "notes": "Built 2026-11-02. Quality check + Versions on the draft page. Marked done on Hesham's instruction 2026-11-02.",
    "evidence": "scripts/lib/versions.py, dashboard/make.html, dashboard/reels_api.py, tests/test_versions.py",
    "updated": "2026-11-02"
   },
@@ -1346,10 +1346,10 @@
    "phase": "P14",
    "title": "P0 · AI creative brief: before editing, you set goal, audience, style, length and the action you want viewers to take (upload page); the story step, the director and the length check all use it",
    "owner": "Claude",
-   "status": "review",
+   "status": "done",
    "depends": [],
    "done_when": "Pick 'sell' + 'fast' + 'short 30-45 s' on the upload page: the story candidates are 30-45 s and the director brief says so.",
-   "notes": "Built 2026-11-02. Goal, audience, style, length, action. The end card stays off (brand.json); \"action\" is a hint for the words only.",
+   "notes": "Built 2026-11-02. Goal, audience, style, length, action. The end card stays off (brand.json); \"action\" is a hint for the words only. Marked done on Hesham's instruction 2026-11-02.",
    "evidence": "scripts/lib/creative_brief.py, dashboard/make.html (Creative brief on the upload page), scripts/reel.py, scripts/qa_check.py, scripts/ready_score.py, tests/test_creative_brief.py",
    "updated": "2026-11-02"
   },
@@ -1358,11 +1358,11 @@
    "phase": "P14",
    "title": "Pipeline overlap: map what depends on what, overlap the free steps that can run together, and measure",
    "owner": "Claude",
-   "status": "todo",
+   "status": "done",
    "depends": [],
    "done_when": "A short written map in docs/DECISIONS.md with measured stage times; overlap built only where it saves real time.",
-   "notes": "",
-   "evidence": "",
+   "notes": "Done 2026-11-02. Measured: render is ~85-90% of the draft; check/snapshot/QA overlap not worth it. Built: shot log and director plan run side by side (saves 30-60 s per fresh reel). Budget guard counts calls in flight. Marked done on Hesham's instruction 2026-11-02.",
+   "evidence": "scripts/reel.py (run_stages, join_shots, Ctx budget reservation), tests/test_overlap.py, docs/DECISIONS.md (measurements)",
    "updated": "2026-11-02"
   },
   {
@@ -1370,10 +1370,10 @@
    "phase": "P14",
    "title": "P0 · Unified content intelligence: ONE file (content_intel.json) joining words, timing, pauses, emphasis, scene changes and face positions per phrase; the story step reads delivery hints from it",
    "owner": "Claude",
-   "status": "review",
+   "status": "done",
    "depends": [],
    "done_when": "jobs/<job>/content_intel.json exists after the story step; the story prompt carries pause/emphasis marks.",
-   "notes": "Built 2026-11-02. jobs/<job>/content_intel.json joins words, pauses, emphasis, speed, scene changes, faces; the story step reads short marks from it. A little more input for the story call (marks only where something is notable).",
+   "notes": "Built 2026-11-02. jobs/<job>/content_intel.json joins words, pauses, emphasis, speed, scene changes, faces; the story step reads short marks from it. A little more input for the story call (marks only where something is notable). Marked done on Hesham's instruction 2026-11-02.",
    "evidence": "scripts/lib/content_intel.py, scripts/reel.py (st_selects, st_plan), tests/test_content_intel.py",
    "updated": "2026-11-02"
   },
@@ -1382,10 +1382,10 @@
    "phase": "P14",
    "title": "P1 · Hook picker: on the draft page choose one of the 3 hooks (curiosity / problem / direct); it makes a new draft with that opening",
    "owner": "Claude",
-   "status": "review",
+   "status": "done",
    "depends": [],
    "done_when": "Draft page lists the 3 hooks from your own words; clicking one sends 'use this opening' and makes a new draft.",
-   "notes": "Built 2026-11-02. Picks one of the 3 hooks (his own words, checked) as the opening title card; free rebuild, no AI.",
+   "notes": "Built 2026-11-02. Picks one of the 3 hooks (his own words, checked) as the opening title card; free rebuild, no AI. Marked done on Hesham's instruction 2026-11-02.",
    "evidence": "dashboard/reels_api.py (use_hook), dashboard/make.html (Opening title block), tests/test_hook_picker.py",
    "updated": "2026-11-02"
   },
@@ -1394,10 +1394,10 @@
    "phase": "P14",
    "title": "Feature map: each of the 12 proposed features marked built / dropped / later, with where it lives",
    "owner": "Claude",
-   "status": "review",
+   "status": "done",
    "depends": [],
    "done_when": "docs/DECISIONS.md has the table; the board has a task for everything still open.",
-   "notes": "Done 2026-11-02.",
+   "notes": "Done 2026-11-02. Marked done on Hesham's instruction 2026-11-02.",
    "evidence": "docs/DECISIONS.md (Feature map)",
    "updated": "2026-11-02"
   },
@@ -1406,11 +1406,11 @@
    "phase": "P12",
    "title": "P2 · Smart B-roll suggestions: suggest library clips/screenshots that match what is being said (needs AI picture matching = cost)",
    "owner": "Claude",
-   "status": "todo",
+   "status": "done",
    "depends": [],
    "done_when": "Parked until you approve the cost; today B-roll attaches by file name you say.",
-   "notes": "",
-   "evidence": "",
+   "notes": "Built 2026-11-02 (free): library files now match attached Arabic letters (بال، وال...), contained names and one-letter spelling differences, with the time they fit. Matching by what is IN the picture (AI) not built: it costs money. Marked done on Hesham's instruction.",
+   "evidence": "scripts/lib/broll.py (suggest/match), tests/test_broll.py",
    "updated": "2026-11-02"
   },
   {
@@ -1418,23 +1418,23 @@
    "phase": "P12",
    "title": "P2 · Multiple reel variations from one source (educational / fast / storytelling): each is a full extra plan and render, about the cost of another reel",
    "owner": "Claude",
-   "status": "todo",
+   "status": "done",
    "depends": [],
    "done_when": "Parked until you approve the cost.",
-   "notes": "",
-   "evidence": "",
+   "notes": "Built 2026-11-02: 'Other versions' on the draft page makes a separate reel from another candidate story; cost shown and confirmed first; shares the footage (no extra disk); first reel untouched. Marked done on Hesham's instruction.",
+   "evidence": "scripts/lib/variations.py, dashboard (Other versions), tests/test_variations.py",
    "updated": "2026-11-02"
   },
   {
    "id": "T107",
-   "phase": "P12",
+   "phase": "P14",
    "title": "P2 · Learn from rejected drafts: remember which version you went back from and why, as lessons for the next reel",
    "owner": "Claude",
-   "status": "todo",
+   "status": "done",
    "depends": [],
    "done_when": "After a 'Use this version' or 'Send changes', one line lands in lessons for the director.",
-   "notes": "",
-   "evidence": "",
+   "notes": "Built 2026-11-02. Going back to an earlier draft records the change he rejected as taste for the next reels. Marked done on Hesham's instruction 2026-11-02.",
+   "evidence": "scripts/lib/versions.py (restore), scripts/lib/director.py (taste), tests/test_versions.py",
    "updated": "2026-11-02"
   }
  ],
