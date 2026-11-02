@@ -3,7 +3,7 @@
 # If it can't start, it says why in this window (send Claude a screenshot).
 cd "$(dirname "$0")" || exit 1
 HERE="$(pwd -P)"
-URL="http://127.0.0.1:8765"
+URL="http://127.0.0.1:8790"
 LOG="$HERE/dashboard/server.log"
 export GIT_TERMINAL_PROMPT=0            # never stop and ask for a GitHub password
 echo "Reel Factory: $HERE"
@@ -35,7 +35,7 @@ fi
 up() { [ "$(curl -s --max-time 2 -o /dev/null -w '%{http_code}' "$URL/api/reels" 2>/dev/null)" = "200" ]; }
 wait_up() { for i in $(seq 1 "$1"); do up && return 0; sleep 1; done; return 1; }
 start_here() {
-  lsof -ti tcp:8765 -sTCP:LISTEN 2>/dev/null | xargs kill 2>/dev/null; sleep 1
+  up && { lsof -ti tcp:8790 -sTCP:LISTEN 2>/dev/null | xargs kill 2>/dev/null; sleep 1; }   # only stops Reel Factory itself
   nohup python3 dashboard/serve.py > "$LOG" 2>&1 &
 }
 
@@ -83,8 +83,8 @@ if up; then
   echo ""
   echo "=============================================="
   echo "  Reel Factory is open in your browser."
-  echo "  Make a reel:  http://127.0.0.1:8765"
-  echo "  Control:      http://127.0.0.1:8765/index.html"
+  echo "  Make a reel:  http://127.0.0.1:8790"
+  echo "  Control:      http://127.0.0.1:8790/index.html"
   echo "  (Hold Cmd and click a link to open it)"
   echo "=============================================="
   echo "You can close this window."
@@ -94,8 +94,8 @@ else
   echo "------ what the dashboard said ------"
   tail -n 15 "$LOG" 2>/dev/null
   [ -f "$HOME/.reelfactory/dashboard.log" ] && { echo "------ auto-start log ------"; tail -n 8 "$HOME/.reelfactory/dashboard.log"; }
-  echo "------ what is using port 8765 ------"
-  lsof -nP -i tcp:8765 -sTCP:LISTEN 2>/dev/null || echo "(nothing)"
+  echo "------ what is using port 8790 ------"
+  lsof -nP -i tcp:8790 -sTCP:LISTEN 2>/dev/null || echo "(nothing)"
   open "$URL/"
   echo ""
   echo "Dashboard link (try it after fixing the problem): $URL"

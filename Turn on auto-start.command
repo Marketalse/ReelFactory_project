@@ -1,6 +1,6 @@
 #!/bin/bash
 # Double-click once: Reel Factory then starts by itself every time you log in to your Mac.
-# Afterwards just open http://127.0.0.1:8765 (bookmark it). Undo with "Turn off auto-start.command".
+# Afterwards just open http://127.0.0.1:8790 (bookmark it). Undo with "Turn off auto-start.command".
 cd "$(dirname "$0")" || exit 1
 HERE="$(pwd -P)"
 LABEL="com.reelfactory.dashboard"
@@ -23,20 +23,20 @@ cat > "$PLIST" <<PL
 </dict></plist>
 PL
 # stop a dashboard started the old way (unless a reel is being made)
-if curl -s --max-time 2 http://127.0.0.1:8765/api/reels | grep -q '"busy": \[\]'; then
-  lsof -ti tcp:8765 -sTCP:LISTEN | xargs kill 2>/dev/null; sleep 1
+if curl -s --max-time 2 http://127.0.0.1:8790/api/reels | grep -q '"busy": \[\]'; then
+  lsof -ti tcp:8790 -sTCP:LISTEN | xargs kill 2>/dev/null; sleep 1
 fi
 launchctl bootout "gui/$(id -u)/$LABEL" 2>/dev/null
 launchctl bootstrap "gui/$(id -u)" "$PLIST" && echo "Auto-start is ON." || { echo "Couldn't turn on auto-start. Send a screenshot of this window to Claude."; exit 1; }
 OK=""
-for i in $(seq 1 30); do [ "$(curl -s --max-time 1 -o /dev/null -w '%{http_code}' http://127.0.0.1:8765/api/reels)" = "200" ] && { OK=1; break; }; sleep 1; done
+for i in $(seq 1 30); do [ "$(curl -s --max-time 1 -o /dev/null -w '%{http_code}' http://127.0.0.1:8790/api/reels)" = "200" ] && { OK=1; break; }; sleep 1; done
 if [ -n "$OK" ]; then
-  open http://127.0.0.1:8765/
+  open http://127.0.0.1:8790/
   echo ""
   echo "=============================================="
   echo "  Reel Factory is open in your browser."
-  echo "  Make a reel:  http://127.0.0.1:8765"
-  echo "  Control:      http://127.0.0.1:8765/index.html"
+  echo "  Make a reel:  http://127.0.0.1:8790"
+  echo "  Control:      http://127.0.0.1:8790/index.html"
   echo "  (Hold Cmd and click a link to open it)"
   echo "=============================================="
   echo "It now starts by itself when you log in, and restarts by itself if it ever stops."
@@ -46,8 +46,8 @@ else
   echo "PROBLEM: auto-start is on, but the dashboard didn't start. Send Claude a screenshot of this window."
   echo "------ auto-start log ------"
   tail -n 15 "$HOME/.reelfactory/dashboard.log" 2>/dev/null
-  echo "------ what is using port 8765 ------"
-  lsof -nP -i tcp:8765 -sTCP:LISTEN 2>/dev/null || echo "(nothing)"
+  echo "------ what is using port 8790 ------"
+  lsof -nP -i tcp:8790 -sTCP:LISTEN 2>/dev/null || echo "(nothing)"
   echo "------ auto-start status ------"
   launchctl print "gui/$(id -u)/$LABEL" 2>&1 | grep -E "state|last exit|runs|program|working directory|disabled" | head -8
   echo ""
@@ -55,13 +55,13 @@ else
   echo ""
   echo "Starting the dashboard from this folder for now, so you can keep working..."
   nohup python3 dashboard/serve.py > dashboard/server.log 2>&1 &
-  for i in $(seq 1 20); do [ "$(curl -s --max-time 1 -o /dev/null -w '%{http_code}' http://127.0.0.1:8765/api/reels)" = "200" ] && break; sleep 1; done
-  open http://127.0.0.1:8765/
+  for i in $(seq 1 20); do [ "$(curl -s --max-time 1 -o /dev/null -w '%{http_code}' http://127.0.0.1:8790/api/reels)" = "200" ] && break; sleep 1; done
+  open http://127.0.0.1:8790/
   echo ""
   echo "=============================================="
   echo "  Reel Factory is open in your browser."
-  echo "  Make a reel:  http://127.0.0.1:8765"
-  echo "  Control:      http://127.0.0.1:8765/index.html"
+  echo "  Make a reel:  http://127.0.0.1:8790"
+  echo "  Control:      http://127.0.0.1:8790/index.html"
   echo "  (Hold Cmd and click a link to open it)"
   echo "=============================================="
 fi

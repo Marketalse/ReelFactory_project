@@ -2,7 +2,7 @@
 
 ## Open Reel Factory
 **Best (once):** in your **ReelFactory_project** folder, double-click **Turn on auto-start.command**.
-From then on Reel Factory starts by itself whenever you log in. Just open http://127.0.0.1:8765 (bookmark it).
+From then on Reel Factory starts by itself whenever you log in. Just open http://127.0.0.1:8790 (bookmark it).
 Without auto-start: double-click **Reel Factory.command** each time.
 First time only: if macOS says it can't verify the file, click **Done**, then go to **System Settings → Privacy & Security**,
 click **Open Anyway** and double-click again.

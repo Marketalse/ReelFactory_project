@@ -10,8 +10,8 @@ Reel Factory must be running (auto-start on, or double-click `Reel Factory.comma
 
 | Link | Page |
 |---|---|
-| http://127.0.0.1:8765 | **Make a reel**: upload, watch the draft, comment, approve, download, cover, score, results, Settings |
-| http://127.0.0.1:8765/index.html | **Control**: all reels, task board, spend, results, activity |
+| http://127.0.0.1:8790 | **Make a reel**: upload, watch the draft, comment, approve, download, cover, score, results, Settings |
+| http://127.0.0.1:8790/index.html | **Control**: all reels, task board, spend, results, activity |
 | (from a reel: **✂ Edit it yourself**) | **Edit**: transcript, preview, properties and timeline, like Premiere |
 
 These links work only on your Mac (nothing is on the internet).
