@@ -666,6 +666,8 @@ def progress(ref):
         out["draft"] = f"{job}/review/draft_540p.mp4"
         out["draft_mtime"] = int(os.path.getmtime(os.path.join(jd, "review", "draft_540p.mp4")))
     out["feedback"] = jj.get("feedback_history", [])
+    if jd:
+        out["posted"] = (_j(os.path.join(jd, "performance.json"), {}) or {}).get("posted", [])
     if jd and out.get("state") in ("stopped", "paused"):
         try:
             sys.path.insert(0, os.path.join(ROOT, "scripts"))
@@ -855,6 +857,22 @@ def save_performance(job, data):
     except Exception:                                 # noqa: BLE001
         pass
     return True, "Saved. Thanks: every result teaches Reel Factory what works."
+
+
+def save_posted(job, platform):
+    """He tells us he posted the reel (T126): the results box only makes sense after that. Kept per platform in performance.json."""
+    if not JOB.match(job or "") or not os.path.isdir(os.path.join(JOBS, job)):
+        return False, "unknown reel"
+    if platform not in PLATFORMS:
+        return False, "choose Instagram or TikTok"
+    p = os.path.join(JOBS, job, "performance.json")
+    d = _j(p, {"entries": []}) or {"entries": []}
+    posted = [x for x in d.get("posted", []) if x.get("platform") != platform]
+    posted.append({"platform": platform, "at": time.strftime("%Y-%m-%d %H:%M"), "ts": int(time.time())})
+    d["posted"] = posted
+    tmp = p + ".tmp"
+    json.dump(d, open(tmp, "w", encoding="utf-8"), indent=1); os.replace(tmp, p)
+    return True, "Saved. Come back in 2 days to type the numbers from Insights."
 
 
 def edit_facts(job):

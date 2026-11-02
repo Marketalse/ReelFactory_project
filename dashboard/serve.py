@@ -288,6 +288,7 @@ class H(SimpleHTTPRequestHandler):
                   "variation": lambda: reels_api.make_variation(body.get("job"), body.get("id")),
                   "cover_reset": lambda: reels_api.cover_reset(body.get("job")),
                   "performance": lambda: reels_api.save_performance(body.get("job"), body.get("data")),
+                  "posted": lambda: reels_api.save_posted(body.get("job"), body.get("platform")),
                   "check": lambda: reels_api.check_name(body.get("slug"), body.get("session")),
                   "notes": lambda: reels_api.save_notes(body.get("slug"), body.get("session"), body.get("text"), body.get("brief"))}.get(action)
             if not fn:
