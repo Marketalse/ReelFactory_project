@@ -20,6 +20,8 @@ SOUNDS = {
                "sine=f=1320:d=0.7,afade=t=out:st=0.02:d=0.68,volume=0.6"),
     "click":  ("A small tap on a title or tag", 0.04,
                "anoisesrc=d=0.04:c=white:a=0.5,highpass=f=1800,afade=t=out:st=0.005:d=0.035"),
+    "hit":    ("The title lands on the first frame", 0.35,
+               "sine=f=70:d=0.35,afade=t=out:st=0.02:d=0.33,volume=1.0"),
     "rise":   ("Build-up before a payoff", 0.80,
                "sine=f=300:d=0.8,aeval='val(0)*sin(2*PI*t*(300+900*t))':c=mono,afade=t=in:d=0.4,afade=t=out:st=0.6:d=0.2,volume=0.7"),
 }

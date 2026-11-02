@@ -30,6 +30,13 @@
    "source": "made by scripts/make_sfx.py from ffmpeg tone/noise generators; own work, free to use in any video"
   },
   {
+   "name": "hit",
+   "file": "hit.wav",
+   "use": "The title lands on the first frame",
+   "seconds": 0.35,
+   "source": "made by scripts/make_sfx.py from ffmpeg tone/noise generators; own work, free to use in any video"
+  },
+  {
    "name": "rise",
    "file": "rise.wav",
    "use": "Build-up before a payoff",
