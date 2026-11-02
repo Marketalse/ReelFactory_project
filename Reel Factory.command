@@ -1,46 +1,89 @@
 #!/bin/bash
 # Double-click this file in Finder to open Reel Factory in your browser.
+# If it can't start, it says why in this window (send Claude a screenshot).
 cd "$(dirname "$0")" || exit 1
 HERE="$(pwd -P)"
+URL="http://127.0.0.1:8765"
+LOG="$HERE/dashboard/server.log"
+export GIT_TERMINAL_PROMPT=0            # never stop and ask for a GitHub password
 echo "Reel Factory: $HERE"
+
+if ! command -v python3 >/dev/null 2>&1; then
+  echo ""
+  echo "PROBLEM: Python is missing on this Mac, so the dashboard can't run."
+  echo "Send Claude a screenshot of this window."
+  exit 1
+fi
+
+# 1. Get the latest version (gives up after 20 seconds, never asks for a password)
 UPDATED=""
 if git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
   BEFORE="$(git rev-parse HEAD 2>/dev/null)"
-  if git pull --quiet 2>/dev/null; then
+  git pull --ff-only --quiet >/dev/null 2>&1 &
+  PULL=$!
+  for i in $(seq 1 20); do kill -0 $PULL 2>/dev/null || break; sleep 1; done
+  if kill -0 $PULL 2>/dev/null; then kill $PULL 2>/dev/null; echo "Update check took too long. Using this version."
+  elif wait $PULL; then
     if [ "$BEFORE" != "$(git rev-parse HEAD 2>/dev/null)" ]; then UPDATED=1; echo "Updated to the latest version."; else echo "Already up to date."; fi
   else
-    echo "Couldn't check for updates (offline?). Using this version."
+    echo "Couldn't check for updates (offline, or a file was changed by hand). Using this version."
   fi
 else
-  echo "Note: this copy isn't linked to GitHub (a ZIP download?), so it never updates. Use your cloned project folder instead."
+  echo "Note: this copy isn't linked to GitHub (a ZIP download?), so it never updates."
 fi
+
+up() { [ "$(curl -s --max-time 2 -o /dev/null -w '%{http_code}' "$URL/api/reels" 2>/dev/null)" = "200" ]; }
+wait_up() { for i in $(seq 1 "$1"); do up && return 0; sleep 1; done; return 1; }
+start_here() {
+  lsof -ti tcp:8765 -sTCP:LISTEN 2>/dev/null | xargs kill 2>/dev/null; sleep 1
+  nohup python3 dashboard/serve.py > "$LOG" 2>&1 &
+}
+
 AGENT="gui/$(id -u)/com.reelfactory.dashboard"
 if launchctl print "$AGENT" >/dev/null 2>&1; then AUTO=1; else AUTO=""; fi
-RUNNING="$(curl -s --max-time 2 http://127.0.0.1:8765/api/root 2>/dev/null | python3 -c 'import sys,json; print(json.load(sys.stdin)["root"])' 2>/dev/null)"
-UP="$(curl -s --max-time 2 -o /dev/null -w '%{http_code}' http://127.0.0.1:8765/api/reels 2>/dev/null)"
-RESTART=""
-if [ "$UP" = "200" ]; then
-  if [ -z "$RUNNING" ]; then RESTART="An older dashboard is running. Restarting it with the new version."
-  elif [ "$RUNNING" != "$HERE" ]; then RESTART="Another copy was running from $RUNNING. Switching to this one."
-  elif [ -n "$UPDATED" ]; then RESTART="Restarting the dashboard with the update."
+
+# 2. If a dashboard is already running, make sure it is this folder's, up to date
+if up; then
+  RUNNING="$(curl -s --max-time 2 "$URL/api/root" 2>/dev/null | python3 -c 'import sys,json; print(json.load(sys.stdin)["root"])' 2>/dev/null)"
+  WHY=""
+  if [ -z "$RUNNING" ]; then WHY="An older dashboard is running. Restarting it with the new version."
+  elif [ "$RUNNING" != "$HERE" ]; then WHY="Another copy was running from $RUNNING. Switching to this one."
+  elif [ -n "$UPDATED" ]; then WHY="Restarting the dashboard with the update."
   fi
-fi
-if [ -n "$RESTART" ]; then
-  if curl -s --max-time 2 http://127.0.0.1:8765/api/reels | grep -q '"busy": \[\]'; then
-    echo "$RESTART"
-    if [ -n "$AUTO" ]; then launchctl kickstart -k "$AGENT"; sleep 2; else
-      lsof -ti tcp:8765 -sTCP:LISTEN | xargs kill 2>/dev/null; sleep 1
-      UP=""
+  if [ -n "$WHY" ]; then
+    if curl -s --max-time 2 "$URL/api/reels" | grep -q '"busy": \[\]'; then
+      echo "$WHY"
+      if [ -n "$AUTO" ] && [ "$RUNNING" = "$HERE" ]; then launchctl kickstart -k "$AGENT" 2>/dev/null; sleep 2
+      else start_here; fi
+    else
+      echo "A reel is being made right now, so the dashboard keeps running. Double-click again when it's finished to load the update."
     fi
-  else
-    echo "A reel is being made right now, so the dashboard keeps running. Double-click again when it's finished to load the update."
   fi
 fi
-if [ "$UP" != "200" ] && [ -n "$AUTO" ]; then
-  launchctl kickstart "$AGENT" 2>/dev/null; sleep 2
-elif [ "$UP" != "200" ]; then
-  nohup python3 dashboard/serve.py > dashboard/server.log 2>&1 &
-  sleep 1.5
+
+# 3. Not running: start it (auto-start first, then directly from this folder)
+if ! up; then
+  echo "Starting the dashboard..."
+  if [ -n "$AUTO" ]; then launchctl kickstart "$AGENT" 2>/dev/null; fi
+  if ! wait_up 8; then
+    [ -n "$AUTO" ] && echo "Auto-start didn't bring it up. Starting it from this folder instead."
+    start_here
+    wait_up 20
+  fi
 fi
-open http://127.0.0.1:8765/
-echo "Opened in your browser. You can close this window."
+
+# 4. Open it, or say clearly what went wrong
+if up; then
+  open "$URL/"
+  echo ""
+  echo "Opened in your browser: $URL"
+  echo "You can close this window."
+else
+  echo ""
+  echo "PROBLEM: the dashboard didn't start. Send Claude a screenshot of this window."
+  echo "------ what the dashboard said ------"
+  tail -n 15 "$LOG" 2>/dev/null
+  [ -f "$HOME/.reelfactory/dashboard.log" ] && { echo "------ auto-start log ------"; tail -n 8 "$HOME/.reelfactory/dashboard.log"; }
+  echo "------ what is using port 8765 ------"
+  lsof -nP -i tcp:8765 -sTCP:LISTEN 2>/dev/null || echo "(nothing)"
+fi
