@@ -559,13 +559,13 @@
       "phase": "P9",
       "title": "energy.py: measure your best reels → target rates",
       "owner": "Claude",
-      "status": "todo",
+      "status": "review",
       "depends": [
         "T13"
       ],
       "done_when": "",
-      "notes": "Target Nov 3: energy.py tool built and tested; real numbers when your best reel videos arrive (T13).",
-      "evidence": "",
+      "notes": "Tool built 2026-11-02. Real target numbers appear when your best reel videos are in references/own (T13).",
+      "evidence": "scripts/energy.py + tests/test_energy.py (known test video: 2 picture changes, longest hold, first sound, loudness). Run: python3 scripts/energy.py references/own/*.mp4 --save",
       "updated": "2026-11-02"
     },
     {
@@ -701,13 +701,13 @@
       "phase": "P9",
       "title": "B-roll library from your logos/screenshots/refs",
       "owner": "Claude",
-      "status": "todo",
+      "status": "review",
       "depends": [
         "T43"
       ],
       "done_when": "",
-      "notes": "Target Nov 3: B-roll library folder + index from your logos/screenshots.",
-      "evidence": "",
+      "notes": "Built 2026-11-02. Add your logos/screenshots to library/broll on your Mac.",
+      "evidence": "scripts/lib/broll.py, library/broll/README.md, tests/test_broll.py. Drop images named after what they show (instagram.svg); said in a reel = copied into that reel.",
       "updated": "2026-11-02"
     },
     {
@@ -1474,6 +1474,12 @@
       "who": "Claude",
       "task": "-",
       "change": "Board re-ordered into dated phases: NOW close pending (Nov 2-4), YOUR TURN (Nov 4-7), NEXT timeline (Nov 9+), LATER ideas. T47 built → review."
+    },
+    {
+      "time": "2026-11-02T21:00",
+      "who": "Claude",
+      "task": "T23,T36,T46",
+      "change": "built → review: own SFX set, energy.py measuring tool, B-roll library"
     }
   ]
 }

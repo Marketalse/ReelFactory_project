@@ -352,6 +352,12 @@ def st_plan(c):
     out = os.path.join(c.job, "timeline.json")
     if os.path.exists(out) and not c.a.replan: return "cached"
     e = jload(os.path.join(c.job, "edl.json")); words = e["words"]
+    try:                                            # logos/screenshots from library/broll whose name he said
+        from lib import broll
+        got = broll.attach(c.job, words)
+        if got: print("   b-roll attached from library/broll:", ", ".join(got))
+    except Exception as ex:                         # noqa: BLE001 - the library is a bonus, never a reason to stop a reel
+        print("   b-roll library skipped:", ex)
     brief = open(os.path.join(c.job, "brief.md"), encoding="utf-8").read() if os.path.exists(os.path.join(c.job, "brief.md")) else ""
     job = jload(os.path.join(c.job, "job.json"), {})
     feedback = c.a.fix or ""
