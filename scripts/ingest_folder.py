@@ -13,10 +13,11 @@ inbox/<slug>/brief.md  optional notes                  -> jobs/<job>/brief.md
 Each clip goes through scripts/ingest.sh (proxy, tone-mapping, checks; the original moves to assets/raw/ read-only).
 The proxies are joined into jobs/<job>/proxy.mp4 and clip_map.json records where each clip sits on the timeline.
 """
-import argparse, datetime, json, os, re, shutil, subprocess, sys
+import argparse, concurrent.futures as cf, datetime, json, os, re, shutil, subprocess, sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from lib import config as cfg   # noqa: E402
+from lib import media_check, media_index   # noqa: E402
 
 VIDEO = (".mov", ".mp4", ".m4v", ".avi", ".webm", ".mkv")
 
@@ -60,13 +61,25 @@ def main():
         sys.exit(f"{job} already has a proxy; use that job folder, or choose another slug")
     os.makedirs(job, exist_ok=True)
 
-    parts = []
-    for n, clip in enumerate(clips, 1):
-        sub = f"{a.slug}/c{n:02d}"
-        print(f"ingest {n}/{len(clips)}: {os.path.basename(clip)}")
-        sh(["bash", os.path.join(cfg.ROOT, "scripts", "ingest.sh"), clip, sub], cwd=cfg.ROOT)
+    # Stage 1: look at every file on its own first (free). One bad file never stops the others; originals are only read.
+    jobs_dir = os.path.join(cfg.ROOT, "jobs")
+    manifest = media_check.check_batch(clips, jobs_dir=jobs_dir, skip_job=os.path.basename(job))
+    json.dump(manifest, open(os.path.join(job, "media_manifest.json"), "w"), indent=1, ensure_ascii=False)
+    for f in manifest["files"]:
+        print(f"check: {f['name']}: {f['verdict']}" + ("" if f.get("use") else " (not used)") + (" - " + "; ".join(f["issues"]) if f["issues"] else ""))
+    clips = [f["source"] for f in manifest["files"] if f.get("use")]
+    if not clips:
+        sys.exit("INGEST FAILED: none of the files can be used: " + "; ".join(f"{f['name']}: {' '.join(f['issues'])}" for f in manifest["files"]))
+
+    # Stage 2: make each clip's working copy (proxy) and its audio. Clips are prepared side by side (2 at a time).
+    def one(n_clip):
+        n, clip = n_clip
+        print(f"ingest {n}/{len(clips)}: {os.path.basename(clip)}", flush=True)
+        sh(["bash", os.path.join(cfg.ROOT, "scripts", "ingest.sh"), clip, f"{a.slug}/c{n:02d}"], cwd=cfg.ROOT)
         p = os.path.join(job, f"c{n:02d}", "proxy.mp4")
-        parts.append({"clip": os.path.basename(clip), "proxy": os.path.relpath(p, job), "duration": dur(p)})
+        return {"clip": os.path.basename(clip), "proxy": os.path.relpath(p, job), "duration": dur(p)}
+    with cf.ThreadPoolExecutor(max_workers=min(2, len(clips))) as ex:
+        parts = list(ex.map(one, enumerate(clips, 1)))
 
     proxy = os.path.join(job, "proxy.mp4")
     if len(parts) == 1:
@@ -83,14 +96,30 @@ def main():
         sys.exit(f"joined proxy is {total:.2f}s but clips add up to {t:.2f}s")
     json.dump({"clips": parts, "duration": total}, open(os.path.join(job, "clip_map.json"), "w"), indent=1)
 
+    # audio, pauses and loudness of the joined copy (one clip: ingest.sh already made them from the original)
     wav = os.path.join(job, "audio16k.wav")
-    sh(["ffmpeg", "-hide_banner", "-loglevel", "error", "-y", "-i", proxy, "-vn", "-ac", "1", "-ar", "16000", wav])
-    r = subprocess.run(["ffmpeg", "-hide_banner", "-i", wav, "-af", "silencedetect=noise=-35dB:d=0.4", "-f", "null", "-"],
-                       capture_output=True, text=True)
-    open(os.path.join(job, "silences.txt"), "w").write("\n".join(l for l in r.stderr.splitlines() if "silence_" in l) + "\n")
-    r = subprocess.run(["ffmpeg", "-hide_banner", "-i", proxy, "-af", "ebur128", "-f", "null", "-"], capture_output=True, text=True)
-    m = re.findall(r"I:\s+(-?[0-9.]+) LUFS", r.stderr)
-    open(os.path.join(job, "loudness.txt"), "w").write((f"I: {m[-1]} LUFS" if m else "unknown") + "\n")
+    if len(parts) == 1 and all(os.path.exists(os.path.join(job, "c01", f)) for f in ("audio16k.wav", "silences.txt")):
+        for f in ("audio16k.wav", "silences.txt", "loudness.txt"):
+            if os.path.exists(os.path.join(job, "c01", f)):
+                shutil.copy(os.path.join(job, "c01", f), os.path.join(job, f))
+    else:
+        sh(["ffmpeg", "-hide_banner", "-loglevel", "error", "-y", "-i", proxy, "-vn", "-ac", "1", "-ar", "16000", wav])
+        def silences():
+            r = subprocess.run(["ffmpeg", "-hide_banner", "-i", wav, "-af", "silencedetect=noise=-35dB:d=0.4", "-f", "null", "-"],
+                               capture_output=True, text=True)
+            open(os.path.join(job, "silences.txt"), "w").write("\n".join(l for l in r.stderr.splitlines() if "silence_" in l) + "\n")
+        def loudness():
+            r = subprocess.run(["ffmpeg", "-hide_banner", "-i", proxy, "-af", "ebur128", "-f", "null", "-"], capture_output=True, text=True)
+            m = re.findall(r"I:\s+(-?[0-9.]+) LUFS", r.stderr)
+            open(os.path.join(job, "loudness.txt"), "w").write((f"I: {m[-1]} LUFS" if m else "unknown") + "\n")
+        with cf.ThreadPoolExecutor(max_workers=2) as ex:
+            list(ex.map(lambda f: f(), (silences, loudness)))
+
+    # the virtual timeline: every clip stays separate (source, proxy, timeline position, scenes, thumbnails)
+    try:
+        media_index.build(job, parts, cfg.ROOT, manifest)
+    except Exception as e:                                   # noqa: BLE001 - the index is extra; never block the reel for it
+        print(f"note: media index not written ({e})")
 
     if folder:
         for name in ("assets", "refs", "cover"):

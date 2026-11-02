@@ -73,18 +73,32 @@ else
   VF="${FIT},format=yuv420p"
 fi
 
-ffmpeg -hide_banner -loglevel error -y -i "$RAW" -vf "$VF" \
-  -c:v libx264 -preset veryfast -crf 18 -pix_fmt yuv420p \
-  -c:a aac -b:a 192k -ar 48000 -movflags +faststart "$JOB/proxy.mp4"
-
-# 4. Audio for ASR, pauses, loudness
+# Audio for ASR, pauses and loudness comes straight from the ORIGINAL, at the same time as the proxy is made (no waiting).
+# Timestamps are normalised: the picture is constant 30 fps from time 0, the sound starts at 0 and is stretched/padded to
+# match (aresample async), and a keyframe every second keeps cutting frame-accurate.
+AUDIO_PID=""
 if [ "$HAS_AUDIO" = "1" ]; then
-  ffmpeg -hide_banner -loglevel error -y -i "$JOB/proxy.mp4" -vn -ac 1 -ar 16000 "$JOB/audio16k.wav"
-  ffmpeg -hide_banner -i "$JOB/audio16k.wav" -af silencedetect=noise=-35dB:d=0.4 -f null - 2>&1 \
-    | grep -E "silence_(start|end)" > "$JOB/silences.txt" || true
-  ffmpeg -hide_banner -i "$JOB/proxy.mp4" -af ebur128 -f null - 2>&1 \
-    | grep -A1 "Integrated loudness" | tail -1 | sed 's/^ *//' > "$JOB/loudness.txt" || true
+  (
+    ffmpeg -hide_banner -loglevel error -y -i "$RAW" -vn -af "aresample=async=1:first_pts=0" -ac 1 -ar 16000 "$JOB/audio16k.wav"
+    ffmpeg -hide_banner -i "$JOB/audio16k.wav" -af silencedetect=noise=-35dB:d=0.4 -f null - 2>&1 \
+      | grep -E "silence_(start|end)" > "$JOB/silences.txt" || true
+    ffmpeg -hide_banner -i "$JOB/audio16k.wav" -af ebur128 -f null - 2>&1 \
+      | grep -A1 "Integrated loudness" | tail -1 | sed 's/^ *//' > "$JOB/loudness.txt" || true
+  ) &
+  AUDIO_PID=$!
 fi
+
+if [ "$HAS_AUDIO" = "1" ]; then
+  ffmpeg -hide_banner -loglevel error -y -i "$RAW" -vf "$VF" -af "aresample=async=1:first_pts=0" \
+    -c:v libx264 -preset veryfast -crf 18 -pix_fmt yuv420p -g 30 -keyint_min 30 -sc_threshold 0 \
+    -c:a aac -b:a 192k -ar 48000 -movflags +faststart "$JOB/proxy.mp4"
+else   # a silent clip gets a silent sound track, so it can be joined with clips that have sound
+  ffmpeg -hide_banner -loglevel error -y -i "$RAW" -f lavfi -i "anullsrc=r=48000:cl=stereo" -vf "$VF" -map 0:v:0 -map 1:a:0 -shortest \
+    -c:v libx264 -preset veryfast -crf 18 -pix_fmt yuv420p -g 30 -keyint_min 30 -sc_threshold 0 \
+    -c:a aac -b:a 128k -ar 48000 -movflags +faststart "$JOB/proxy.mp4"
+fi
+
+[ -z "$AUDIO_PID" ] || wait "$AUDIO_PID" || die "audio extraction failed"
 
 # 5. Verify proxy
 PDUR=$(ffprobe -v error -show_entries format=duration -of csv=p=0 "$JOB/proxy.mp4")

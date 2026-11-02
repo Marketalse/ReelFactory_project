@@ -84,6 +84,42 @@ def speech_ratio(path):
     return (max(0.0, 1 - sil / dur) if dur else 0.0), (float(lu[-1]) if lu else None)
 
 
+def speech_segments(path, dur):
+    """Where someone is talking: the stretches between silences, as [[start, end], ...] (max 40, longest kept)."""
+    r = _run(["ffmpeg", "-hide_banner", "-nostats", "-i", path, "-vn", "-af", "silencedetect=noise=-35dB:d=0.4", "-f", "null", "-"], timeout=300)
+    sil = [(float(a), float(b)) for a, b in zip(re.findall(r"silence_start: (-?[0-9.]+)", r.stderr),
+                                              re.findall(r"silence_end: ([0-9.]+)", r.stderr))]
+    segs, t = [], 0.0
+    for a, b in sil:
+        if a - t >= 0.4:
+            segs.append([round(t, 2), round(a, 2)])
+        t = b
+    if dur - t >= 0.4:
+        segs.append([round(t, 2), round(dur, 2)])
+    return sorted(sorted(segs, key=lambda x: x[0] - x[1])[:40])
+
+
+def footage_scan(path, dur):
+    """Free picture scan at 5 frames/s, tiny size: scene changes, camera/subject motion, black, frozen and dark footage.
+    Returns {} if the scan can't run. Faces, interviews and product demos need the AI picture step (shot log), not this."""
+    r = _run(["ffmpeg", "-hide_banner", "-nostats", "-i", path, "-an", "-vf",
+              "fps=5,scale=160:-2,blackdetect=d=0.5:pix_th=0.1,freezedetect=n=-60dB:d=1.5,signalstats,"
+              "metadata=print:key=lavfi.signalstats.YDIF:file=-", "-f", "null", "-"], timeout=600)
+    txt = (r.stdout or "") + (r.stderr or "")
+    ydif = [float(x) for x in re.findall(r"YDIF=([0-9.]+)", txt)]
+    if len(ydif) < 5:
+        return {}
+    pts = [float(x) for x in re.findall(r"pts_time:([0-9.]+)", txt)]
+    srt = sorted(ydif); med = srt[len(srt) // 2]
+    cuts = [round(i / 5, 2) for i, v in enumerate(ydif) if i and v > max(20.0, 6 * med)]
+    black = sum(float(x) for x in re.findall(r"black_duration:([0-9.]+)", txt))
+    frozen = sum(float(x) for x in re.findall(r"freeze_duration: ([0-9.]+)", txt))
+    mv = "steady" if med < 2.0 else "some movement" if med < 6.0 else "lots of movement"
+    return {"scene_changes": cuts[:60], "motion": mv, "motion_level": round(med, 2),
+            "black_share": round(min(1.0, black / dur), 2) if dur else 0.0,
+            "frozen_share": round(min(1.0, frozen / dur), 2) if dur else 0.0}
+
+
 def classify(has_audio, speech):
     """A first guess, never a decision: talking-head / b-roll / mixed."""
     if not has_audio:
@@ -142,11 +178,26 @@ def analyze(path, fast=False):
             sp, lufs = speech_ratio(path)
             out["speech_ratio"] = round(sp, 2); out["lufs"] = lufs
             out["role"], out["role_why"] = classify(bool(a), sp)
+            if a:
+                out["speech_segments"] = speech_segments(path, dur)
+            if v:
+                sc = footage_scan(path, dur)
+                if sc:
+                    out["scan"] = sc
+                    if sc["black_share"] >= 0.8 or sc["frozen_share"] >= 0.8:
+                        out["unusable"] = True
+                        out["issues"].append("almost all black or frozen: this footage can't be used")
+                    elif sc["black_share"] >= 0.3 or sc["frozen_share"] >= 0.5:
+                        out["issues"].append(f"large black or frozen parts ({round(max(sc['black_share'], sc['frozen_share']) * 100)}% of it)")
+                    if sc["scene_changes"] and out.get("role") == "talking-head" and len(sc["scene_changes"]) > 5:
+                        out["role"], out["role_why"] = "mixed", "talking, but the picture changes a lot"
             if a and lufs is not None and lufs < -30:
                 out["issues"].append(f"very quiet sound ({lufs:.0f} LUFS): get closer to the microphone next time")
         if not a and v:
             out["issues"].append("has no sound")
-        if out["issues"]:
+        if out.get("unusable"):
+            out["verdict"] = "fail"
+        elif out["issues"]:
             out["verdict"] = "warn"
     except (ValueError, OSError, subprocess.SubprocessError) as e:
         out["verdict"] = "fail"; out["issues"].append(str(e))
