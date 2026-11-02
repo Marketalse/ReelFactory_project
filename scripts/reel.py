@@ -143,7 +143,7 @@ class Ctx:
         self.cost["calls"].append(rec); jsave(self.cost_path, self.cost)
         print(f"   [{stage}] {model.split('/')[1]} in={rec['in']} out={rec['out']} think={rec['reasoning']} ${rec['cost']:.4f} {dt:.0f}s")
         if rec["finish"] == "length":
-            if not _retry and max_tokens < 16000:      # answer was cut off: try once more with double room (budget guard still applies)
+            if not _retry and max_tokens < 24000:      # answer was cut off: try once more with double room (budget guard still applies)
                 print(f"   [{stage}] answer was cut off at {max_tokens}; trying once more with {max_tokens * 2}")
                 return self.llm(stage, model, content, max_tokens * 2, effort, est_in_tokens, _retry=True)
             raise Stop(f"{stage}: output hit max_tokens={max_tokens} (truncated JSON). Raise the limit or lower effort.")
@@ -214,7 +214,7 @@ def st_fix(c):
     asr = jload(os.path.join(c.job, "transcript_asr.json"))
     if os.path.exists(out) and jload(os.path.join(c.job, "transcript_fix_meta.json")): return "cached"
     prompt = FIX_PROMPT.replace("{glossary}", glossary_text()) + "\n".join(f"{i}:{w['text']}" for i, w in enumerate(asr))
-    txt = c.llm("fix", M_FIX, [{"type": "text", "text": prompt}], min(12000, 2500 + 30 * len(asr)), "low")   # longer clip = longer answer
+    txt = c.llm("fix", M_FIX, [{"type": "text", "text": prompt}], min(16000, 4000 + 40 * len(asr)), "low")   # longer clip = longer answer
     fx = parse_json(txt)
     words = [dict(w) for w in asr]; applied = []
     for f in fx.get("fixes", []):
@@ -277,7 +277,7 @@ def st_shotlog(c):
         content.append({"type": "text", "text": "t=%.2f" % f["t"]})
         b = base64.b64encode(open(os.path.join(c.job, f["file"]), "rb").read()).decode()
         content.append({"type": "image_url", "image_url": {"url": "data:image/jpeg;base64," + b}})
-    log = parse_json(c.llm("shotlog", M_VIS, content, 6000, "low"))
+    log = parse_json(c.llm("shotlog", M_VIS, content, 9000, "low"))
     if len(log) != man["count"]: raise Stop(f"shot log returned {len(log)} rows for {man['count']} frames")
     jsave(out, log); return f"{len(log)} rows"
 
@@ -304,7 +304,7 @@ def st_selects(c):
         jsave(sp, {"selects": [{"id": "A", "range": [0.0, proxy_duration(c.job)], "label": "the whole take", "hook_line": "", "why": "take is already reel length", "score": 0}]})
     if not os.path.exists(sp):
         dur = proxy_duration(c.job)
-        res = parse_json(c.llm("selects", M_SEL, [{"type": "text", "text": SELECTS_PROMPT.format(dur=dur, lines=lines, lmin=LEN_MIN, lmax=LEN_MAX)}], 3000, c.a.effort))
+        res = parse_json(c.llm("selects", M_SEL, [{"type": "text", "text": SELECTS_PROMPT.format(dur=dur, lines=lines, lmin=LEN_MIN, lmax=LEN_MAX)}], 5000, c.a.effort))
         jsave(sp, res)
     sel = jload(sp)["selects"]
     pick = c.a.select; from_job = None
@@ -358,7 +358,7 @@ def st_plan(c):
     prompt = director.build_prompt(words, e["duration"], brief, job_logos(c), feedback, director.taste())
     if feedback and os.path.exists(os.path.join(c.job, "scene_plan.json")):
         prompt += "\n\nPREVIOUS PLAN:\n" + json.dumps(jload(os.path.join(c.job, "scene_plan.json")), ensure_ascii=False)
-    plan = parse_json(c.llm("plan", M_DIR, [{"type": "text", "text": prompt}], 6000, c.a.effort))
+    plan = parse_json(c.llm("plan", M_DIR, [{"type": "text", "text": prompt}], 9000, c.a.effort))
     attempts = [(M_DIR, plan)]
 
     def resolve(p):
@@ -374,7 +374,7 @@ def st_plan(c):
         plan = parse_json(c.llm("repair", model, [{"type": "text", "text":
             "Fix this reel plan JSON so every error below is solved. Change only what is needed, keep the schema, "
             "return ONLY the full JSON.\n\nERRORS:\n" + "\n".join(err) + "\n\nPLAN:\n" + json.dumps(plan, ensure_ascii=False)
-            + "\n\nTRANSCRIPT:\n" + director.numbered_transcript(words)}], 6000, c.a.effort))
+            + "\n\nTRANSCRIPT:\n" + director.numbered_transcript(words)}], 9000, c.a.effort))
         attempts.append((model, plan)); tl, err, warn = resolve(plan)
     jsave(os.path.join(c.job, "scene_plan.json"), plan)
     jsave(os.path.join(c.job, "validation.json"), {"errors": err, "warnings": warn, "attempts": [m for m, _ in attempts]})
