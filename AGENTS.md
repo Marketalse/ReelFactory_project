@@ -70,3 +70,5 @@ After each reel, add at most 3 one-line lessons to `.reel-agent/lessons.md`. Eac
 - Hesham is not a developer: plain words, short steps, no jargon.
 - When something on his Mac doesn't work, give the **simplest direct fix first**: one command to paste in Terminal, or one click, that shows the result or the error right away. Not a chain of buttons, updates and merges.
 - If a fix hasn't worked after **2 tries**, stop guessing: give that direct test and ask for one screenshot of the result.
+- **MUST:** any Terminal command or script that starts the dashboard also opens it in the browser and prints its links: Make a reel http://reelfactory.localhost:8766 and Control http://reelfactory.localhost:8766/index.html (backup http://127.0.0.1:8766) (Hesham, 2026-11-02).
+- Reel Factory's dashboard address is port **8766** (if another app holds it, the start buttons pick the next free one via `scripts/rf_port.sh` and print it; never hard-code a port elsewhere). Reel Factory uses ports 8766-8789 (first free one). Port 8765 belongs to Hesham's other project (Content Workshop): never use it, and never stop a program that isn't Reel Factory.

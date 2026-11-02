@@ -477,7 +477,7 @@ def apply_word_fixes(job, comment):
 def dashboard_watching(job):
     """True when an open dashboard tab is following this reel and can show its own notification
     (clicking a browser notification opens the reel; a Mac notification would open Script Editor)."""
-    port = os.environ.get("RF_DASH_PORT", "8765")
+    port = os.environ.get("RF_DASH_PORT", "8766")
     try:
         with urllib.request.urlopen(f"http://127.0.0.1:{port}/api/watching?ref={os.path.basename(job)}", timeout=2) as r:
             return bool(json.load(r).get("watching"))

@@ -3,7 +3,6 @@
 # If it can't start, it says why in this window (send Claude a screenshot).
 cd "$(dirname "$0")" || exit 1
 HERE="$(pwd -P)"
-URL="http://127.0.0.1:8765"
 LOG="$HERE/dashboard/server.log"
 export GIT_TERMINAL_PROMPT=0            # never stop and ask for a GitHub password
 echo "Reel Factory: $HERE"
@@ -32,10 +31,12 @@ else
   echo "Note: this copy isn't linked to GitHub (a ZIP download?), so it never updates."
 fi
 
-up() { [ "$(curl -s --max-time 2 -o /dev/null -w '%{http_code}' "$URL/api/reels" 2>/dev/null)" = "200" ]; }
+. scripts/rf_port.sh                    # Reel Factory's own address (never Content Workshop's)
+echo "Address: $NAMED"
+up() { is_rf "$RF_PORT"; }
 wait_up() { for i in $(seq 1 "$1"); do up && return 0; sleep 1; done; return 1; }
 start_here() {
-  lsof -ti tcp:8765 -sTCP:LISTEN 2>/dev/null | xargs kill 2>/dev/null; sleep 1
+  up && { lsof -ti tcp:$RF_PORT -sTCP:LISTEN 2>/dev/null | xargs kill 2>/dev/null; sleep 1; }   # only stops Reel Factory itself
   nohup python3 dashboard/serve.py > "$LOG" 2>&1 &
 }
 
@@ -79,14 +80,8 @@ fi
 
 # 4. Open it, or say clearly what went wrong
 if up; then
-  open "$URL/"
-  echo ""
-  echo "=============================================="
-  echo "  Reel Factory is open in your browser."
-  echo "  Make a reel:  http://127.0.0.1:8765"
-  echo "  Control:      http://127.0.0.1:8765/index.html"
-  echo "  (Hold Cmd and click a link to open it)"
-  echo "=============================================="
+  open_browser
+  show_links
   echo "You can close this window."
 else
   echo ""
@@ -94,9 +89,8 @@ else
   echo "------ what the dashboard said ------"
   tail -n 15 "$LOG" 2>/dev/null
   [ -f "$HOME/.reelfactory/dashboard.log" ] && { echo "------ auto-start log ------"; tail -n 8 "$HOME/.reelfactory/dashboard.log"; }
-  echo "------ what is using port 8765 ------"
-  lsof -nP -i tcp:8765 -sTCP:LISTEN 2>/dev/null || echo "(nothing)"
-  open "$URL/"
+  echo "------ what is using port $RF_PORT ------"
+  lsof -nP -i tcp:$RF_PORT -sTCP:LISTEN 2>/dev/null || echo "(nothing)"
   echo ""
-  echo "Dashboard link (try it after fixing the problem): $URL"
+  echo "Dashboard link (try it after fixing the problem): $NAMED"
 fi

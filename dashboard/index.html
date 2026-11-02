@@ -167,7 +167,7 @@ async function load(){
     const r=await fetch('/api/tasks',{cache:'no-store'}); if(!r.ok) throw 0;
     D=await r.json(); $('#banner').style.display='none';
   }catch(e){
-    $('#banner').innerHTML='Not connected to the local server, so nothing can be saved. In Terminal run <code>python3 dashboard/serve.py</code> from the Reel-Factory folder, then open <code>http://127.0.0.1:8765</code>.';
+    $('#banner').innerHTML='Not connected to the local server, so nothing can be saved. In Terminal run <code>python3 dashboard/serve.py</code> from the Reel-Factory folder, then open <code>http://127.0.0.1:8766</code>.';
     $('#banner').style.display='block'; D=D||{tasks:[],phases:[],owners:[],statuses:Object.keys(NAMES),log:[]};
   }
   fillSelects(); render();

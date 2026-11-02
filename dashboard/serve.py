@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Reel Factory control dashboard — local server (Python standard library only).
 
-    python3 dashboard/serve.py            then open http://127.0.0.1:8765
+    python3 dashboard/serve.py            then open http://127.0.0.1:8766
 
 Serves index.html and keeps tasks.json as the single task list for Hesham, Claude and Hermes.
 Every save makes a backup in dashboard/.backups/ (last 50 kept). A save is refused if someone
@@ -22,7 +22,7 @@ TASKS = os.path.join(HERE, "tasks.json")
 EXPENSES = os.path.join(HERE, "expenses.json")
 BACKUPS = os.path.join(HERE, ".backups")
 STATUSES = {"todo", "in_progress", "review", "blocked", "done"}
-PORT = int(os.environ.get("RF_DASH_PORT", "8765"))
+PORT = int(os.environ.get("RF_DASH_PORT", "8766"))
 
 
 def load(path, default):
@@ -165,7 +165,7 @@ class H(SimpleHTTPRequestHandler):
     def same_origin(self):
         """Only this page may change settings (a website you visit can't post to the dashboard)."""
         o = self.headers.get("Origin")
-        return o in (None, f"http://127.0.0.1:{PORT}", f"http://localhost:{PORT}")
+        return o in (None, f"http://127.0.0.1:{PORT}", f"http://localhost:{PORT}", f"http://reelfactory.localhost:{PORT}")
 
     def do_POST(self):
         if not self.same_origin():
