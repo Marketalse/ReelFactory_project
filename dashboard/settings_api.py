@@ -1,5 +1,5 @@
 """Settings page backend: health checks and saving the API key. Never returns or logs the key."""
-import json, os, platform, shutil, subprocess, sys, urllib.request, urllib.error
+import json, os, platform, shutil, subprocess, sys, time, urllib.request, urllib.error
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.join(os.path.dirname(HERE), "scripts"))
@@ -104,18 +104,53 @@ def update_ready():
         return False
 
 
+BOARD = "dashboard/tasks.json"
+
+
+def _changed():
+    """Tracked files changed on this Mac (the task board is edited by the dashboard itself)."""
+    r = _git("status", "--porcelain", "--untracked-files=no")
+    return [l[3:].strip().strip('"') for l in r.stdout.splitlines() if l.strip()]
+
+
 def update(busy):
-    """Get the latest version from GitHub. Returns (ok, message, restart_needed)."""
+    """Get the latest version from GitHub. Returns (ok, message, restart_needed).
+    Your own task-board changes are kept (three-way merge); any other changed file stops the update and is named."""
     if busy:
         return False, "A reel is being made right now. Update when it's finished.", False
     if not _git("rev-parse", "--is-inside-work-tree").stdout.strip():
         return False, "This copy isn't linked to GitHub (a ZIP download?), so it can't update itself.", False
     before = _git("rev-parse", "HEAD").stdout.strip()
+    changed = _changed()
+    other = [f for f in changed if f != BOARD]
+    if other:
+        return False, "Couldn't update: these files were changed on this Mac: " + ", ".join(other[:5]) + ". Send this message to Claude.", False
+    mine = None
+    if BOARD in changed:                          # keep your board changes: save them, update, then merge them back
+        try:
+            from lib import board_merge
+            base = json.loads(_git("show", f"HEAD:{BOARD}").stdout)
+            mine = board_merge.load_file(os.path.join(ROOT, BOARD))
+            keep = os.path.expanduser("~/.reelfactory/update-backup"); os.makedirs(keep, exist_ok=True)
+            board_merge.save_file(os.path.join(keep, "tasks-" + time.strftime("%Y%m%d-%H%M%S") + ".json"), mine)
+        except Exception:                         # noqa: BLE001
+            return False, "Couldn't read your task board to keep your changes. Send this message to Claude.", False
+        _git("checkout", "--", BOARD)
     r = _git("pull", "--ff-only", "--quiet", timeout=120)
     if r.returncode:
+        if mine is not None:
+            board_merge.save_file(os.path.join(ROOT, BOARD), mine)       # put your board back exactly as it was
         if "local changes" in r.stderr or "overwritten" in r.stderr:
             return False, "Couldn't update: files in the project were changed on this Mac. Send this message to Claude.", False
         return False, "Couldn't reach GitHub. Check your internet connection and try again.", False
+    if mine is not None:
+        theirs = None
+        try:
+            theirs = board_merge.load_file(os.path.join(ROOT, BOARD))
+            board_merge.save_file(os.path.join(ROOT, BOARD), board_merge.merge3(base, mine, theirs))
+        except Exception:                         # noqa: BLE001 - never lose your board: the saved copy is also in ~/.reelfactory/update-backup
+            if theirs is None:
+                board_merge.save_file(os.path.join(ROOT, BOARD), mine)
     after = _git("rev-parse", "HEAD").stdout.strip()
     if after == before:
         return True, "You already have the latest version.", False
