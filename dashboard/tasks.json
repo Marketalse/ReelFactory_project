@@ -83,6 +83,11 @@
    "id": "P13",
    "name": "NEXT · Stage 6 rendering and checking (starts when you say go)",
    "goal": "Safer rendering, stronger automatic checks, clear errors, quick re-renders"
+  },
+  {
+   "id": "P14",
+   "name": "NOW · Pipeline redesign + creative brief (Nov 2-4)",
+   "goal": "One shared understanding of the footage, a creative brief before editing, and hook choice"
   }
  ],
  "tasks": [
@@ -1374,6 +1379,102 @@
    "done_when": "Dashboard shows 'QA report' and 'Versions' for a reel; you can approve any version.",
    "notes": "Built 2026-11-02. Quality check + Versions on the draft page.",
    "evidence": "scripts/lib/versions.py, dashboard/make.html, dashboard/reels_api.py, tests/test_versions.py",
+   "updated": "2026-11-02"
+  },
+  {
+   "id": "T100",
+   "phase": "P14",
+   "title": "P0 · AI creative brief: before editing, you set goal, audience, style, length and the action you want viewers to take (upload page); the story step, the director and the length check all use it",
+   "owner": "Claude",
+   "status": "todo",
+   "depends": [],
+   "done_when": "Pick 'sell' + 'fast' + 'short 30-45 s' on the upload page: the story candidates are 30-45 s and the director brief says so.",
+   "notes": "",
+   "evidence": "",
+   "updated": "2026-11-02"
+  },
+  {
+   "id": "T101",
+   "phase": "P14",
+   "title": "Pipeline overlap: map what depends on what, overlap the free steps that can run together, and measure",
+   "owner": "Claude",
+   "status": "todo",
+   "depends": [],
+   "done_when": "A short written map in docs/DECISIONS.md with measured stage times; overlap built only where it saves real time.",
+   "notes": "",
+   "evidence": "",
+   "updated": "2026-11-02"
+  },
+  {
+   "id": "T102",
+   "phase": "P14",
+   "title": "P0 · Unified content intelligence: ONE file (content_intel.json) joining words, timing, pauses, emphasis, scene changes and face positions per phrase; the story step reads delivery hints from it",
+   "owner": "Claude",
+   "status": "todo",
+   "depends": [],
+   "done_when": "jobs/<job>/content_intel.json exists after the story step; the story prompt carries pause/emphasis marks.",
+   "notes": "",
+   "evidence": "",
+   "updated": "2026-11-02"
+  },
+  {
+   "id": "T103",
+   "phase": "P14",
+   "title": "P1 · Hook picker: on the draft page choose one of the 3 hooks (curiosity / problem / direct); it makes a new draft with that opening",
+   "owner": "Claude",
+   "status": "todo",
+   "depends": [],
+   "done_when": "Draft page lists the 3 hooks from your own words; clicking one sends 'use this opening' and makes a new draft.",
+   "notes": "",
+   "evidence": "",
+   "updated": "2026-11-02"
+  },
+  {
+   "id": "T104",
+   "phase": "P14",
+   "title": "Feature map: each of the 12 proposed features marked built / dropped / later, with where it lives",
+   "owner": "Claude",
+   "status": "todo",
+   "depends": [],
+   "done_when": "docs/DECISIONS.md has the table; the board has a task for everything still open.",
+   "notes": "",
+   "evidence": "",
+   "updated": "2026-11-02"
+  },
+  {
+   "id": "T105",
+   "phase": "P12",
+   "title": "P2 · Smart B-roll suggestions: suggest library clips/screenshots that match what is being said (needs AI picture matching = cost)",
+   "owner": "Claude",
+   "status": "todo",
+   "depends": [],
+   "done_when": "Parked until you approve the cost; today B-roll attaches by file name you say.",
+   "notes": "",
+   "evidence": "",
+   "updated": "2026-11-02"
+  },
+  {
+   "id": "T106",
+   "phase": "P12",
+   "title": "P2 · Multiple reel variations from one source (educational / fast / storytelling): each is a full extra plan and render, about the cost of another reel",
+   "owner": "Claude",
+   "status": "todo",
+   "depends": [],
+   "done_when": "Parked until you approve the cost.",
+   "notes": "",
+   "evidence": "",
+   "updated": "2026-11-02"
+  },
+  {
+   "id": "T107",
+   "phase": "P12",
+   "title": "P2 · Learn from rejected drafts: remember which version you went back from and why, as lessons for the next reel",
+   "owner": "Claude",
+   "status": "todo",
+   "depends": [],
+   "done_when": "After a 'Use this version' or 'Send changes', one line lands in lessons for the director.",
+   "notes": "",
+   "evidence": "",
    "updated": "2026-11-02"
   }
  ],

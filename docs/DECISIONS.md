@@ -136,3 +136,20 @@ T98 (quick re-render) investigated on a real render here: HyperFrames 0.8.226 CA
 
 ## 2026-11-02 — T98 quick re-render built (Hesham said yes)
 `scripts/lib/segcache.py` + `render.draft_render`. DRAFTS only (the final is always a whole render). First draft: one whole render with a keyframe every 2 s, cut without re-encoding into 6 s pieces in `jobs/<job>/render_cache/` (+ `pieces.json`). After an edit: each piece has a fingerprint (the clips/cards overlapping it, their template files, only the captions shown in it, the footage, the render recipe; anything not understood changes all fingerprints), only pieces whose fingerprint changed are rendered again (`--start/--end`), the rest are reused. If 60% or more changed, or anything fails or looks wrong (frame count off by more than 1, join error), it makes the whole draft instead: the cache can cost time but never show an old picture. Join = picture copied (raw H.264 re-timed to even 30 fps) + each piece's sound trimmed/padded to its exact length, so no drift. Proven on a real render here: 21 s reel, caption changed: 1 of 4 pieces re-rendered, 44 s instead of 64 s, 630 frames and 21.000 s of sound exactly; the real run also caught a 70 s timeline bug in the first join method (fixed, tested). Bigger savings on longer reels (about 35 s start-up per piece). Pieces can differ from a whole render by about one frame at card edges and by 1-2 grey levels (Chrome is not bit-identical between runs). The cache is never deleted automatically (AGENTS rule: nothing in jobs/ is deleted); it can grow about 40 MB per full re-seed.
+
+## 2026-11-02 — Feature map for the 12 proposed advanced features (T104)
+| Feature | Priority | Status | Where |
+|---|---|---|---|
+| AI creative brief | P0 | building (T100) | upload page, `jobs/<job>/brief.json` |
+| Smart hook generator | P1 | built (3 hooks per story, his own words); picker on the draft page = T103 | `editorial.json`, Stage 4 |
+| Editable transcript | P0 | built | Edit page (cut/restore words, spellings), T79 |
+| Brand profiles | P1 | one profile (config/brand.json) + Brand Memory of approved reels; SEVERAL profiles dropped by Hesham | `scripts/lib/brand_memory.py` |
+| Intelligent B-roll | P2 | partly: a library file named after something he says is attached; picture-matching suggestions parked (cost) = T105 | `scripts/lib/broll.py` |
+| Multilingual captions | P1 | built for Arabic + English terms (language detection, right-to-left, Latin terms); Kurdish dropped by Hesham | Stage 3, `speech_intel.json` |
+| Auto quality assurance | P0 | built | Stage 6: `qa_check.py`, `render_guard.py`, Quality check on the draft page |
+| AI revision assistant | P1 | built ("Send changes" in plain words, `old => new` spellings, remembers his comments as taste) | `reel.py --fix`, `director.taste()` |
+| Multiple reel variations | P2 | parked: each is a full extra plan and render = T106 (needs his OK on cost) | |
+| Feedback learning | P2 | partly built (taste from comments, Brand Memory, lessons); learning from rejected drafts = T107 | |
+| Publishing integrations | P2 | NOT planned: AGENTS.md rule 8, Reel Factory never publishes or schedules posts | |
+| Performance intelligence | P2 | manual results box built (T77); learning from them = T76 (later, reminder 2026-11-08) | |
+Pipeline redesign (parallel stages, one shared understanding of the footage): T101 (overlap, measured) and T102 (one `content_intel.json`).
