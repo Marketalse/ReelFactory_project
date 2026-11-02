@@ -129,6 +129,55 @@ def fix(job, text):
     return _run(job, [os.path.join(JOBS, job), "--fix", text])
 
 
+# ----------------------------------------------------------------------------- Edit page (manual editing)
+def _editor_job(job):
+    if not JOB.match(job or "") or not os.path.isdir(os.path.join(JOBS, job)):
+        return None, "unknown reel"
+    if job in _running:
+        return None, "this reel is being made right now; edit it when it's finished"
+    if not os.path.exists(os.path.join(JOBS, job, "timeline.json")):
+        return None, "this reel has no draft yet"
+    return os.path.join(JOBS, job), ""
+
+
+def editor(job, edit=None):
+    """(ok, data|message) for the Edit page. With `edit`: an unsaved preview of that version."""
+    jd, msg = _editor_job(job)
+    if not jd:
+        return False, msg
+    sys.path.insert(0, os.path.join(ROOT, "scripts"))
+    from lib import manual_edit as me
+    try:
+        data = me.state(jd, edit)
+        if edit is None:
+            data["waveform"] = me.waveform(jd)
+            data["draft_mtime"] = int(os.path.getmtime(os.path.join(jd, "review", "draft_540p.mp4"))) if os.path.exists(os.path.join(jd, "review", "draft_540p.mp4")) else 0
+        return True, data
+    except me.EditError as e:
+        return False, str(e)
+
+
+def editor_save(job, edit):
+    jd, msg = _editor_job(job)
+    if not jd:
+        return False, msg, []
+    sys.path.insert(0, os.path.join(ROOT, "scripts"))
+    from lib import manual_edit as me
+    try:
+        return me.save(jd, edit or {})
+    except me.EditError as e:
+        return False, str(e), []
+
+
+def rebuild(job):
+    jd, msg = _editor_job(job)
+    if not jd:
+        return False, msg
+    if not os.path.exists(os.path.join(jd, "manual_edit.json")):
+        return False, "save your edit first"
+    return _run(job, [jd, "--rebuild"])
+
+
 def approve(job):
     if not JOB.match(job or "") or not os.path.exists(os.path.join(JOBS, job, "review", "draft_540p.mp4")):
         return False, "no draft to approve"
@@ -138,7 +187,7 @@ def approve(job):
 def media_path(rel):
     """Only drafts, contact sheets and finals inside jobs/ may be served."""
     m = re.match(r"^(\d{4}-\d{2}-\d{2}-[a-z0-9-]+)/(review/draft_540p\.mp4|review/contact_sheet\.jpg|final/[A-Za-z0-9_.-]+\.mp4"
-                 r"|review/cover\.jpg|final/cover_v\d+\.jpg|edit_package/(?:1_video\.mp4|2_graphics\.mov|captions_ar\.srt))$", rel or "")
+                 r"|proxy\.mp4|review/cover\.jpg|final/cover_v\d+\.jpg|edit_package/(?:1_video\.mp4|2_graphics\.mov|captions_ar\.srt))$", rel or "")
     if not m:
         return None
     p = os.path.realpath(os.path.join(JOBS, rel))
@@ -352,14 +401,14 @@ def progress(ref):
     slug = job[11:] if job else ref
     key = job if job in _running else (slug if slug in _running else None)
     run = _running.get(key) if key else None
-    mode = "final" if run and "--approve" in run["what"] else ("fix" if run and "--fix" in run["what"] else "draft")
+    mode = "final" if run and "--approve" in run["what"] else ("fix" if run and ("--fix" in run["what"] or "--rebuild" in run["what"]) else "draft")
     out = {"ref": ref, "job": job, "slug": slug, "running": bool(run), "mode": mode, "now": now}
     jd = os.path.join(JOBS, job) if job else None
     jj = _j(os.path.join(jd, "job.json"), {}) if jd else {}
     status = jj.get("status", "")
     log = _tail(os.path.join(jd, "run.log"), 400) if jd else []
     last = _last_run(log)
-    out["last_mode"] = "final" if last and "--approve" in last[0] else ("fix" if last and "--fix" in last[0] else "draft")
+    out["last_mode"] = "final" if last and "--approve" in last[0] else ("fix" if last and ("--fix" in last[0] or "--rebuild" in last[0]) else "draft")
     runlog = _tail(os.path.join(RUNS, (key or job or slug or "x") + ".log"), 40)
     if not job and not run:
         stop = _stop_text(_tail(os.path.join(RUNS, slug + ".log"), 40)) if slug else ""

@@ -714,7 +714,7 @@ function showResult(p){
         <p class="small" style="margin:0">This is a quick preview (lower quality). When you approve, your final video is made in high quality, then a cover image.</p>
         <label for="fixText" style="font-weight:600">Want changes?</label>
         <textarea id="fixText" dir="auto" placeholder="Tell it like you'd tell an editor: “hook shorter”, “remove the flash”, “bigger captions”. Wrong word? Write: wrong => right"></textarea>
-        <div class="row"><button class="btn violet" id="sendFix">Send changes</button></div>
+        <div class="row"><button class="btn violet" id="sendFix">Send changes</button><a class="btn" href="edit.html?job=${encodeURIComponent(job)}" style="text-decoration:none">✂ Edit it yourself</a></div>
         <div style="border-top:1px solid var(--line);padding-top:14px;display:grid;gap:10px">
           <b>Happy with it?</b>
           ${p.handles_set?"":`<div class="warn">Your Instagram and TikTok handles aren't set yet, and the final videos need them on the last card. Send them to Claude once, then come back and approve.</div>`}
@@ -745,7 +745,7 @@ function showResult(p){
         <label for="fixText" style="font-weight:600">Want changes?</label>
         <textarea id="fixText" dir="auto" placeholder="Write your editing comments: “remove the second card”, “bigger captions”. Wrong word? Write: wrong => right"></textarea>
         <p class="small" style="margin:0">Sending changes makes a new draft. Approve it again to get the new final video. This one stays saved.</p>
-        <div class="row"><button class="btn violet" id="sendFix">Send changes</button></div>
+        <div class="row"><button class="btn violet" id="sendFix">Send changes</button><a class="btn" href="edit.html?job=${encodeURIComponent(job)}" style="text-decoration:none">✂ Edit it yourself</a></div>
         ${readyBlock(p)}
         ${coverBlock(p)}
         ${perfBlock(p)}
@@ -957,6 +957,8 @@ async function boot(){
   $("#demoNote").hidden = live;
   if(live) setupSettings();
   renderFiles(); updateSlug(); await refreshContinue();
+  const qj=new URLSearchParams(location.search).get("job");
+  if(live && qj){ store.set("rf.track",qj); showTrack(qj,false); watch(qj); return; }
   const ref=store.get("rf.track");
   if(live && ref){
     // reopen the reel you were following, unless it's long finished

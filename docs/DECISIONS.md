@@ -95,3 +95,9 @@ One line per decision. Newest at the bottom. If a later decision changes an earl
 ## 2026-11-02 · Task board in plain words
 - "Review" shows as "Built, needs your OK"; a task whose dependency is built is no longer shown as waiting. Summary: Built so far %, Needs your OK (Show them / Mark all done), Your turn, Claude next, Parked for later, plus "How to read this board".
 - Committee and block-sample tasks parked in P7 (autopilot works without them); real-reel tasks (T42, T43) moved to review with evidence.
+
+## 2026-11-02 · Edit page: manual editing in the dashboard (Premiere-style)
+- Hesham wants to edit himself, like Premiere's text-based editing. New page `dashboard/edit.html` (opened from a draft/final: "✂ Edit it yourself"): transcript (cut / restore / highlight / fix spelling), live preview over the proxy video, properties, and a timeline (Cards, Title, Zooms, You, Voice, Words) with drag to move/resize, add and delete, undo/redo.
+- Edits are stored in SOURCE word numbers (`jobs/<job>/manual_edit.json`: drop / keep / texts) so a cut never moves a card onto the wrong word; `lib/manual_edit.py` rebuilds the cut (edl.build gained drop/keep/texts) and re-checks the plan with the same rules as the AI (director.resolve). Saving is refused while a rule is broken; every save backs up the previous files in `edits/<time>/`.
+- "Save & make new draft" runs `reel.py --rebuild`: compile + draft + report only, $0. Later `--fix` comments keep the manual cuts (st_edl reads manual_edit.json).
+- The live preview is approximate (HTML overlays on the source video); the exact look is the rendered draft.

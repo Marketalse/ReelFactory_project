@@ -1,0 +1,555 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Reel Factory · Edit</title>
+<style>
+:root{
+  --bg:#16181f; --panel:#1f222b; --panel2:#272b36; --panel3:#313644; --line:#3a4052;
+  --text:#eef0f5; --muted:#a3aabb; --dim:#737b90;
+  --lime:#B6FF00; --violet:#7D53FF; --violet-t:#b39dff; --coral:#FF6B4A; --amber:#ffb020; --blue:#5aa2ff; --teal:#3cc7b4;
+  --font:-apple-system,BlinkMacSystemFont,"Segoe UI","Readex Pro",Roboto,"Noto Sans Arabic",sans-serif;
+  --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+  color-scheme:dark;
+}
+*{box-sizing:border-box} html,body{margin:0;height:100%}
+body{background:var(--bg);color:var(--text);font:13.5px/1.45 var(--font);-webkit-font-smoothing:antialiased;overflow:hidden}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--lime);outline-offset:1px}
+.app{display:grid;grid-template-rows:auto minmax(0,1fr) auto;height:100vh}
+/* top bar */
+.top{display:flex;align-items:center;gap:10px;padding:8px 14px;border-bottom:1px solid var(--line);background:var(--panel)}
+.top .brand{font-weight:700;white-space:nowrap} .top .brand b{color:var(--lime)}
+.top .name{color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:26vw}
+.top .sp{flex:1}
+.btn{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:6px 11px;cursor:pointer;white-space:nowrap}
+.btn:hover{background:var(--panel3)} .btn:disabled{opacity:.45;cursor:default}
+.btn.primary{background:var(--lime);color:#141414;border-color:var(--lime);font-weight:650}
+.btn.violet{background:var(--violet);border-color:var(--violet);font-weight:600}
+.btn.ghost{background:transparent}
+.btn.icon{padding:6px 9px}
+.status{font-size:12.5px;color:var(--muted);white-space:nowrap}
+.status.dirty{color:var(--amber)} .status.ok{color:var(--lime)} .status.err{color:var(--coral)}
+/* middle: transcript | monitor | properties */
+.mid{display:grid;grid-template-columns:minmax(260px,1.15fr) minmax(280px,1fr) minmax(250px,.9fr);min-height:0}
+.pane{border-right:1px solid var(--line);display:flex;flex-direction:column;min-height:0;background:var(--panel)}
+.pane:last-child{border-right:0}
+.ph{display:flex;align-items:center;gap:8px;padding:8px 12px;border-bottom:1px solid var(--line);font-weight:600}
+.ph .tab{font-weight:600;border-bottom:2px solid var(--lime);padding-bottom:2px}
+.ph small{font-weight:400;color:var(--dim)}
+.tools{display:flex;gap:6px;flex-wrap:wrap;padding:8px 12px;border-bottom:1px solid var(--line)}
+.tools input{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:5px 9px;flex:1;min-width:110px}
+.scroll{overflow:auto;min-height:0;flex:1}
+/* transcript */
+.tx{padding:10px 14px 30px;direction:rtl;text-align:right;font-size:17px;line-height:2.05;user-select:none}
+.para{margin:0 0 10px}
+.para .tc{direction:ltr;display:block;text-align:left;font:11.5px var(--mono);color:var(--dim);line-height:1.6}
+.w{border-radius:4px;padding:1px 2px;cursor:pointer}
+.w:hover{background:var(--panel3)}
+.w.kw{color:var(--lime)}
+.w.sel{background:#3b5bdb;color:#fff}
+.w.cur{box-shadow:inset 0 -2px 0 var(--lime)}
+.w.cut{text-decoration:line-through;text-decoration-color:var(--coral);color:var(--coral);opacity:.75}
+.w.auto{text-decoration:line-through;color:var(--dim);opacity:.6}
+.w.fixed{border-bottom:1px dotted var(--amber)}
+.w input{width:7em;font-size:15px;background:var(--panel2);border:1px solid var(--amber);border-radius:4px;padding:0 4px;direction:rtl}
+.legend{display:flex;gap:12px;flex-wrap:wrap;padding:6px 12px;border-top:1px solid var(--line);font-size:11.5px;color:var(--muted)}
+.legend i{font-style:normal}
+/* monitor */
+.mon{background:#0d0e12;display:flex;flex-direction:column;min-height:0}
+.screen{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;padding:10px}
+.frame{position:relative;height:100%;aspect-ratio:9/16;max-width:100%;background:#000;overflow:hidden;border-radius:6px;container-type:inline-size}
+.frame video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transform-origin:50% 38%;transition:transform .18s}
+.ov{position:absolute;inset:0;pointer-events:none}
+.ov .hook{position:absolute;top:13%;left:10%;right:15%;direction:rtl;text-align:right}
+.ov .hook .l1{font-weight:700;font-size:6.3cqw;color:#fff;text-shadow:0 2px 8px #000}
+.ov .hook .l2{display:inline-block;margin-top:2cqw;font-weight:800;font-size:7.4cqw;color:var(--lime);background:var(--violet);padding:.5cqw 2.4cqw;border-radius:2cqw}
+.ov .card{position:absolute;inset:0;background:#14161dee;display:flex;flex-direction:column;justify-content:center;padding:0 12%;direction:rtl;text-align:right;gap:2cqw}
+.ov .card .k{color:var(--lime);font-size:4cqw;font-weight:600}
+.ov .card .h{font-size:8cqw;font-weight:800;line-height:1.15}
+.ov .card .s{font-size:4.6cqw;color:#cfd3dd}
+.ov .split{position:absolute;left:10%;right:15%;top:22%;background:#14161dee;border-radius:3cqw;padding:4cqw;direction:rtl;text-align:right}
+.ov .split .v{font-size:12cqw;font-weight:800;color:var(--lime);line-height:1}
+.ov .split .lb{font-size:5.4cqw;font-weight:700}
+.ov .flash{position:absolute;inset:0;background:var(--lime);display:flex;align-items:center;justify-content:center;color:#14161d;font-size:16cqw;font-weight:900;direction:rtl}
+.ov .logo{position:absolute;left:10%;right:15%;top:23%;background:#fff;color:#14161d;border-radius:3cqw;padding:5cqw;text-align:center;font-weight:800;font-size:6cqw}
+.ov .caps{position:absolute;left:10%;right:15%;top:64%;text-align:center;direction:rtl}
+.ov .caps span{display:inline-block;background:#000000b8;color:#fff;font-weight:800;font-size:6.4cqw;padding:.6cqw 2.2cqw;border-radius:2cqw}
+.ov .caps b{color:var(--lime)}
+.ov .badge{position:absolute;left:2cqw;bottom:2cqw;font:600 2.6cqw var(--font);color:#fff;background:#0009;border-radius:2cqw;padding:.5cqw 2cqw}
+.ctl{display:flex;align-items:center;gap:8px;padding:8px 12px;border-top:1px solid var(--line);background:var(--panel)}
+.tcode{font:600 13px var(--mono);color:var(--blue)}
+.ctl select{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:5px 8px}
+/* properties */
+.props{padding:12px;display:grid;gap:12px;align-content:start}
+.props h3{margin:0;font-size:14px}
+.field{display:grid;gap:4px}
+.field label{font-size:12px;color:var(--muted);display:flex;justify-content:space-between}
+.field input,.field select{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:7px 9px;width:100%}
+.field input[dir=rtl]{text-align:right}
+.field input.over{border-color:var(--coral)}
+.row{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.issues{display:grid;gap:6px}
+.issue{font-size:12.5px;border-radius:8px;padding:7px 9px;background:var(--panel2);border-left:3px solid var(--amber)}
+.issue.e{border-left-color:var(--coral);color:#ffd5cc}
+.hint{font-size:12px;color:var(--muted);margin:0}
+.kbd{font:11px var(--mono);background:var(--panel3);border-radius:4px;padding:1px 5px}
+/* timeline */
+.tl{border-top:1px solid var(--line);background:var(--panel);display:grid;grid-template-rows:auto 1fr;height:var(--tlh,260px);min-height:180px}
+.tlbar{display:flex;align-items:center;gap:10px;padding:6px 12px;border-bottom:1px solid var(--line)}
+.tlbar input[type=range]{width:140px;accent-color:var(--lime)}
+.tlwrap{display:grid;grid-template-columns:88px 1fr;min-height:0;overflow:hidden}
+.heads{border-right:1px solid var(--line);padding-top:24px}
+.head{height:30px;display:flex;align-items:center;gap:6px;padding:0 8px;font:600 11px var(--font);color:var(--muted);border-bottom:1px solid #2a2e3a}
+.head i{font-style:normal;background:var(--panel3);border-radius:4px;padding:0 5px;color:var(--text);font:600 10.5px var(--mono)}
+.lanes{position:relative;overflow-x:auto;overflow-y:hidden}
+.inner{position:relative;height:100%}
+.ruler{position:sticky;top:0;height:24px;border-bottom:1px solid var(--line);cursor:pointer;background:var(--panel)}
+.tick{position:absolute;top:0;height:100%;border-left:1px solid #3a4052;font:10px var(--mono);color:var(--dim);padding:5px 0 0 3px}
+.lane{position:relative;height:30px;border-bottom:1px solid #2a2e3a}
+.clip{position:absolute;top:3px;bottom:3px;border-radius:5px;font-size:11px;font-weight:600;padding:0 6px;display:flex;align-items:center;overflow:hidden;white-space:nowrap;cursor:grab;color:#fff;direction:rtl}
+.clip.sel{outline:2px solid #fff;z-index:2}
+.clip .grip{position:absolute;top:0;bottom:0;width:7px;cursor:ew-resize}
+.clip .grip.r{right:0} .clip .grip.l{left:0}
+.c-text_card{background:#6b46e8} .c-split{background:#2f7be0} .c-flash{background:#8fbf00;color:#111} .c-logo_card{background:#d9852b}
+.c-hook{background:#5a3fb8;cursor:default}
+.seg{position:absolute;top:3px;bottom:3px;border-radius:4px;background:#2c6e8a;border:1px solid #3d8fb1;font-size:10.5px;color:#d7eef7;padding:0 5px;overflow:hidden;white-space:nowrap}
+.seg.b{background:#2a5f77}
+.zoom{position:absolute;top:7px;width:14px;height:14px;margin-left:-7px;background:var(--amber);transform:rotate(45deg);border-radius:2px;cursor:grab}
+.zoom.sel{outline:2px solid #fff}
+.wt{position:absolute;top:9px;height:12px;width:2px;background:#59627a}
+.wt.kw{background:var(--lime);height:14px;top:8px}
+canvas.wave{position:absolute;left:0;top:0;height:30px}
+.play{position:absolute;top:0;bottom:0;width:2px;background:var(--coral);pointer-events:none;z-index:5}
+.play::before{content:"";position:absolute;top:0;left:-6px;border:7px solid transparent;border-top:9px solid var(--coral)}
+.toast{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:var(--panel3);border:1px solid var(--line);padding:9px 14px;border-radius:10px;display:none;z-index:50;max-width:80vw}
+.load{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:var(--bg);z-index:60;color:var(--muted);text-align:center;padding:20px}
+@media (max-width:900px){ body{overflow:auto} .app{height:auto} .mid{grid-template-columns:1fr} .pane{border-right:0;border-bottom:1px solid var(--line);max-height:70vh} .screen{height:60vh} }
+</style>
+</head>
+<body>
+<div class="load" id="load">Opening the editor…</div>
+<div class="app">
+  <div class="top">
+    <div class="brand">Reel Factory <b>Edit</b></div>
+    <div class="name" id="jobName"></div>
+    <button class="btn icon" id="undo" title="Undo (⌘Z)" disabled>↶</button>
+    <button class="btn icon" id="redo" title="Redo (⇧⌘Z)" disabled>↷</button>
+    <span class="status" id="status"></span>
+    <span class="sp"></span>
+    <a class="btn ghost" id="back" href="make.html" style="text-decoration:none">← Back to the reel</a>
+    <button class="btn" id="save">Save</button>
+    <button class="btn primary" id="rebuild" title="Saves, then makes a new draft from your edit (no AI cost)">Save &amp; make new draft</button>
+  </div>
+
+  <div class="mid">
+    <!-- transcript -->
+    <section class="pane" aria-label="Transcript">
+      <div class="ph"><span class="tab">Transcript</span><small>select words, then cut or restore</small></div>
+      <div class="tools">
+        <input id="find" placeholder="Search words…" dir="auto">
+        <button class="btn" id="cutBtn" title="Cut the selected words (Delete)">✂ Cut</button>
+        <button class="btn" id="restoreBtn" title="Bring the selected words back">↺ Restore</button>
+        <button class="btn" id="kwBtn" title="Highlight the selected words in the captions (green)">★ Highlight</button>
+      </div>
+      <div class="scroll" id="txScroll"><div class="tx" id="tx"></div></div>
+      <div class="legend"><i>Normal = in the reel</i><i style="color:var(--coral)"><s>red</s> = you cut it</i><i style="color:var(--dim)"><s>grey</s> = removed automatically (pause, "umm", repeat)</i><i style="color:var(--lime)">green = highlighted</i><i>double-click = fix spelling</i></div>
+    </section>
+
+    <!-- monitor -->
+    <section class="pane mon" aria-label="Preview">
+      <div class="ph"><span class="tab" id="monTitle">Live preview</span><small id="monNote">approximate look; exact look after “make new draft”</small></div>
+      <div class="screen"><div class="frame" id="frame">
+        <video id="vid" playsinline preload="auto"></video>
+        <div class="ov" id="ov"></div>
+      </div></div>
+      <div class="ctl">
+        <button class="btn icon" id="prevW" title="Previous word (←)">⏮</button>
+        <button class="btn" id="playBtn" title="Play / pause (Space)" style="min-width:70px">▶ Play</button>
+        <button class="btn icon" id="nextW" title="Next word (→)">⏭</button>
+        <span class="tcode" id="tc">00:00.0</span><span class="status" id="dur"></span>
+        <span class="sp" style="flex:1"></span>
+        <select id="monMode" title="What the monitor shows"><option value="live">Live preview</option><option value="draft">Last draft video</option></select>
+      </div>
+    </section>
+
+    <!-- properties -->
+    <section class="pane" aria-label="Properties">
+      <div class="ph"><span class="tab">Properties</span><small id="propSub"></small></div>
+      <div class="scroll"><div class="props" id="props"></div></div>
+    </section>
+  </div>
+
+  <!-- timeline -->
+  <section class="tl" aria-label="Timeline">
+    <div class="tlbar">
+      <b>Timeline</b>
+      <button class="btn" id="addCard" title="Add a card at the playhead">＋ Card</button>
+      <button class="btn" id="addZoom" title="Add a zoom on the word at the playhead">＋ Zoom</button>
+      <button class="btn" id="delSel" title="Delete the selected card or zoom (Delete)" disabled>🗑 Delete</button>
+      <span class="sp" style="flex:1"></span>
+      <span class="status">Zoom</span><input type="range" id="zoomTl" min="8" max="160" value="26" aria-label="Timeline zoom">
+    </div>
+    <div class="tlwrap">
+      <div class="heads">
+        <div class="head"><i>V3</i>Cards</div>
+        <div class="head"><i>V2</i>Title</div>
+        <div class="head"><i>FX</i>Zooms</div>
+        <div class="head"><i>V1</i>You</div>
+        <div class="head"><i>A1</i>Voice</div>
+        <div class="head"><i>T</i>Words</div>
+      </div>
+      <div class="lanes" id="lanes"><div class="inner" id="inner">
+        <div class="ruler" id="ruler"></div>
+        <div class="lane" id="lCards"></div>
+        <div class="lane" id="lHook"></div>
+        <div class="lane" id="lZoom"></div>
+        <div class="lane" id="lYou"></div>
+        <div class="lane" id="lWave"><canvas class="wave" id="wave"></canvas></div>
+        <div class="lane" id="lWords"></div>
+        <div class="play" id="playhead"></div>
+      </div></div>
+    </div>
+  </section>
+</div>
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+"use strict";
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const clone=o=>JSON.parse(JSON.stringify(o));
+const JOB=new URLSearchParams(location.search).get("job")||"";
+const LABEL={text_card:"Text card",split:"Number / point card",flash:"Flash word",logo_card:"Logo card"};
+const FIELD={kicker:"Small line above",headline:"Headline",sub:"Line below",value:"Number (as you said it)",label:"Label",word:"Word",
+             name_a:"Name",name_b:"Second name",joiner:"Between",logo_a:"Logo",logo_b:"Second logo",line1:"Line 1 (white)",line2:"Line 2 (green)"};
+let S=null;                 // last server state (derived from E)
+let E=null;                 // the edit being worked on
+let undo=[], redo=[], dirty=false, savedOnce=false;
+let sel={words:new Set(), anchor:null, item:null};   // item: {kind:'moment'|'zoom', i}
+let PX=26;                  // pixels per second on the timeline
+let playing=false, raf=0, tNow=0;
+
+function toast(m,ms=2600){const t=$("#toast");t.textContent=m;t.style.display="block";clearTimeout(t._h);t._h=setTimeout(()=>t.style.display="none",ms)}
+function fmt(t){t=Math.max(0,t||0);const m=Math.floor(t/60),s=t-m*60;return String(m).padStart(2,"0")+":"+s.toFixed(1).padStart(4,"0")}
+function human(m){
+  return String(m).replace(/moments\[(\d+)\] \((\w+)\)/g,(_,i,b)=>`Card ${+i+1} (${LABEL[b]||b})`)
+    .replace(/punch_ins\[(\d+)\]/g,(_,i)=>`Zoom ${+i+1}`).replace(/add a punch_in or a moment there/,"add a zoom or a card there")
+    .replace(/'(\w+)' is (\d+) characters, max (\d+) for \w+/,(_,k,n,mx)=>`“${FIELD[k]||k}” is ${n} letters; the most is ${mx}`)
+    .replace(/at_word/g,"word").replace(/\bhook\b/g,"title");
+}
+function setStatus(txt,cls){const s=$("#status");s.textContent=txt;s.className="status "+(cls||"")}
+
+/* ------------------------------------------------------------------ server */
+async function api(path, body){
+  const r=await fetch(path, body?{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)}:{cache:"no-store"});
+  const j=await r.json().catch(()=>({ok:false,message:"no answer"}));
+  if(!r.ok) throw new Error(j.message||("error "+r.status));
+  return j;
+}
+let pend=0;
+async function refresh(){
+  const my=++pend;
+  try{ const st=await api("/api/editor/preview",{job:JOB, edit:E}); if(my!==pend) return; Object.assign(S, st, {edit:E}); render(); }
+  catch(e){ toast("Couldn't update the preview: "+e.message,4000); }
+}
+function change(fn){                      // every edit goes through here: undo, then recompute
+  undo.push(clone(E)); if(undo.length>100) undo.shift(); redo=[];
+  fn(E); dirty=true; updButtons(); setStatus("Not saved","dirty"); refresh();
+}
+function updButtons(){ $("#undo").disabled=!undo.length; $("#redo").disabled=!redo.length; $("#delSel").disabled=!sel.item; }
+$("#undo").onclick=()=>{ if(!undo.length) return; redo.push(clone(E)); E=undo.pop(); sel.item=null; dirty=true; updButtons(); setStatus("Not saved","dirty"); refresh(); };
+$("#redo").onclick=()=>{ if(!redo.length) return; undo.push(clone(E)); E=redo.pop(); sel.item=null; dirty=true; updButtons(); setStatus("Not saved","dirty"); refresh(); };
+
+/* ------------------------------------------------------------------ helpers on the cut */
+const kept=()=>S.words.filter(w=>w.kept);
+function wordAt(t){ const k=kept(); let best=k[0]; for(const w of k){ if(w.t<=t+1e-3) best=w; else break; } return best; }
+function wordNear(t){ const k=kept(); let best=k[0],d=1e9; for(const w of k){ const dd=Math.abs(w.t-t); if(dd<d){d=dd;best=w;} } return best; }
+function srcOf(t){ for(const s of S.segments){ if(t>=s.t_in-1e-4 && t<s.t_out) return s.src_in+(t-s.t_in); } const l=S.segments[S.segments.length-1]; return l?l.src_out:0; }
+function reelOf(src){ for(const s of S.segments){ if(src>=s.src_in-1e-3 && src<=s.src_out+1e-3) return s.t_in+(src-s.src_in); } return null; }
+function segOfSrc(src){ return S.segments.findIndex(s=>src>=s.src_in-0.03 && src<s.src_out-0.01); }
+const scenesOf=b=>S.scenes.filter(s=>s.block===b);
+const sceneFor=i=>S.scenes.find(s=>s.id==="m"+i);           // resolve names each card m<k>, k = its place in E.moments
+const momentScenes=()=>S.scenes.filter(s=>LABEL[s.block]);
+const wordT=i=>{ const w=S.words.find(x=>x.i===i); return w&&w.kept?w.t:null; };
+
+/* ------------------------------------------------------------------ transcript */
+function renderTx(){
+  const q=$("#find").value.trim();
+  const kw=new Set(E.keyword_src||[]);
+  const fixed=new Set(Object.keys(E.texts||{}).map(Number));
+  const cur=playing||tNow>0?wordAt(tNow):null;
+  let html="", para=[], last=null;
+  const flush=()=>{ if(!para.length) return; const f=para[0];
+    html+=`<p class="para"><span class="tc">${f.kept?fmt(f.t):"cut · src "+fmt(f.src_start)}</span>${para.map(w=>{
+      const c=["w"]; if(!w.kept) c.push(w.why==="you cut it"?"cut":"auto"); if(kw.has(w.i)&&w.kept) c.push("kw");
+      if(sel.words.has(w.i)) c.push("sel"); if(cur&&cur.i===w.i) c.push("cur"); if(fixed.has(w.i)) c.push("fixed");
+      const hit=q&&w.text.includes(q)?' style="outline:1px solid var(--amber)"':"";
+      return `<span class="${c.join(" ")}" data-i="${w.i}" title="${esc(w.kept?fmt(w.t):(w.why||""))}"${hit}>${esc(w.text)}</span>`;}).join(" ")}</p>`; para=[]; };
+  for(const w of S.words){
+    if(last && (w.src_start-last.src_end>1.2 || para.length>=34)) flush();
+    para.push(w); last=w;
+  }
+  flush();
+  $("#tx").innerHTML=html;
+}
+let dragSel=false;
+$("#tx").addEventListener("mousedown",e=>{
+  const el=e.target.closest(".w"); if(!el||e.target.tagName==="INPUT") return;
+  const i=+el.dataset.i;
+  if(e.shiftKey && sel.anchor!=null){ selectRange(sel.anchor,i); }
+  else { sel.words=new Set([i]); sel.anchor=i; dragSel=true; }
+  sel.item=null; updButtons(); markSel();
+  const w=S.words.find(x=>x.i===i); if(w&&w.kept) seek(w.t);
+  e.preventDefault();
+});
+function markSel(){ document.querySelectorAll("#tx .w").forEach(el=>el.classList.toggle("sel",sel.words.has(+el.dataset.i))); }
+$("#tx").addEventListener("mouseover",e=>{ if(!dragSel) return; const el=e.target.closest(".w"); if(el){ selectRange(sel.anchor,+el.dataset.i); markSel(); } });
+addEventListener("mouseup",()=>{ if(dragSel){ dragSel=false; renderProps(); } });
+function selectRange(a,b){ const lo=Math.min(a,b), hi=Math.max(a,b); sel.words=new Set(S.words.filter(w=>w.i>=lo&&w.i<=hi).map(w=>w.i)); }
+$("#tx").addEventListener("dblclick",e=>{
+  const el=e.target.closest(".w"); if(!el) return; const i=+el.dataset.i; const w=S.words.find(x=>x.i===i);
+  el.innerHTML=`<input value="${esc(w.text)}" aria-label="Spelling">`; const inp=el.querySelector("input"); inp.focus(); inp.select();
+  const done=ok=>{ const v=inp.value.trim(); if(ok&&v&&v!==w.text){ change(E=>{ E.texts=E.texts||{}; E.texts[String(i)]=v; }); toast("Spelling changed: it shows in the captions"); } else renderTx(); };
+  inp.onkeydown=ev=>{ if(ev.key==="Enter") done(true); if(ev.key==="Escape") done(false); ev.stopPropagation(); };
+  inp.onblur=()=>done(true);
+});
+function cutSel(){ if(!sel.words.size) return toast("Select words first (click, or click and drag)");
+  const ids=[...sel.words]; change(E=>{ const d=new Set(E.drop||[]), k=new Set(E.keep||[]); ids.forEach(i=>{d.add(i);k.delete(i)}); E.drop=[...d]; E.keep=[...k]; });
+  toast(ids.length+" word"+(ids.length>1?"s":"")+" cut"); }
+function restoreSel(){ if(!sel.words.size) return toast("Select the crossed-out words to bring back");
+  const ids=[...sel.words]; change(E=>{ const d=new Set(E.drop||[]), k=new Set(E.keep||[]);
+    ids.forEach(i=>{ const w=S.words.find(x=>x.i===i); d.delete(i); if(w && !w.kept && w.why!=="you cut it") k.add(i); }); E.drop=[...d]; E.keep=[...k]; });
+  toast("Restored"); }
+function kwSel(){ if(!sel.words.size) return toast("Select a word to highlight");
+  const ids=[...sel.words]; change(E=>{ const s=new Set(E.keyword_src||[]); const allOn=ids.every(i=>s.has(i)); ids.forEach(i=>allOn?s.delete(i):s.add(i)); E.keyword_src=[...s]; }); }
+$("#cutBtn").onclick=cutSel; $("#restoreBtn").onclick=restoreSel; $("#kwBtn").onclick=kwSel;
+$("#find").oninput=()=>{ renderTx(); const q=$("#find").value.trim(); if(q){ const el=[...document.querySelectorAll("#tx .w")].find(x=>x.textContent.includes(q)); if(el) el.scrollIntoView({block:"center"}); } };
+
+/* ------------------------------------------------------------------ properties */
+function fieldHtml(key,spec,val,prefix){
+  if(spec.type==="enum") return `<div class="field"><label>${esc(FIELD[key]||key)}</label><select data-k="${prefix}${key}">${spec.options.map(o=>`<option value="${esc(o)}"${o===val?" selected":""}>${esc(o||"—")}</option>`).join("")}</select></div>`;
+  if(spec.type==="asset") return `<div class="field"><label>${esc(FIELD[key]||key)}</label><select data-k="${prefix}${key}"><option value="">—</option>${S.logos.map(o=>`<option${("assets/logos/"+o===val||o===val)?" selected":""}>${esc(o)}</option>`).join("")}</select></div>`;
+  const mx=spec.maxLength||99, n=(val||"").length;
+  return `<div class="field"><label>${esc(FIELD[key]||key)}${spec.required?" *":""}<span>${n}/${mx}</span></label><input dir="auto" data-k="${prefix}${key}" value="${esc(val||"")}" class="${n>mx?"over":""}"></div>`;
+}
+function renderProps(){
+  const P=$("#props"); let h="";
+  const it=sel.item;
+  if(it&&it.kind==="moment"&&E.moments[it.i]){
+    const m=E.moments[it.i], b=S.blocks[m.block], sc=sceneFor(it.i);
+    $("#propSub").textContent=LABEL[m.block]||m.block;
+    h+=`<h3>${esc(LABEL[m.block]||m.block)}</h3><p class="hint">Starts at ${sc?fmt(sc.t_in):"?"} on the word “${esc((S.words.find(w=>w.i===m.at_src)||{}).text||"")}”. Drag it on the timeline to move it; drag its right edge to make it longer.</p>`;
+    h+=`<div class="field"><label>Type</label><select data-k="block">${Object.keys(LABEL).filter(k=>S.blocks[k]).map(k=>`<option value="${k}"${k===m.block?" selected":""}>${LABEL[k]}</option>`).join("")}</select></div>`;
+    for(const [k,spec] of Object.entries(b.inputs)) h+=fieldHtml(k,spec,m.values[k],"v.");
+    h+=`<div class="field"><label>Length<span>${(+m.duration).toFixed(1)} s (${b.duration_s.min}–${b.duration_s.max})</span></label><input type="range" data-k="duration" min="${b.duration_s.min}" max="${b.duration_s.max}" step="0.1" value="${m.duration}"></div>`;
+    h+=`<div class="row"><button class="btn" id="pDel">🗑 Delete card</button><button class="btn" id="pGo">Go to it</button></div>`;
+  } else if(it&&it.kind==="zoom"&&E.punch_ins[it.i]){
+    const z=E.punch_ins[it.i];
+    $("#propSub").textContent="Zoom";
+    h+=`<h3>Zoom</h3><p class="hint">A quick zoom on your face at the word “${esc((S.words.find(w=>w.i===z.at_src)||{}).text||"")}”.</p>
+      <div class="field"><label>Strength<span>${(+z.scale).toFixed(2)}×</span></label><input type="range" data-k="scale" min="1.1" max="1.5" step="0.05" value="${z.scale}"></div>
+      <div class="row"><button class="btn" id="pDel">🗑 Delete zoom</button></div>`;
+  } else {
+    $("#propSub").textContent="Title + checks";
+    const hk=S.blocks.hook_two_tone.inputs;
+    h+=`<h3>Title (first frame)</h3>${fieldHtml("line1",hk.line1,E.hook.line1,"h.")}${fieldHtml("line2",hk.line2,E.hook.line2,"h.")}`;
+    if(sel.words.size) h+=`<p class="hint">${sel.words.size} word(s) selected: <span class="kbd">Delete</span> cuts them, <b>↺ Restore</b> brings them back, <b>★ Highlight</b> makes them green.</p>`;
+    h+=`<p class="hint">Click a card or zoom on the timeline to change it. <span class="kbd">Space</span> play · <span class="kbd">←</span><span class="kbd">→</span> word by word · <span class="kbd">⌘Z</span> undo.</p>`;
+  }
+  const errs=S.errors||[], warns=S.warnings||[];
+  h+=`<div class="issues"><b style="font-size:12.5px">${errs.length?"Fix before saving":"Checks"}</b>${errs.map(x=>`<div class="issue e">${esc(human(x))}</div>`).join("")}${warns.map(x=>`<div class="issue">${esc(human(x))}</div>`).join("")}${!errs.length&&!warns.length?'<div class="issue" style="border-left-color:var(--lime)">All rules pass.</div>':""}</div>`;
+  h+=`<p class="hint">Length now: <b>${fmt(S.duration)}</b> · ${S.segments.length} pieces · ${E.moments.length} cards · ${E.punch_ins.length} zooms</p>`;
+  P.innerHTML=h;
+  P.querySelectorAll("[data-k]").forEach(inp=>{
+    const k=inp.dataset.k, live=inp.type==="range";
+    const apply=()=>{ const v=inp.type==="range"?+inp.value:inp.value;
+      if(k.startsWith("h.")) change(E=>{E.hook=Object.assign({},E.hook,{[k.slice(2)]:v})});
+      else if(sel.item&&sel.item.kind==="moment"){ const i=sel.item.i;
+        if(k==="block") change(E=>{ const b=S.blocks[v]; const m=E.moments[i]; const old=m.values; m.block=v; m.values={};
+          for(const [kk,sp] of Object.entries(b.inputs)) if(sp.type==="string") m.values[kk]=(old[kk]||old.headline||old.label||old.word||"").slice(0,sp.maxLength||99);
+          m.duration=Math.min(Math.max(m.duration,b.duration_s.min),b.duration_s.max); });
+        else if(k==="duration") change(E=>{E.moments[i].duration=v});
+        else change(E=>{E.moments[i].values[k.slice(2)]=v}); }
+      else if(sel.item&&sel.item.kind==="zoom"){ const i=sel.item.i; change(E=>{E.punch_ins[i].scale=v}); } };
+    if(live) inp.onchange=apply; else if(inp.tagName==="SELECT") inp.onchange=apply; else { inp.onchange=apply; inp.oninput=()=>{ const lab=inp.parentElement.querySelector("label span"); const mx=+(lab?.textContent.split("/")[1]||99); if(lab) lab.textContent=inp.value.length+"/"+mx; inp.classList.toggle("over",inp.value.length>mx); }; }
+  });
+  const d=$("#pDel"); if(d) d.onclick=delItem;
+  const g=$("#pGo"); if(g) g.onclick=()=>{ const sc=sceneFor(sel.item.i); if(sc) seek(sc.t_in); };
+}
+function delItem(){ const it=sel.item; if(!it) return;
+  change(E=>{ if(it.kind==="moment") E.moments.splice(it.i,1); else E.punch_ins.splice(it.i,1); });
+  sel.item=null; updButtons(); toast(it.kind==="moment"?"Card deleted":"Zoom deleted"); }
+$("#delSel").onclick=delItem;
+
+/* ------------------------------------------------------------------ timeline */
+function renderTimeline(){
+  const W=Math.max(S.duration*PX+60, $("#lanes").clientWidth);
+  $("#inner").style.width=W+"px";
+  const step=PX>=60?1:PX>=25?2:PX>=12?5:10;
+  let r=""; for(let t=0;t<=S.duration+0.01;t+=step) r+=`<div class="tick" style="left:${t*PX}px">${fmt(t).replace(/\.0$/,"")}</div>`;
+  $("#ruler").innerHTML=r;
+  // cards
+  $("#lCards").innerHTML=E.moments.map((m,i)=>{ const s=sceneFor(i); if(!s) return ""; const v=s.values||{}; const txt=v.headline||v.label||v.word||v.name_a||LABEL[s.block];
+    return `<div class="clip c-${s.block}${sel.item&&sel.item.kind==="moment"&&sel.item.i===i?" sel":""}" data-m="${i}" style="left:${s.t_in*PX}px;width:${Math.max(8,(s.t_out-s.t_in)*PX)}px" title="${esc(LABEL[s.block]+": "+txt)}">${esc(txt)}<span class="grip r" data-g="${i}"></span></div>`; }).join("");
+  const hk=scenesOf("hook_two_tone")[0];
+  $("#lHook").innerHTML=hk?`<div class="clip c-hook" style="left:0;width:${(hk.t_out-hk.t_in)*PX}px" title="Title (edit it in Properties)">${esc((hk.values||{}).line1||"Title")}</div>`:"";
+  $("#lZoom").innerHTML=E.punch_ins.map((p,i)=>{ const t=wordT(p.at_src); return t==null?"":`<div class="zoom${sel.item&&sel.item.kind==="zoom"&&sel.item.i===i?" sel":""}" data-z="${i}" style="left:${t*PX}px" title="Zoom ${(+p.scale).toFixed(2)}×"></div>`; }).join("");
+  $("#lYou").innerHTML=S.segments.map((s,i)=>`<div class="seg${i%2?" b":""}" style="left:${s.t_in*PX}px;width:${Math.max(2,(s.t_out-s.t_in)*PX-1)}px" title="Piece ${i+1}: ${fmt(s.t_in)}–${fmt(s.t_out)}">${(s.t_out-s.t_in)*PX>40?"Piece "+(i+1):""}</div>`).join("");
+  const kw=new Set((S.keyword_ids||[]));
+  $("#lWords").innerHTML=kept().map((w,k)=>`<div class="wt${kw.has(k)?" kw":""}" style="left:${w.t*PX}px" title="${esc(w.text)}"></div>`).join("");
+  drawWave(W);
+  wireTimeline();
+  placePlayhead();
+}
+function drawWave(W){
+  const c=$("#wave"), wf=S.waveform||{peaks:[]}; const dpr=devicePixelRatio||1;
+  c.width=Math.min(W,30000)*dpr; c.height=30*dpr; c.style.width=Math.min(W,30000)+"px";
+  const g=c.getContext("2d"); g.scale(dpr,dpr); g.fillStyle="#3cc7b4aa";
+  if(!wf.peaks.length) return;
+  for(const s of S.segments){
+    for(let x=s.t_in*PX; x<s.t_out*PX; x+=2){
+      const src=s.src_in+(x/PX-s.t_in); const p=wf.peaks[Math.floor(src*wf.per_s)]||0; const h=Math.max(1,p/100*26);
+      g.fillRect(x,15-h/2,1.5,h);
+    }
+  }
+}
+function xToT(clientX){ const r=$("#inner").getBoundingClientRect(); return Math.max(0,Math.min(S.duration,(clientX-r.left)/PX)); }
+function wireTimeline(){
+  $("#ruler").onmousedown=e=>{ seek(xToT(e.clientX)); const mv=ev=>seek(xToT(ev.clientX)); const up=()=>{removeEventListener("mousemove",mv);removeEventListener("mouseup",up)}; addEventListener("mousemove",mv); addEventListener("mouseup",up); };
+  document.querySelectorAll("#lCards .clip").forEach(el=>{
+    el.onmousedown=e=>{
+      const i=+el.dataset.m, sc=sceneFor(i), resize=!!e.target.dataset.g; e.preventDefault();
+      sel.item={kind:"moment",i}; sel.words.clear(); updButtons(); renderProps(); document.querySelectorAll("#lCards .clip").forEach(x=>x.classList.toggle("sel",x===el));
+      const x0=e.clientX, l0=sc.t_in, d0=sc.t_out-sc.t_in, spec=S.blocks[E.moments[i].block].duration_s; let moved=false, nt=l0, nd=d0;
+      const mv=ev=>{ const dx=(ev.clientX-x0)/PX; if(Math.abs(ev.clientX-x0)>3) moved=true; if(!moved) return;
+        if(resize){ nd=Math.min(spec.max,Math.max(spec.min,d0+dx)); el.style.width=nd*PX+"px"; }
+        else { const w=wordNear(Math.max(0,l0+dx)); nt=w.t; el.style.left=nt*PX+"px"; el._w=w; } };
+      const up=()=>{ removeEventListener("mousemove",mv); removeEventListener("mouseup",up);
+        if(!moved){ return; }
+        if(resize) change(E=>{E.moments[i].duration=Math.round(nd*10)/10});
+        else if(el._w) change(E=>{E.moments[i].at_src=el._w.i}); };
+      addEventListener("mousemove",mv); addEventListener("mouseup",up);
+    };
+  });
+  document.querySelectorAll("#lZoom .zoom").forEach(el=>{
+    el.onmousedown=e=>{ const i=+el.dataset.z; e.preventDefault(); sel.item={kind:"zoom",i}; sel.words.clear(); updButtons(); renderProps();
+      document.querySelectorAll("#lZoom .zoom").forEach(x=>x.classList.toggle("sel",x===el));
+      const x0=e.clientX, l0=wordT(E.punch_ins[i].at_src)||0; let w=null;
+      const mv=ev=>{ if(Math.abs(ev.clientX-x0)<3) return; w=wordNear(Math.max(0,l0+(ev.clientX-x0)/PX)); el.style.left=w.t*PX+"px"; };
+      const up=()=>{ removeEventListener("mousemove",mv); removeEventListener("mouseup",up); if(w) change(E=>{ E.punch_ins[i].at_src=w.i; }); };
+      addEventListener("mousemove",mv); addEventListener("mouseup",up); };
+  });
+}
+function placePlayhead(){ $("#playhead").style.left=(tNow*PX)+"px"; }
+$("#zoomTl").oninput=e=>{ PX=+e.target.value; renderTimeline(); };
+$("#addCard").onclick=()=>{
+  const w=wordAt(tNow), k=kept(), at=k.indexOf(w);
+  const said=k.slice(at,at+5).map(x=>x.text).join(" ");
+  change(E=>E.moments.push({block:"text_card",at_src:w.i,duration:2.0,values:{headline:said.slice(0,36),kicker:"",sub:""}}));
+  sel.item={kind:"moment",i:E.moments.length-1}; updButtons();
+  toast("Card added with your words at "+fmt(w.t)+": edit it in Properties");
+};
+$("#addZoom").onclick=()=>{ const w=wordAt(tNow); change(E=>E.punch_ins.push({at_src:w.i,scale:1.25})); toast("Zoom added at "+fmt(w.t)); };
+
+/* ------------------------------------------------------------------ monitor: live preview over the source video */
+const vid=$("#vid");
+function seek(t){ tNow=Math.max(0,Math.min(S.duration,t));
+  if($("#monMode").value==="draft"){ vid.currentTime=tNow; } else vid.currentTime=srcOf(tNow);
+  drawOverlay(); placePlayhead(); $("#tc").textContent=fmt(tNow); if(!playing) renderTxCur(); }
+function renderTxCur(){ const w=wordAt(tNow); document.querySelectorAll("#tx .w.cur").forEach(x=>x.classList.remove("cur"));
+  const el=w&&document.querySelector(`#tx .w[data-i="${w.i}"]`); if(el){ el.classList.add("cur"); } }
+function loop(){
+  if(!playing) return;
+  if($("#monMode").value==="draft"){ tNow=vid.currentTime; }
+  else {
+    const src=vid.currentTime; let i=segOfSrc(src);
+    if(i<0){ const nx=S.segments.find(s=>s.src_in>src-0.01); if(!nx){ stop(); seek(S.duration); return; } vid.currentTime=nx.src_in; i=S.segments.indexOf(nx); }
+    const s=S.segments[i];
+    if(src>=s.src_out-0.035){ const nx=S.segments[i+1]; if(!nx){ stop(); return; } vid.currentTime=nx.src_in; }
+    tNow=s.t_in+Math.max(0,vid.currentTime-s.src_in);
+  }
+  if(tNow>=S.duration-0.02){ stop(); }
+  drawOverlay(); placePlayhead(); $("#tc").textContent=fmt(tNow);
+  const w=wordAt(tNow); if(w&&w.i!==loop._w){ loop._w=w.i; renderTxCur(); const el=document.querySelector(`#tx .w[data-i="${w.i}"]`); if(el) el.scrollIntoView({block:"nearest"}); }
+  const ln=$("#lanes"), x=tNow*PX; if(x>ln.scrollLeft+ln.clientWidth-40||x<ln.scrollLeft) ln.scrollLeft=x-60;
+  raf=requestAnimationFrame(loop);
+}
+function play(){ if(tNow>=S.duration-0.05) seek(0); playing=true; vid.play().catch(()=>{}); $("#playBtn").textContent="❚❚ Pause"; raf=requestAnimationFrame(loop); }
+function stop(){ playing=false; vid.pause(); cancelAnimationFrame(raf); $("#playBtn").textContent="▶ Play"; }
+$("#playBtn").onclick=()=>playing?stop():play();
+$("#prevW").onclick=()=>{ const k=kept(); const w=wordAt(tNow); const i=k.indexOf(w); seek((k[Math.max(0,tNow-w.t>0.15?i:i-1)]||w).t); };
+$("#nextW").onclick=()=>{ const k=kept(); const i=k.indexOf(wordAt(tNow)); if(k[i+1]) seek(k[i+1].t); };
+$("#monMode").onchange=()=>{ stop(); const draft=$("#monMode").value==="draft";
+  vid.src=draft?`/media/${JOB}/review/draft_540p.mp4?v=${S.draft_mtime||0}`:`/media/${JOB}/proxy.mp4`;
+  $("#monTitle").textContent=draft?"Last draft video":"Live preview";
+  $("#monNote").textContent=draft?"the video as last made (before your unsaved changes)":"approximate look; exact look after “make new draft”";
+  vid.onloadedmetadata=()=>seek(Math.min(tNow,S.duration)); drawOverlay(); };
+function drawOverlay(){
+  const ov=$("#ov"); if($("#monMode").value==="draft"){ ov.innerHTML=""; vid.style.transform=""; return; }
+  let h="";
+  const t=tNow, on=s=>t>=s.t_in&&t<s.t_out;
+  const hk=scenesOf("hook_two_tone").find(on);
+  if(hk) h+=`<div class="hook"><div class="l1">${esc(hk.values.line1)}</div><div class="l2">${esc(hk.values.line2)}</div></div>`;
+  let full=false;
+  for(const s of momentScenes().filter(on)){ const v=s.values||{};
+    if(s.block==="text_card"){ full=true; h+=`<div class="card">${v.kicker?`<div class="k">${esc(v.kicker)}</div>`:""}<div class="h">${esc(v.headline)}</div>${v.sub?`<div class="s">${esc(v.sub)}</div>`:""}</div>`; }
+    if(s.block==="split") h+=`<div class="split">${v.value?`<div class="v">${esc(v.value)}</div>`:""}<div class="lb">${esc(v.label)}</div></div>`;
+    if(s.block==="flash"){ full=true; h+=`<div class="flash">${esc(v.word)}</div>`; }
+    if(s.block==="logo_card") h+=`<div class="logo">${esc(v.name_a||"")}${v.joiner?" "+esc(v.joiner)+" ":""}${esc(v.name_b||"")}</div>`;
+  }
+  if(!full && !hk){ const k=kept(), w=wordAt(t), i=k.indexOf(w), g=Math.floor(i/3)*3, kw=new Set(S.keyword_ids||[]);
+    if(w && t<=w.t_end+0.6) h+=`<div class="caps"><span>${k.slice(g,g+3).map((x,j)=>kw.has(g+j)?`<b>${esc(x.text)}</b>`:esc(x.text)).join(" ")}</span></div>`; }
+  const z=(S.punch_ins||[]).find(p=>t>=p[0]&&t<p[0]+1.6);
+  vid.style.transform=z?`scale(${z[1]})`:"";
+  h+=`<div class="badge">Live preview</div>`;
+  ov.innerHTML=h;
+}
+
+/* ------------------------------------------------------------------ save / rebuild */
+async function save(){
+  if((S.errors||[]).length){ toast("Fix the red items in Properties first",3500); return false; }
+  setStatus("Saving…");
+  try{ const r=await api("/api/editor/save",{job:JOB, edit:E}); dirty=false; savedOnce=true; setStatus("Saved","ok"); toast(r.message,3200); return true; }
+  catch(e){ setStatus("Not saved","err"); toast(e.message,5000); return false; }
+}
+$("#save").onclick=save;
+$("#rebuild").onclick=async()=>{
+  if(dirty && !(await save())) return;
+  if(!dirty && !savedOnce && !S.saved_at){ if(!(await save())) return; }
+  try{ await api("/api/editor/rebuild",{job:JOB}); toast("Making your new draft (no AI cost)…"); setTimeout(()=>location.href="make.html?job="+encodeURIComponent(JOB),900); }
+  catch(e){ toast(e.message,5000); }
+};
+addEventListener("beforeunload",e=>{ if(dirty){ e.preventDefault(); e.returnValue=""; } });
+
+/* ------------------------------------------------------------------ keys */
+addEventListener("keydown",e=>{
+  if(e.target.matches("input,textarea,select")) return;
+  const mod=e.metaKey||e.ctrlKey;
+  if(e.code==="Space"){ e.preventDefault(); playing?stop():play(); }
+  else if(mod&&e.key.toLowerCase()==="z"){ e.preventDefault(); (e.shiftKey?$("#redo"):$("#undo")).click(); }
+  else if(mod&&e.key.toLowerCase()==="s"){ e.preventDefault(); save(); }
+  else if(e.key==="Delete"||e.key==="Backspace"){ e.preventDefault(); if(sel.item) delItem(); else if(sel.words.size) cutSel(); }
+  else if(e.key==="ArrowLeft"){ e.preventDefault(); $("#prevW").click(); }
+  else if(e.key==="ArrowRight"){ e.preventDefault(); $("#nextW").click(); }
+  else if(e.key==="Escape"){ sel.words.clear(); sel.item=null; updButtons(); render(); }
+});
+
+function render(){ renderTx(); renderProps(); renderTimeline(); drawOverlay(); $("#dur").textContent="/ "+fmt(S.duration); }
+
+(async function boot(){
+  if(!JOB){ $("#load").textContent="No reel chosen. Open the editor from a reel's page."; return; }
+  $("#jobName").textContent=JOB; $("#back").href="make.html?job="+encodeURIComponent(JOB);
+  try{ S=await api("/api/editor?job="+encodeURIComponent(JOB)); }
+  catch(e){ $("#load").innerHTML=`<div><b>Can't open the editor</b><br>${esc(e.message)}<br><br><a class="btn" href="make.html" style="text-decoration:none">← Back</a></div>`; return; }
+  E=clone(S.edit); E.moments=E.moments||[]; E.punch_ins=E.punch_ins||[]; E.hook=E.hook||{};
+  vid.src=`/media/${JOB}/proxy.mp4`; vid.muted=false;
+  PX=Math.max(8,Math.min(60,Math.floor(($("#lanes").clientWidth-60)/Math.max(10,S.duration))));
+  $("#zoomTl").value=PX;
+  setStatus(S.saved_at?"Last saved "+S.saved_at:"No manual edits yet");
+  $("#load").remove(); render(); seek(0);
+})();
+</script>
+</body>
+</html>

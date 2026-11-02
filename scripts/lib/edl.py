@@ -37,21 +37,27 @@ def find_retakes(words, n=3, window=6.0, max_drop=6.0):
     return drop
 
 
-def build(words, s0, s1, *, pause=None, drop_fillers=True, retakes=True):
+def build(words, s0, s1, *, pause=None, drop_fillers=True, retakes=True, drop=(), keep=(), texts=None):
     """words: full transcript (source time). Returns dict(segments=[{src_in,src_out,t_in,t_out}],
-    words=[reel-time words with 'src_i'], removed={...}, duration)."""
+    words=[reel-time words with 'src_i'], removed={...}, duration).
+    Manual edits from the dashboard editor (source word numbers): drop = cut these words, keep = bring these back even
+    if they were removed automatically (filler / retake), texts = {src_i: new spelling}."""
     pause = cfg.RULES["cut"]["remove_pauses_over_s"] if pause is None else pause
+    drop, keep, texts = set(drop), set(keep), {int(k): v for k, v in (texts or {}).items()}
     idx = [i for i, w in enumerate(words) if w["start"] >= s0 - 0.05 and w["end"] <= s1 + 0.05]
-    removed = {"fillers": [], "retakes": [], "pauses": 0}
+    removed = {"fillers": [], "retakes": [], "pauses": 0, "manual": []}
     if drop_fillers:
-        keep = [i for i in idx if _norm(words[i]["text"]) not in FILLERS]
-        removed["fillers"] = [words[i]["text"] for i in idx if i not in keep]
-        idx = keep
+        kept = [i for i in idx if _norm(words[i]["text"]) not in FILLERS or i in keep]
+        removed["fillers"] = [words[i]["text"] for i in idx if i not in kept]
+        idx = kept
     if retakes:
         local = [words[i] for i in idx]
-        d = find_retakes(local)
+        d = {k for k in find_retakes(local) if idx[k] not in keep}
         removed["retakes"] = [local[k]["text"] for k in sorted(d)]
         idx = [i for k, i in enumerate(idx) if k not in d]
+    if drop:
+        removed["manual"] = [words[i]["text"] for i in idx if i in drop]
+        idx = [i for i in idx if i not in drop]
     if not idx:
         raise ValueError("no words left in the chosen range")
 
@@ -99,7 +105,7 @@ def build(words, s0, s1, *, pause=None, drop_fillers=True, retakes=True):
         segments.append({"src_in": round(a, 3), "src_out": round(b, 3), "t_in": round(t, 3), "t_out": round(t + b - a, 3)})
         for i in ws:
             w = words[i]
-            out_words.append({"text": w["text"], "start": round(t + w["start"] - a, 3), "end": round(t + min(w["end"], b) - a, 3), "src_i": i})
+            out_words.append({"text": texts.get(i, w["text"]), "start": round(t + w["start"] - a, 3), "end": round(t + min(w["end"], b) - a, 3), "src_i": i})
         t += b - a
     return {"segments": segments, "words": out_words, "removed": removed, "duration": round(t, 3),
             "source_range": [s0, s1], "source_seconds": round(s1 - s0, 3)}

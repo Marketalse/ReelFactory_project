@@ -330,7 +330,9 @@ def st_edl(c):
     out = os.path.join(c.job, "edl.json")
     if os.path.exists(out) and not c.a.replan: return "cached"
     s0, s1 = jload(os.path.join(c.job, "chosen_select.json"))["range"]
-    e = edlmod.build(jload(os.path.join(c.job, "transcript.json")), s0, s1)
+    man = jload(os.path.join(c.job, "manual_edit.json"), {}) or {}          # cuts/restores/spellings from the Edit page
+    e = edlmod.build(jload(os.path.join(c.job, "transcript.json")), s0, s1,
+                     drop=man.get("drop", []), keep=man.get("keep", []), texts=man.get("texts", {}))
     jsave(out, e)
     r = e["removed"]
     return f"{e['source_seconds']:.1f}s -> {e['duration']:.1f}s ({r['pauses']} pauses, {len(r['fillers'])} fillers, {len(r['retakes'])} retake words removed)"
@@ -508,6 +510,7 @@ def main():
     ap.add_argument("--skip-review", action="store_true", help="skip Gate 0 for this reel")
     ap.add_argument("--approve", action="store_true", help="Gate 2: render the final video and the cover suggestion")
     ap.add_argument("--fix", help="Gate 2: re-plan with this feedback")
+    ap.add_argument("--rebuild", action="store_true", help="new draft from the manual edit (Edit page); no AI, no spend")
     a = ap.parse_args()
     a.img_tok = {1080: 2800, 720: 1300, 540: 800, 384: 420}.get(a.width, 800)
     a.rekey = False; a.replan = bool(a.fix)
@@ -537,7 +540,20 @@ def main():
     print(f"JOB {os.path.basename(job)} | budget ${a.budget:.2f} | spent so far ${c.spent():.4f}")
     t_all = time.time(); status = "ok"
     try:
-        if a.approve:
+        if a.rebuild:
+            if not os.path.exists(os.path.join(job, "timeline.json")):
+                raise Stop("nothing to rebuild yet: make a draft first")
+            a.replan = True                                  # re-render the draft
+            j = jload(os.path.join(job, "job.json"), {})
+            j.setdefault("feedback_history", []).append({"time": time.strftime("%Y-%m-%d %H:%M"), "fix": "(manual edit in the editor)"})
+            jsave(os.path.join(job, "job.json"), j)
+            print(f"{'plan':11s} ok    0.0s  +$0.0000  your manual edit")
+            for s in ("compile", "draft", "report"):
+                t0 = time.time()
+                msg = FUNCS[s](c)
+                set_status(c, s)
+                print(f"{s:11s} ok  {time.time() - t0:5.1f}s  +$0.0000  {msg}")
+        elif a.approve:
             import render
             if not os.path.exists(os.path.join(job, "review", "draft_540p.mp4")):
                 raise Stop("nothing to approve yet: no draft in review/")
