@@ -178,6 +178,30 @@ def rebuild(job):
     return _run(job, [jd, "--rebuild"])
 
 
+def use_hook(job, n):
+    """Hook picker (T103): put one of the three hooks (his own words) on the opening title card, then rebuild the draft.
+    Free: no AI. The words come from editorial.json and were checked to be in his transcript."""
+    jd, msg = _editor_job(job)
+    if not jd:
+        return False, msg
+    sys.path.insert(0, os.path.join(ROOT, "scripts"))
+    from lib import manual_edit as me, director
+    ed = _j(os.path.join(jd, "editorial.json"), {}) or {}
+    try:
+        h = [x for x in ed.get("hooks", []) if x.get("found")][int(n)]
+    except (TypeError, ValueError, IndexError):
+        return False, "that hook is not available"
+    try:
+        edit = me.current(jd)
+        edit["hook"] = director.fix_hook({"line1": h["line"]}, [])
+        ok, m, _notes = me.save(jd, edit)
+    except me.EditError as e:
+        return False, str(e)
+    if not ok:
+        return False, m
+    return _run(job, [jd, "--rebuild"])
+
+
 def use_version(job, n):
     """Go back to an earlier draft (its plan and preview become the current ones). Nothing is deleted."""
     jd, msg = _editor_job(job)
@@ -348,7 +372,7 @@ def check_name(slug, session):
     return True, "ok"
 
 
-def save_notes(slug, session, text):
+def save_notes(slug, session, text, brief=None):
     text = (text or "").strip()
     if len(text) > 4000:
         return False, "notes are too long (max 4000 characters)"
@@ -358,7 +382,9 @@ def save_notes(slug, session, text):
         ok, d = _claim(slug, session)
     if not ok:
         return False, d
-    open(os.path.join(d, "brief.md"), "w", encoding="utf-8").write(text + "\n")
+    sys.path.insert(0, os.path.join(ROOT, "scripts"))
+    from lib import creative_brief
+    creative_brief.save(d, brief, text)                  # notes + the structured creative brief (goal, audience, style, length, action)
     return True, "saved"
 
 
@@ -555,6 +581,9 @@ def progress(ref):
             sys.path.insert(0, os.path.join(ROOT, "scripts"))
             from lib import versions
             out["qa"] = versions.summary(jd); out["versions"] = versions.listing(jd)
+            ed = _j(os.path.join(jd, "editorial.json"), {}) or {}
+            out["hooks"] = [{"type": h.get("type"), "line": h.get("line")} for h in ed.get("hooks", []) if h.get("found")]
+            out["hook_now"] = ed.get("hook_on_screen") or (_j(os.path.join(jd, "scene_plan.json"), {}) or {}).get("hook")
         except Exception:                           # noqa: BLE001
             pass
     out["handles_set"] = _handles_set()

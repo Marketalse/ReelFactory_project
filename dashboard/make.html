@@ -321,6 +321,18 @@ input[type=password]:focus{border-color:var(--violet)}
           <input type="file" id="cphIn" accept=".jpg,.jpeg,.png,.webp,.heic,.heif,image/jpeg,image/png,image/webp,image/heic" hidden>
         </div>
         <div class="slot wide">
+          <div class="head">Creative brief <span class="badge auto">Optional</span> <button class="tip" type="button" data-tip="Tell the editor what this reel is for before it starts. It picks the story, the pace and the length from this. Leave everything on “Let the editor decide” to work like before.">?</button></div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin-top:8px">
+            <label class="small">Goal<select id="cbGoal" class="btn" style="width:100%;padding:9px 12px"><option value="">Let the editor decide</option><option value="educate">Teach something useful</option><option value="sell">Sell a product or service</option><option value="followers">Win new followers</option><option value="entertain">Entertain and be shared</option></select></label>
+            <label class="small">Style<select id="cbStyle" class="btn" style="width:100%;padding:9px 12px"><option value="">Let the editor decide</option><option value="educational">Educational: clear, calmer</option><option value="fast">Fast: energetic, quick cuts</option><option value="storytelling">Storytelling: emotional</option></select></label>
+            <label class="small">Length<select id="cbLength" class="btn" style="width:100%;padding:9px 12px"><option value="">Standard (40–90 s)</option><option value="short">Short (30–45 s)</option><option value="long">Long (60–90 s)</option></select></label>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;margin-top:10px">
+            <label class="small">Who is it for?<input id="cbAudience" dir="auto" maxlength="120" class="btn" style="width:100%;text-align:start;padding:9px 12px" placeholder="e.g. new store owners"></label>
+            <label class="small">What should viewers do?<input id="cbAction" dir="auto" maxlength="160" class="btn" style="width:100%;text-align:start;padding:9px 12px" placeholder="e.g. comment “store”"></label>
+          </div>
+        </div>
+        <div class="slot wide">
           <div class="head">Notes for the editor <button class="tip" type="button" data-tip="Tell it what matters, in Arabic or English, like you'd brief a human editor. E.g. “Main point: reply to customers fast. Ask people to comment ‘store’.”">?</button></div>
           <textarea id="notes" dir="auto" maxlength="4000" placeholder="e.g. The key message is… / Put the hook on the first sentence / Ask viewers to comment “store”"></textarea>
         </div>
@@ -512,7 +524,9 @@ $("#makeBtn").onclick=async ()=>{
     if(S.logo){ await backend.upload(S.slug, S.session, S.logo, {kind:"logo"}, onBytes); doneBytes+=S.logo.size; }
     if(S.cph){ await backend.upload(S.slug, S.session, S.cph, {kind:"cover_photo"}, onBytes); doneBytes+=S.cph.size; }
     const notes=$("#notes").value.trim();
-    if(notes){ const r=await backend.saveNotes(S.slug, S.session, notes); if(!r.ok) throw new Error(r.message); }
+    const brief={goal:$("#cbGoal").value, style:$("#cbStyle").value, length:$("#cbLength").value, audience:$("#cbAudience").value.trim(), action:$("#cbAction").value.trim()};
+    const hasBrief=Object.values(brief).some(v=>v);
+    if(notes||hasBrief){ const r=await backend.saveNotes(S.slug, S.session, notes, brief); if(!r.ok) throw new Error(r.message); }
     S.uploadFrac=1; drawUpload();
     const r=await backend.start(S.slug);
     if(!r.ok) throw new Error(r.message);
@@ -565,7 +579,7 @@ function backToCompose(){
 $("#newBtn").onclick=()=>{
   if(S.busy && S.uploadFrac<1){ toast("Upload in progress", "Wait for the upload to finish before starting another reel."); return; }
   S.files.forEach(f=>URL.revokeObjectURL(f.url)); S.files=[]; S.logo=null; S.session=rid(); S.busy=false;
-  $("#notes").value=""; $("#reelName").value=""; $("#logoClear").click(); $("#cphClear").click(); $("#makeBtn").disabled=false;
+  $("#notes").value=""; ["#cbGoal","#cbStyle","#cbLength","#cbAudience","#cbAction"].forEach(i=>{ $(i).value=""; }); $("#reelName").value=""; $("#logoClear").click(); $("#cphClear").click(); $("#makeBtn").disabled=false;
   renderFiles(); updateSlug(); backToCompose();
 };
 const UPLOAD_W = 0.08;   // share of the overall bar used by the upload
@@ -682,6 +696,17 @@ function qaBlock(p){
     <ul style="list-style:none;margin:8px 0 0;padding:0;display:grid;gap:4px">${li(q.errors,"❌")}${li(q.warnings,"⚠️")}${li(q.notes,"👀")}${(q.errors.length+q.warnings.length+q.notes.length)?"":'<li class="small">✅ Nothing to fix.</li>'}</ul>
     ${q.technical?`<p class="small" style="margin:8px 0 0;color:var(--muted)">File: ${esc(q.technical)}</p>`:""}</details>`;
 }
+const HOOK_TXT={curiosity:"Curiosity",problem:"Problem",direct:"Direct value"};
+function hooksBlock(p){
+  const h=p.hooks||[]; if(!h.length) return "";
+  const now=p.hook_now&&(p.hook_now.line1||p.hook_now.line2)?`${p.hook_now.line1||""} ${p.hook_now.line2||""}`.trim():"";
+  return `<details style="border-top:1px solid var(--line);padding-top:14px"><summary><b>Opening title</b> <span class="small" style="color:var(--muted)">(pick one of 3, from your own words)</span></summary>
+    ${now?`<p class="small" style="margin:8px 0 0;color:var(--muted)">Now: <span dir="auto">${esc(now)}</span></p>`:""}
+    <div style="display:grid;gap:8px;margin-top:8px">${h.map((x,i)=>`<div class="small" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+      <b>${esc(HOOK_TXT[x.type]||x.type||"Hook")}</b><span dir="auto" style="flex:1;min-width:160px">${esc(x.line)}</span>
+      <button class="btn" data-hook="${i}" style="padding:4px 10px">Use this title</button></div>`).join("")}</div>
+    <p class="small" style="margin:8px 0 0;color:var(--muted)">Free and quick: no AI is used, a new draft is made with this title.</p></details>`;
+}
 function versionsBlock(p){
   const v=p.versions||[]; if(v.length<2) return "";
   const last=v[v.length-1].n;
@@ -761,11 +786,16 @@ function showResult(p){
           ${p.handles_set?"":`<div class="warn">Your Instagram and TikTok handles aren't set yet, and the final videos need them on the last card. Send them to Claude once, then come back and approve.</div>`}
           <div class="row"><button class="btn primary" id="approve" ${p.handles_set?"":"disabled"}>Approve &amp; make final video</button></div>
         </div>
+        ${hooksBlock(p)}
         ${qaBlock(p)}
         ${versionsBlock(p)}
         ${readyBlock(p)}
         ${p.feedback&&p.feedback.length?`<details><summary class="small">Your earlier comments (${p.feedback.length})</summary><div class="history" style="margin-top:6px">${p.feedback.map(f=>`<div>${esc(f.time)} · ${esc(f.fix)}</div>`).join("")}</div></details>`:""}
       </div></div>`;
+    R.querySelectorAll("[data-hook]").forEach(b=>b.onclick=async ()=>{
+      b.disabled=true; const r=await backend.useHook(job,+b.dataset.hook); if(!r.ok){ b.disabled=false; return toast("Couldn't change the title", r.message, "error"); }
+      toast("New title", "Making a new draft with this opening title.", "ok"); showTrack(job,false); watch(job);
+    });
     R.querySelectorAll("[data-ver]").forEach(b=>b.onclick=async ()=>{
       b.disabled=true; const r=await backend.useVersion(job,+b.dataset.ver); if(!r.ok){ b.disabled=false; return toast("Couldn't switch version", r.message, "error"); }
       toast("Version restored", r.message, "ok"); showTrack(job,false); watch(job);
@@ -875,7 +905,7 @@ const RealBackend = {
     throw last;
   },
   async post(action, body){ try{ const r=await fetch("/api/reels/"+action,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)}); return await r.json(); }catch(e){ return {ok:false,message:"The dashboard didn't answer. Check that Reel Factory.command is running."}; } },
-  saveNotes(slug, session, text){ return this.post("notes",{slug,session,text}); },
+  saveNotes(slug, session, text, brief){ return this.post("notes",{slug,session,text,brief}); },
   coverUpload(job, kind, file){
     return new Promise((resolve, reject)=>{
       const x=new XMLHttpRequest(); x.open("POST","/api/cover");
@@ -889,6 +919,7 @@ const RealBackend = {
   fix(job,text){ return this.post("fix",{job,text}); },
   approve(job){ return this.post("approve",{job}); },
   useVersion(job,n){ return this.post("use_version",{job,n}); },
+  useHook(job,n){ return this.post("use_hook",{job,n}); },
   resume(job){ return this.post("resume",{job}); },
   reveal(job){ return this.post("reveal",{job}); },
   mediaUrl(job, path){ return "/media/"+encodeURIComponent(job)+"/"+path.split("/").map(encodeURIComponent).join("/"); },
@@ -949,6 +980,7 @@ const DemoBackend = (()=>{
     async reveal(){ return {ok:false,message:"Finder can't be opened in demo mode."}; },
     async post(){ return {ok:false,message:"Not available in demo mode."}; },
     async useVersion(){ return {ok:false,message:"Not available in demo mode."}; },
+    async useHook(){ return {ok:false,message:"Not available in demo mode."}; },
     async coverUpload(){ throw new Error("Not available in demo mode."); },
     mediaUrl(job){ const j=jobs[job]; const f=j&&j.files.find(f=>!/\.(avi|mkv)$/i.test(f.name)); if(!f) return ""; return (f._url=f._url||URL.createObjectURL(f)); },
     watch(ref, onUpdate){

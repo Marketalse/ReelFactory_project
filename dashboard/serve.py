@@ -257,10 +257,11 @@ class H(SimpleHTTPRequestHandler):
                   "fix": lambda: reels_api.fix(body.get("job"), body.get("text")), "approve": lambda: reels_api.approve(body.get("job")),
                   "reveal": lambda: reels_api.reveal(body.get("job")),
                   "use_version": lambda: reels_api.use_version(body.get("job"), body.get("n")),
+                  "use_hook": lambda: reels_api.use_hook(body.get("job"), body.get("n")),
                   "cover_reset": lambda: reels_api.cover_reset(body.get("job")),
                   "performance": lambda: reels_api.save_performance(body.get("job"), body.get("data")),
                   "check": lambda: reels_api.check_name(body.get("slug"), body.get("session")),
-                  "notes": lambda: reels_api.save_notes(body.get("slug"), body.get("session"), body.get("text"))}.get(action)
+                  "notes": lambda: reels_api.save_notes(body.get("slug"), body.get("session"), body.get("text"), body.get("brief"))}.get(action)
             if not fn:
                 return self.send_json(404, {"error": "unknown action"})
             ok, msg = fn()

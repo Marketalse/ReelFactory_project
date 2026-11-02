@@ -83,6 +83,11 @@
    "id": "P13",
    "name": "NEXT · Stage 6 rendering and checking (starts when you say go)",
    "goal": "Safer rendering, stronger automatic checks, clear errors, quick re-renders"
+  },
+  {
+   "id": "P14",
+   "name": "NOW · Pipeline redesign + creative brief (Nov 2-4)",
+   "goal": "One shared understanding of the footage, a creative brief before editing, and hook choice"
   }
  ],
  "tasks": [
@@ -183,18 +188,6 @@
    "updated": "2026-11-01"
   },
   {
-   "id": "T09",
-   "phase": "P10",
-   "title": "Answer: music + SFX library",
-   "owner": "Hesham",
-   "status": "in_progress",
-   "depends": [],
-   "done_when": "",
-   "notes": "Answer after T13. Music: you add trending music when posting (decided). Still needed: your 11 best reels in Google Drive to learn your sound-effect style.",
-   "evidence": "",
-   "updated": "2026-11-02"
-  },
-  {
    "id": "T10",
    "phase": "P0",
    "title": "Answer: never-show list (or 'nothing')",
@@ -216,30 +209,6 @@
    "done_when": "",
    "notes": "Answered 2026-11-02.",
    "evidence": "config/glossary.json: page → بيج, store → متجر (confirmed)",
-   "updated": "2026-11-02"
-  },
-  {
-   "id": "T12",
-   "phase": "P10",
-   "title": "Answer: clips = separate takes or multi-camera? filename order OK?",
-   "owner": "Hesham",
-   "status": "todo",
-   "depends": [],
-   "done_when": "",
-   "notes": "Needs your answer: separate takes or multi-camera?",
-   "evidence": "",
-   "updated": "2026-11-02"
-  },
-  {
-   "id": "T13",
-   "phase": "P10",
-   "title": "Send 2–3 of your best previous reels (references/own)",
-   "owner": "Hesham",
-   "status": "in_progress",
-   "depends": [],
-   "done_when": "",
-   "notes": "Needs the best reel videos in the Google Drive folder. 11 links received 2026-11-01 (references/own/best_reels.md). Waiting for the video files (Instagram is blocked from the cloud).",
-   "evidence": "",
    "updated": "2026-11-02"
   },
   {
@@ -378,7 +347,6 @@
    "owner": "Claude",
    "status": "review",
    "depends": [
-    "T09",
     "T20"
    ],
    "done_when": "",
@@ -421,7 +389,6 @@
    "owner": "Claude",
    "status": "review",
    "depends": [
-    "T12",
     "T16"
    ],
    "done_when": "",
@@ -565,9 +532,7 @@
    "title": "energy.py: measure your best reels → target rates",
    "owner": "Claude",
    "status": "review",
-   "depends": [
-    "T13"
-   ],
+   "depends": [],
    "done_when": "",
    "notes": "Tool built 2026-11-02. Real target numbers appear when your best reel videos are in references/own (T13).",
    "evidence": "scripts/energy.py + tests/test_energy.py (known test video: 2 picture changes, longest hold, first sound, loudness). Run: python3 scripts/energy.py references/own/*.mp4 --save",
@@ -852,7 +817,7 @@
   {
    "id": "T56",
    "phase": "P10",
-   "title": "Nous portal: name the key 'Reel Factory' and set a monthly limit (suggest $20) if the portal offers one",
+   "title": "Nous portal: name the key 'Reel Factory' and set a monthly limit of $35 (Hesham, 2026-11-02: more room for better quality) if the portal offers one",
    "owner": "Hesham",
    "status": "todo",
    "depends": [
@@ -860,7 +825,7 @@
    ],
    "done_when": "Portal shows the key with its limit",
    "evidence": "",
-   "notes": "2 minutes in the Nous portal. Second safety net on top of Reel Factory's own caps ($1/reel, $50/month).",
+   "notes": "2 minutes in the Nous portal. Second safety net next to Reel Factory's own caps ($1/reel, $50/month in config/project.json: unchanged; the portal's $35 will stop first).",
    "updated": "2026-11-02"
   },
   {
@@ -1374,6 +1339,102 @@
    "done_when": "Dashboard shows 'QA report' and 'Versions' for a reel; you can approve any version.",
    "notes": "Built 2026-11-02. Quality check + Versions on the draft page.",
    "evidence": "scripts/lib/versions.py, dashboard/make.html, dashboard/reels_api.py, tests/test_versions.py",
+   "updated": "2026-11-02"
+  },
+  {
+   "id": "T100",
+   "phase": "P14",
+   "title": "P0 · AI creative brief: before editing, you set goal, audience, style, length and the action you want viewers to take (upload page); the story step, the director and the length check all use it",
+   "owner": "Claude",
+   "status": "review",
+   "depends": [],
+   "done_when": "Pick 'sell' + 'fast' + 'short 30-45 s' on the upload page: the story candidates are 30-45 s and the director brief says so.",
+   "notes": "Built 2026-11-02. Goal, audience, style, length, action. The end card stays off (brand.json); \"action\" is a hint for the words only.",
+   "evidence": "scripts/lib/creative_brief.py, dashboard/make.html (Creative brief on the upload page), scripts/reel.py, scripts/qa_check.py, scripts/ready_score.py, tests/test_creative_brief.py",
+   "updated": "2026-11-02"
+  },
+  {
+   "id": "T101",
+   "phase": "P14",
+   "title": "Pipeline overlap: map what depends on what, overlap the free steps that can run together, and measure",
+   "owner": "Claude",
+   "status": "todo",
+   "depends": [],
+   "done_when": "A short written map in docs/DECISIONS.md with measured stage times; overlap built only where it saves real time.",
+   "notes": "",
+   "evidence": "",
+   "updated": "2026-11-02"
+  },
+  {
+   "id": "T102",
+   "phase": "P14",
+   "title": "P0 · Unified content intelligence: ONE file (content_intel.json) joining words, timing, pauses, emphasis, scene changes and face positions per phrase; the story step reads delivery hints from it",
+   "owner": "Claude",
+   "status": "review",
+   "depends": [],
+   "done_when": "jobs/<job>/content_intel.json exists after the story step; the story prompt carries pause/emphasis marks.",
+   "notes": "Built 2026-11-02. jobs/<job>/content_intel.json joins words, pauses, emphasis, speed, scene changes, faces; the story step reads short marks from it. A little more input for the story call (marks only where something is notable).",
+   "evidence": "scripts/lib/content_intel.py, scripts/reel.py (st_selects, st_plan), tests/test_content_intel.py",
+   "updated": "2026-11-02"
+  },
+  {
+   "id": "T103",
+   "phase": "P14",
+   "title": "P1 · Hook picker: on the draft page choose one of the 3 hooks (curiosity / problem / direct); it makes a new draft with that opening",
+   "owner": "Claude",
+   "status": "review",
+   "depends": [],
+   "done_when": "Draft page lists the 3 hooks from your own words; clicking one sends 'use this opening' and makes a new draft.",
+   "notes": "Built 2026-11-02. Picks one of the 3 hooks (his own words, checked) as the opening title card; free rebuild, no AI.",
+   "evidence": "dashboard/reels_api.py (use_hook), dashboard/make.html (Opening title block), tests/test_hook_picker.py",
+   "updated": "2026-11-02"
+  },
+  {
+   "id": "T104",
+   "phase": "P14",
+   "title": "Feature map: each of the 12 proposed features marked built / dropped / later, with where it lives",
+   "owner": "Claude",
+   "status": "review",
+   "depends": [],
+   "done_when": "docs/DECISIONS.md has the table; the board has a task for everything still open.",
+   "notes": "Done 2026-11-02.",
+   "evidence": "docs/DECISIONS.md (Feature map)",
+   "updated": "2026-11-02"
+  },
+  {
+   "id": "T105",
+   "phase": "P12",
+   "title": "P2 · Smart B-roll suggestions: suggest library clips/screenshots that match what is being said (needs AI picture matching = cost)",
+   "owner": "Claude",
+   "status": "todo",
+   "depends": [],
+   "done_when": "Parked until you approve the cost; today B-roll attaches by file name you say.",
+   "notes": "",
+   "evidence": "",
+   "updated": "2026-11-02"
+  },
+  {
+   "id": "T106",
+   "phase": "P12",
+   "title": "P2 · Multiple reel variations from one source (educational / fast / storytelling): each is a full extra plan and render, about the cost of another reel",
+   "owner": "Claude",
+   "status": "todo",
+   "depends": [],
+   "done_when": "Parked until you approve the cost.",
+   "notes": "",
+   "evidence": "",
+   "updated": "2026-11-02"
+  },
+  {
+   "id": "T107",
+   "phase": "P12",
+   "title": "P2 · Learn from rejected drafts: remember which version you went back from and why, as lessons for the next reel",
+   "owner": "Claude",
+   "status": "todo",
+   "depends": [],
+   "done_when": "After a 'Use this version' or 'Send changes', one line lands in lessons for the director.",
+   "notes": "",
+   "evidence": "",
    "updated": "2026-11-02"
   }
  ],
