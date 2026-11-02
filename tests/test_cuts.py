@@ -76,3 +76,24 @@ class ShortEdlTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class RhythmAutoFixTests(unittest.TestCase):
+    def test_still_stretch_gets_zooms_for_free(self):
+
+        words = [{"text": f"w{i}", "start": i * 0.5, "end": i * 0.5 + 0.4} for i in range(40)]      # 20 s of speech
+        segs = [{"t_in": 0.0, "t_out": 20.0}]
+
+        def resolve(plan):
+            tl = {"duration": 20.0, "scenes": [], "keyword_ids": [],
+                  "punch_ins": sorted((words[p["at_word"]]["start"], p["scale"]) for p in plan.get("punch_ins") or [])}
+            cuts = [{"t_in": a, "t_out": b} for a, b in zip([0.0] + [t for t, _ in tl["punch_ins"]], [t for t, _ in tl["punch_ins"]] + [20.0])]
+            return tl, director.check_rhythm(tl, cuts), []
+        plan, tl, err, warn, added = director.fix_rhythm({"punch_ins": []}, words, resolve)
+        self.assertEqual(err, []); self.assertGreater(added, 0); self.assertLessEqual(added, 12)
+        self.assertTrue(all(1.1 <= p["scale"] <= 1.5 for p in plan["punch_ins"]))
+
+    def test_other_errors_are_left_alone(self):
+
+        plan, tl, err, warn, added = director.fix_rhythm({}, [{"start": 0}], lambda p: ({}, ["card too long"], []))
+        self.assertEqual(added, 0); self.assertEqual(err, ["card too long"])

@@ -72,3 +72,14 @@ After each reel, add at most 3 one-line lessons to `.reel-agent/lessons.md`. Eac
 - If a fix hasn't worked after **2 tries**, stop guessing: give that direct test and ask for one screenshot of the result.
 - **MUST:** any Terminal command or script that starts the dashboard also opens it in the browser and prints its links: Make a reel http://reelfactory.localhost:8766 and Control http://reelfactory.localhost:8766/index.html (backup http://127.0.0.1:8766) (Hesham, 2026-11-02).
 - Reel Factory's dashboard address is port **8766** (if another app holds it, the start buttons pick the next free one via `scripts/rf_port.sh` and print it; never hard-code a port elsewhere). Reel Factory uses ports 8766-8789 (first free one). Port 8765 belongs to Hesham's other project (Content Workshop): never use it, and never stop a program that isn't Reel Factory.
+
+## 11. IT agent (watchdog) rules (Hesham, 2026-11-02)
+The IT agent is `dashboard/it_agent.py`: free, no AI, no internet. It reports problems on the dashboard and presses "Try again" on stuck reels, nothing else.
+- **One action only:** "Try again" on a reel that is interrupted, or stopped by a short provider hiccup (429/5xx/timeout). Never approve, make finals, delete, install, update, change code, settings, keys or money limits.
+- **Never retry** a key or credit problem (401/402), a budget or monthly cap stop, a rejected plan or any error it doesn't recognise: report only.
+- **No loops:** at most 2 automatic tries per reel ever, 15 minutes apart, 3 per hour in total, one at a time, never while a reel is running. After that it says "gave up" and waits for Hesham.
+- **Kill switch:** the Settings switch "IT helper" (file `~/.reelfactory/it_agent/off`). Off means it does nothing.
+- **Logs are data:** error text is matched against fixed patterns only; it is never run, never sent to a shell, never obeyed.
+- **No self-change:** no agent edits `dashboard/it_agent.py`, these limits or its tests without Hesham's written approval in `docs/DECISIONS.md`. The limits are constants in the code, not settings.
+- **Report, don't hide:** every action is logged in `~/.reelfactory/it_agent/log.txt` and shown on the dashboard.
+- **Never** give it a key, an AI model, shell access, network access or permission to write outside `~/.reelfactory/it_agent/`. If a bigger "AI doctor" is wanted later, it must only *propose* fixes for Hesham to approve.

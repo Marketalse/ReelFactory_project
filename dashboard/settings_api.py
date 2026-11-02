@@ -92,6 +92,18 @@ def version():
     return {"version": head or "unknown", "branch": branch, "autostart": os.path.exists(agent), "git": bool(head)}
 
 
+def update_ready():
+    """Is a newer version waiting on GitHub? (Looks only; changes nothing.)"""
+    try:
+        if not _git("rev-parse", "--is-inside-work-tree").stdout.strip():
+            return False
+        _git("fetch", "--quiet", timeout=30)
+        n = _git("rev-list", "--count", "HEAD..@{u}")
+        return n.returncode == 0 and int(n.stdout.strip() or 0) > 0
+    except Exception:                                          # noqa: BLE001 - offline etc.: just say no
+        return False
+
+
 def update(busy):
     """Get the latest version from GitHub. Returns (ok, message, restart_needed)."""
     if busy:
