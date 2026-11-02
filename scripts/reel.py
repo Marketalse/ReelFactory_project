@@ -21,7 +21,7 @@ import argparse, base64, glob, json, os, re, shutil, subprocess, sys, time, urll
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from lib import config as cfg   # noqa: E402  (all settings live in config/*.json)
-from lib import transcript as tr, edl as edlmod, director   # noqa: E402
+from lib import transcript as tr, edl as edlmod, director, speech_intel   # noqa: E402
 from lib.hfbuild import BuildError   # noqa: E402
 
 ROOT = cfg.ROOT
@@ -209,10 +209,22 @@ Rules:
 WORDS:
 """
 
+def speech_intel_run(c):
+    """Stage 3 extras (free, no AI): language, delivery, separate scores, low-confidence words. Never blocks the reel."""
+    try:
+        si = speech_intel.build(c.job, cfg.PROJECT["asr"]["language"], cfg.GLOSSARY.get("terms", []))
+        if si:
+            for line in speech_intel.summary_lines(si): print("   speech:", line)
+    except Exception as e:                                            # noqa: BLE001
+        print(f"   speech: analysis skipped ({e})")
+
+
 def st_fix(c):
     out = os.path.join(c.job, "transcript.json")
     asr = jload(os.path.join(c.job, "transcript_asr.json"))
-    if os.path.exists(out) and jload(os.path.join(c.job, "transcript_fix_meta.json")): return "cached"
+    if os.path.exists(out) and jload(os.path.join(c.job, "transcript_fix_meta.json")):
+        if not os.path.exists(os.path.join(c.job, "speech_intel.json")): speech_intel_run(c)
+        return "cached"
     prompt = FIX_PROMPT.replace("{glossary}", glossary_text()) + "\n".join(f"{i}:{w['text']}" for i, w in enumerate(asr))
     txt = c.llm("fix", M_FIX, [{"type": "text", "text": prompt}], 4000, "low")   # longer clip = longer answer
     fx = parse_json(txt)
@@ -223,6 +235,7 @@ def st_fix(c):
             applied.append({"i": i, "from": words[i]["text"], "to": t}); words[i]["text"] = t
     jsave(out, words)
     jsave(os.path.join(c.job, "transcript_fix_meta.json"), {"model": M_FIX, "n_words": len(words), "n_changed": len(applied), "changes": applied, "notes": fx.get("notes")})
+    speech_intel_run(c)
     return f"{len(applied)}/{len(words)} words corrected"
 
 def glossary_text():
@@ -444,6 +457,9 @@ def st_report(c):
          "| stage | model | in tok | out tok | cost | s |", "|---|---|---|---|---|---|"]
     for x in cost:
         L.append(f"| {x['stage']} | {x['model'].split('/')[1]} | {x['in']} | {x['out']} | ${x['cost']:.4f} | {x['seconds']} |")
+    si = jload(os.path.join(c.job, "speech_intel.json"), {})
+    if si:
+        L += ["", "Speech (rough guides, not proof):"] + [f"- {x}" for x in speech_intel.summary_lines(si)]
     L += ["", f"Transcript: {rv.get('changed', 0)} words fixed by you at Gate 0 (error rate {rv.get('error_rate', 0):.0%}).",
           f"Cut: {e.get('source_seconds', 0):.1f}s of the take -> {e.get('duration', 0):.1f}s reel; removed {e.get('removed', {}).get('pauses', 0)} pauses, "
           f"{len(e.get('removed', {}).get('fillers', []))} fillers, {len(e.get('removed', {}).get('retakes', []))} retake words.",

@@ -1238,6 +1238,18 @@
    "notes": "Built 2026-11-02. Not built: external-mic sync, noise reduction, cross-reel proxy cache (see docs/DECISIONS.md).",
    "evidence": "scripts/ingest_folder.py, scripts/ingest.sh, scripts/lib/media_index.py, tests/test_ingest_stage2.py",
    "updated": "2026-11-02"
+  },
+  {
+   "id": "T89",
+   "phase": "P9",
+   "title": "Stage 3 upgrade: language mix, delivery analysis, 4 separate speech scores, low-confidence words (speech_intel.json)",
+   "owner": "Claude",
+   "status": "review",
+   "depends": [],
+   "done_when": "After a reel's word-fix step, jobs/<job>/speech_intel.json exists and report.md has a 'Speech' section.",
+   "notes": "Built 2026-11-02. Not built: speaker labels, meaning-based importance, Kurdish engine (see docs/DECISIONS.md).",
+   "evidence": "scripts/lib/speech_intel.py, tests/test_speech_intel.py",
+   "updated": "2026-11-02"
   }
  ],
  "log": [
