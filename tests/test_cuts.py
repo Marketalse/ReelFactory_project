@@ -1,5 +1,5 @@
 """Face pieces shorter than 0.3 s are folded into a neighbour instead of stopping the reel."""
-import os, sys, unittest
+import json, os, sys, unittest
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(ROOT, "scripts"))
@@ -97,3 +97,16 @@ class RhythmAutoFixTests(unittest.TestCase):
 
         plan, tl, err, warn, added = director.fix_rhythm({}, [{"start": 0}], lambda p: ({}, ["card too long"], []))
         self.assertEqual(added, 0); self.assertEqual(err, ["card too long"])
+
+
+class RelaxedDurationTests(unittest.TestCase):
+    def test_edit_page_may_stretch_and_shrink_clips(self):
+        words = [{"text": f"w{i}", "start": round(i * 0.45, 2), "end": round(i * 0.45 + 0.38, 2)} for i in range(120)]
+        plan = {"hook": {"line1": "عنوان", "line2": "سطر"}, "keyword_ids": [], "punch_ins": [], "cta": {}, "cover": {},
+                "moments": [{"block": "text_card", "at_word": 12, "duration": 9.0, "values": {"headline": "خدمة الزبائن"}},
+                            {"block": "info_card", "at_word": 60, "duration": 0.6, "values": {"headline": "قصير"}}]}
+        strict, _, w1 = director.resolve(json.loads(json.dumps(plan)), words, words[-1]["end"], logos=[])
+        loose, e2, w2 = director.resolve(json.loads(json.dumps(plan)), words, words[-1]["end"], logos=[], relaxed=True)
+        d = lambda tl, b: next(round(s["t_out"] - s["t_in"], 1) for s in tl["scenes"] if s["block"] == b)
+        self.assertEqual(d(strict, "text_card"), 3.5)                    # the AI is kept to the template's range
+        self.assertEqual((d(loose, "text_card"), d(loose, "info_card")), (9.0, 0.6)); self.assertEqual((e2, w2), ([], []))

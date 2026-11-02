@@ -99,6 +99,9 @@ class H(SimpleHTTPRequestHandler):
 
     def do_GET(self):
         q = {k: v[0] for k, v in parse_qs(urlparse(self.path).query).items()}
+        if self.path.startswith("/api/upload/status"):
+            return self.send_json(200, reels_api.upload_status(q.get("slug"), q.get("kind"), unquote(q.get("name", "")), q.get("session"),
+                                                               int(q.get("order") or 0) if str(q.get("order") or "0").isdigit() else 0))
         if self.path.startswith("/api/watching"):
             return self.send_json(200, {"watching": reels_api.watching(q.get("ref", ""))})
         if self.path.startswith("/api/progress"):
@@ -217,9 +220,10 @@ class H(SimpleHTTPRequestHandler):
             h = self.headers
             try:
                 n = int(h.get("Content-Length", 0)); order = int(h.get("X-Order", 0) or 0)
+                offset = int(h.get("X-Offset", 0) or 0); total = int(h.get("X-Total", 0) or 0) or None
             except ValueError:
                 return self.send_json(400, {"ok": False, "message": "bad upload headers"})
-            ok, msg = reels_api.upload(h.get("X-Slug"), h.get("X-Kind"), unquote(h.get("X-Name", "")), h.get("X-Session"), n, self.rfile, order)
+            ok, msg = reels_api.upload(h.get("X-Slug"), h.get("X-Kind"), unquote(h.get("X-Name", "")), h.get("X-Session"), n, self.rfile, order, offset, total)
             if not ok:
                 self.close_connection = True               # the unread body must not be parsed as the next request
             return self.send_json(200 if ok else 409, {"ok": ok, "message": msg})
