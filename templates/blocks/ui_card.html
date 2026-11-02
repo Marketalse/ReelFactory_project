@@ -1,0 +1,45 @@
+<html data-composition-variables='[{"id":"title","type":"string","label":"Window title","default":"لوحة الإعلانات","maxLength":24},{"id":"headline","type":"string","label":"What it shows","default":"هنا ترى النتيجة","maxLength":32},{"id":"image","type":"string","label":"Screenshot file (from the reel assets)","default":""}]'>
+<template>
+<style>
+#root{position:absolute;inset:0;pointer-events:none}
+#__ID__-win{position:absolute;left:calc(var(--text-x) + 30px);width:720px;top:800px;border-radius:30px;background:var(--bg);box-shadow:0 34px 80px rgba(0,0,0,.55);overflow:hidden;direction:ltr;border:2px solid rgba(255,255,255,.14);transform-origin:50% 50%}
+#__ID__-bar{height:50px;display:flex;align-items:center;gap:10px;padding:0 20px;background:var(--surface)}
+.__ID__-dot{width:15px;height:15px;border-radius:50%}
+#__ID__-ttl{margin-inline-start:14px;color:var(--muted);font-family:var(--font);font-size:26px;font-weight:500;direction:rtl;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:520px}
+#__ID__-body{position:relative;height:250px;background:var(--bg);overflow:hidden}
+#__ID__-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:none}
+#__ID__-skel{position:absolute;inset:0;padding:22px 26px;display:grid;grid-template-columns:1fr 2fr;gap:18px}
+.__ID__-side{display:grid;gap:12px;align-content:start}
+.__ID__-side i{height:18px;border-radius:9px;background:var(--surface)}
+.__ID__-main{display:grid;gap:14px;grid-template-rows:auto 1fr}
+.__ID__-kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.__ID__-kpis i{height:56px;border-radius:14px;background:var(--surface);border-top:5px solid var(--lime)}
+.__ID__-kpis i:nth-child(2){border-top-color:var(--violet)}.__ID__-kpis i:nth-child(3){border-top-color:var(--coral)}
+.__ID__-chart{display:flex;align-items:flex-end;gap:12px;padding:0 6px}
+.__ID__-chart b{flex:1;border-radius:8px 8px 0 0;background:var(--lime)}
+#__ID__-label{position:absolute;left:0;right:0;bottom:0;padding:30px 26px 18px;direction:rtl;text-align:right;font-family:var(--font);font-size:44px;font-weight:700;color:var(--text);background:linear-gradient(0deg,rgba(36,40,52,.95),rgba(36,40,52,0))}
+</style>
+<div id="root" data-composition-id="__ID__" data-width="1080" data-height="1920" data-layout-allow-overlap>
+  <div id="__ID__-win" class="clip" data-start="0" data-duration="__DUR__">
+    <div id="__ID__-bar"><i class="__ID__-dot" style="background:var(--coral)"></i><i class="__ID__-dot" style="background:var(--lime)"></i><i class="__ID__-dot" style="background:var(--violet)"></i><span id="__ID__-ttl" data-var-text="title">.</span></div>
+    <div id="__ID__-body">
+      <img id="__ID__-img" data-var-src="image" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="">
+      <div id="__ID__-skel"><div class="__ID__-side"><i></i><i style="width:80%"></i><i style="width:60%"></i><i style="width:90%"></i></div>
+        <div class="__ID__-main"><div class="__ID__-kpis"><i></i><i></i><i></i></div><div class="__ID__-chart"><b style="height:35%"></b><b style="height:55%"></b><b style="height:42%"></b><b style="height:75%"></b><b style="height:62%"></b><b style="height:92%"></b></div></div></div>
+      <div id="__ID__-label" data-var-text="headline">.</div>
+    </div>
+  </div>
+</div>
+<script>
+const tl = gsap.timeline({ paused: true });
+const D = __DUR__;
+const vars = (window.__hyperframes && window.__hyperframes.getVariables()) || {};
+if (vars.image) { document.querySelector("#__ID__-img").style.display = "block"; document.querySelector("#__ID__-skel").style.display = "none"; }
+tl.fromTo("#__ID__-win", { y: 150, opacity: 0, rotation: -5, scale: 0.92 }, { y: 0, opacity: 1, rotation: -1.5, scale: 1, duration: 0.55, ease: "back.out(1.5)" }, 0);
+tl.to("#__ID__-win", { y: -14, duration: 1.1, ease: "sine.inOut", yoyo: true, repeat: 1 }, 0.6);
+tl.fromTo(".__ID__-chart b", { scaleY: 0, transformOrigin: "50% 100%" }, { scaleY: 1, duration: 0.5, stagger: 0.06, ease: "power2.out" }, 0.35);
+tl.to("#__ID__-win", { y: 70, opacity: 0, duration: 0.28, ease: "power2.in" }, D - 0.3);
+window.__timelines["__ID__"] = tl;
+</script>
+</template>
+</html>

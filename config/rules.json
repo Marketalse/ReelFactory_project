@@ -49,6 +49,21 @@
     },
     "tier_list": {
       "min_gap_s": 10
+    },
+    "ui_card": {
+      "min_gap_s": 6,
+      "requires": "image file in job assets/ (optional)"
+    },
+    "doc_card": {
+      "min_gap_s": 6
+    },
+    "pixel_scene": {
+      "min_gap_s": 10
+    },
+    "text_behind": {
+      "min_gap_s": 10,
+      "max_per_reel": 2,
+      "requires": "face in the middle of the frame (checked from the shot log)"
     }
   },
   "sfx": {

@@ -88,6 +88,16 @@
    "id": "P14",
    "name": "NOW · Pipeline redesign + creative brief (Nov 2-4)",
    "goal": "One shared understanding of the footage, a creative brief before editing, and hook choice"
+  },
+  {
+   "id": "P15",
+   "name": "TEST ROUND · Check what was built (you, on your Mac)",
+   "goal": "Merge, update, then one real reel with the new features; tell Claude what breaks"
+  },
+  {
+   "id": "P16",
+   "name": "PARKED · Closed without being built (reopen when you want)",
+   "goal": "Needs your Mac, your screens, your style OK or extra cost"
   }
  ],
  "tasks": [
@@ -1435,6 +1445,198 @@
    "done_when": "After a 'Use this version' or 'Send changes', one line lands in lessons for the director.",
    "notes": "Built 2026-11-02. Going back to an earlier draft records the change he rejected as taste for the next reels. Marked done on Hesham's instruction 2026-11-02.",
    "evidence": "scripts/lib/versions.py (restore), scripts/lib/director.py (taste), tests/test_versions.py",
+   "updated": "2026-11-02"
+  },
+  {
+   "id": "T108",
+   "phase": "P15",
+   "title": "Merge v2 into main on GitHub, then Settings → Get the latest version",
+   "owner": "Hesham",
+   "status": "todo",
+   "depends": [],
+   "done_when": "Settings shows the new version and 'Up to date'.",
+   "notes": "",
+   "evidence": "",
+   "updated": "2026-11-02"
+  },
+  {
+   "id": "T109",
+   "phase": "P15",
+   "title": "Click 'Try again' on the stopped reel (it stopped at the story step) and let it finish",
+   "owner": "Hesham",
+   "status": "todo",
+   "depends": [],
+   "done_when": "A draft is ready.",
+   "notes": "The empty-AI-answer fix is in v2.",
+   "evidence": "",
+   "updated": "2026-11-02"
+  },
+  {
+   "id": "T110",
+   "phase": "P15",
+   "title": "Upload a new reel with 2+ clips and fill the Creative brief (goal, style, length)",
+   "owner": "Hesham",
+   "status": "todo",
+   "depends": [],
+   "done_when": "'Your files' panel shows every clip; the story candidates follow the length you chose.",
+   "notes": "",
+   "evidence": "",
+   "updated": "2026-11-02"
+  },
+  {
+   "id": "T111",
+   "phase": "P15",
+   "title": "On the draft page open: Opening title, Other versions, Quality check, Versions",
+   "owner": "Hesham",
+   "status": "todo",
+   "depends": [],
+   "done_when": "Pick another opening title: a new draft appears quickly with that title.",
+   "notes": "",
+   "evidence": "",
+   "updated": "2026-11-02"
+  },
+  {
+   "id": "T112",
+   "phase": "P15",
+   "title": "Open 🎞 Timeline: split a piece, press Check my cuts, accept one cut, Save",
+   "owner": "Hesham",
+   "status": "todo",
+   "depends": [],
+   "done_when": "The timeline keeps your cuts; nothing runs until you press Auto-edit.",
+   "notes": "",
+   "evidence": "",
+   "updated": "2026-11-02"
+  },
+  {
+   "id": "T113",
+   "phase": "P15",
+   "title": "Read report.md of the reel: Speech, Story and cuts, Captions and visuals",
+   "owner": "Hesham",
+   "status": "todo",
+   "depends": [],
+   "done_when": "The notes match what you see in the draft; tell Claude what is wrong.",
+   "notes": "",
+   "evidence": "",
+   "updated": "2026-11-02"
+  },
+  {
+   "id": "T114",
+   "phase": "P15",
+   "title": "Approve the draft and check the final video + cover",
+   "owner": "Hesham",
+   "status": "todo",
+   "depends": [],
+   "done_when": "Final video plays, 9:16, sound about -14 LUFS, cover looks right.",
+   "notes": "",
+   "evidence": "",
+   "updated": "2026-11-02"
+  },
+  {
+   "id": "T115",
+   "phase": "P15",
+   "title": "Nous portal: name the key 'Reel Factory' and set the monthly limit to $35",
+   "owner": "Hesham",
+   "status": "todo",
+   "depends": [],
+   "done_when": "Portal shows the key with its limit.",
+   "notes": "From T56.",
+   "evidence": "",
+   "updated": "2026-11-02"
+  },
+  {
+   "id": "T116",
+   "phase": "P15",
+   "title": "Run the model bake-off once on a real reel and choose the models",
+   "owner": "Hesham",
+   "status": "todo",
+   "depends": [],
+   "done_when": "python3 scripts/reel.py jobs/<job> --bakeoff \"modelA,modelB\" then pick per step in docs/DECISIONS.md.",
+   "notes": "From T44/T60. Costs cents.",
+   "evidence": "",
+   "updated": "2026-11-02"
+  },
+  {
+   "id": "T117",
+   "phase": "P15",
+   "title": "After you post a reel: type the 2-day and 7-day numbers in 'How did it do?'",
+   "owner": "Hesham",
+   "status": "todo",
+   "depends": [],
+   "done_when": "Results saved; learning starts at 10 reels.",
+   "notes": "From T45.",
+   "evidence": "",
+   "updated": "2026-11-02"
+  },
+  {
+   "id": "T118",
+   "phase": "P15",
+   "title": "Send Claude a screenshot of anything that looks wrong or stops",
+   "owner": "Hesham",
+   "status": "todo",
+   "depends": [],
+   "done_when": "Claude fixes it the same day.",
+   "notes": "",
+   "evidence": "",
+   "updated": "2026-11-02"
+  },
+  {
+   "id": "T119",
+   "phase": "P16",
+   "title": "Text behind the head (needs a person-cutout model on your Mac)",
+   "owner": "Claude",
+   "status": "done",
+   "depends": [],
+   "done_when": "Proven on a real reel.",
+   "notes": "Built 2026-11-02: text behind the head with a free on-device person cutout (HyperFrames remove-background); proven on a real render with your face (viewed). ~2 fps on a plain CPU (about 45 s for a 3 s moment at full size, half size for drafts, cached); falls back by dropping only that moment. Done on Hesham's instruction.",
+   "evidence": "scripts/lib/matte.py, templates/blocks/text_behind.html, scripts/compile.py, scripts/lib/director.py, tests/test_text_behind.py",
+   "updated": "2026-11-02"
+  },
+  {
+   "id": "T120",
+   "phase": "P16",
+   "title": "Pixel-art scenes (marketing department, social-media manager, meeting)",
+   "owner": "Claude",
+   "status": "done",
+   "depends": [],
+   "done_when": "You approve a sample.",
+   "notes": "Built 2026-11-02: pixel_scene with 3 scenes (marketing department, social media manager, team meeting), drawn in code in the brand colours (no image credits spent); viewed in a real HyperFrames snapshot. Done on Hesham's instruction.",
+   "evidence": "templates/blocks/pixel_scene.html, templates/blocks/registry.json, tests/test_safe_zones.py",
+   "updated": "2026-11-02"
+  },
+  {
+   "id": "T121",
+   "phase": "P16",
+   "title": "Floating UI card and document card templates",
+   "owner": "Claude",
+   "status": "done",
+   "depends": [],
+   "done_when": "You approve samples.",
+   "notes": "Built 2026-11-02: ui_card (floating app window with a screenshot from the reel's assets) and doc_card (paper sheet with a highlighted phrase); viewed in a real snapshot. Add your own screenshots to library/broll/ and the picture matching (T123) offers them. Done on Hesham's instruction.",
+   "evidence": "templates/blocks/ui_card.html, templates/blocks/doc_card.html, tests/test_safe_zones.py",
+   "updated": "2026-11-02"
+  },
+  {
+   "id": "T122",
+   "phase": "P16",
+   "title": "Separate paid AI critics (script, visual, audience) + chair",
+   "owner": "Claude",
+   "status": "todo",
+   "depends": [],
+   "done_when": "Only if you approve the cost.",
+   "notes": "Was T37/T14. Mostly covered by Stages 4-6.",
+   "evidence": "",
+   "updated": "2026-11-02"
+  },
+  {
+   "id": "T123",
+   "phase": "P16",
+   "title": "Smart B-roll by what is IN the picture (vision AI)",
+   "owner": "Claude",
+   "status": "done",
+   "depends": [],
+   "done_when": "Only if you approve the cost.",
+   "notes": "Built 2026-11-02: new library pictures are described once by the vision AI (cached), one small text call per reel picks the ones that fit. Cents per reel; money guard applies; off switch in config/project.json -> broll_ai.enabled. Done on Hesham's instruction.",
+   "evidence": "scripts/lib/broll_ai.py, scripts/reel.py (broll_ai_step), config/project.json (broll_ai), tests/test_broll_ai.py",
    "updated": "2026-11-02"
   }
  ],

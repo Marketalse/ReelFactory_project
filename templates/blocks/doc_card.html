@@ -1,0 +1,39 @@
+<html data-composition-variables='[{"id":"title","type":"string","label":"Document title","default":"خطة المحتوى","maxLength":24},{"id":"highlight","type":"string","label":"Highlighted phrase","default":"رد خلال دقيقة","maxLength":32},{"id":"note","type":"string","label":"Small note","default":"","maxLength":50}]'>
+<template>
+<style>
+#root{position:absolute;inset:0;pointer-events:none}
+#__ID__-wrap{position:absolute;left:calc(var(--text-x) + 60px);width:660px;top:800px;height:330px}
+.__ID__-sheet{position:absolute;inset:0;border-radius:18px;background:var(--text);box-shadow:0 26px 60px rgba(0,0,0,.5)}
+#__ID__-s3{transform:rotate(-5deg) translate(-16px,10px);opacity:.55}
+#__ID__-s2{transform:rotate(3deg) translate(14px,6px);opacity:.8}
+#__ID__-s1{padding:30px 36px;display:flex;flex-direction:column;gap:14px;direction:rtl;text-align:right;font-family:var(--font);color:var(--bg);transform:rotate(-1deg)}
+#__ID__-ttl{font-size:46px;font-weight:700;line-height:1.15;border-bottom:4px solid var(--violet);padding-bottom:8px}
+.__ID__-ln{height:14px;border-radius:7px;background:rgba(36,40,52,.16)}
+#__ID__-hl{align-self:flex-start;position:relative;font-size:54px;font-weight:700;line-height:1.2;padding:2px 10px}
+#__ID__-hl:before{content:"";position:absolute;inset:6px 0 4px 0;background:var(--lime);z-index:-1;transform-origin:100% 50%;transform:scaleX(var(--w,1))}
+#__ID__-note{font-size:34px;font-weight:400;color:rgba(36,40,52,.7)}
+#__ID__-note:empty{display:none}
+</style>
+<div id="root" data-composition-id="__ID__" data-width="1080" data-height="1920" data-layout-allow-overlap>
+  <div id="__ID__-wrap" class="clip" data-start="0" data-duration="__DUR__">
+    <div id="__ID__-s3" class="__ID__-sheet"></div><div id="__ID__-s2" class="__ID__-sheet"></div>
+    <div id="__ID__-s1" class="__ID__-sheet">
+      <div id="__ID__-ttl" data-var-text="title">.</div>
+      <div class="__ID__-ln" style="width:92%"></div><div class="__ID__-ln" style="width:70%"></div>
+      <div id="__ID__-hl" data-var-text="highlight">.</div>
+      <div id="__ID__-note" data-var-text="note"></div>
+    </div>
+  </div>
+</div>
+<script>
+const tl = gsap.timeline({ paused: true });
+const D = __DUR__;
+tl.fromTo("#__ID__-s3", { x: 60, opacity: 0 }, { x: 0, opacity: 0.55, duration: 0.4, ease: "power3.out" }, 0);
+tl.fromTo("#__ID__-s2", { x: 40, opacity: 0 }, { x: 0, opacity: 0.8, duration: 0.4, ease: "power3.out" }, 0.08);
+tl.fromTo("#__ID__-s1", { y: 140, opacity: 0, rotation: -6 }, { y: 0, opacity: 1, rotation: -1, duration: 0.5, ease: "back.out(1.6)" }, 0.15);
+tl.fromTo("#__ID__-hl", { "--w": 0 }, { "--w": 1, duration: 0.45, ease: "power2.out" }, 0.75);
+tl.to("#__ID__-wrap", { y: 60, opacity: 0, duration: 0.28, ease: "power2.in" }, D - 0.3);
+window.__timelines["__ID__"] = tl;
+</script>
+</template>
+</html>

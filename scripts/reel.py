@@ -21,7 +21,7 @@ import argparse, base64, glob, json, os, re, shutil, subprocess, sys, threading,
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from lib import config as cfg   # noqa: E402  (all settings live in config/*.json)
-from lib import transcript as tr, edl as edlmod, director, speech_intel, editorial, visual_plan, brand_memory, creative_brief, content_intel, frames_dedup, learning, doctor, sequence   # noqa: E402
+from lib import transcript as tr, edl as edlmod, director, speech_intel, editorial, visual_plan, brand_memory, creative_brief, content_intel, frames_dedup, learning, doctor, sequence, broll_ai   # noqa: E402
 from lib.hfbuild import BuildError   # noqa: E402
 
 ROOT = cfg.ROOT
@@ -406,6 +406,50 @@ def job_logos(c):
     return sorted(f for f in os.listdir(d) if f.lower().endswith((".svg", ".png", ".jpg", ".jpeg", ".webp"))) if os.path.isdir(d) else []
 
 
+def broll_ai_step(c, words, root=None):
+    """T123: describe NEW library pictures once (vision AI), pick the ones that fit this reel (one small text call), copy them into the reel's
+    assets/. Returns (files attached, note for the director). Cost-gated: skipped when the library has no pictures or the feature is off;
+    any failure is reported and the reel carries on."""
+    conf = cfg.PROJECT.get("broll_ai", {"enabled": True, "max_new_per_reel": 8, "max_pick": 6})
+    if not conf.get("enabled", True):
+        return [], ""
+    try:
+        idx = broll_ai.broll.index(root)
+        if not any(i["file"].lower().endswith(broll_ai.PIC_EXT) for i in idx):
+            return [], ""
+        todo = broll_ai.pending(root, int(conf.get("max_new_per_reel", 8)))
+        if todo:
+            content, sent = broll_ai.describe_content(root, todo)
+            if sent:
+                rows = parse_json(c.llm("broll_describe", M_VIS, content, 1800, "low"))
+                new = broll_ai.clean_descriptions(rows, sent)
+                broll_ai.save(root, new)
+                print(f"   b-roll: described {len(new)} new library picture(s) once (kept for next time)")
+        cat = broll_ai.catalog(root)
+        if not cat:
+            return [], ""
+        lines = "\n".join(f"[{a:.0f}] {t}" for a, b, t, _ in lines_from_words(words))
+        ans = parse_json(c.llm("broll_pick", M_SEL, [{"type": "text", "text": broll_ai.pick_prompt(lines, cat, int(conf.get("max_pick", 6)))}], 700, "low"))
+        picks = broll_ai.clean_picks(ans, cat, int(conf.get("max_pick", 6)))
+        got = []
+        for p in picks:
+            dst = os.path.join(c.job, "assets"); os.makedirs(dst, exist_ok=True)
+            if not os.path.exists(os.path.join(dst, p["file"])):
+                shutil.copy(os.path.join(broll_ai.broll.lib_dir(root), p["file"]), os.path.join(dst, p["file"]))
+            got.append(p["file"])
+        if got:
+            print("   b-roll (picture match):", ", ".join(got))
+        return got, broll_ai.brief_note(picks, cat)
+    except Stop as ex:
+        if str(ex).startswith(("BUDGET GUARD", "MONTHLY CAP")):
+            raise                                    # the money guard always wins
+        print("   b-roll picture matching skipped:", ex)
+        return [], ""
+    except Exception as ex:                          # noqa: BLE001 - the library is a bonus, never a reason to stop a reel
+        print("   b-roll picture matching skipped:", ex)
+        return [], ""
+
+
 def st_plan(c):
     """Director (Haiku) -> plan; code resolves word anchors to exact times and checks every rule;
     one repair with the Director, then one with the fallback model; still failing -> stop."""
@@ -419,6 +463,8 @@ def st_plan(c):
     except Exception as ex:                         # noqa: BLE001 - the library is a bonus, never a reason to stop a reel
         print("   b-roll library skipped:", ex)
     brief = open(os.path.join(c.job, "brief.md"), encoding="utf-8").read() if os.path.exists(os.path.join(c.job, "brief.md")) else ""
+    _got, note = broll_ai_step(c, words)               # pictures matched by what is IN them (AI, cents; cached descriptions)
+    if note: brief += "\n\n" + note
     job = jload(os.path.join(c.job, "job.json"), {})
     feedback = c.a.fix or ""
     ch = jload(os.path.join(c.job, "chosen_select.json"), {}) or {}; sl = jload(os.path.join(c.job, "selects.json"), {}) or {}

@@ -59,9 +59,14 @@ def preflight(job, project=None, min_free_gb=MIN_FREE_GB):
     if not os.path.isdir(project) or not os.path.exists(os.path.join(project, "index.html")):
         bad.append("the video project was not built (hyperframes/index.html missing): Try again")
     else:
+        dropped = set((_jl(os.path.join(project, "compile_info.json"), {}) or {}).get("dropped_scenes", []))      # moments compile gave up on (e.g. no cutout)
         for s in tl["scenes"]:
+            if s["id"] in dropped:
+                continue
             if s.get("block") in blocks and blocks[s["block"]].get("file") and not os.path.exists(os.path.join(project, "compositions", s["id"] + ".html")):
                 bad.append(f"the project is missing the file for scene {s['id']} ({s['block']})")
+            if s.get("block") == "text_behind" and not os.path.exists(os.path.join(project, "assets", f"matte_{s['id']}.webm")):
+                bad.append(f"the person cutout for scene {s['id']} (text behind the head) is missing")
         pa = os.path.join(project, "assets")
         for need in ("proxy.mp4", os.path.join("fonts", "ReadexPro.ttf")):
             if not os.path.exists(os.path.join(pa, need)):
