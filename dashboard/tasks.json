@@ -78,6 +78,11 @@
    "id": "P12",
    "name": "LATER · Ideas, no date yet",
    "goal": "Only after the pending tasks and the timeline are done"
+  },
+  {
+   "id": "P13",
+   "name": "NEXT · Stage 6 rendering and checking (starts when you say go)",
+   "goal": "Safer rendering, stronger automatic checks, clear errors, quick re-renders"
   }
  ],
  "tasks": [
@@ -1273,6 +1278,102 @@
    "done_when": "After a reel's compile step jobs/<job>/visual_plan.json exists; after 2 approvals the director gets a BRAND MEMORY line.",
    "notes": "Built 2026-11-02. Dropped from the plan by Hesham: smart reframing / subject tracking and several saved brand profiles.",
    "evidence": "scripts/lib/visual_plan.py, scripts/lib/brand_memory.py, tests/test_visual_plan.py",
+   "updated": "2026-11-02"
+  },
+  {
+   "id": "T92",
+   "phase": "P13",
+   "title": "Before rendering: check the plan and that every file it needs exists (clips, logos, fonts, sounds), with a plain-words list of what is missing",
+   "owner": "Claude",
+   "status": "todo",
+   "depends": [],
+   "done_when": "Starting a render with a missing file stops in 2 seconds and names the file.",
+   "notes": "Partly there: plan rules and a media check exist. New: one pre-flight check for ALL assets.",
+   "evidence": "",
+   "updated": "2026-11-02"
+  },
+  {
+   "id": "T93",
+   "phase": "P13",
+   "title": "Same settings every time: save a render recipe (tool versions, size, frame rate, codec, input file fingerprints) and export metadata next to every video",
+   "owner": "Claude",
+   "status": "todo",
+   "depends": [],
+   "done_when": "jobs/<job>/render_manifest.json exists for every draft and final; the same inputs give the same recipe.",
+   "notes": "New.",
+   "evidence": "",
+   "updated": "2026-11-02"
+  },
+  {
+   "id": "T94",
+   "phase": "P13",
+   "title": "Check the finished video file: size 1080x1920 (draft 540x960), 9:16, frame rate, codec, length, plays to the very end (no corrupted part)",
+   "owner": "Claude",
+   "status": "todo",
+   "depends": [],
+   "done_when": "A broken or wrongly sized file is rejected with the reason.",
+   "notes": "Partly there: length, black and frozen frames, loudness already checked.",
+   "evidence": "",
+   "updated": "2026-11-02"
+  },
+  {
+   "id": "T95",
+   "phase": "P13",
+   "title": "Check sound and picture stay in sync, plus silence gaps and audio peaks, by comparing speech in the video with the planned word times",
+   "owner": "Claude",
+   "status": "todo",
+   "depends": [],
+   "done_when": "A reel where the voice drifts more than 0.1 s from the words is flagged with the time.",
+   "notes": "Partly there: loudness, peaks, 'no audio'. New: sync and silence checks.",
+   "evidence": "",
+   "updated": "2026-11-02"
+  },
+  {
+   "id": "T96",
+   "phase": "P13",
+   "title": "Check captions and text on the finished video: nothing clipped, nothing outside the safe area, nothing hidden behind a card or face, and the video matches the plan (cards appear when planned)",
+   "owner": "Claude",
+   "status": "todo",
+   "depends": [],
+   "done_when": "Sample frames at every caption and card: the report lists any clipped or hidden text with its time.",
+   "notes": "Partly there: caption words vs speech, placeholder text. New: look at the real frames.",
+   "evidence": "",
+   "updated": "2026-11-02"
+  },
+  {
+   "id": "T97",
+   "phase": "P13",
+   "title": "Retry the render automatically when the failure is temporary (browser crash, out of memory, timeout, disk full), only the render step, never the whole reel",
+   "owner": "Claude",
+   "status": "todo",
+   "depends": [],
+   "done_when": "A crashed render restarts once by itself; the message says what happened and what you can do.",
+   "notes": "New. Same safety limits as the IT helper: 1 retry, never loops.",
+   "evidence": "",
+   "updated": "2026-11-02"
+  },
+  {
+   "id": "T98",
+   "phase": "P13",
+   "title": "Quick re-render after small edits: keep already-rendered pieces and redo only the parts that changed (captions, titles, effects)",
+   "owner": "Claude",
+   "status": "todo",
+   "depends": [],
+   "done_when": "Changing one caption re-renders in a fraction of the full time. First check whether HyperFrames allows rendering in pieces; if not, tell you before building.",
+   "notes": "New. Investigate first: the render tool may not allow it.",
+   "evidence": "",
+   "updated": "2026-11-02"
+  },
+  {
+   "id": "T99",
+   "phase": "P13",
+   "title": "QA report page + versions: one clear report per draft in the dashboard, keep each draft as a version, and let you compare and pick a version or ask for changes; the editable project state is saved with it",
+   "owner": "Claude",
+   "status": "todo",
+   "depends": [],
+   "done_when": "Dashboard shows 'QA report' and 'Versions' for a reel; you can approve any version.",
+   "notes": "Partly there: draft, approve, fix and Edit page exist. New: report view and version picker.",
+   "evidence": "",
    "updated": "2026-11-02"
   }
  ],
