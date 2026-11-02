@@ -1235,7 +1235,7 @@
    "status": "review",
    "depends": [],
    "done_when": "Upload 2+ clips: the reel runs, and jobs/<job>/media_index.json + thumbs/ exist.",
-   "notes": "Built 2026-11-02. Not built: external-mic sync, noise reduction, cross-reel proxy cache (see docs/DECISIONS.md).",
+   "notes": "Built 2026-11-02. Dropped from the plan by Hesham: external-mic sync and noise reduction.",
    "evidence": "scripts/ingest_folder.py, scripts/ingest.sh, scripts/lib/media_index.py, tests/test_ingest_stage2.py",
    "updated": "2026-11-02"
   },
@@ -1247,7 +1247,7 @@
    "status": "review",
    "depends": [],
    "done_when": "After a reel's word-fix step, jobs/<job>/speech_intel.json exists and report.md has a 'Speech' section.",
-   "notes": "Built 2026-11-02. Not built: speaker labels, meaning-based importance, Kurdish engine (see docs/DECISIONS.md).",
+   "notes": "Built 2026-11-02. Dropped from the plan by Hesham: speaker labels and Kurdish Sorani transcription.",
    "evidence": "scripts/lib/speech_intel.py, tests/test_speech_intel.py",
    "updated": "2026-11-02"
   },
@@ -1271,7 +1271,7 @@
    "status": "review",
    "depends": [],
    "done_when": "After a reel's compile step jobs/<job>/visual_plan.json exists; after 2 approvals the director gets a BRAND MEMORY line.",
-   "notes": "Built 2026-11-02. Not built: subject tracking/smart reframing (needs face detection at ingest), multiple saved brand profiles.",
+   "notes": "Built 2026-11-02. Dropped from the plan by Hesham: smart reframing / subject tracking and several saved brand profiles.",
    "evidence": "scripts/lib/visual_plan.py, scripts/lib/brand_memory.py, tests/test_visual_plan.py",
    "updated": "2026-11-02"
   }
