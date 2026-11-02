@@ -15,8 +15,8 @@ import glob, json, os, re
 from . import config as cfg
 from .hfbuild import REGISTRY, check_values, BuildError
 
-FULL_SCREEN = {"text_card", "flash"}          # the face is hidden: captions pause
-DIRECTOR_BLOCKS = ["text_card", "split", "flash", "logo_card"]   # what the Director may place as moments
+FULL_SCREEN = {"text_card", "flash", "number_graph", "before_after", "tier_list"}          # the face is hidden: captions pause
+DIRECTOR_BLOCKS = ["text_card", "split", "flash", "logo_card", "name_tag", "info_card", "number_graph", "before_after", "tier_list"]   # what the Director may place as moments
 DIGITS = re.compile(r"[0-9][0-9,.]*")
 
 
@@ -57,7 +57,7 @@ BRAND: {brand}
 REEL LENGTH: {dur:.1f} s. {cta_note}
 BRIEF FROM HESHAM: {brief}
 LOGO FILES AVAILABLE (logo_card may only use these): {logos}
-NUMBERS ACTUALLY SPOKEN (split.value / flash.word may only use these): {numbers}
+NUMBERS ACTUALLY SPOKEN (split.value / number_graph.value+percent / flash.word may only use these): {numbers}
 
 BLOCKS YOU CAN PLACE AS MOMENTS (* = required value):
 {catalogue}
@@ -68,7 +68,8 @@ RULES:
 - hook.line1 (max 28 chars) + hook.line2 (max 22 chars, the punchiest words) come from his own words in the first sentences.
 - keyword_ids: 1 keyword per 2-4 seconds of speech, the words that carry the meaning.
 - flash: at most {flash_max}, only on a payoff or a spoken number. text_card: at least {tc_gap} s apart; one every {chapter} s on long reels.
-- Never two full-screen moments (text_card, flash) back to back.{cta_rules}
+- Never two full-screen moments (text_card, flash, number_graph, before_after, tier_list) back to back.
+- name_tag only when he says a name out loud; before_after and tier_list only when he really compares or ranks; info_card to explain one point.{cta_rules}
 - values must fit the max lengths exactly.
 - cover = the reel's cover image (thumbnail). Its big title is the hook. Add, only if it fits what he said:
   tag (max 16 chars, a short topic label in English capitals from a term he used, e.g. "STOCK TIPS"),
@@ -238,6 +239,11 @@ def resolve(plan, edl_words, duration, *, logos=(), platform_handle="@handle"):
                        else f"{where}: ends at {t + d:.1f}s, after the reel ends ({duration:.1f}s)")
         if b == "split" and vals.get("value") and DIGITS.search(vals["value"]) and DIGITS.search(vals["value"]).group(0).rstrip(".,") not in spoken:
             err.append(f"{where}: value {vals['value']!r} is not a number he said ({', '.join(sorted(spoken)) or 'none spoken'})")
+        if b == "number_graph":
+            for key in ("value", "percent"):
+                mm = DIGITS.search(vals.get(key, "") or "")
+                if mm and mm.group(0).rstrip(".,") not in spoken:
+                    err.append(f"{where}: {key} {vals[key]!r} is not a number he said ({', '.join(sorted(spoken)) or 'none spoken'})")
         if b == "flash" and DIGITS.search(vals.get("word", "")) and DIGITS.search(vals["word"]).group(0).rstrip(".,") not in spoken:
             err.append(f"{where}: word {vals['word']!r} is a number he did not say")
         if b == "logo_card":

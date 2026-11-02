@@ -1,0 +1,27 @@
+<html data-composition-variables='[{"id":"kicker","type":"string","label":"Small label","default":"","maxLength":20},{"id":"headline","type":"string","label":"Headline","default":"الرد السريع يبيع","maxLength":32},{"id":"caption","type":"string","label":"Explanation","default":"","maxLength":60}]'>
+<template>
+<style>
+#root{position:absolute;inset:0;pointer-events:none}
+#__ID__-card{position:absolute;left:var(--text-x);width:var(--text-w);top:790px;display:flex;flex-direction:column;gap:14px;padding:34px 36px;border-radius:36px;background:var(--surface);box-shadow:0 22px 50px rgba(0,0,0,.45);direction:rtl;text-align:right;font-family:var(--font);border-top:8px solid var(--lime)}
+#__ID__-kicker{color:var(--lime);font-size:36px;font-weight:600}
+#__ID__-kicker:empty{display:none}
+#__ID__-head{color:var(--text);font-size:72px;font-weight:700;line-height:1.15}
+#__ID__-cap{color:var(--muted);font-size:42px;font-weight:400;line-height:1.3}
+#__ID__-cap:empty{display:none}
+</style>
+<div id="root" data-composition-id="__ID__" data-width="1080" data-height="1920" data-layout-allow-overlap>
+  <div id="__ID__-card" class="clip" data-start="0" data-duration="__DUR__">
+    <div id="__ID__-kicker" data-var-text="kicker"></div>
+    <div id="__ID__-head" data-var-text="headline">.</div>
+    <div id="__ID__-cap" data-var-text="caption"></div>
+  </div>
+</div>
+<script>
+const tl = gsap.timeline({ paused: true });
+const D = __DUR__;
+tl.fromTo("#__ID__-card", { y: 120, opacity: 0, scale: 0.96 }, { y: 0, opacity: 1, scale: 1, duration: 0.5, ease: "power3.out" }, 0);
+tl.to("#__ID__-card", { y: 60, opacity: 0, duration: 0.25, ease: "power2.in" }, D - 0.3);
+window.__timelines["__ID__"] = tl;
+</script>
+</template>
+</html>

@@ -1,0 +1,31 @@
+<html data-composition-variables='[{"id":"title","type":"string","label":"Title","default":"ترتيب الأدوات","maxLength":28},{"id":"tier_s","type":"string","label":"Top tier (S)","default":"واتساب","maxLength":24},{"id":"tier_a","type":"string","label":"Tier A","default":"انستغرام","maxLength":24},{"id":"tier_b","type":"string","label":"Tier B","default":"","maxLength":24},{"id":"tier_c","type":"string","label":"Tier C","default":"","maxLength":24}]'>
+<template>
+<style>
+#root{position:absolute;inset:0;background:var(--bg)}
+#__ID__-box{position:absolute;left:var(--text-x);width:var(--text-w);top:380px;display:flex;flex-direction:column;gap:26px;direction:rtl;font-family:var(--font)}
+#__ID__-title{color:var(--text);font-size:76px;font-weight:700;text-align:center;line-height:1.15;margin-bottom:14px}
+.__ID__-row{display:flex;align-items:center;gap:26px;padding:20px 26px;border-radius:28px;background:var(--surface)}
+.__ID__-row:has(.__ID__-it:empty){display:none}
+.__ID__-tag{flex:none;width:112px;height:112px;border-radius:24px;display:flex;align-items:center;justify-content:center;font-size:72px;font-weight:700;color:var(--bg);direction:ltr}
+.__ID__-it{color:var(--text);font-size:60px;font-weight:600;line-height:1.2;flex:1}
+#__ID__-s .__ID__-tag{background:var(--lime)} #__ID__-a .__ID__-tag{background:var(--violet);color:var(--text)} #__ID__-b .__ID__-tag{background:var(--muted)} #__ID__-c .__ID__-tag{background:var(--coral);color:var(--text)}
+</style>
+<div id="root" data-composition-id="__ID__" data-width="1080" data-height="1920">
+  <div id="__ID__-box" class="clip" data-start="0" data-duration="__DUR__">
+    <div id="__ID__-title" data-var-text="title">.</div>
+    <div id="__ID__-s" class="__ID__-row"><div class="__ID__-tag">S</div><div class="__ID__-it" data-var-text="tier_s"></div></div>
+    <div id="__ID__-a" class="__ID__-row"><div class="__ID__-tag">A</div><div class="__ID__-it" data-var-text="tier_a"></div></div>
+    <div id="__ID__-b" class="__ID__-row"><div class="__ID__-tag">B</div><div class="__ID__-it" data-var-text="tier_b"></div></div>
+    <div id="__ID__-c" class="__ID__-row"><div class="__ID__-tag">C</div><div class="__ID__-it" data-var-text="tier_c"></div></div>
+  </div>
+</div>
+<script>
+const tl = gsap.timeline({ paused: true });
+const D = __DUR__;
+tl.fromTo("#__ID__-title", { y: -30, opacity: 0 }, { y: 0, opacity: 1, duration: 0.35, ease: "power3.out" }, 0);
+["s","a","b","c"].forEach((k, i) => tl.fromTo("#__ID__-" + k, { x: 140, opacity: 0 }, { x: 0, opacity: 1, duration: 0.4, ease: "power3.out" }, 0.25 + i * 0.22));
+tl.to("#__ID__-box", { opacity: 0, duration: 0.2 }, D - 0.25);
+window.__timelines["__ID__"] = tl;
+</script>
+</template>
+</html>

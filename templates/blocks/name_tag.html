@@ -1,0 +1,27 @@
+<html data-composition-variables='[{"id":"name","type":"string","label":"Name (as he said it)","default":"هشام","maxLength":24},{"id":"role","type":"string","label":"Role or topic","default":"مسوّق","maxLength":32}]'>
+<template>
+<style>
+#root{position:absolute;inset:0;pointer-events:none}
+#__ID__-tag{position:absolute;left:var(--text-x);width:var(--text-w);top:300px;display:flex;justify-content:flex-start;direction:rtl;font-family:var(--font)}
+#__ID__-pill{display:flex;flex-direction:column;gap:4px;max-width:640px;padding:18px 34px 18px 30px;border-radius:26px;background:var(--surface);border-right:10px solid var(--lime);box-shadow:0 12px 32px rgba(0,0,0,.35)}
+#__ID__-name{color:var(--text);font-size:56px;font-weight:700;line-height:1.15}
+#__ID__-role{color:var(--muted);font-size:38px;font-weight:400;line-height:1.2}
+#__ID__-role:empty{display:none}
+</style>
+<div id="root" data-composition-id="__ID__" data-width="1080" data-height="1920" data-layout-allow-overlap>
+  <div id="__ID__-tag" class="clip" data-start="0" data-duration="__DUR__">
+    <div id="__ID__-pill">
+      <div id="__ID__-name" data-var-text="name">.</div>
+      <div id="__ID__-role" data-var-text="role"></div>
+    </div>
+  </div>
+</div>
+<script>
+const tl = gsap.timeline({ paused: true });
+const D = __DUR__;
+tl.fromTo("#__ID__-pill", { x: 80, opacity: 0 }, { x: 0, opacity: 1, duration: 0.4, ease: "power3.out" }, 0);
+tl.to("#__ID__-pill", { x: 80, opacity: 0, duration: 0.25, ease: "power2.in" }, D - 0.3);
+window.__timelines["__ID__"] = tl;
+</script>
+</template>
+</html>

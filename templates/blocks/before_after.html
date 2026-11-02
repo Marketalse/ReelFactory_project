@@ -1,0 +1,31 @@
+<html data-composition-variables='[{"id":"before_label","type":"string","label":"Before label","default":"قبل","maxLength":14},{"id":"before","type":"string","label":"Before","default":"رد بعد يومين","maxLength":40},{"id":"after_label","type":"string","label":"After label","default":"بعد","maxLength":14},{"id":"after","type":"string","label":"After","default":"رد خلال دقيقة","maxLength":40}]'>
+<template>
+<style>
+#root{position:absolute;inset:0;background:var(--bg)}
+#__ID__-box{position:absolute;left:var(--text-x);width:var(--text-w);top:420px;display:flex;flex-direction:column;gap:44px;direction:rtl;text-align:right;font-family:var(--font)}
+.__ID__-card{display:flex;flex-direction:column;gap:12px;padding:38px 40px;border-radius:36px}
+#__ID__-b{background:var(--surface);border-right:12px solid var(--coral)}
+#__ID__-a{background:var(--surface);border-right:12px solid var(--lime)}
+.__ID__-lab{font-size:42px;font-weight:600}
+#__ID__-bl{color:var(--coral)} #__ID__-al{color:var(--lime)}
+.__ID__-txt{color:var(--text);font-size:70px;font-weight:700;line-height:1.2}
+#__ID__-arrow{align-self:center;color:var(--muted);font-size:80px;line-height:1}
+</style>
+<div id="root" data-composition-id="__ID__" data-width="1080" data-height="1920">
+  <div id="__ID__-box" class="clip" data-start="0" data-duration="__DUR__">
+    <div id="__ID__-b" class="__ID__-card"><div id="__ID__-bl" class="__ID__-lab" data-var-text="before_label">.</div><div class="__ID__-txt" data-var-text="before">.</div></div>
+    <div id="__ID__-arrow">↓</div>
+    <div id="__ID__-a" class="__ID__-card"><div id="__ID__-al" class="__ID__-lab" data-var-text="after_label">.</div><div class="__ID__-txt" data-var-text="after">.</div></div>
+  </div>
+</div>
+<script>
+const tl = gsap.timeline({ paused: true });
+const D = __DUR__;
+tl.fromTo("#__ID__-b", { x: 120, opacity: 0 }, { x: 0, opacity: 1, duration: 0.4, ease: "power3.out" }, 0);
+tl.fromTo("#__ID__-arrow", { opacity: 0, y: -20 }, { opacity: 1, y: 0, duration: 0.25 }, 0.35);
+tl.fromTo("#__ID__-a", { x: -120, opacity: 0, scale: 0.95 }, { x: 0, opacity: 1, scale: 1, duration: 0.45, ease: "back.out(1.5)" }, 0.55);
+tl.to("#__ID__-box", { opacity: 0, duration: 0.2 }, D - 0.25);
+window.__timelines["__ID__"] = tl;
+</script>
+</template>
+</html>

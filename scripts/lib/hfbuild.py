@@ -51,6 +51,7 @@ def check_values(block, values, where):
 FIT = {  # block -> {value: (largest px, smallest px)}: one-line text sized from its length to fit the 780 px text box
     "flash": {"word": (260, 90)},
     "split": {"value": (230, 96)},
+    "number_graph": {"value": (230, 96)},
 }
 GLYPH_EM = 0.62          # average Readex Pro bold glyph width in em (Arabic and digits), with margin
 
