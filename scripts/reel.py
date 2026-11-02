@@ -535,7 +535,13 @@ def st_plan(c):
         if h: brief += "\n\n" + h
     except Exception:                               # noqa: BLE001
         pass
-    prompt = director.build_prompt(words, e["duration"], brief, job_logos(c), feedback, director.taste())
+    try:                                              # words said with emphasis (measured loudness): the director prefers them for zooms and key words
+        si = jload(os.path.join(c.job, "speech_intel.json"), {}) or {}
+        emph_src = {x["i"] for x in si.get("delivery", {}).get("emphasis_words", [])}
+        marks = {k for k, w in enumerate(words) if w.get("src_i") in emph_src}
+    except Exception:                                 # noqa: BLE001
+        marks = set()
+    prompt = director.build_prompt(words, e["duration"], brief, job_logos(c), feedback, director.taste(), marks=marks)
     if feedback and os.path.exists(os.path.join(c.job, "scene_plan.json")):
         prompt += "\n\nPREVIOUS PLAN:\n" + json.dumps(jload(os.path.join(c.job, "scene_plan.json")), ensure_ascii=False)
     plan = parse_json(c.llm("plan", M_DIR, [{"type": "text", "text": prompt}], 9000, c.a.effort))

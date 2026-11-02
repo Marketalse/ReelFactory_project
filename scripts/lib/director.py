@@ -32,12 +32,13 @@ def catalogue():
     return "\n".join(lines)
 
 
-def numbered_transcript(words, per_line=12):
+def numbered_transcript(words, per_line=12, marks=()):
+    marks = set(marks or ())
     out, line = [], []
     for i, w in enumerate(words):
         if not line:
             line_t = w["start"]
-        line.append(f"({i}){w['text']}")
+        line.append(f"({i}){w['text']}{'!' if i in marks else ''}")
         if len(line) >= per_line or i == len(words) - 1 or words[i + 1]["start"] - w["end"] > 0.3:
             out.append(f"[{line_t:5.1f}s] " + " ".join(line)); line = []
     return "\n".join(out)
@@ -62,13 +63,15 @@ NUMBERS ACTUALLY SPOKEN (split.value / number_graph.value+percent / flash.word m
 BLOCKS YOU CAN PLACE AS MOMENTS (* = required value):
 {catalogue}
 Also: punch_ins = a quick zoom on the face at a key word (scale 1.1-1.5), the cheapest visual change. Use them often.
+A word followed by ! in the transcript was SAID WITH EMPHASIS (louder): prefer those words for punch_ins and keyword_ids.
 
 RULES:
 - Everything on screen comes from what he said: same words, his spelling, Western digits. Never invent numbers, names or claims.
 - hook.line1 (max 28 chars) + hook.line2 (max 22 chars, the punchiest words) come from his own words in the first sentences.
 - keyword_ids: 1 keyword per 2-4 seconds of speech, the words that carry the meaning.
 - flash: at most {flash_max}, only on a payoff or a spoken number. text_card: at least {tc_gap} s apart; one every {chapter} s on long reels.
-- Never two full-screen moments (text_card, flash, number_graph, before_after, tier_list) back to back.
+- Never two full-screen moments (text_card, flash, number_graph, before_after, tier_list, pixel_scene) back to back.
+- BE VISUALLY AMBITIOUS, never basic: a new visual (card, graphic or zoom) every 2.5-3 s, and VARIETY: in a 60 s reel use at least 4 different block types and never the same block twice in a row. Match the visual to what he says: text_behind for the ONE most important keyword (once per reel), pixel_scene when he describes a team, a person or a place, ui_card or doc_card when he mentions a tool, dashboard, document or plan (ui_card.image only from the LIBRARY PICTURES in the brief), number_graph/split when he says a number, before_after/tier_list when he compares or ranks, info_card for one explained point.
 - name_tag only when he says a name out loud; before_after and tier_list only when he really compares or ranks; info_card to explain one point.{cta_rules}
 - values must fit the max lengths exactly.
 - cover = the reel's cover image (thumbnail). Its big title is the hook. Add, only if it fits what he said:
@@ -126,7 +129,7 @@ def taste(root=None, skip_job=None, limit=12):
     return text[:TASTE_MAX]
 
 
-def build_prompt(words, dur, brief="", logos=(), feedback="", prefs=""):
+def build_prompt(words, dur, brief="", logos=(), feedback="", prefs="", marks=()):
     r = cfg.RULES
     c = cfg.BRAND["colors"]
     p = PROMPT.format(
@@ -138,7 +141,7 @@ def build_prompt(words, dur, brief="", logos=(), feedback="", prefs=""):
         cta_json=('"cta":{"type":"follow","line":"","promise":"","keyword":""},' if cta_on() else ""), brief=brief.strip() or "none", logos=", ".join(logos) or "none",
         numbers=", ".join(spoken_numbers(words)) or "none", catalogue=catalogue(),
         flash_max=r["moments"]["flash"]["max_per_reel"], tc_gap=r["moments"]["text_card"]["min_gap_s"],
-        chapter="-".join(str(x) for x in r["chapter_card_every_s"]), transcript=numbered_transcript(words))
+        chapter="-".join(str(x) for x in r["chapter_card_every_s"]), transcript=numbered_transcript(words, marks=marks))
     if prefs:
         p += ("\n\nHESHAM'S STANDING PREFERENCES (from his earlier comments; follow them unless his notes for this reel say otherwise):\n" + prefs)
     if feedback:
