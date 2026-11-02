@@ -111,7 +111,7 @@ class Ctx:
 
     def spent(self): return sum(c["cost"] for c in self.cost["calls"])
 
-    def llm(self, stage, model, content, max_tokens, effort="low", est_in_tokens=None):
+    def llm(self, stage, model, content, max_tokens, effort="low", est_in_tokens=None, _retry=False):
         """One paid call. Returns text. Enforces the budget BEFORE calling."""
         chars = sum(len(p.get("text", "")) for p in content if p["type"] == "text")
         imgs = sum(1 for p in content if p["type"] == "image_url")
@@ -143,6 +143,9 @@ class Ctx:
         self.cost["calls"].append(rec); jsave(self.cost_path, self.cost)
         print(f"   [{stage}] {model.split('/')[1]} in={rec['in']} out={rec['out']} think={rec['reasoning']} ${rec['cost']:.4f} {dt:.0f}s")
         if rec["finish"] == "length":
+            if not _retry and max_tokens < 16000:      # answer was cut off: try once more with double room (budget guard still applies)
+                print(f"   [{stage}] answer was cut off at {max_tokens}; trying once more with {max_tokens * 2}")
+                return self.llm(stage, model, content, max_tokens * 2, effort, est_in_tokens, _retry=True)
             raise Stop(f"{stage}: output hit max_tokens={max_tokens} (truncated JSON). Raise the limit or lower effort.")
         return d["choices"][0]["message"]["content"]
 
@@ -211,7 +214,7 @@ def st_fix(c):
     asr = jload(os.path.join(c.job, "transcript_asr.json"))
     if os.path.exists(out) and jload(os.path.join(c.job, "transcript_fix_meta.json")): return "cached"
     prompt = FIX_PROMPT.replace("{glossary}", glossary_text()) + "\n".join(f"{i}:{w['text']}" for i, w in enumerate(asr))
-    txt = c.llm("fix", M_FIX, [{"type": "text", "text": prompt}], 2500, "low")
+    txt = c.llm("fix", M_FIX, [{"type": "text", "text": prompt}], min(12000, 2500 + 30 * len(asr)), "low")   # longer clip = longer answer
     fx = parse_json(txt)
     words = [dict(w) for w in asr]; applied = []
     for f in fx.get("fixes", []):
