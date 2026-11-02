@@ -60,6 +60,15 @@ class UpdateTests(unittest.TestCase):
         self.assertFalse(ok); self.assertIn("a.txt", msg)
         self.assertEqual(open(os.path.join(self.mac, "a.txt")).read(), "mine")
 
+    def test_untracked_file_in_the_way_is_moved_to_a_backup_and_the_update_goes_through(self):
+        open(os.path.join(self.mac, "new_thing.txt"), "w").write("mine")                  # same name as a file the update adds
+        open(os.path.join(self.origin, "new_thing.txt"), "w").write("theirs"); self.push_new()
+        ok, msg, restart = self.api.update({})
+        self.assertTrue(ok, msg); self.assertTrue(restart)
+        self.assertEqual(open(os.path.join(self.mac, "new_thing.txt")).read(), "theirs")
+        kept = [os.path.join(dp, f) for dp, dn, fn in os.walk(os.path.join(self.t, ".reelfactory", "update-backup")) for f in fn]
+        self.assertEqual([open(k).read() for k in kept if k.endswith("new_thing.txt")], ["mine"])   # nothing lost
+
 
 if __name__ == "__main__":
     unittest.main()

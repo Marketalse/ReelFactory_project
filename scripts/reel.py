@@ -373,10 +373,17 @@ def st_plan(c):
             err = director.check_rhythm(tl, director.face_cuts(tl, e["segments"]))
         return tl, err, warn
 
+    def free_fixes(plan, tl, err, warn):
+        if err and all(director.OVERLAP_ERR.search(x) for x in err):   # two moments at once: shorten or drop one, free, no AI
+            plan, tl, err, warn, n = director.fix_overlaps(plan, resolve)
+            print(f"   overlaps: fixed {n} automatically (free)")
+        if err and all(director.STILL_ERR.search(x) for x in err):     # only "nothing changes on screen": fix it for free, no AI
+            plan, tl, err, warn, added = director.fix_rhythm(plan, words, resolve)
+            print(f"   rhythm: added {added} zoom(s) automatically (free)")
+        return plan, tl, err, warn
+
     tl, err, warn = resolve(plan)
-    if err and all(director.STILL_ERR.search(x) for x in err):        # only "nothing changes on screen": fix it for free, no AI
-        plan, tl, err, warn, added = director.fix_rhythm(plan, words, resolve)
-        print(f"   rhythm: added {added} zoom(s) automatically (free)")
+    plan, tl, err, warn = free_fixes(plan, tl, err, warn)
     for model in [m for m in (M_DIR, M_DIR_FALLBACK) if m] if not c.a.no_repair else []:
         if not err: break
         print(f"   plan errors -> repair with {model.split('/')[1]}:", *err[:8], sep="\n     - ")
@@ -385,9 +392,7 @@ def st_plan(c):
             "return ONLY the full JSON.\n\nERRORS:\n" + "\n".join(err) + "\n\nPLAN:\n" + json.dumps(plan, ensure_ascii=False)
             + "\n\nTRANSCRIPT:\n" + director.numbered_transcript(words)}], 9000, c.a.effort))
         attempts.append((model, plan)); tl, err, warn = resolve(plan)
-        if err and all(director.STILL_ERR.search(x) for x in err):
-            plan, tl, err, warn, added = director.fix_rhythm(plan, words, resolve)
-            print(f"   rhythm: added {added} zoom(s) automatically (free)")
+        plan, tl, err, warn = free_fixes(plan, tl, err, warn)
     jsave(os.path.join(c.job, "scene_plan.json"), plan)
     jsave(os.path.join(c.job, "validation.json"), {"errors": err, "warnings": warn, "attempts": [m for m, _ in attempts]})
     if err: raise Stop("plan still breaks the rules after repair: " + "; ".join(err[:4]))
