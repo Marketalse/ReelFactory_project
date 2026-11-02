@@ -21,7 +21,7 @@ import argparse, base64, glob, json, os, re, shutil, subprocess, sys, threading,
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from lib import config as cfg   # noqa: E402  (all settings live in config/*.json)
-from lib import transcript as tr, edl as edlmod, director, speech_intel, editorial, visual_plan, brand_memory, creative_brief, content_intel, frames_dedup, learning, doctor, sequence, broll_ai   # noqa: E402
+from lib import transcript as tr, edl as edlmod, director, speech_intel, editorial, visual_plan, brand_memory, creative_brief, content_intel, frames_dedup, learning, doctor, sequence, broll_ai, tighten   # noqa: E402
 from lib.hfbuild import BuildError   # noqa: E402
 
 ROOT = cfg.ROOT
@@ -33,9 +33,9 @@ M_SEL = cfg.MODELS["selects"]
 M_DIR = cfg.MODELS["director"]
 M_DIR_FALLBACK = cfg.MODELS.get("director_fallback")
 LEN_MIN, LEN_MAX = cfg.RULES["reel_length_s"]["min"], cfg.RULES["reel_length_s"]["max"]
-STAGES = ["ingest", "transcribe", "fix", "review", "selects", "edl", "keyframes", "shotlog", "plan", "compile", "draft", "report"]
+STAGES = ["ingest", "transcribe", "fix", "review", "selects", "tighten", "edl", "keyframes", "shotlog", "plan", "compile", "draft", "report"]
 STATUS_AFTER = {"ingest": "ingested", "transcribe": "transcribed", "fix": "transcript_fixed", "review": "transcript_reviewed",
-                "selects": "story_picked", "edl": "cut", "plan": "planned", "compile": "built", "draft": "preview_ready"}
+                "selects": "story_picked", "tighten": "story_picked", "edl": "cut", "plan": "planned", "compile": "built", "draft": "preview_ready"}
 
 class Stop(Exception):
     pass
@@ -254,8 +254,32 @@ def st_fix(c):
             applied.append({"i": i, "from": words[i]["text"], "to": t}); words[i]["text"] = t
     jsave(out, words)
     jsave(os.path.join(c.job, "transcript_fix_meta.json"), {"model": M_FIX, "n_words": len(words), "n_changed": len(applied), "changes": applied, "notes": fx.get("notes")})
-    speech_intel_run(c)
-    return f"{len(applied)}/{len(words)} words corrected"
+    speech_intel_run(c)                                   # scores + the doubtful words
+    proofed = proofread(c, words)                         # T125: a second, in-context pass on the doubtful words
+    if proofed:
+        jsave(out, words)
+        meta = jload(os.path.join(c.job, "transcript_fix_meta.json"), {}); meta["proof"] = proofed; jsave(os.path.join(c.job, "transcript_fix_meta.json"), meta)
+        speech_intel_run(c)
+    return f"{len(applied)}/{len(words)} words corrected" + (f", {len(proofed)} more by the proofreader" if proofed else "")
+
+
+def proofread(c, words):
+    """T125: sentence-level proofreading with the doubtful words marked. One-to-one fixes only; a failure never stops the reel. -> changes made."""
+    try:
+        si = jload(os.path.join(c.job, "speech_intel.json"), {}) or {}
+        doubtful = {w["i"] for w in si.get("low_confidence_words", [])}
+        topic = ", ".join(k["word"] for k in si.get("key_terms", [])[:8]) or "none yet"
+        done = []
+        for chunk in tr.proof_chunks(words, doubtful)[:5]:
+            ans = parse_json(c.llm("proof", M_FIX, [{"type": "text", "text": tr.PROOF_PROMPT.format(glossary=glossary_text(), topic=topic) + chunk}], 2500, "low"))
+            done += tr.apply_proof(words, ans.get("fixes", []) if isinstance(ans, dict) else [])
+        if done: print(f"   proofreader: {len(done)} word(s) corrected in context")
+        return done
+    except Stop as ex:
+        if str(ex).startswith(("BUDGET GUARD", "MONTHLY CAP")): raise
+        print("   proofreading skipped:", ex); return []
+    except Exception as ex:                               # noqa: BLE001
+        print("   proofreading skipped:", ex); return []
 
 def glossary_text():
     terms = [t for t in cfg.GLOSSARY.get("terms", []) if t.get("confirmed")]
@@ -389,13 +413,45 @@ def st_selects(c):
     jsave(os.path.join(c.job, "chosen_select.json"), dict(s, picked_by=by))
     return f"select {s['id']} {s['range']}"
 
+def st_tighten(c):
+    """T124: an AI editor removes weak, repeated or off-topic LINES from the chosen story (and may move its start/end); code checks every cut."""
+    tp = os.path.join(c.job, "tighten.json")
+    if os.path.exists(tp): return "cached"
+    if os.path.exists(os.path.join(c.job, "edl.json")):                    # an older reel that was already cut: leave its cut alone
+        return "skipped (this reel was already cut)"
+    ch = jload(os.path.join(c.job, "chosen_select.json"), {}) or {}
+    if not ch.get("range"): raise Stop("no story chosen yet")
+    s0, s1 = ch["range"]
+    cb = creative_brief.load(c.job); lmin, lmax = creative_brief.length_range(cb, (LEN_MIN, LEN_MAX))
+    try:
+        ci = content_intel.build(c.job)
+        us = tighten.units(ci, s0, s1) if ci else []
+        if len(us) < 4:
+            jsave(tp, {"range_before": [s0, s1], "range": [s0, s1], "drops": [], "removed_s": 0, "summary": "too short to tighten"})
+            return "nothing to tighten (very short)"
+        sl = jload(os.path.join(c.job, "selects.json"), {}) or {}
+        ans = parse_json(c.llm("tighten", M_SEL, [{"type": "text", "text": tighten.build_prompt(us, sl.get("main_message"), sl.get("audience"), ch.get("style") or cb.get("style"), lmin, lmax)}], 2500, c.a.effort))
+        dec = tighten.decide(ans, us, lmin)
+        rng, rows = tighten.apply(us, dec)
+    except Stop as ex:
+        if str(ex).startswith(("BUDGET GUARD", "MONTHLY CAP")): raise
+        print("   tightening skipped:", ex)
+        jsave(tp, {"range_before": [s0, s1], "range": [s0, s1], "drops": [], "removed_s": 0, "summary": "skipped: " + str(ex)[:120]})
+        return "skipped (the cut stays as it was)"
+    jsave(tp, {"range_before": [s0, s1], "range": rng, "drops": rows, "removed_s": dec["removed_s"], "summary": dec["summary"], "notes": dec["notes"]})
+    ch2 = dict(ch, range=rng, range_before=[s0, s1], tightened=True); jsave(os.path.join(c.job, "chosen_select.json"), ch2)
+    for r in rows: print(f"   AI cut {r['t0']:.1f}-{r['t1']:.1f}s: {r['why']}")
+    return f"AI cut {len(rows)} line(s), {dec['removed_s']:.0f} s removed; range {s0:.0f}-{s1:.0f} -> {rng[0]:.0f}-{rng[1]:.0f}"
+
+
 def st_edl(c):
     out = os.path.join(c.job, "edl.json")
     if os.path.exists(out) and not c.a.replan: return "cached"
     s0, s1 = jload(os.path.join(c.job, "chosen_select.json"))["range"]
     man = jload(os.path.join(c.job, "manual_edit.json"), {}) or {}          # cuts/restores/spellings from the Edit page
+    ai_drop = [i for i in tighten.drop_words(os.path.join(c.job, "tighten.json")) if i not in set(man.get("keep", []))]    # the AI's cuts, unless he restored them
     e = edlmod.build(jload(os.path.join(c.job, "transcript.json")), s0, s1,
-                     drop=man.get("drop", []), keep=man.get("keep", []), texts=man.get("texts", {}))
+                     drop=list(man.get("drop", [])) + ai_drop, keep=man.get("keep", []), texts=man.get("texts", {}))
     jsave(out, e)
     r = e["removed"]
     return f"{e['source_seconds']:.1f}s -> {e['duration']:.1f}s ({r['pauses']} pauses, {len(r['fillers'])} fillers, {len(r['retakes'])} retake words removed)"
@@ -479,7 +535,13 @@ def st_plan(c):
         if h: brief += "\n\n" + h
     except Exception:                               # noqa: BLE001
         pass
-    prompt = director.build_prompt(words, e["duration"], brief, job_logos(c), feedback, director.taste())
+    try:                                              # words said with emphasis (measured loudness): the director prefers them for zooms and key words
+        si = jload(os.path.join(c.job, "speech_intel.json"), {}) or {}
+        emph_src = {x["i"] for x in si.get("delivery", {}).get("emphasis_words", [])}
+        marks = {k for k, w in enumerate(words) if w.get("src_i") in emph_src}
+    except Exception:                                 # noqa: BLE001
+        marks = set()
+    prompt = director.build_prompt(words, e["duration"], brief, job_logos(c), feedback, director.taste(), marks=marks)
     if feedback and os.path.exists(os.path.join(c.job, "scene_plan.json")):
         prompt += "\n\nPREVIOUS PLAN:\n" + json.dumps(jload(os.path.join(c.job, "scene_plan.json")), ensure_ascii=False)
     plan = parse_json(c.llm("plan", M_DIR, [{"type": "text", "text": prompt}], 9000, c.a.effort))
@@ -710,7 +772,7 @@ def bakeoff(job, models, a):
 
 
 FUNCS = {"ingest": st_ingest, "transcribe": st_transcribe, "fix": st_fix, "review": st_review, "selects": st_selects,
-         "edl": st_edl, "keyframes": st_keyframes, "shotlog": st_shotlog, "plan": st_plan, "compile": st_compile,
+         "tighten": st_tighten, "edl": st_edl, "keyframes": st_keyframes, "shotlog": st_shotlog, "plan": st_plan, "compile": st_compile,
          "draft": st_draft, "report": st_report}
 
 
@@ -802,7 +864,7 @@ def main():
     c = Ctx(job, a)
     force = set(filter(None, a.force.split(",")))
     files = {"transcribe": ["transcript_asr.json"], "fix": ["transcript_fix_meta.json"], "review": ["transcript_review_meta.json"],
-             "keyframes": ["keyframes.json"], "shotlog": ["shot_log.json"], "selects": ["selects.json", "chosen_select.json"],
+             "keyframes": ["keyframes.json"], "shotlog": ["shot_log.json"], "selects": ["selects.json", "chosen_select.json", "tighten.json"], "tighten": ["tighten.json"],
              "edl": ["edl.json"], "plan": ["timeline.json"], "draft": ["review/draft_540p.mp4"]}
     for s in force:
         for f in files.get(s, []):

@@ -744,11 +744,18 @@ function readyBlock(p){
 const PERF=[["views","Views"],["avg_watch_s","Average watch time (seconds)"],["full_pct","Watched to the end (%)"],["likes","Likes"],["comments","Comments"],["shares","Shares"],["saves","Saves"],["follows","New follows"]];
 const WHEN_TXT={"48h":"2 days after posting","7d":"7 days after posting","30d":"30 days after posting"};
 function perfBlock(p){
+  const posted=p.posted||[];
+  if(!posted.length) return `<div id="perfBox" style="border-top:1px solid var(--line);padding-top:14px;display:grid;gap:10px">
+    <b>Posted it?</b>
+    <p class="small" style="margin:0">Nothing is posted for you. After you post this reel yourself, tell Reel Factory here. It will then ask for the numbers from Instagram or TikTok Insights after 2 days (they are not ready sooner), so it can learn what works for your audience.</p>
+    <div class="row" style="gap:8px;flex-wrap:wrap"><select id="postPlat" class="btn" style="padding:9px 12px"><option value="instagram">Instagram</option><option value="tiktok">TikTok</option></select>
+      <button class="btn violet" type="button" id="postedBtn">I posted it</button></div></div>`;
+  const first=posted.slice().sort((a,b)=>a.ts-b.ts)[0], due=new Date((first.ts+2*86400)*1000), ready=Date.now()>=due.getTime();
   return `<div id="perfBox" style="border-top:1px solid var(--line);padding-top:14px;display:grid;gap:10px">
     <b>How did it do?</b>
-    <p class="small" style="margin:0">After you post, open Insights on Instagram or TikTok and copy the numbers here, 2 days after posting (and again after 7 days if you can). Reel Factory learns what works for your audience.</p>
+    <p class="small" style="margin:0">You posted this on ${posted.map(x=>(x.platform==="tiktok"?"TikTok":"Instagram")+" ("+esc(x.at)+")").join(" and ")}. ${ready?"The numbers are ready in Insights: copy them here (again after 7 days if you can).":"Insights needs about 2 days: come back on <b>"+due.toLocaleDateString()+"</b> and copy the numbers here."}</p>
     <div class="row" style="gap:8px;flex-wrap:wrap">
-      <select id="pfPlat" class="btn" style="padding:9px 12px"><option value="instagram">Instagram</option><option value="tiktok">TikTok</option></select>
+      <select id="pfPlat" class="btn" style="padding:9px 12px">${posted.map(x=>`<option value="${esc(x.platform)}">${x.platform==="tiktok"?"TikTok":"Instagram"}</option>`).join("")}</select>
       <select id="pfWhen" class="btn" style="padding:9px 12px">${Object.entries(WHEN_TXT).map(([k,v])=>`<option value="${k}">${v}</option>`).join("")}</select>
     </div>
     <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px">
@@ -766,6 +773,8 @@ async function loadPerf(job){
 }
 function wirePerf(p){
   if(!$("#perfBox")) return;
+  if($("#postedBtn")){ $("#postedBtn").onclick=async ()=>{ const r=await backend.post("posted",{job:p.job,platform:$("#postPlat").value});
+      if(!r.ok) return toast("Couldn't save", r.message, "error"); toast("Saved", r.message, "ok"); showTrack(p.job,false); watch(p.job); }; return; }
   $("#pfSave").onclick=async ()=>{
     const data={platform:$("#pfPlat").value, when:$("#pfWhen").value}; PERF.forEach(([k])=>{ const v=$("#pf_"+k).value.trim(); if(v) data[k]=v; });
     const r=await backend.post("performance",{job:p.job,data});

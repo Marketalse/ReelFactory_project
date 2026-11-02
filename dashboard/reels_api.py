@@ -483,7 +483,7 @@ def save_notes(slug, session, text, brief=None):
 STEPS = [
     ("prepare", "Preparing your video", "Joining your takes and making a working copy", ["ingest"]),
     ("listen", "Listening to your words", "Writing down every word with its timing, then fixing spellings", ["transcribe", "fix", "review"]),
-    ("story", "Choosing the story and cutting", "Picking the strongest part and removing pauses and false starts", ["selects", "edl"]),
+    ("story", "Choosing the story and cutting", "Picking the strongest part and removing pauses and false starts", ["selects", "tighten", "edl"]),
     ("plan", "Planning captions and visuals", "Placing captions, titles, cards and zooms on your words", ["keyframes", "shotlog", "plan", "compile"]),
     ("render", "Rendering and checking the draft", "Making the draft video and checking every frame", ["draft", "report"]),
 ]
@@ -491,7 +491,7 @@ FINAL_STEPS = [
     ("video", "Making your final video", "High quality, one video for Instagram and TikTok"),
     ("cover", "Making your cover image", "A suggestion; you can upload your own after"),
 ]
-DEFAULT_SECS = {"ingest": 60, "transcribe": 270, "fix": 15, "review": 1, "selects": 20, "edl": 2, "keyframes": 15,
+DEFAULT_SECS = {"ingest": 60, "transcribe": 270, "fix": 15, "review": 1, "selects": 20, "tighten": 20, "edl": 2, "keyframes": 15,
                 "shotlog": 25, "plan": 25, "compile": 5, "draft": 300, "report": 2}
 FINAL_SECS = {"video": 300, "cover": 40}
 ORDER = [s for st in STEPS for s in st[3]]
@@ -666,6 +666,8 @@ def progress(ref):
         out["draft"] = f"{job}/review/draft_540p.mp4"
         out["draft_mtime"] = int(os.path.getmtime(os.path.join(jd, "review", "draft_540p.mp4")))
     out["feedback"] = jj.get("feedback_history", [])
+    if jd:
+        out["posted"] = (_j(os.path.join(jd, "performance.json"), {}) or {}).get("posted", [])
     if jd and out.get("state") in ("stopped", "paused"):
         try:
             sys.path.insert(0, os.path.join(ROOT, "scripts"))
@@ -855,6 +857,22 @@ def save_performance(job, data):
     except Exception:                                 # noqa: BLE001
         pass
     return True, "Saved. Thanks: every result teaches Reel Factory what works."
+
+
+def save_posted(job, platform):
+    """He tells us he posted the reel (T126): the results box only makes sense after that. Kept per platform in performance.json."""
+    if not JOB.match(job or "") or not os.path.isdir(os.path.join(JOBS, job)):
+        return False, "unknown reel"
+    if platform not in PLATFORMS:
+        return False, "choose Instagram or TikTok"
+    p = os.path.join(JOBS, job, "performance.json")
+    d = _j(p, {"entries": []}) or {"entries": []}
+    posted = [x for x in d.get("posted", []) if x.get("platform") != platform]
+    posted.append({"platform": platform, "at": time.strftime("%Y-%m-%d %H:%M"), "ts": int(time.time())})
+    d["posted"] = posted
+    tmp = p + ".tmp"
+    json.dump(d, open(tmp, "w", encoding="utf-8"), indent=1); os.replace(tmp, p)
+    return True, "Saved. Come back in 2 days to type the numbers from Insights."
 
 
 def edit_facts(job):

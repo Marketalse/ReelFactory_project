@@ -197,9 +197,15 @@ def build_project(out_dir, *, duration, face_cuts, scenes, video_src, audio=None
                       f'data-duration="{_num(d)}" data-media-start="{_num(f["src_in"])}" '
                       f'data-has-audio="true" data-track-index="0" playsinline></video>')
         sc, cx, cy, y = f.get("scale", 1.0), f.get("cx", 0.5), f.get("cy", 0.38), f.get("y", 0)
-        # a cut is instant: set the frame for this segment exactly at its start (punch-in = a jump in scale)
-        tweens.append(f'tl.set("#face", {{ scale: {sc}, x: {_num((0.5 - cx) * W * (sc - 1))}, '
-                      f'y: {_num(y + (0.38 - cy) * H * (sc - 1))} }}, {_num(f["t_in"])});')
+        state = f'scale: {sc}, x: {_num((0.5 - cx) * W * (sc - 1))}, y: {_num(y + (0.38 - cy) * H * (sc - 1))}'
+        prev = face_cuts[n - 1] if n else None
+        same_take = bool(prev) and abs(prev["src_in"] + (prev["t_out"] - prev["t_in"]) - f["src_in"]) < 0.05 and (sc, y) != (prev.get("scale", 1.0), prev.get("y", 0))
+        if same_take and sc != 1.0 or same_take and prev.get("scale", 1.0) != 1.0:
+            # a zoom inside one continuous take SNAPS (a fast ease, like an editor's keyframe) instead of jumping; a real cut stays instant
+            d = 0.14 if sc > prev.get("scale", 1.0) else 0.2
+            tweens.append(f'tl.to("#face", {{ {state}, duration: {d}, ease: "power2.out" }}, {_num(f["t_in"])});')
+        else:                                                   # a cut is instant: set the frame for this segment exactly at its start
+            tweens.append(f'tl.set("#face", {{ {state} }}, {_num(f["t_in"])});')
 
     for s in scenes:
         check_values(s["block"], s.get("values", {}), s["id"])

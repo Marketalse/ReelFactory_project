@@ -8,7 +8,7 @@ Reads timeline.json + edl.json (written by reel.py) and writes jobs/<job>/hyperf
 import argparse, json, os, shutil, sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from lib import config as cfg, matte       # noqa: E402
+from lib import config as cfg, matte, sfx_mix       # noqa: E402
 from lib import hfbuild, director   # noqa: E402
 
 
@@ -77,9 +77,16 @@ def compile_job(job, platform="instagram", final=False, out=None, layer="full"):
                 shutil.copy(os.path.join(src_logos, f), os.path.join(out, "assets", "logos", f))
     if layer == "video":
         scenes = []
+    audio = []
+    if layer == "full":                                       # sound effects (T127): only in the full reel, never in the clean video layer
+        try:
+            ev = sfx_mix.plan(dict(tl, scenes=[s for s in scenes if s["block"] != "captions"]), hfbuild.REGISTRY["blocks"], cap_words, cap_kw)
+            audio = sfx_mix.project_audio(ev, tl["duration"], out)
+        except Exception as ex:                               # noqa: BLE001 - no sound effects is better than no reel
+            print("   sound effects skipped:", ex)
     hfbuild.build_project(out, duration=tl["duration"], face_cuts=[] if layer == "graphics" else cuts, scenes=scenes,
-                          video_src=os.path.join(job, "proxy.mp4"), transparent=layer == "graphics")
-    json.dump({"platform": platform, "final": final, "face_cuts": cuts, "caption_words": len(cap_words), "dropped_scenes": dropped},
+                          video_src=os.path.join(job, "proxy.mp4"), transparent=layer == "graphics", audio=audio or None)
+    json.dump({"platform": platform, "final": final, "face_cuts": cuts, "caption_words": len(cap_words), "dropped_scenes": dropped, "sfx": len(audio)},
               open(os.path.join(out, "compile_info.json"), "w"), indent=1)
     return out
 

@@ -9,7 +9,7 @@ Then `reel.py --rebuild` makes a new draft from them. No AI, no spend."""
 import json, os, shutil, subprocess, time
 from array import array
 
-from . import config as cfg, director, edl as edlmod
+from . import config as cfg, director, edl as edlmod, tighten
 from .hfbuild import REGISTRY
 
 EDITABLE = list(director.DIRECTOR_BLOCKS)
@@ -68,8 +68,10 @@ def compute(job, edit):
     """edit (source word numbers) -> (edl, plan, timeline, errors, warnings). Nothing is written."""
     tr, s0, s1 = _inputs(job)
     texts = {int(k): str(v).strip() for k, v in (edit.get("texts") or {}).items() if str(v).strip()}
+    keep_set = {int(x) for x in edit.get("keep") or []}
+    ai = [i for i in tighten.drop_words(os.path.join(job, "tighten.json")) if i not in keep_set]          # the AI editor's cuts stay unless he restored them
     try:
-        e = edlmod.build(tr, s0, s1, drop=[int(x) for x in edit.get("drop") or []], keep=[int(x) for x in edit.get("keep") or []],
+        e = edlmod.build(tr, s0, s1, drop=[int(x) for x in edit.get("drop") or []] + ai, keep=[int(x) for x in edit.get("keep") or []],
                          texts=texts)
     except ValueError as ex:
         raise EditError(str(ex))
@@ -110,6 +112,7 @@ def state(job, edit=None):
     edit = edit if edit is not None else current(job)
     e, plan, tl, err, warn = compute(job, edit)
     kept = {w["src_i"]: w for w in e["words"]}
+    ai_why = tighten.cut_reasons(os.path.join(job, "tighten.json"))
     texts = {int(k): v for k, v in (edit.get("texts") or {}).items()}
     words = []
     for i, w in enumerate(tr):
@@ -119,7 +122,8 @@ def state(job, edit=None):
         words.append({"i": i, "text": texts.get(i, w["text"]), "src_start": w["start"], "src_end": w["end"], "kept": k is not None,
                       "t": k["start"] if k else None, "t_end": k["end"] if k else None,
                       "why": None if k else ("you cut it" if i in set(map(int, edit.get("drop") or [])) else
-                                             ("filler" if edlmod._norm(w["text"]) in edlmod.FILLERS else "retake or pause"))})
+                                             ("AI cut: " + ai_why[i] if i in ai_why else
+                                              ("filler" if edlmod._norm(w["text"]) in edlmod.FILLERS else "retake or pause")))})
     blocks = {b: {"label": REGISTRY["blocks"][b].get("label", b), "inputs": REGISTRY["blocks"][b]["inputs"],
                   "duration_s": REGISTRY["blocks"][b]["duration_s"]} for b in EDITABLE + ["hook_two_tone"]}
     return {"edit": edit, "words": words, "segments": e["segments"], "duration": e["duration"],

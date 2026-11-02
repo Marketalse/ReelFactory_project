@@ -69,11 +69,33 @@ def values(job):
     return v
 
 
+def best_moment(job):
+    """The best cover moment from the shot log (free, already paid for): face found, eyes open, not a 'avoid' frame, headroom ok, a face
+    near the middle, the most animated / best 'hook' look. -> {"t", "face"} or None."""
+    rows = _jload(os.path.join(job, "shot_log.json"), []) or []
+    best, score = None, -1e9
+    for r in rows if isinstance(rows, list) else []:
+        f = r.get("face")
+        if not isinstance(r, dict) or not f or r.get("eyes") != "open" or "avoid" in (r.get("usable") or []):
+            continue
+        cx = f["x"] + f["w"] / 2
+        sc = (3 if "hook" in (r.get("usable") or []) else 0) + float(r.get("energy") or 1) + (1 if r.get("headroom") == "ok" else -1) - 6 * abs(cx - 0.5) - (2 if r.get("bg") == "high" else 0)
+        if sc > score:
+            best, score = {"t": float(r["t"]), "face": f}, sc
+    return best
+
+
 def pick_frame(job, out, n=10):
-    """The sharpest of n frames from the middle of the take (biggest JPEG = most detail; no blur, no blink mid-move)."""
+    """The best moment from the shot log when there is one; else the sharpest of n frames from the middle of the take."""
     proxy = os.path.join(job, "proxy.mp4")
     if not os.path.exists(proxy):
         raise CoverError("no proxy.mp4 to take a photo from")
+    bm = best_moment(job)
+    if bm:
+        os.makedirs(os.path.dirname(out), exist_ok=True)
+        r = subprocess.run(["ffmpeg", "-v", "error", "-y", "-ss", f"{bm['t']:.2f}", "-i", proxy, "-frames:v", "1", "-q:v", "2", out], capture_output=True)
+        if r.returncode == 0 and os.path.exists(out):
+            return out
     dur = float(subprocess.run(["ffprobe", "-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0", proxy],
                                capture_output=True, text=True).stdout.strip() or 0)
     tmp = os.path.join(os.path.dirname(out), "_frames"); os.makedirs(tmp, exist_ok=True)
@@ -147,7 +169,89 @@ window.__timelines["cover"] = tl;
 """
 
 
-def build(job, v, photo):
+PAGE_HERO = """<!doctype html>
+<html lang="ar"><head><meta charset="UTF-8"><meta name="viewport" content="width={W}, height={H}">
+<script src="vendor/gsap.min.js"></script>
+<style>
+@font-face {{ font-family: "Readex Pro"; src: url("assets/fonts/ReadexPro.ttf"); font-weight: 160 700; }}
+:root {{ {vars} }}
+* {{ margin:0; padding:0; box-sizing:border-box; }}
+html, body {{ width:{W}px; height:{H}px; overflow:hidden; background:var(--bg); }}
+#root {{ position:relative; width:100%; height:100%; overflow:hidden; font-family:var(--font); background:linear-gradient(180deg,#1b1e2a 0%,var(--bg) 55%,#1b1e2a 100%); }}
+#grid {{ position:absolute; left:0; right:0; top:0; height:1000px;
+  background-image:radial-gradient(rgba(255,255,255,.12) 2.2px, transparent 2.6px); background-size:54px 54px; background-position:27px 27px;
+  -webkit-mask-image:linear-gradient(180deg,#000 60%,transparent); mask-image:linear-gradient(180deg,#000 60%,transparent); }}
+#glow {{ position:absolute; left:50%; top:{glow_y}px; width:1300px; height:1300px; transform:translate(-50%,-50%);
+  background:radial-gradient(circle, rgba(125,83,255,.78) 0%, rgba(125,83,255,.30) 38%, transparent 68%); }}
+#beam1 {{ position:absolute; left:-260px; top:{beam_y}px; width:1000px; height:120px; background:var(--lime); opacity:.9; transform:rotate(-24deg); }}
+#beam2 {{ position:absolute; right:-300px; top:{beam2_y}px; width:760px; height:80px; background:var(--violet); opacity:.9; transform:rotate(-24deg); }}
+#title {{ position:absolute; left:var(--text-x); width:var(--text-w); top:{title_top}px; text-align:center; direction:rtl; font-weight:700; line-height:.98;
+  text-shadow:0 14px 50px rgba(0,0,0,.45); }}
+#l1 {{ color:var(--text); font-size:{s1}px; }}
+#l2 {{ color:var(--lime); font-size:{s2}px; }}
+#person {{ position:absolute; left:{p_left}px; top:{p_top}px; width:{p_w}px; height:{p_h}px; filter:drop-shadow(0 0 28px rgba(182,255,0,.28)) drop-shadow(0 20px 40px rgba(0,0,0,.5)); }}
+#fade {{ position:absolute; left:0; right:0; bottom:0; height:340px; background:linear-gradient(180deg,transparent,var(--bg) 92%); }}
+#tag {{ position:absolute; right:170px; top:290px; background:var(--lime); color:#14161d; font-weight:700; font-size:46px; letter-spacing:2px; padding:10px 30px 12px;
+  border-radius:40px; direction:ltr; box-shadow:0 12px 30px rgba(0,0,0,.35); }}
+#sticker {{ position:absolute; right:190px; top:{sticker_top}px; max-width:700px; background:var(--violet); color:#fff; font-weight:700;
+  font-size:54px; letter-spacing:1px; padding:20px 38px 24px; border-radius:22px; direction:ltr; transform:rotate(4deg); box-shadow:0 18px 40px rgba(0,0,0,.35); }}
+#card {{ position:absolute; left:var(--text-x); top:{card_top}px; max-width:740px; background:var(--lime); color:#14161d; border-radius:34px;
+  padding:34px 44px 38px; transform:rotate(-3deg); box-shadow:0 22px 50px rgba(0,0,0,.4); direction:ltr; }}
+#card .lbl {{ font-size:36px; font-weight:600; letter-spacing:3px; }}
+#card .val {{ font-size:{sv}px; font-weight:700; margin-top:6px; white-space:nowrap; }}
+#card .val b {{ background:#14161d; color:var(--lime); border-radius:16px; padding:0 18px 6px; margin-left:8px; }}
+</style></head>
+<body>
+<div id="root" data-composition-id="cover" data-start="0" data-duration="1" data-width="{W}" data-height="{H}">
+  <div id="grid"></div><div id="glow"></div><div id="beam1"></div><div id="beam2"></div>
+  <div id="title"><div id="l1">{line1}</div><div id="l2">{line2}</div></div>
+  <img id="person" src="assets/cutout.png" alt="">
+  <div id="fade"></div>
+  {tag}{card}{sticker}
+</div>
+<script>
+const tl = gsap.timeline({{ paused: true }});
+window.__timelines["cover"] = tl;
+</script>
+</body></html>
+"""
+
+
+def cutout(photo, dest, runner=subprocess.run):
+    """The person cut out of the photo (transparent PNG) with HyperFrames' on-device model: free, ~15-30 s. None when it can't be done."""
+    try:
+        r = runner(HF + ["remove-background", photo, "-o", dest], capture_output=True, text=True, timeout=900)
+        return dest if r.returncode == 0 and os.path.exists(dest) and os.path.getsize(dest) > 0 else None
+    except (OSError, subprocess.SubprocessError):
+        return None
+
+
+def title_size(text, big=190, small=64):
+    """Big for short titles; long ones may use two lines (each line of the title stays inside the 780 px text box). -> (font px, lines)."""
+    n = max(1, len(text))
+    one = 780 / (0.62 * n)
+    if one >= 120 or n <= 12:
+        return int(max(small, min(big, one))), 1
+    two = 780 * 1.85 / (0.62 * n)
+    size = int(max(small, min(big, two)))
+    return size, max(1, -(-int(0.62 * size * n) // 780))
+
+
+def hero_geometry(face, two_lines, s1, s2, n1=1, n2=1):
+    """Where the person and the title go so the head covers the lower part of the title (the 'text behind the head' look)."""
+    cy = (face["y"] + face["h"] * 0.5) if face else 0.36
+    top_f = (face["y"]) if face else 0.27
+    S = 1.32
+    p_w, p_h = int(W * S), int(H * S)
+    p_left = int((W - p_w) / 2)
+    p_top = int(930 - cy * p_h)                                  # the face centre sits at y = 930
+    head_top = p_top + top_f * p_h
+    title_h = (s1 * n1 + s2 * n2) * 0.98
+    title_top = int(max(340, head_top - 0.55 * title_h))
+    return dict(p_w=p_w, p_h=p_h, p_left=p_left, p_top=p_top, title_top=title_top, glow_y=int(930 - 120), beam_y=1330, beam2_y=230)
+
+
+def build(job, v, photo, cut=None, face=None):
     out = os.path.join(job, "cover", "hf")
     shutil.rmtree(out, ignore_errors=True)
     for d in ("assets/fonts", "vendor"):
@@ -164,6 +268,20 @@ def build(job, v, photo):
         a, b = v["card_value"].rsplit("=", 1)
         val = f"{e(a.strip())} = <b>{e(b.strip())}</b>"
     two_lines = bool(v["line1"]) and bool(v["line2"])
+    if cut:                                                  # the hero layout: big title BEHIND the head, the cutout in front
+        shutil.copy(cut, os.path.join(out, "assets", "cutout.png"))
+        (s1, n1), (s2, n2) = title_size(v["line1"]), title_size(v["line2"])
+        g = hero_geometry(face, two_lines, s1, s2, n1, n2)
+        page = PAGE_HERO.format(
+            W=W, H=H, vars=hfbuild.brand_vars(), s1=s1, s2=s2, sv=hfbuild.fit_size(v["card_value"], 72, 44, 640), sticker_top=(1370 if v["card_value"] else 1330), card_top=1190, **g,
+            line1=e(v["line1"]), line2=e(v["line2"]),
+            tag=f'<div id="tag">{e(v["tag"])}</div>' if v["tag"] else "",
+            sticker=f'<div id="sticker">{e(v["sticker"])}</div>' if v["sticker"] else "",
+            card=(f'<div id="card">{"<div class=lbl>" + e(v["card_label"]) + "</div>" if v["card_label"] else ""}<div class="val">{val}</div></div>') if v["card_value"] else "")
+        open(os.path.join(out, "index.html"), "w", encoding="utf-8").write(page)
+        json.dump({"id": "cover", "name": "cover"}, open(os.path.join(out, "meta.json"), "w"))
+        json.dump({"paths": {"blocks": "compositions", "assets": "assets"}, "media": {"autoProxy": False}}, open(os.path.join(out, "hyperframes.json"), "w"), indent=1)
+        return out
     page = PAGE.format(
         W=W, H=H, vars=hfbuild.brand_vars(),
         photo_top=(940 if v["card_value"] else 800) if two_lines else 700,
@@ -229,11 +347,14 @@ def make(job):
     own = own_file(job, "own")
     if own:
         return {"cover": to_jpg(own, dest), "source": "your own cover"}
-    photo = own_file(job, "photo") or pick_frame(job, os.path.join(job, "cover", "frame.jpg"))
+    own_photo = own_file(job, "photo")
+    bm = None if own_photo else best_moment(job)
+    photo = own_photo or pick_frame(job, os.path.join(job, "cover", "frame.jpg"))
     v = values(job)
-    shoot(build(job, v, photo), dest)
+    cut = cutout(readable(photo), os.path.join(job, "cover", "cutout.png"))      # the person cut out; without it the older layout is used
+    shoot(build(job, v, photo, cut=cut, face=(bm or {}).get("face")), dest)
     json.dump(v, open(os.path.join(job, "cover", "values.json"), "w", encoding="utf-8"), ensure_ascii=False, indent=1)
-    return {"cover": dest, "source": "your photo" if own_file(job, "photo") else "a frame from your video", "values": v}
+    return {"cover": dest, "source": "your photo" if own_file(job, "photo") else "a frame from your video", "values": v, "layout": "hero (cutout)" if cut else "classic"}
 
 
 if __name__ == "__main__":

@@ -312,6 +312,13 @@ def extra_qa(job, video, qa, tl, width=None):
         qa["errors"] += e; qa["warnings"] += w; qa.setdefault("metrics", {})["sync"] = m
     except Exception as ex:                                  # noqa: BLE001
         qa["warnings"].append(f"sound sync check skipped: {ex}")
+    try:                                                      # T125: many doubtful words means the captions may contain errors
+        si = json.load(open(os.path.join(job, "speech_intel.json"), encoding="utf-8"))
+        n_low, n_all = len(si.get("low_confidence_words", [])), (si.get("transcript") or {}).get("words") or 0
+        if n_all and n_low / n_all > 0.06:
+            qa["warnings"].append(f"the captions may contain errors: {n_low} of {n_all} words are doubtful (open the Edit page and check the marked words)")
+    except (OSError, ValueError):
+        pass
     try:
         vp = json.load(open(os.path.join(job, "visual_plan.json"), encoding="utf-8"))
         try:                                                 # moments the compile step dropped are not expected on screen

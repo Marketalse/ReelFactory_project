@@ -106,3 +106,41 @@ def apply_review(path, words):
                 t0 += d
     return out, {"words_before": total, "words_after": len(out), "changed": changed,
                  "error_rate": round(changed / total, 3) if total else 0.0}
+
+
+# ----------------------------------------------------------------------------- proofreading pass (T125)
+PROOF_PROMPT = """You are a careful PROOFREADER of an automatic Iraqi-Arabic transcript. The speaker is an Iraqi (Erbil) marketer-entrepreneur talking to camera about business, online stores, Meta ads and customer service. Dialect: Iraqi Arabic mixed with English terms. Each line below is one stretch of speech; its words are numbered (n)word. A word followed by ? is doubtful: the recognizer was unsure about it.
+Find words that are clearly WRONG in their sentence (nonsense, a mis-heard dialect word, an English term written in Arabic letters, a brand name) and give the right word.
+Rules:
+- ONE-TO-ONE: one replacement word per word number; never merge, split, add or delete words (timestamps depend on it). The replacement is a single word without spaces.
+- Keep the Iraqi dialect; do NOT turn it into formal Arabic. English terms (customer service, ads, store) are written in Latin letters.
+- Use these exact spellings when meant: {glossary}
+- Topic hints (frequent words): {topic}
+- Be conservative: change a word only when the sentence meaning makes the right word clear. Correct words stay untouched.
+Return ONLY JSON: {{"fixes":[{{"i":<word number>,"text":"<right word>","why":"<=8 words English"}}]}}
+
+LINES:
+"""
+
+
+def proof_chunks(words, doubtful, max_words=260):
+    """Lines of numbered words, split into chunks of about max_words so one answer never gets cut off. doubtful = set of word numbers."""
+    chunks, cur, n = [], [], 0
+    for ph in phrases(words, gap=0.5, max_words=18):
+        line = " ".join(f"({i}){words[i]['text']}{'?' if i in doubtful else ''}" for i in ph)
+        if cur and n + len(ph) > max_words:
+            chunks.append("\n".join(cur)); cur, n = [], 0
+        cur.append(line); n += len(ph)
+    if cur:
+        chunks.append("\n".join(cur))
+    return chunks
+
+
+def apply_proof(words, fixes):
+    """One-to-one replacements only. Returns [{i, from, to, why}] for the changes actually made (words is changed in place)."""
+    done = []
+    for f in fixes if isinstance(fixes, list) else []:
+        i, t = (f.get("i"), (f.get("text") or "").strip()) if isinstance(f, dict) else (None, "")
+        if isinstance(i, int) and 0 <= i < len(words) and t and " " not in t and len(t) <= 30 and t != words[i]["text"]:
+            done.append({"i": i, "from": words[i]["text"], "to": t, "why": str(f.get("why") or "")[:60]}); words[i]["text"] = t
+    return done
