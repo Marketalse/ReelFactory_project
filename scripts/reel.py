@@ -254,8 +254,32 @@ def st_fix(c):
             applied.append({"i": i, "from": words[i]["text"], "to": t}); words[i]["text"] = t
     jsave(out, words)
     jsave(os.path.join(c.job, "transcript_fix_meta.json"), {"model": M_FIX, "n_words": len(words), "n_changed": len(applied), "changes": applied, "notes": fx.get("notes")})
-    speech_intel_run(c)
-    return f"{len(applied)}/{len(words)} words corrected"
+    speech_intel_run(c)                                   # scores + the doubtful words
+    proofed = proofread(c, words)                         # T125: a second, in-context pass on the doubtful words
+    if proofed:
+        jsave(out, words)
+        meta = jload(os.path.join(c.job, "transcript_fix_meta.json"), {}); meta["proof"] = proofed; jsave(os.path.join(c.job, "transcript_fix_meta.json"), meta)
+        speech_intel_run(c)
+    return f"{len(applied)}/{len(words)} words corrected" + (f", {len(proofed)} more by the proofreader" if proofed else "")
+
+
+def proofread(c, words):
+    """T125: sentence-level proofreading with the doubtful words marked. One-to-one fixes only; a failure never stops the reel. -> changes made."""
+    try:
+        si = jload(os.path.join(c.job, "speech_intel.json"), {}) or {}
+        doubtful = {w["i"] for w in si.get("low_confidence_words", [])}
+        topic = ", ".join(k["word"] for k in si.get("key_terms", [])[:8]) or "none yet"
+        done = []
+        for chunk in tr.proof_chunks(words, doubtful)[:5]:
+            ans = parse_json(c.llm("proof", M_FIX, [{"type": "text", "text": tr.PROOF_PROMPT.format(glossary=glossary_text(), topic=topic) + chunk}], 2500, "low"))
+            done += tr.apply_proof(words, ans.get("fixes", []) if isinstance(ans, dict) else [])
+        if done: print(f"   proofreader: {len(done)} word(s) corrected in context")
+        return done
+    except Stop as ex:
+        if str(ex).startswith(("BUDGET GUARD", "MONTHLY CAP")): raise
+        print("   proofreading skipped:", ex); return []
+    except Exception as ex:                               # noqa: BLE001
+        print("   proofreading skipped:", ex); return []
 
 def glossary_text():
     terms = [t for t in cfg.GLOSSARY.get("terms", []) if t.get("confirmed")]
