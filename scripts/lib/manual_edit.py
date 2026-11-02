@@ -93,7 +93,7 @@ def compute(job, edit):
                          "values": dict(m.get("values") or {})} for m in edit.get("moments") or []],
             "punch_ins": [{"at_word": idx(p.get("at_src")), "scale": float(p.get("scale") or 1.25)} for p in edit.get("punch_ins") or []],
             "cta": old.get("cta") or {}, "cover": old.get("cover") or {}}
-    tl, err, warn = director.resolve(plan, e["words"], e["duration"], logos=logos(job))
+    tl, err, warn = director.resolve(plan, e["words"], e["duration"], logos=logos(job), relaxed=True)
     try:
         warn += director.check_rhythm(tl, director.face_cuts(tl, e["segments"]))
     except Exception as ex:                    # noqa: BLE001

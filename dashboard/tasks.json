@@ -1202,6 +1202,30 @@
       "evidence": "",
       "notes": "Needs your OK on the style and a one-time character set.",
       "updated": "2026-11-02"
+    },
+    {
+      "id": "T86",
+      "phase": "P9",
+      "title": "Stage 1 upgrade: every file checked on its own, duplicates found, bad files skipped (not the whole batch), uploads resume after a drop, 'Your files' panel",
+      "owner": "Claude",
+      "status": "review",
+      "depends": [],
+      "done_when": "Upload 3 files incl. one broken and one copy: broken one is reported, copy is skipped, the rest are made; a dropped upload continues from where it stopped.",
+      "notes": "Built 2026-11-02. Not built yet: face / camera-movement detection and uploading several files at the same time (local uploads are already fast).",
+      "evidence": "scripts/lib/media_check.py, scripts/ingest_folder.py, dashboard/reels_api.py (resumable upload), dashboard/make.html (retry + Your files panel), tests/test_media_check.py, tests/test_dashboard.py",
+      "updated": "2026-11-02"
+    },
+    {
+      "id": "T87",
+      "phase": "P9",
+      "title": "Edit page: stretch and shrink clips freely (0.5 s up to 3x the old limit), trim from the left or right edge, never over a neighbour",
+      "owner": "Claude",
+      "status": "review",
+      "depends": [],
+      "done_when": "Drag either edge of a card on the timeline: it gets shorter or longer and stays valid.",
+      "notes": "Built 2026-11-02.",
+      "evidence": "dashboard/edit.html, scripts/lib/director.py (relaxed), tests/test_cuts.py",
+      "updated": "2026-11-02"
     }
   ],
   "log": [
@@ -1492,6 +1516,12 @@
       "who": "Claude",
       "task": "T47",
       "change": "new-block sample reel (--new-blocks); number graph made robust"
+    },
+    {
+      "time": "2026-11-02T23:30",
+      "who": "Claude",
+      "task": "T86,T87",
+      "change": "Stage 1 media check + resumable uploads + Your files panel; Edit page clip duration flexibility → review"
     }
   ]
 }

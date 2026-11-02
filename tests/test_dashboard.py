@@ -18,8 +18,8 @@ class ApiTest(unittest.TestCase):
     def tearDown(self):
         os.environ.pop("RF_ROOT", None); self.tmp.cleanup()
 
-    def up(self, data=b"x" * 1000, name="take.MOV", kind="clip", slug="store-tips", session="abcdefgh12", order=1, length=None):
-        return self.api.upload(slug, kind, name, session, len(data) if length is None else length, io.BytesIO(data), order)
+    def up(self, data=b"x" * 1000, name="take.MOV", kind="clip", slug="store-tips", session="abcdefgh12", order=1, length=None, offset=0, total=None):
+        return self.api.upload(slug, kind, name, session, len(data) if length is None else length, io.BytesIO(data), order, offset, total)
 
     def job(self, name, status, log, timing=None):
         d = os.path.join(self.root, "jobs", name); os.makedirs(os.path.join(d, "review"), exist_ok=True)
@@ -43,11 +43,23 @@ class UploadTests(ApiTest):
         self.assertFalse(self.up(data=b"")[0])
         self.assertTrue(self.up(name="logo.svg", kind="logo")[0])
 
-    def test_interrupted_upload_leaves_nothing_behind(self):
-        ok, msg = self.up(data=b"x" * 10, length=100)
+    def test_interrupted_upload_keeps_a_part_and_resumes_from_it(self):
+        data = bytes(range(256)) * 40
+        ok, msg = self.up(data=data[:3000], length=len(data))                       # connection drops after 3000 bytes
         self.assertFalse(ok); self.assertIn("interrupted", msg)
         clips = os.path.join(self.root, "inbox", "store-tips", "clips")
-        self.assertEqual(os.listdir(clips), [])
+        self.assertEqual(os.listdir(clips), ["01-take.mov.part"])                  # no half-finished clip is ever used
+        st = self.api.upload_status("store-tips", "clip", "take.MOV", "abcdefgh12", 1)
+        self.assertEqual(st["bytes"], 3000)
+        ok, msg = self.up(data=data[3000:], length=len(data) - 3000, offset=3000, total=len(data))   # resume from there
+        self.assertTrue(ok, msg)
+        self.assertEqual(open(os.path.join(clips, "01-take.mov"), "rb").read(), data)
+        self.assertEqual(os.listdir(clips), ["01-take.mov"])
+
+    def test_resume_from_the_wrong_place_is_told_where_to_continue(self):
+        self.up(data=b"x" * 100, length=1000)
+        ok, msg = self.up(data=b"y" * 900, length=900, offset=500, total=1000)
+        self.assertFalse(ok); self.assertEqual(msg, "resume:100")
 
     def test_a_name_used_by_another_session_or_job_is_refused(self):
         self.assertTrue(self.up()[0])

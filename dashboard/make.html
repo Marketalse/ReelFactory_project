@@ -359,6 +359,7 @@ input[type=password]:focus{border-color:var(--violet)}
       </div>
       <div class="bar" id="bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" aria-label="Overall progress"><i></i></div>
       <ol class="steps" id="steps"></ol>
+      <div id="mediaBox" hidden></div>
     </div>
 
     <div class="card" id="result" hidden></div>
@@ -424,7 +425,7 @@ function renderFiles(){
       <div class="thumb" style="${f.thumb&&f.thumb!=="none"?`background-image:url(${f.thumb})`:""}">${f.thumb==="none"?"No preview":(f.thumb?"":"…")}</div>
       <div style="min-width:0">
         <div class="name">${esc(f.file.name)}</div>
-        <div class="meta">${size(f.file.size)}${f.duration?` · ${clock(f.duration)}`:""}${f.thumb==="none"?" · preview not available in the browser, it will still work":""}${f.state==="done"?" · uploaded ✓":f.state==="error"?" · upload failed":""}</div>
+        <div class="meta">${size(f.file.size)}${f.duration?` · ${clock(f.duration)}`:""}${f.thumb==="none"?" · preview not available in the browser, it will still work":""}${f.state==="done"?" · uploaded ✓":f.state==="error"?" · upload failed: "+esc(f.err||""):""}</div>
         ${f.state==="uploading"||f.state==="done"?`<div class="mini"><i style="width:${Math.round(100*f.sent/f.file.size)}%"></i></div>`:""}
       </div>
       <div class="acts">
@@ -497,11 +498,17 @@ $("#makeBtn").onclick=async ()=>{
   const onBytes = cur => { S.uploadFrac=(doneBytes+cur)/total; const sp=(doneBytes+cur)/Math.max(.1,(performance.now()-t0)/1000); S.uploadEta=(total-doneBytes-cur)/Math.max(1,sp); drawUpload(); };
   try{
     const ok=await backend.check(S.slug, S.session); if(!ok.ok) throw new Error(ok.message);
+    const failed=[];
     for(let i=0;i<S.files.length;i++){
-      const f=S.files[i]; f.state="uploading";
-      await backend.upload(S.slug, S.session, f.file, {kind:"clip", order:i+1}, sent=>{ f.sent=sent; onBytes(sent); });
-      f.state="done"; f.sent=f.file.size; doneBytes+=f.file.size;
+      const f=S.files[i]; f.state="uploading"; renderFiles();
+      try{ await backend.upload(S.slug, S.session, f.file, {kind:"clip", order:i+1}, sent=>{ f.sent=sent; onBytes(sent); });
+        f.state="done"; f.sent=f.file.size; }
+      catch(e){ if(/already used|already exists|choose another name|busy|one reel at a time/i.test(String(e.message))) throw e;   // those stop everything
+        f.state="error"; f.err=String(e.message||e); failed.push(f); }
+      doneBytes+=f.file.size; renderFiles();
     }
+    if(failed.length===S.files.length) throw new Error(failed[0].err);
+    if(failed.length) toast(`${failed.length} file${failed.length>1?"s":""} didn't upload`, failed.map(f=>f.file.name+": "+f.err).join(" · ")+" — the rest are going ahead.", "error", 15000);
     if(S.logo){ await backend.upload(S.slug, S.session, S.logo, {kind:"logo"}, onBytes); doneBytes+=S.logo.size; }
     if(S.cph){ await backend.upload(S.slug, S.session, S.cph, {kind:"cover_photo"}, onBytes); doneBytes+=S.cph.size; }
     const notes=$("#notes").value.trim();
@@ -563,7 +570,18 @@ $("#newBtn").onclick=()=>{
 };
 const UPLOAD_W = 0.08;   // share of the overall bar used by the upload
 function drawUpload(){ drawSteps(S.last, true); }
+function drawMedia(p){
+  const box=$("#mediaBox"); const m=p&&p.media; if(!m||!m.files||!m.files.length){ box.hidden=true; return; }
+  const sm=m.summary||{}; const rows=m.files.map(f=>{
+    const bad=f.verdict==="fail", skip=!f.use, tag=bad?"Can't be used":f.duplicate_of?"Duplicate, skipped":f.verdict==="warn"?"Check":"Good";
+    const col=bad||f.duplicate_of?"var(--coral)":f.verdict==="warn"?"var(--amber)":"var(--lime)";
+    const info=bad?"":`${f.duration?clock(f.duration):""}${f.width?` · ${f.width}×${f.height}`:""}${f.fps?` · ${f.fps} fps`:""}${f.role?` · ${esc(f.role)}`:""}`;
+    return `<div style="padding:9px 0;border-top:1px solid var(--line);opacity:${skip?.7:1}"><div style="display:flex;gap:10px;align-items:baseline;flex-wrap:wrap"><b style="font-weight:600">${esc(f.name)}</b><span style="color:${col};font-size:13px">● ${tag}</span><span style="color:var(--muted);font-size:13px">${info}</span></div>${(f.issues||[]).map(x=>`<div style="color:var(--muted);font-size:13.5px;margin-top:2px">• ${esc(x)}</div>`).join("")}</div>`; }).join("");
+  box.hidden=false;
+  box.innerHTML=`<details ${sm.failed||sm.duplicates||sm.warnings?"open":""} style="margin-top:16px"><summary style="cursor:pointer;color:var(--muted)">Your files: ${sm.used} used of ${sm.total}${sm.failed?`, ${sm.failed} can't be used`:""}${sm.duplicates?`, ${sm.duplicates} duplicate`:""} · ${clock(sm.seconds||0)} of footage. Originals are never changed.</summary>${rows}</details>`;
+}
 function drawSteps(p, uploading){
+  drawMedia(p);
   const up = { key:"upload", label:"Uploading your files", detail: S.files.length? `${S.files.length} video${S.files.length>1?"s":""}${S.logo?" + logo":""}` : "Your files", state: S.uploadFrac>=1 || !uploading ? "done" : "active", fraction:S.uploadFrac };
   const server = p && p.steps ? p.steps : [
     {key:"prepare",label:"Preparing your video",detail:"Joining your takes and making a working copy",state:"waiting"},
@@ -806,16 +824,31 @@ $("#continue").addEventListener("click", async e=>{
 /* Real backend: dashboard/serve.py + dashboard/reels_api.py (local, Python standard library). */
 const RealBackend = {
   async status(){ const r=await fetch("/api/reels",{cache:"no-store"}); if(!r.ok) throw new Error("offline"); return r.json(); },
-  upload(slug, session, file, opts, onProgress){
+  async offset(slug, session, file, opts){
+    try{ const q=new URLSearchParams({slug,session,kind:opts.kind,name:file.name,order:String(opts.order||0)});
+      const j=await (await fetch("/api/upload/status?"+q,{cache:"no-store"})).json(); return Math.min(j.bytes||0, file.size-1); }catch(e){ return 0; }
+  },
+  sendOnce(slug, session, file, opts, onProgress, offset){
     return new Promise((resolve, reject)=>{
       const x=new XMLHttpRequest(); x.open("POST","/api/upload");
       x.setRequestHeader("X-Slug",slug); x.setRequestHeader("X-Kind",opts.kind); x.setRequestHeader("X-Session",session);
       x.setRequestHeader("X-Name",encodeURIComponent(file.name)); if(opts.order) x.setRequestHeader("X-Order",String(opts.order));
-      x.upload.onprogress=e=>onProgress&&onProgress(e.loaded);
-      x.onload=()=>{ let j={}; try{j=JSON.parse(x.responseText)}catch(e){} (x.status===200&&j.ok)? resolve(j) : reject(new Error(j.message||("upload failed ("+x.status+")"))); };
-      x.onerror=()=>reject(new Error("network: the dashboard didn't answer"));
-      x.send(file);
+      x.setRequestHeader("X-Offset",String(offset)); x.setRequestHeader("X-Total",String(file.size));
+      x.upload.onprogress=e=>onProgress&&onProgress(offset+e.loaded);
+      x.onload=()=>{ let j={}; try{j=JSON.parse(x.responseText)}catch(e){} (x.status===200&&j.ok)? resolve(j) : reject(Object.assign(new Error(j.message||("upload failed ("+x.status+")")),{retry:/interrupted|^resume:/.test(j.message||"")})); };
+      x.onerror=()=>reject(Object.assign(new Error("network: the dashboard didn't answer"),{retry:true}));
+      x.send(offset? file.slice(offset) : file);
     });
+  },
+  /* One file, up to 4 tries: after a dropped connection it continues from the bytes already saved instead of starting again. */
+  async upload(slug, session, file, opts, onProgress){
+    let last=null;
+    for(let n=0;n<4;n++){
+      const off = n? await this.offset(slug, session, file, opts) : 0;
+      try{ return await this.sendOnce(slug, session, file, opts, onProgress, off); }
+      catch(e){ last=e; if(!e.retry) throw e; await new Promise(r=>setTimeout(r, 1000*Math.pow(2,n))); }
+    }
+    throw last;
   },
   async post(action, body){ try{ const r=await fetch("/api/reels/"+action,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)}); return await r.json(); }catch(e){ return {ok:false,message:"The dashboard didn't answer. Check that Reel Factory.command is running."}; } },
   saveNotes(slug, session, text){ return this.post("notes",{slug,session,text}); },

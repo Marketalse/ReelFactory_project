@@ -250,7 +250,7 @@ def _claim(slug, session):
     return True, d
 
 
-def upload(slug, kind, name, session, length, stream, order=0):
+def upload(slug, kind, name, session, length, stream, order=0, offset=0, total=None):
     """Save one uploaded file. Returns (ok, message_or_saved_name)."""
     if not SLUG.match(slug or ""):
         return False, "reel name: use letters, digits and dashes"
@@ -262,7 +262,8 @@ def upload(slug, kind, name, session, length, stream, order=0):
     safe = _safe_name(name)
     if not safe.lower().endswith(exts):
         return False, f"{name}: this file type can't be used here (allowed: {', '.join(e[1:].upper() for e in exts)})"
-    if not 0 < length <= limit:
+    total = int(total or (offset + length))
+    if not 0 < total <= limit or length < 0 or offset < 0:
         return False, f"{name}: file is empty or larger than {limit >> 20} MB"
     if slug in _running or _job_for_slug(slug):
         return False, f"a reel called {slug} already exists: choose another name"
@@ -280,18 +281,39 @@ def upload(slug, kind, name, session, length, stream, order=0):
                 os.remove(old)
     dest = os.path.join(d, sub); os.makedirs(dest, exist_ok=True)
     path = os.path.join(dest, safe); tmp = path + ".part"
+    if offset:                                      # resuming: only continue exactly where the saved part ends
+        have = os.path.getsize(tmp) if os.path.exists(tmp) else 0
+        if have != offset:
+            return False, f"resume:{have}"
     left = length
-    with open(tmp, "wb") as f:
+    with open(tmp, "ab" if offset else "wb") as f:
         while left > 0:
             chunk = stream.read(min(1 << 20, left))
             if not chunk:
                 break
             f.write(chunk); left -= len(chunk)
-    if left:
-        os.remove(tmp)                              # our own partial temp file, never Hesham's footage
-        return False, f"{name}: upload was interrupted, try again"
+    if left or offset + length != total:
+        return False, f"{name}: upload was interrupted, resuming…"      # the saved part is kept so the next try continues from it
     os.replace(tmp, path)
     return True, safe
+
+
+def upload_status(slug, kind, name, session, order=0):
+    """How many bytes of this file are already saved (for resuming an interrupted upload). Reads only."""
+    if not SLUG.match(slug or "") or not SESSION.match(session or "") or kind not in UPLOAD_KINDS:
+        return {"bytes": 0}
+    sub, exts, limit = UPLOAD_KINDS[kind]
+    safe = _safe_name(name)
+    if kind == "clip" and order:
+        safe = f"{int(order):02d}-{safe}"
+    d = os.path.join(INBOX, slug)
+    try:
+        if open(os.path.join(d, MARK), encoding="utf-8").read().strip() != session:
+            return {"bytes": 0}
+    except OSError:
+        return {"bytes": 0}
+    part = os.path.join(d, sub, safe + ".part")
+    return {"bytes": os.path.getsize(part) if os.path.exists(part) else 0, "done": os.path.exists(os.path.join(d, sub, safe))}
 
 
 def check_name(slug, session):
@@ -406,6 +428,11 @@ def progress(ref):
     jd = os.path.join(JOBS, job) if job else None
     jj = _j(os.path.join(jd, "job.json"), {}) if jd else {}
     status = jj.get("status", "")
+    man = _j(os.path.join(jd, "media_manifest.json")) if jd else None
+    if man:
+        out["media"] = {"summary": man.get("summary", {}), "files": [{k: f.get(k) for k in (
+            "name", "verdict", "use", "duration", "width", "height", "fps", "role", "issues", "duplicate_of", "asset_id", "bytes")}
+            for f in man.get("files", [])]}
     log = _tail(os.path.join(jd, "run.log"), 400) if jd else []
     last = _last_run(log)
     out["last_mode"] = "final" if last and "--approve" in last[0] else ("fix" if last and ("--fix" in last[0] or "--rebuild" in last[0]) else "draft")

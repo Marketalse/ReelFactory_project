@@ -188,7 +188,7 @@ def cta_dur():
 HOOK_DUR = 2.6
 
 
-def resolve(plan, edl_words, duration, *, logos=(), platform_handle="@handle"):
+def resolve(plan, edl_words, duration, *, logos=(), platform_handle="@handle", relaxed=False):
     """Turn a plan into an exact timeline. Returns (timeline, errors, warnings).
     timeline = {"duration", "scenes": [...], "frames": [(t, scale, y)], "keyword_ids", "caption_gaps": [(a,b)]}"""
     err, warn = [], []
@@ -223,6 +223,8 @@ def resolve(plan, edl_words, duration, *, logos=(), platform_handle="@handle"):
         if t is None:
             continue
         spec = REGISTRY["blocks"][b]["duration_s"]
+        if relaxed:                              # Edit page: you may stretch or shrink a clip well beyond the AI's usual range
+            spec = {"min": 0.5, "max": max(spec["max"] * 3, 8.0)}
         d = float(m.get("duration") or spec["min"])
         if not spec["min"] <= d <= spec["max"]:
             warn.append(f"{where}: duration {d} clamped to {spec['min']}-{spec['max']} s")
