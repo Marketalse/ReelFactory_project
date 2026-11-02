@@ -79,5 +79,11 @@
     "true_peak": -1.5,
     "lra": 9.0,
     "voice_filter": "highpass=f=75,lowpass=f=15000,acompressor=threshold=-21dB:ratio=2.5:attack=15:release=200:makeup=2"
+  },
+  "broll_ai": {
+    "enabled": true,
+    "max_new_per_reel": 8,
+    "max_pick": 6,
+    "_note": "T123 (Hesham approved the cost 2026-11-02): each new library picture is described once by the vision model; each reel makes one small text call to pick matching files. Set enabled false to switch off."
   }
 }
