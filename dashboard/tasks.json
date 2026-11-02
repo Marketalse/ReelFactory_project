@@ -1649,11 +1649,11 @@
    "phase": "P17",
    "title": "AI editor for the cutting: an AI pass reads the story and removes weak, repeated or off-topic parts (whole sentences only, checked by code), instead of only cutting pauses by rules",
    "owner": "Claude",
-   "status": "todo",
+   "status": "done",
    "depends": [],
    "done_when": "The reel's report lists what the AI cut and why; the Edit page shows each AI cut so you can restore it.",
-   "notes": "From Hesham's feedback on the first real reel, 2026-11-02.",
-   "evidence": "",
+   "notes": "New stage 'tighten': AI removes weak/repeated lines, code checks every cut, Edit page shows each AI cut with its reason. Built 2026-11-02 after Hesham's feedback on the first real reel.",
+   "evidence": "scripts/lib/tighten.py, scripts/reel.py (st_tighten), scripts/lib/manual_edit.py, tests/test_tighten.py",
    "updated": "2026-11-02"
   },
   {
@@ -1661,11 +1661,11 @@
    "phase": "P17",
    "title": "Captions that are right: a second AI proofreading pass on the doubtful words, and a warning when many words are doubtful",
    "owner": "Claude",
-   "status": "todo",
+   "status": "done",
    "depends": [],
    "done_when": "Fewer garbled words in the captions; the quality check says how many words are doubtful.",
-   "notes": "From Hesham's feedback on the first real reel, 2026-11-02.",
-   "evidence": "",
+   "notes": "Second AI proofreading pass on the doubtful words (in sentence context) + a warning when more than 6% of words are doubtful. Built 2026-11-02 after Hesham's feedback on the first real reel.",
+   "evidence": "scripts/lib/transcript.py, scripts/reel.py (proofread), scripts/render.py, tests/test_proof.py",
    "updated": "2026-11-02"
   },
   {
@@ -1673,11 +1673,11 @@
    "phase": "P17",
    "title": "Results box only after you say 'I posted it' (it was shown before posting)",
    "owner": "Claude",
-   "status": "todo",
+   "status": "done",
    "depends": [],
    "done_when": "The 'How did it do?' box appears after 'I posted it' and tells you when to come back for the numbers.",
-   "notes": "From Hesham's feedback on the first real reel, 2026-11-02.",
-   "evidence": "",
+   "notes": "'Posted it?' first; the numbers form appears only after 'I posted it', with the date to come back. Built 2026-11-02 after Hesham's feedback on the first real reel.",
+   "evidence": "dashboard/make.html, dashboard/reels_api.py, tests/test_posted.py",
    "updated": "2026-11-02"
   },
   {
@@ -1685,11 +1685,11 @@
    "phase": "P17",
    "title": "Richer visuals and real sound: wire the sound effects (they were never used), smooth zoom snaps, emphasis marks for the director, variety rules",
    "owner": "Claude",
-   "status": "todo",
+   "status": "done",
    "depends": [],
    "done_when": "The draft has whoosh/pop/hit sounds on cards and zooms, zooms snap smoothly, and the director uses more block types.",
-   "notes": "From Hesham's feedback on the first real reel, 2026-11-02.",
-   "evidence": "",
+   "notes": "Sound effects were never used: now wired (whoosh/hit/pop/ding); zooms snap smoothly; emphasis marks + variety rules for the director. Verified in a real render. Built 2026-11-02 after Hesham's feedback on the first real reel.",
+   "evidence": "scripts/lib/sfx_mix.py, scripts/compile.py, scripts/lib/hfbuild.py, scripts/lib/director.py, tests/test_sfx_mix.py",
    "updated": "2026-11-02"
   },
   {
@@ -1697,11 +1697,11 @@
    "phase": "P17",
    "title": "A cover that attracts: bold title behind the head, your cutout in front, gradient background, best-frame choice",
    "owner": "Claude",
-   "status": "todo",
+   "status": "done",
    "depends": [],
    "done_when": "The cover looks like a real thumbnail: big two-line title, your face cut out, strong colours.",
-   "notes": "From Hesham's feedback on the first real reel, 2026-11-02.",
-   "evidence": "",
+   "notes": "Cover: best frame from the shot log, person cutout, glow, big title behind the head; classic layout as fallback. Viewed in a real render. Built 2026-11-02 after Hesham's feedback on the first real reel.",
+   "evidence": "scripts/cover.py, tests/test_cover_hero.py, tests/test_safe_zones.py",
    "updated": "2026-11-02"
   }
  ],

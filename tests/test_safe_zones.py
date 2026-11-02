@@ -9,7 +9,7 @@ from lib import config as cfg, hfbuild  # noqa: E402
 Z = cfg.RULES["safe_zone"]
 BOX = {"x0": Z["left"], "x1": Z["canvas"][0] - Z["right"], "y0": Z["top"], "y1": Z["canvas"][1] - Z["bottom"]}
 LONG_AR = "شنو تتصور الزبون راح يسوي لازم يكون عندك خدمة زبائن"
-SKIP_IDS = re.compile(r"(-(scrim|bg|panel|glow)|^grid|^fade)$")
+SKIP_IDS = re.compile(r"(-(scrim|bg|panel|glow)|^grid|^fade|^glow|^beam[12]|^person)$")
 
 
 def long_text(n):
@@ -131,6 +131,14 @@ class SafeZoneTests(unittest.TestCase):
         html_ = html_.replace("<head>", "<head><script>window.__timelines={}</script>", 1).replace("</body>", "<script>window.SEEK=0.5</script></body>")
         open(os.path.join(proj, "index.html"), "w", encoding="utf-8").write(html_)
         pages["cover"] = os.path.join(proj, "index.html")
+        j2 = tempfile.mkdtemp(); cutpng = os.path.join(j2, "cut.png")                         # the hero layout (title behind the head) with a long hook
+        subprocess.run(["ffmpeg", "-v", "error", "-y", "-f", "lavfi", "-i", "color=gray:s=400x700", "-frames:v", "1", cutpng], check=True)
+        proj2 = cover.build(j2, dict(v, line1=long_text(28), line2=long_text(22)), photo, cut=cutpng, face={"x": .3, "y": .2, "w": .4, "h": .2})
+        shutil.copy(os.path.join(proj2, "assets", "fonts", "ReadexPro.ttf"), os.path.join(proj2, "ReadexPro.ttf"))
+        h2 = open(os.path.join(proj2, "index.html"), encoding="utf-8").read().replace('id="root"', 'id="stage"')
+        h2 = h2.replace("<head>", "<head><script>window.__timelines={}</script>", 1).replace("</body>", "<script>window.SEEK=0.5</script></body>")
+        open(os.path.join(proj2, "index.html"), "w", encoding="utf-8").write(h2)
+        pages["cover_hero"] = os.path.join(proj2, "index.html")
         js = os.path.join(self.d, "measure.js"); open(js, "w").write(MEASURE)
         r = subprocess.run(["node", js, json.dumps(pages), json.dumps(BOX)], capture_output=True, text=True, timeout=180,
                            env=dict(os.environ, NODE_PATH=subprocess.run(["npm", "root", "-g"], capture_output=True, text=True).stdout.strip()))
