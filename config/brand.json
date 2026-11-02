@@ -85,5 +85,6 @@
     "main": "references/ref5_B_counters.mp4",
     "layout": "references/ref3_B_split.mp4"
   },
-  "never_show": "CONFIRM — see Inputs sheet B10"
+  "never_show": [],
+  "_never_show_note": "Hesham 2026-11-02: nothing is banned from the screen."
 }

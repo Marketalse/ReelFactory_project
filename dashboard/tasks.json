@@ -1,6 +1,6 @@
 {
  "project": "Reel Factory",
- "version": 21,
+ "version": 22,
  "owners": [
   "Hesham",
   "Claude",
@@ -174,24 +174,24 @@
    "phase": "P0",
    "title": "Answer: never-show list (or 'nothing')",
    "owner": "Hesham",
-   "status": "todo",
+   "status": "review",
    "depends": [],
    "done_when": "",
-   "notes": "",
-   "evidence": "",
-   "updated": "2026-11-01"
+   "notes": "Answered 2026-11-02: nothing.",
+   "evidence": "config/brand.json never_show = [] (nothing)",
+   "updated": "2026-11-02"
   },
   {
    "id": "T11",
    "phase": "P0",
    "title": "Answer: glossary page/بيج, store/متجر",
    "owner": "Hesham",
-   "status": "todo",
+   "status": "review",
    "depends": [],
    "done_when": "",
-   "notes": "",
-   "evidence": "",
-   "updated": "2026-11-01"
+   "notes": "Answered 2026-11-02.",
+   "evidence": "config/glossary.json: page → بيج, store → متجر (confirmed)",
+   "updated": "2026-11-02"
   },
   {
    "id": "T12",
