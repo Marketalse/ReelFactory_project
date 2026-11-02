@@ -28,10 +28,10 @@
     }
   },
   "budget_usd": {
-    "per_reel_warn": 0.3,
-    "per_reel_stop": 1.0,
-    "monthly_stop": 50.0,
-    "_pending": "warn 0.45 proposed (T14)"
+    "per_reel_warn": 1.0,
+    "per_reel_stop": 1.5,
+    "monthly_stop": 100.0,
+    "_note": "Hesham 2026-11-02: about 90 reels a month (3 a day) at premium quality, about $1.10 per reel on average, $100 a month."
   },
   "asr": {
     "engine": "whisper",

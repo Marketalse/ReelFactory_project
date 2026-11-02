@@ -1851,11 +1851,11 @@
    "phase": "P19",
    "title": "Raise caps to fit the new design (needs Hesham's written number)",
    "owner": "Hesham",
-   "status": "todo",
+   "status": "done",
    "depends": [],
    "done_when": "per-reel stop, warn and monthly stop in config match the approved numbers.",
    "notes": "Hesham 2026-11-02: enhance structure, AI models, creativity, accept higher cost. Estimate: scripts/cost_estimate.py.",
-   "evidence": "",
+   "evidence": "config/project.json budget_usd: warn 1.00, stop 1.50, monthly 100; approval in docs/DECISIONS.md 2026-11-02",
    "updated": "2026-11-02"
   },
   {

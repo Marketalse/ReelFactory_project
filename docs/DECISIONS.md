@@ -196,3 +196,6 @@ Measured with `python3 scripts/cost_estimate.py` (free, offline; real prompt siz
 - Limits: the per-reel stop is $1.00 (would barely fit), the monthly stop is $50 and the Nous portal limit is $35 (reached after about 39 pack reels). Caps are NOT changed here: they change only with Hesham's written numbers (task T140).
 - Rendering, Whisper, cutouts, icons, SFX and QA stay local and free; cost is only the AI calls.
 Plan: board phase P19 (T136-T141): roles config, pipeline as a list of steps, cost screen, cost tiers (Draft / Standard / Premium per reel), caps, and a side-by-side real test. Phase P18 (Format Pack) builds on it.
+
+## 2026-11-02 · Budget raised (written approval by Hesham, T140)
+Hesham: "if increasing our budget would give us better results I would set $90 for 3 reels/day, total 90 reels/month, budget of $100/month for such quality". Caps now: per-reel warn $1.00, per-reel stop $1.50, monthly stop $100 (were $0.30 / $1.00 / $50). Estimated cost of a full-quality reel is about $0.90 (scripts/cost_estimate.py), so 90 reels is about $81. The Nous portal limit ($35) is set on the Nous site and must also be raised by Hesham to $100, or it stops first. Cheaper tiers (Draft/Standard, T139) still come so test reels stay cheap.
