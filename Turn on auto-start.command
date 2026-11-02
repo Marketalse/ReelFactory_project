@@ -31,12 +31,13 @@ launchctl bootstrap "gui/$(id -u)" "$PLIST" && echo "Auto-start is ON." || { ech
 OK=""
 for i in $(seq 1 30); do [ "$(curl -s --max-time 1 -o /dev/null -w '%{http_code}' http://127.0.0.1:8790/api/reels)" = "200" ] && { OK=1; break; }; sleep 1; done
 if [ -n "$OK" ]; then
-  open http://127.0.0.1:8790/
+  open -a "Google Chrome" "http://reelfactory.localhost:8790/" 2>/dev/null || open http://127.0.0.1:8790/
   echo ""
   echo "=============================================="
   echo "  Reel Factory is open in your browser."
-  echo "  Make a reel:  http://127.0.0.1:8790"
-  echo "  Control:      http://127.0.0.1:8790/index.html"
+  echo "  Make a reel:  http://reelfactory.localhost:8790"
+  echo "  Control:      http://reelfactory.localhost:8790/index.html"
+  echo "  (backup link: http://127.0.0.1:8790)"
   echo "  (Hold Cmd and click a link to open it)"
   echo "=============================================="
   echo "It now starts by itself when you log in, and restarts by itself if it ever stops."
@@ -56,12 +57,13 @@ else
   echo "Starting the dashboard from this folder for now, so you can keep working..."
   nohup python3 dashboard/serve.py > dashboard/server.log 2>&1 &
   for i in $(seq 1 20); do [ "$(curl -s --max-time 1 -o /dev/null -w '%{http_code}' http://127.0.0.1:8790/api/reels)" = "200" ] && break; sleep 1; done
-  open http://127.0.0.1:8790/
+  open -a "Google Chrome" "http://reelfactory.localhost:8790/" 2>/dev/null || open http://127.0.0.1:8790/
   echo ""
   echo "=============================================="
   echo "  Reel Factory is open in your browser."
-  echo "  Make a reel:  http://127.0.0.1:8790"
-  echo "  Control:      http://127.0.0.1:8790/index.html"
+  echo "  Make a reel:  http://reelfactory.localhost:8790"
+  echo "  Control:      http://reelfactory.localhost:8790/index.html"
+  echo "  (backup link: http://127.0.0.1:8790)"
   echo "  (Hold Cmd and click a link to open it)"
   echo "=============================================="
 fi

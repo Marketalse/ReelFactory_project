@@ -165,7 +165,7 @@ class H(SimpleHTTPRequestHandler):
     def same_origin(self):
         """Only this page may change settings (a website you visit can't post to the dashboard)."""
         o = self.headers.get("Origin")
-        return o in (None, f"http://127.0.0.1:{PORT}", f"http://localhost:{PORT}")
+        return o in (None, f"http://127.0.0.1:{PORT}", f"http://localhost:{PORT}", f"http://reelfactory.localhost:{PORT}")
 
     def do_POST(self):
         if not self.same_origin():

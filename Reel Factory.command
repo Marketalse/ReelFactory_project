@@ -79,12 +79,13 @@ fi
 
 # 4. Open it, or say clearly what went wrong
 if up; then
-  open "$URL/"
+  open -a "Google Chrome" "http://reelfactory.localhost:8790/" 2>/dev/null || open "$URL/"
   echo ""
   echo "=============================================="
   echo "  Reel Factory is open in your browser."
-  echo "  Make a reel:  http://127.0.0.1:8790"
-  echo "  Control:      http://127.0.0.1:8790/index.html"
+  echo "  Make a reel:  http://reelfactory.localhost:8790"
+  echo "  Control:      http://reelfactory.localhost:8790/index.html"
+  echo "  (backup link: http://127.0.0.1:8790)"
   echo "  (Hold Cmd and click a link to open it)"
   echo "=============================================="
   echo "You can close this window."
