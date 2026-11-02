@@ -1262,6 +1262,18 @@
    "notes": "Built 2026-11-02. Not built: alternative full drafts per style, per-style pacing presets (cost; need your OK).",
    "evidence": "scripts/lib/editorial.py, scripts/reel.py, tests/test_editorial.py",
    "updated": "2026-11-02"
+  },
+  {
+   "id": "T91",
+   "phase": "P9",
+   "title": "Stage 5 upgrade: visual_plan.json (caption timing, roles, zones, animations, checks) + Brand Memory (learns the look of approved reels)",
+   "owner": "Claude",
+   "status": "review",
+   "depends": [],
+   "done_when": "After a reel's compile step jobs/<job>/visual_plan.json exists; after 2 approvals the director gets a BRAND MEMORY line.",
+   "notes": "Built 2026-11-02. Not built: subject tracking/smart reframing (needs face detection at ingest), multiple saved brand profiles.",
+   "evidence": "scripts/lib/visual_plan.py, scripts/lib/brand_memory.py, tests/test_visual_plan.py",
+   "updated": "2026-11-02"
   }
  ],
  "log": [

@@ -21,7 +21,7 @@ import argparse, base64, glob, json, os, re, shutil, subprocess, sys, time, urll
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from lib import config as cfg   # noqa: E402  (all settings live in config/*.json)
-from lib import transcript as tr, edl as edlmod, director, speech_intel, editorial   # noqa: E402
+from lib import transcript as tr, edl as edlmod, director, speech_intel, editorial, visual_plan, brand_memory   # noqa: E402
 from lib.hfbuild import BuildError   # noqa: E402
 
 ROOT = cfg.ROOT
@@ -388,6 +388,11 @@ def st_plan(c):
         hk = "; ".join(f"{h.get('type')}: {h.get('line')}" for h in (ch.get("hooks") or [])[:3] if h.get("line"))
         brief += (f"\n\nEDITORIAL BRIEF (from the story step): main message: {sl['main_message']}. Audience: {sl.get('audience', '')}. "
                   f"Style: {ch.get('style', '')}." + (f" Candidate opening lines (his own words): {hk}." if hk else ""))
+    try:
+        h = brand_memory.hint()                     # what his approved reels looked like (only after 2+ approvals)
+        if h: brief += "\n\nBRAND MEMORY: " + h
+    except Exception:                               # noqa: BLE001
+        pass
     prompt = director.build_prompt(words, e["duration"], brief, job_logos(c), feedback, director.taste())
     if feedback and os.path.exists(os.path.join(c.job, "scene_plan.json")):
         prompt += "\n\nPREVIOUS PLAN:\n" + json.dumps(jload(os.path.join(c.job, "scene_plan.json")), ensure_ascii=False)
@@ -445,6 +450,12 @@ def st_compile(c):
         p = compile_job(c.job)
     except BuildError as e:
         raise Stop(f"compile refused the plan: {e}")
+    try:                                            # the structured visual plan + plain checks (free, never blocks)
+        vp = visual_plan.build(c.job)
+        if vp:
+            for line in visual_plan.summary_lines(vp): print("   visual:", line)
+    except Exception as ex:                         # noqa: BLE001
+        print("   visual plan skipped:", ex)
     return os.path.relpath(p, c.job)
 
 
@@ -477,6 +488,9 @@ def st_report(c):
          "| stage | model | in tok | out tok | cost | s |", "|---|---|---|---|---|---|"]
     for x in cost:
         L.append(f"| {x['stage']} | {x['model'].split('/')[1]} | {x['in']} | {x['out']} | ${x['cost']:.4f} | {x['seconds']} |")
+    vp = jload(os.path.join(c.job, "visual_plan.json"), {})
+    if vp:
+        L += ["", "Captions and visuals (plan, with checks):"] + [f"- {x}" for x in visual_plan.summary_lines(vp)]
     ed = jload(os.path.join(c.job, "editorial.json"), {})
     if ed:
         L += ["", "Story and cuts (why, and what to check):"] + [f"- {x}" for x in editorial.summary_lines(ed)]
@@ -675,6 +689,11 @@ def main():
                 outs = render.final(job, cfg.PROJECT["review"]["platforms"])
             except render.RenderError as e:
                 raise Stop(str(e))
+            try:                                     # remember the look of the reel he approved
+                vp = jload(os.path.join(job, "visual_plan.json"))
+                if vp: brand_memory.record(os.path.basename(job), vp["intensity"], visual_plan.block_counts(vp))
+            except Exception as ex:                  # noqa: BLE001
+                print("   brand memory skipped:", ex)
             j = jload(os.path.join(job, "job.json"), {}); j["status"] = "rendered"; j["output"] = [os.path.relpath(o, job) for o in outs]
             jsave(os.path.join(job, "job.json"), j)
             print("FINAL:", *outs, sep="\n  ")
