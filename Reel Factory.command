@@ -66,7 +66,12 @@ if ! up; then
   echo "Starting the dashboard..."
   if [ -n "$AUTO" ]; then launchctl kickstart "$AGENT" 2>/dev/null; fi
   if ! wait_up 8; then
-    [ -n "$AUTO" ] && echo "Auto-start didn't bring it up. Starting it from this folder instead."
+    if [ -n "$AUTO" ]; then
+      echo "Auto-start didn't bring it up, so it's starting from this folder instead (it works, but stops when the Mac restarts)."
+      echo "To fix auto-start: System Settings > General > Login Items, allow 'bash' (Reel Factory) in the background,"
+      echo "then double-click 'Turn on auto-start.command' again. If that shows PROBLEM, send Claude a screenshot."
+      launchctl print "$AGENT" 2>&1 | grep -E "state =|last exit|working directory" | head -3 | sed 's/^/   auto-start: /'
+    fi
     start_here
     wait_up 20
   fi

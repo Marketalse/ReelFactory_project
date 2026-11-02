@@ -17,7 +17,7 @@ cat > "$PLIST" <<PL
   <key>WorkingDirectory</key><string>$(esc "$HERE")</string>
   <key>EnvironmentVariables</key><dict><key>PATH</key><string>$(esc "$PATH")</string></dict>
   <key>RunAtLoad</key><true/>
-  <key>KeepAlive</key><dict><key>SuccessfulExit</key><false/></dict>
+  <key>KeepAlive</key><true/>
   <key>StandardOutPath</key><string>$(esc "$HOME/.reelfactory/dashboard.log")</string>
   <key>StandardErrorPath</key><string>$(esc "$HOME/.reelfactory/dashboard.log")</string>
 </dict></plist>
@@ -41,4 +41,9 @@ else
   tail -n 15 "$HOME/.reelfactory/dashboard.log" 2>/dev/null
   echo "------ what is using port 8765 ------"
   lsof -nP -i tcp:8765 -sTCP:LISTEN 2>/dev/null || echo "(nothing)"
+  echo "------ auto-start status ------"
+  launchctl print "gui/$(id -u)/$LABEL" 2>&1 | grep -E "state|last exit|runs|program|working directory|disabled" | head -8
+  echo ""
+  echo "Tip: open System Settings > General > Login Items and make sure 'bash' (Reel Factory) is allowed in the background."
+  echo "Until this is fixed, double-click 'Reel Factory.command' to open the dashboard."
 fi
