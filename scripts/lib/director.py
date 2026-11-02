@@ -372,6 +372,32 @@ def longest_still(timeline, cuts):
     return best
 
 
+STILL_ERR = re.compile(r"nothing changes on screen from ([\d.]+)s to ([\d.]+)s")
+
+
+def fix_rhythm(plan, words, resolve, max_add=8):
+    """FREE, no AI. While the only problem left is 'nothing changes on screen for too long', add a quick zoom (punch-in)
+    on the word nearest the middle of that stretch, then check again. Bounded: at most `max_add` zooms.
+    resolve(plan) -> (timeline, errors, warnings). Returns (plan, timeline, errors, warnings, added)."""
+    plan = json.loads(json.dumps(plan))
+    added = 0
+    tl, err, warn = resolve(plan)
+    while err and added < max_add and all(STILL_ERR.search(x) for x in err):
+        m = STILL_ERR.search(err[0])
+        a, b = float(m.group(1)), float(m.group(2))
+        mid = (a + b) / 2
+        have = {p.get("at_word") for p in plan.get("punch_ins") or []}
+        inside = [i for i, w in enumerate(words) if a + 0.4 <= w["start"] <= b - 0.4 and i not in have]
+        pool = inside or [i for i, w in enumerate(words) if i not in have]
+        if not pool:
+            break
+        k = min(pool, key=lambda i: abs(words[i]["start"] - mid))
+        plan.setdefault("punch_ins", []).append({"at_word": k, "scale": 1.25})
+        added += 1
+        tl, err, warn = resolve(plan)
+    return plan, tl, err, warn, added
+
+
 def check_rhythm(timeline, cuts):
     d, a, b = longest_still(timeline, cuts)
     lim = cfg.RULES["max_still_hold_s"]
