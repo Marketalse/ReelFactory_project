@@ -729,12 +729,12 @@
       "phase": "P9",
       "title": "Text-behind-head (needs matte) — prove on the Mac",
       "owner": "Claude",
-      "status": "todo",
+      "status": "blocked",
       "depends": [
         "T43"
       ],
       "done_when": "",
-      "notes": "Needs your Mac (matte model). Target Nov 4: ready to try; marked blocked until you run it.  Reassigned from Hermes (v2: Hermes optional).",
+      "notes": "Blocked: needs your Mac to install a person-cutout model and test on real footage. When you want it, tell me and I will give you ONE command to paste. Needs your Mac (matte model). Target Nov 4: ready to try; marked blocked until you run it.  Reassigned from Hermes (v2: Hermes optional).",
       "evidence": "",
       "updated": "2026-11-02"
     },
@@ -889,14 +889,14 @@
       "phase": "P9",
       "title": "Cheaper-model bake-off on the real transcript: word fix, story pick, director — current vs 2 cheaper Nous models",
       "owner": "Claude",
-      "status": "todo",
+      "status": "review",
       "depends": [
         "T54",
         "T58"
       ],
       "done_when": "Side-by-side report: quality notes + cost per step",
-      "evidence": "",
-      "notes": "Target Nov 4: bake-off command ready; runs on your Mac with your OK (costs cents). Costs cents. Only uses footage Hesham already recorded.",
+      "evidence": "scripts/reel.py --bakeoff + tests/test_bakeoff.py (pretend AI). Runs the 3 AI steps on a real reel with each model in scratch folders and writes jobs/_bakeoff/<reel>/report.md. Your reel is never touched.",
+      "notes": "Ready 2026-11-02. To run (costs cents, needs your key): python3 scripts/reel.py jobs/<your-reel> --bakeoff \"model-a,model-b\" . Model names: python3 scripts/models_refresh.py lists what Nous offers. Then you pick per step (T60).",
       "updated": "2026-11-02"
     },
     {
@@ -924,7 +924,7 @@
       ],
       "done_when": "Same output with fewer tokens per reel (measured in cost.json)",
       "evidence": "",
-      "notes": "Target Nov 4: safe token cuts; the rest after T60.",
+      "notes": "Waiting for the bake-off result (T59/T60). Finding: ~95% of a reel's AI cost is the footage description (20 pictures, ~14,600 tokens, $0.052 of $0.055). Fewer or smaller pictures is the big saving, but it can hurt face/logo detection, so it must be compared in the bake-off first. Target Nov 4: safe token cuts; the rest after T60.",
       "updated": "2026-11-02"
     },
     {
@@ -1480,6 +1480,12 @@
       "who": "Claude",
       "task": "T23,T36,T46",
       "change": "built → review: own SFX set, energy.py measuring tool, B-roll library"
+    },
+    {
+      "time": "2026-11-02T22:00",
+      "who": "Claude",
+      "task": "T59,T61,T48",
+      "change": "T59 bake-off built → review; T61 finding recorded; T48 blocked on Mac test"
     }
   ]
 }
