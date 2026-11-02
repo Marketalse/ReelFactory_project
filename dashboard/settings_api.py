@@ -113,6 +113,33 @@ def _changed():
     return [l[3:].strip().strip('"') for l in r.stdout.splitlines() if l.strip()]
 
 
+def _names_after(stderr, marker):
+    """File names git lists (one per indented line) after a message containing `marker`."""
+    out, on = [], False
+    for l in stderr.splitlines():
+        if marker in l:
+            on = True; continue
+        if on:
+            if l[:1] in ("\t", " ") and l.strip():
+                out.append(l.strip())
+            else:
+                on = False
+    return out
+
+
+def _move_aside(names):
+    """Move files that are in the way of an update into ~/.reelfactory/update-backup/<time>/ (never deleted). Returns the names moved."""
+    keep = os.path.join(os.path.expanduser("~/.reelfactory/update-backup"), time.strftime("%Y%m%d-%H%M%S"))
+    moved = []
+    for n in names:
+        src = os.path.normpath(os.path.join(ROOT, n))
+        if n.startswith(("/", "..")) or ".." in n.split("/") or not src.startswith(os.path.normpath(ROOT) + os.sep) or not os.path.exists(src):
+            continue
+        dst = os.path.join(keep, n); os.makedirs(os.path.dirname(dst), exist_ok=True)
+        shutil.move(src, dst); moved.append(n)
+    return moved
+
+
 def update(busy):
     """Get the latest version from GitHub. Returns (ok, message, restart_needed).
     Your own task-board changes are kept (three-way merge); any other changed file stops the update and is named."""
@@ -137,11 +164,19 @@ def update(busy):
             return False, "Couldn't read your task board to keep your changes. Send this message to Claude.", False
         _git("checkout", "--", BOARD)
     r = _git("pull", "--ff-only", "--quiet", timeout=120)
+    if r.returncode and "untracked working tree files would be overwritten" in r.stderr:
+        moved = _move_aside(_names_after(r.stderr, "untracked working tree files would be overwritten"))   # kept in a backup, not deleted
+        if moved:
+            r = _git("pull", "--ff-only", "--quiet", timeout=120)
     if r.returncode:
         if mine is not None:
             board_merge.save_file(os.path.join(ROOT, BOARD), mine)       # put your board back exactly as it was
-        if "local changes" in r.stderr or "overwritten" in r.stderr:
-            return False, "Couldn't update: files in the project were changed on this Mac. Send this message to Claude.", False
+        named = _names_after(r.stderr, "local changes to the following files would be overwritten")
+        if named:
+            return False, "Couldn't update: these files were changed on this Mac: " + ", ".join(named[:5]) + ". Send this message to Claude.", False
+        if "local changes" in r.stderr or "overwritten" in r.stderr or "not possible to fast-forward" in r.stderr.lower():
+            first = next((l.strip() for l in r.stderr.splitlines() if l.strip()), "")
+            return False, "Couldn't update: files in the project were changed on this Mac. Send this message to Claude. [" + first[:160] + "]", False
         return False, "Couldn't reach GitHub. Check your internet connection and try again.", False
     if mine is not None:
         theirs = None
