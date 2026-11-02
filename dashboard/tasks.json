@@ -1386,11 +1386,11 @@
    "phase": "P14",
    "title": "P0 · AI creative brief: before editing, you set goal, audience, style, length and the action you want viewers to take (upload page); the story step, the director and the length check all use it",
    "owner": "Claude",
-   "status": "todo",
+   "status": "review",
    "depends": [],
    "done_when": "Pick 'sell' + 'fast' + 'short 30-45 s' on the upload page: the story candidates are 30-45 s and the director brief says so.",
-   "notes": "",
-   "evidence": "",
+   "notes": "Built 2026-11-02. Goal, audience, style, length, action. The end card stays off (brand.json); \"action\" is a hint for the words only.",
+   "evidence": "scripts/lib/creative_brief.py, dashboard/make.html (Creative brief on the upload page), scripts/reel.py, scripts/qa_check.py, scripts/ready_score.py, tests/test_creative_brief.py",
    "updated": "2026-11-02"
   },
   {
@@ -1434,11 +1434,11 @@
    "phase": "P14",
    "title": "Feature map: each of the 12 proposed features marked built / dropped / later, with where it lives",
    "owner": "Claude",
-   "status": "todo",
+   "status": "review",
    "depends": [],
    "done_when": "docs/DECISIONS.md has the table; the board has a task for everything still open.",
-   "notes": "",
-   "evidence": "",
+   "notes": "Done 2026-11-02.",
+   "evidence": "docs/DECISIONS.md (Feature map)",
    "updated": "2026-11-02"
   },
   {

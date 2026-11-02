@@ -134,8 +134,9 @@ def main():
                         open(os.path.join(d, f), "w", encoding="utf-8").write(clean_svg(open(fp, encoding="utf-8", errors="replace").read()))
                     else:
                         shutil.copy(fp, os.path.join(d, f))
-        if os.path.isfile(os.path.join(folder, "brief.md")):
-            shutil.copy(os.path.join(folder, "brief.md"), os.path.join(job, "brief.md"))
+        for bf in ("brief.md", "brief.json"):
+            if os.path.isfile(os.path.join(folder, bf)):
+                shutil.copy(os.path.join(folder, bf), os.path.join(job, bf))
 
     jp = os.path.join(job, "job.json")
     jobd = json.load(open(jp)) if os.path.exists(jp) else {}

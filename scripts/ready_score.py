@@ -60,9 +60,21 @@ def score(job, final=False):
         "Add a short title in the first frame: people decide with the sound off.", (hook or {}).get("values", {}).get("line1", ""))
 
     # 3. Length: 40-60 s keeps most people to the end
-    add("length", "Good length", _band(dur, [(39.9, 10), (60, 15), (75, 11), (90, 7)]) if dur >= 15 else 3, 15,
-        "Shorter keeps more people to the end: aim for 40-60 s (cut the weakest example or the long intro)." if dur > 60 else
-        "Very short reels can feel unfinished: 40-60 s is the sweet spot.", f"{dur:.0f} s")
+    try:                                              # a length chosen in the creative brief counts as the target
+        import sys as _s
+        _s.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+        from lib import creative_brief as _cb
+        _b = _cb.load(job)
+        _lo, _hi = _cb.length_range(_b, (0, 0)) if _b.get("length") else (0, 0)
+    except Exception:                                 # noqa: BLE001
+        _lo = _hi = 0
+    if _hi and dur >= 15:
+        add("length", "Good length", 15 if _lo - 2 <= dur <= _hi + 2 else 8, 15,
+            f"You asked for {_lo}-{_hi} s in the brief: this reel is {dur:.0f} s.", f"{dur:.0f} s (asked {_lo}-{_hi})")
+    else:
+        add("length", "Good length", _band(dur, [(39.9, 10), (60, 15), (75, 11), (90, 7)]) if dur >= 15 else 3, 15,
+            "Shorter keeps more people to the end: aim for 40-60 s (cut the weakest example or the long intro)." if dur > 60 else
+            "Very short reels can feel unfinished: 40-60 s is the sweet spot.", f"{dur:.0f} s")
 
     # 4. Rhythm: something changes on screen every few seconds
     try:

@@ -321,6 +321,18 @@ input[type=password]:focus{border-color:var(--violet)}
           <input type="file" id="cphIn" accept=".jpg,.jpeg,.png,.webp,.heic,.heif,image/jpeg,image/png,image/webp,image/heic" hidden>
         </div>
         <div class="slot wide">
+          <div class="head">Creative brief <span class="badge auto">Optional</span> <button class="tip" type="button" data-tip="Tell the editor what this reel is for before it starts. It picks the story, the pace and the length from this. Leave everything on “Let the editor decide” to work like before.">?</button></div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin-top:8px">
+            <label class="small">Goal<select id="cbGoal" class="btn" style="width:100%;padding:9px 12px"><option value="">Let the editor decide</option><option value="educate">Teach something useful</option><option value="sell">Sell a product or service</option><option value="followers">Win new followers</option><option value="entertain">Entertain and be shared</option></select></label>
+            <label class="small">Style<select id="cbStyle" class="btn" style="width:100%;padding:9px 12px"><option value="">Let the editor decide</option><option value="educational">Educational: clear, calmer</option><option value="fast">Fast: energetic, quick cuts</option><option value="storytelling">Storytelling: emotional</option></select></label>
+            <label class="small">Length<select id="cbLength" class="btn" style="width:100%;padding:9px 12px"><option value="">Standard (40–90 s)</option><option value="short">Short (30–45 s)</option><option value="long">Long (60–90 s)</option></select></label>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;margin-top:10px">
+            <label class="small">Who is it for?<input id="cbAudience" dir="auto" maxlength="120" class="btn" style="width:100%;text-align:start;padding:9px 12px" placeholder="e.g. new store owners"></label>
+            <label class="small">What should viewers do?<input id="cbAction" dir="auto" maxlength="160" class="btn" style="width:100%;text-align:start;padding:9px 12px" placeholder="e.g. comment “store”"></label>
+          </div>
+        </div>
+        <div class="slot wide">
           <div class="head">Notes for the editor <button class="tip" type="button" data-tip="Tell it what matters, in Arabic or English, like you'd brief a human editor. E.g. “Main point: reply to customers fast. Ask people to comment ‘store’.”">?</button></div>
           <textarea id="notes" dir="auto" maxlength="4000" placeholder="e.g. The key message is… / Put the hook on the first sentence / Ask viewers to comment “store”"></textarea>
         </div>
@@ -512,7 +524,9 @@ $("#makeBtn").onclick=async ()=>{
     if(S.logo){ await backend.upload(S.slug, S.session, S.logo, {kind:"logo"}, onBytes); doneBytes+=S.logo.size; }
     if(S.cph){ await backend.upload(S.slug, S.session, S.cph, {kind:"cover_photo"}, onBytes); doneBytes+=S.cph.size; }
     const notes=$("#notes").value.trim();
-    if(notes){ const r=await backend.saveNotes(S.slug, S.session, notes); if(!r.ok) throw new Error(r.message); }
+    const brief={goal:$("#cbGoal").value, style:$("#cbStyle").value, length:$("#cbLength").value, audience:$("#cbAudience").value.trim(), action:$("#cbAction").value.trim()};
+    const hasBrief=Object.values(brief).some(v=>v);
+    if(notes||hasBrief){ const r=await backend.saveNotes(S.slug, S.session, notes, brief); if(!r.ok) throw new Error(r.message); }
     S.uploadFrac=1; drawUpload();
     const r=await backend.start(S.slug);
     if(!r.ok) throw new Error(r.message);
@@ -565,7 +579,7 @@ function backToCompose(){
 $("#newBtn").onclick=()=>{
   if(S.busy && S.uploadFrac<1){ toast("Upload in progress", "Wait for the upload to finish before starting another reel."); return; }
   S.files.forEach(f=>URL.revokeObjectURL(f.url)); S.files=[]; S.logo=null; S.session=rid(); S.busy=false;
-  $("#notes").value=""; $("#reelName").value=""; $("#logoClear").click(); $("#cphClear").click(); $("#makeBtn").disabled=false;
+  $("#notes").value=""; ["#cbGoal","#cbStyle","#cbLength","#cbAudience","#cbAction"].forEach(i=>{ $(i).value=""; }); $("#reelName").value=""; $("#logoClear").click(); $("#cphClear").click(); $("#makeBtn").disabled=false;
   renderFiles(); updateSlug(); backToCompose();
 };
 const UPLOAD_W = 0.08;   // share of the overall bar used by the upload
@@ -875,7 +889,7 @@ const RealBackend = {
     throw last;
   },
   async post(action, body){ try{ const r=await fetch("/api/reels/"+action,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)}); return await r.json(); }catch(e){ return {ok:false,message:"The dashboard didn't answer. Check that Reel Factory.command is running."}; } },
-  saveNotes(slug, session, text){ return this.post("notes",{slug,session,text}); },
+  saveNotes(slug, session, text, brief){ return this.post("notes",{slug,session,text,brief}); },
   coverUpload(job, kind, file){
     return new Promise((resolve, reject)=>{
       const x=new XMLHttpRequest(); x.open("POST","/api/cover");

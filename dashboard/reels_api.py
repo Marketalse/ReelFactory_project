@@ -348,7 +348,7 @@ def check_name(slug, session):
     return True, "ok"
 
 
-def save_notes(slug, session, text):
+def save_notes(slug, session, text, brief=None):
     text = (text or "").strip()
     if len(text) > 4000:
         return False, "notes are too long (max 4000 characters)"
@@ -358,7 +358,9 @@ def save_notes(slug, session, text):
         ok, d = _claim(slug, session)
     if not ok:
         return False, d
-    open(os.path.join(d, "brief.md"), "w", encoding="utf-8").write(text + "\n")
+    sys.path.insert(0, os.path.join(ROOT, "scripts"))
+    from lib import creative_brief
+    creative_brief.save(d, brief, text)                  # notes + the structured creative brief (goal, audience, style, length, action)
     return True, "saved"
 
 

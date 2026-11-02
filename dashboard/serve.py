@@ -260,7 +260,7 @@ class H(SimpleHTTPRequestHandler):
                   "cover_reset": lambda: reels_api.cover_reset(body.get("job")),
                   "performance": lambda: reels_api.save_performance(body.get("job"), body.get("data")),
                   "check": lambda: reels_api.check_name(body.get("slug"), body.get("session")),
-                  "notes": lambda: reels_api.save_notes(body.get("slug"), body.get("session"), body.get("text"))}.get(action)
+                  "notes": lambda: reels_api.save_notes(body.get("slug"), body.get("session"), body.get("text"), body.get("brief"))}.get(action)
             if not fn:
                 return self.send_json(404, {"error": "unknown action"})
             ok, msg = fn()

@@ -72,6 +72,11 @@ def run(job, video, final=False, project=None):
     if abs(d - tl["duration"]) > 0.2:
         err.append(f"length {d:.2f}s but the plan is {tl['duration']:.2f}s")
     lmin, lmax = cfg.RULES["reel_length_s"]["min"], cfg.RULES["reel_length_s"]["max"]
+    try:                                                  # the reel's own creative brief can ask for another length
+        from lib import creative_brief
+        lmin, lmax = creative_brief.length_range(creative_brief.load(job), (lmin, lmax))
+    except Exception:                                     # noqa: BLE001
+        pass
     if not lmin <= d <= lmax:
         warn.append(f"length {d:.1f}s is outside the {lmin}-{lmax}s target")
 
