@@ -408,6 +408,35 @@ def fix_rhythm(plan, words, resolve, max_add=None):
     return plan, tl, err, warn, added
 
 
+OVERLAP_ERR = re.compile(r"m(\d+) \((\w+)\) starts at ([\d.]+)s before m(\d+) \((\w+)\) ends at ([\d.]+)s")
+
+
+def fix_overlaps(plan, resolve, max_fix=12):
+    """FREE, no AI. While the only problem left is 'two moments on screen at once': make the earlier one end a little sooner
+    (if it stays long enough), otherwise drop the later one. Bounded by max_fix. Returns (plan, timeline, errors, warnings, fixed)."""
+    plan = json.loads(json.dumps(plan))
+    fixed = 0
+    tl, err, warn = resolve(plan)
+    while err and fixed < max_fix and all(OVERLAP_ERR.search(x) for x in err):
+        m = OVERLAP_ERR.search(err[0])
+        kb, ka = int(m.group(1)), int(m.group(4))
+        xs, ye = float(m.group(3)), float(m.group(6))
+        moms = plan.get("moments") or []
+        if not (0 <= ka < len(moms) and 0 <= kb < len(moms)):
+            break
+        a = moms[ka]
+        spec = REGISTRY["blocks"][a["block"]]["duration_s"]
+        d = float(a.get("duration") or spec["min"])
+        new_d = round(d - (ye - xs) - 0.1, 2)
+        if new_d >= spec["min"]:
+            a["duration"] = new_d
+        else:
+            moms.pop(kb)
+        fixed += 1
+        tl, err, warn = resolve(plan)
+    return plan, tl, err, warn, fixed
+
+
 def check_rhythm(timeline, cuts):
     d, a, b = longest_still(timeline, cuts)
     lim = cfg.RULES["max_still_hold_s"]

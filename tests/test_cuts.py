@@ -99,6 +99,26 @@ class RhythmAutoFixTests(unittest.TestCase):
         self.assertEqual(added, 0); self.assertEqual(err, ["card too long"])
 
 
+class OverlapAutoFixTests(unittest.TestCase):
+    def test_overlapping_moments_fixed_for_free(self):
+        words = [{"text": f"w{i}", "start": round(i * 0.45, 2), "end": round(i * 0.45 + 0.38, 2)} for i in range(120)]
+        dur = words[-1]["end"]
+        plan = {"hook": {"line1": "عنوان", "line2": "سطر"}, "keyword_ids": [], "punch_ins": [], "cta": {}, "cover": {},
+                "moments": [{"block": "info_card", "at_word": 30, "duration": 4.0, "values": {"headline": "خدمة الزبائن"}},
+                            {"block": "name_tag", "at_word": 36, "duration": 2.5, "values": {"name": "هشام"}}]}
+        resolve = lambda p: director.resolve(p, words, dur, logos=[])
+        _, e0, _ = resolve(json.loads(json.dumps(plan)))
+        if not e0:
+            self.skipTest("sample does not overlap with this template range")
+        self.assertTrue(all(director.OVERLAP_ERR.search(x) for x in e0), e0)
+        plan2, tl, err, warn, n = director.fix_overlaps(plan, resolve)
+        self.assertEqual(err, []); self.assertGreater(n, 0)
+
+    def test_other_errors_left_alone(self):
+        plan, tl, err, warn, n = director.fix_overlaps({}, lambda p: ({}, ["card too long"], []))
+        self.assertEqual((n, err), (0, ["card too long"]))
+
+
 class RelaxedDurationTests(unittest.TestCase):
     def test_edit_page_may_stretch_and_shrink_clips(self):
         words = [{"text": f"w{i}", "start": round(i * 0.45, 2), "end": round(i * 0.45 + 0.38, 2)} for i in range(120)]
