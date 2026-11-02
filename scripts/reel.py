@@ -21,7 +21,7 @@ import argparse, base64, glob, json, os, re, shutil, subprocess, sys, time, urll
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from lib import config as cfg   # noqa: E402  (all settings live in config/*.json)
-from lib import transcript as tr, edl as edlmod, director, speech_intel   # noqa: E402
+from lib import transcript as tr, edl as edlmod, director, speech_intel, editorial   # noqa: E402
 from lib.hfbuild import BuildError   # noqa: E402
 
 ROOT = cfg.ROOT
@@ -295,7 +295,8 @@ def st_shotlog(c):
     jsave(out, log); return f"{len(log)} rows"
 
 SELECTS_PROMPT = """You are the story editor of an Iraqi short-form (Reels) channel run by Hesham, a marketer-entrepreneur in Erbil. From this transcript of ONE raw take, propose exactly 3 candidate stories, each a continuous source range of {lmin}-{lmax} seconds that could stand alone as a reel. Each must start on a strong spoken hook taken from the speaker's OWN words, hold one idea, and end on a natural close. Prefer ranges that begin/end at pauses. Do not invent content.
-Return ONLY JSON: {{"selects":[{{"id":"A","range":[start_s,end_s],"label":"<=12 words English","hook_line":"verbatim Arabic from transcript","why":"<=25 words","score":1-10}},...]}} sorted best first.
+First state the main message of the take and who it is for. For each candidate also give: the style that fits it (educational, fast or storytelling), honest 1-10 scores (relevance to the main message, clarity, delivery, novelty, narrative fit: do not give everything 8-9), and three alternative opening hooks (curiosity, problem, direct value). Every hook line must be copied word for word from the transcript, inside or just before that candidate's range; never rephrase or invent.
+Return ONLY JSON: {{"main_message":"<=20 words English","audience":"<=10 words English","selects":[{{"id":"A","range":[start_s,end_s],"label":"<=12 words English","hook_line":"verbatim Arabic from transcript","why":"<=25 words","style":"educational|fast|storytelling","scores":{{"relevance":1-10,"clarity":1-10,"delivery":1-10,"novelty":1-10,"fit":1-10}},"hooks":[{{"type":"curiosity","line":"verbatim Arabic"}},{{"type":"problem","line":"verbatim Arabic"}},{{"type":"direct","line":"verbatim Arabic"}}],"score":1-10}},...]}} sorted best first.
 Take length: {dur:.1f}s.
 TRANSCRIPT (time_start-time_end text):
 {lines}"""
@@ -318,6 +319,14 @@ def st_selects(c):
     if not os.path.exists(sp):
         dur = proxy_duration(c.job)
         res = parse_json(c.llm("selects", M_SEL, [{"type": "text", "text": SELECTS_PROMPT.format(dur=dur, lines=lines, lmin=LEN_MIN, lmax=LEN_MAX)}], 5000, c.a.effort))
+        try:                                          # score with the formula, check hooks are his own words (free)
+            w8 = editorial.weights(cfg.RULES); si = jload(os.path.join(c.job, "speech_intel.json")); tw = jload(os.path.join(c.job, "transcript.json"), [])
+            for x in res.get("selects", []):
+                editorial.score_select(x, w8, si)
+                x["hook_check"] = editorial.check_hooks(x, tw)
+            res["selects"] = sorted(res.get("selects", []), key=lambda x: -(x.get("score") or 0))
+        except Exception as ex:                       # noqa: BLE001 - the extras never block the story pick
+            print("   story scoring skipped:", ex)
         jsave(sp, res)
     sel = jload(sp)["selects"]
     pick = c.a.select; from_job = None
@@ -374,6 +383,11 @@ def st_plan(c):
     brief = open(os.path.join(c.job, "brief.md"), encoding="utf-8").read() if os.path.exists(os.path.join(c.job, "brief.md")) else ""
     job = jload(os.path.join(c.job, "job.json"), {})
     feedback = c.a.fix or ""
+    ch = jload(os.path.join(c.job, "chosen_select.json"), {}) or {}; sl = jload(os.path.join(c.job, "selects.json"), {}) or {}
+    if sl.get("main_message"):                      # the story step's findings guide the director (his own words only)
+        hk = "; ".join(f"{h.get('type')}: {h.get('line')}" for h in (ch.get("hooks") or [])[:3] if h.get("line"))
+        brief += (f"\n\nEDITORIAL BRIEF (from the story step): main message: {sl['main_message']}. Audience: {sl.get('audience', '')}. "
+                  f"Style: {ch.get('style', '')}." + (f" Candidate opening lines (his own words): {hk}." if hk else ""))
     prompt = director.build_prompt(words, e["duration"], brief, job_logos(c), feedback, director.taste())
     if feedback and os.path.exists(os.path.join(c.job, "scene_plan.json")):
         prompt += "\n\nPREVIOUS PLAN:\n" + json.dumps(jload(os.path.join(c.job, "scene_plan.json")), ensure_ascii=False)
@@ -414,6 +428,12 @@ def st_plan(c):
     tl["face_cy"] = round(faces[len(faces) // 2], 3) if faces else 0.36
     tl["director"] = attempts[-1][0]; tl["feedback"] = feedback
     jsave(out, tl)
+    try:                                            # editable decisions + rationale + confidence flags (free)
+        ed = editorial.build(c.job, cfg.RULES, LEN_MIN, LEN_MAX)
+        if ed:
+            for line in editorial.summary_lines(ed): print("   editorial:", line)
+    except Exception as ex:                         # noqa: BLE001
+        print("   editorial notes skipped:", ex)
     n = sum(1 for s in tl["scenes"] if s["block"] not in ("hook_two_tone", "cta_card"))
     return f"{n} moments, {len(tl['punch_ins'])} punch-ins, {len(tl['keyword_ids'])} keywords ({len(warn)} warnings)"
 
@@ -457,6 +477,9 @@ def st_report(c):
          "| stage | model | in tok | out tok | cost | s |", "|---|---|---|---|---|---|"]
     for x in cost:
         L.append(f"| {x['stage']} | {x['model'].split('/')[1]} | {x['in']} | {x['out']} | ${x['cost']:.4f} | {x['seconds']} |")
+    ed = jload(os.path.join(c.job, "editorial.json"), {})
+    if ed:
+        L += ["", "Story and cuts (why, and what to check):"] + [f"- {x}" for x in editorial.summary_lines(ed)]
     si = jload(os.path.join(c.job, "speech_intel.json"), {})
     if si:
         L += ["", "Speech (rough guides, not proof):"] + [f"- {x}" for x in speech_intel.summary_lines(si)]
