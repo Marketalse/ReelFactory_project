@@ -1357,11 +1357,11 @@
    "phase": "P13",
    "title": "Quick re-render after small edits: keep already-rendered pieces and redo only the parts that changed (captions, titles, effects)",
    "owner": "Claude",
-   "status": "blocked",
+   "status": "review",
    "depends": [],
    "done_when": "Changing one caption re-renders in a fraction of the full time. First check whether HyperFrames allows rendering in pieces; if not, tell you before building.",
-   "notes": "Investigated 2026-11-02: possible (--start/--end works, pieces join exactly) but ~35 s start-up per piece and ~1 frame difference at card edges. Needs Hesham's yes/no.",
-   "evidence": "docs/DECISIONS.md (Stage 6 entry: measured on a real render)",
+   "notes": "Built 2026-11-02 (Hesham said yes). Drafts only; final stays a whole render. Real test: 1 of 4 pieces re-rendered, 44 s instead of 64 s. Falls back to a whole render on any doubt.",
+   "evidence": "scripts/lib/segcache.py, scripts/render.py (draft_render), tests/test_segcache.py (10 tests) + a real render test",
    "updated": "2026-11-02"
   },
   {

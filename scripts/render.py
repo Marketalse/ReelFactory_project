@@ -10,7 +10,7 @@ import argparse, glob, json, os, re, shutil, subprocess, sys, time
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from lib import config as cfg       # noqa: E402
-from lib import hfbuild, render_guard, versions   # noqa: E402
+from lib import hfbuild, render_guard, versions, segcache   # noqa: E402
 import qa_check                     # noqa: E402
 
 HF = ["npx", "--yes", f"hyperframes@{cfg.PROJECT.get('tools', {}).get('hyperframes', '0.8.226')}"]
@@ -77,14 +77,14 @@ def snapshot(project, total):
     return m[-1] if m else None
 
 
-def render(project, out_path, quality):
+def render(project, out_path, quality, extra=()):
     """One render. A temporary failure (browser crash, timeout...) is retried ONCE; a full disk or a broken plan never is."""
-    res, _ = render_guard.retry_once(lambda: _render_once(project, out_path, quality), RenderError)
+    res, _ = render_guard.retry_once(lambda: _render_once(project, out_path, quality, extra), RenderError)
     return res
 
 
-def _render_once(project, out_path, quality):
-    code, out, err = run(HF + ["render", "--quality", quality, "-o", out_path], project, 3600)
+def _render_once(project, out_path, quality, extra=()):
+    code, out, err = run(HF + ["render", "--quality", quality] + list(extra) + ["-o", out_path], project, 3600)
     if code or not os.path.exists(out_path) or os.path.getsize(out_path) == 0:
         log = os.path.join(os.path.dirname(os.path.abspath(out_path)), "render_error.log")
         try:
@@ -241,6 +241,58 @@ def make_cover(job):
         return {"error": str(e)[:300]}
 
 
+def draft_render(job, project, tl, say=print):
+    """The draft picture+sound (review/_draft_full.mp4). First time: one whole render (keyframe every 2 s) cut into 6 s pieces
+    in jobs/<job>/render_cache. Later: only the pieces whose content changed are rendered again, the rest are reused (T98).
+    Any doubt -> a whole render. Returns (path, stats)."""
+    full = os.path.join(job, "review", "_draft_full.mp4")
+    cache = os.path.join(job, "render_cache")
+    dur = tl["duration"]
+    stats = {"pieces": 0, "rendered": 0, "reused": 0, "mode": "whole"}
+    try:
+        pieces = segcache.grid(dur)
+        recipe = f"hyperframes-{cfg.PROJECT.get('tools', {}).get('hyperframes', '0.8.226')}|draft|30fps"
+        keys = segcache.piece_keys(project, pieces, recipe)
+        got = segcache.have(cache, keys)
+    except Exception as ex:                                        # noqa: BLE001 - the cache is a speed-up only
+        say(f"   quick re-render not used ({ex}); making the whole draft")
+        pieces = None
+    if pieces:
+        stats["pieces"] = len(pieces)
+        missing = [i for i, g in enumerate(got) if not g]
+        seeded = os.path.exists(os.path.join(cache, "pieces.json"))
+        if seeded and len(missing) < len(pieces) * 0.6 or (seeded and not missing):
+            try:
+                for i in missing:
+                    a, b = pieces[i]
+                    last = i == len(pieces) - 1
+                    out = os.path.join(cache, keys[i] + ".mp4")
+                    render(project, out + ".part.mp4", "draft", ["--keyframe-interval", "2", "--start", str(a)] + ([] if last else ["--end", str(b)]))
+                    os.replace(out + ".part.mp4", out)
+                err = segcache.join([os.path.join(cache, k + ".mp4") for k in keys], [b - a for a, b in pieces], full)
+                if err:
+                    raise RenderError(err)
+                verify(full, dur)
+                segcache.save_index(cache, pieces, keys, dur, recipe)
+                stats.update(mode="pieces", rendered=len(missing), reused=len(pieces) - len(missing))
+                say(f"   quick re-render: {len(missing)} of {len(pieces)} pieces made again, {len(pieces) - len(missing)} reused")
+                return full, stats
+            except (RenderError, OSError) as ex:
+                say(f"   quick re-render failed ({str(ex)[:120]}); making the whole draft instead")
+    render(project, full, "draft", ["--keyframe-interval", "2"])
+    if pieces:
+        try:
+            bad = segcache.cut_pieces(full, pieces, keys, cache)
+            if bad:
+                say("   piece cache not saved: " + bad[0])
+            else:
+                segcache.save_index(cache, pieces, keys, dur, recipe)
+                stats.update(mode="whole+seeded", rendered=len(pieces))
+        except Exception as ex:                                    # noqa: BLE001
+            say(f"   piece cache not saved ({ex})")
+    return full, stats
+
+
 def save_qa(job, qa, final=False):
     json.dump(qa, open(os.path.join(job, "qa_final.json" if final else "qa.json"), "w"), indent=1, ensure_ascii=False)
 
@@ -280,11 +332,11 @@ def draft(job):
     sheet = snapshot(project, tl["duration"])
     os.makedirs(os.path.join(job, "review"), exist_ok=True)
     t0 = time.time()
-    full = render(project, os.path.join(job, "review", "_draft_full.mp4"), "draft")
+    full, rstats = draft_render(job, project, tl)
     verify(full, tl["duration"])
     even_sound(full)
     qa = qa_check.run(job, full, final=False, project=project)
-    info = extra_qa(job, full, qa, tl)
+    info = dict(extra_qa(job, full, qa, tl), render=rstats)
     small = os.path.join(job, "review", "draft_540p.mp4")
     r = subprocess.run(["ffmpeg", "-hide_banner", "-loglevel", "error", "-y", "-i", full, "-vf", "scale=540:-2",
                         "-c:v", "libx264", "-crf", "28", "-preset", "veryfast", "-c:a", "aac", "-b:a", "128k", small], capture_output=True, text=True)
