@@ -1,0 +1,34 @@
+<html data-composition-variables='[{"id":"motion","type":"string","label":"Motion file (checked Lottie)","default":""},{"id":"label","type":"string","label":"Short label (optional)","default":"","maxLength":24}]'>
+<template>
+<style>
+#root{position:absolute;inset:0;pointer-events:none}
+#__ID__-card{position:absolute;left:var(--text-x);width:var(--text-w);top:440px;height:520px;border-radius:44px;background:rgba(36,40,52,.86);border:2px solid rgba(255,255,255,.12);box-shadow:0 30px 80px rgba(0,0,0,.45);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:26px;direction:rtl;font-family:var(--font)}
+#__ID__-tile{width:340px;height:340px;border-radius:40px;background:rgba(255,255,255,.95);display:flex;align-items:center;justify-content:center;overflow:hidden}
+#__ID__-anim{width:260px;height:260px}
+#__ID__-label{color:var(--text);font-size:46px;font-weight:600;max-width:700px;text-align:center;white-space:nowrap}
+</style>
+<div id="root" data-composition-id="__ID__" data-width="1080" data-height="1920">
+  <div id="__ID__-card" class="clip" data-start="0" data-duration="__DUR__">
+    <div id="__ID__-tile"><div id="__ID__-anim"></div></div>
+    <div id="__ID__-label" data-var-text="label"></div>
+  </div>
+</div>
+<script>
+const tl = gsap.timeline({ paused: true });
+const D = __DUR__;
+const DATA = __LOTTIE_JSON__;
+const anim = lottie.loadAnimation({ container: document.querySelector("#__ID__-anim"), renderer: "svg", loop: false, autoplay: false, animationData: DATA,
+  rendererSettings: { preserveAspectRatio: "xMidYMid meet" } });
+const frames = Math.max(1, (DATA.op || 1) - (DATA.ip || 0));
+const secs = Math.max(0.2, frames / (DATA.fr || 30));
+const clock = { t: 0 };
+// the picture is a pure function of the time: frame = (time inside the card, looped) -- no timers, so every render is identical
+function show(t) { anim.goToAndStop(Math.min(frames - 0.01, ((Math.max(0, t - 0.25) % secs) / secs) * frames), true); }
+show(0);
+tl.fromTo("#__ID__-card", { y: -40, opacity: 0, scale: 0.92 }, { y: 0, opacity: 1, scale: 1, duration: 0.4, ease: "back.out(1.7)" }, 0);
+tl.to(clock, { t: D, duration: D, ease: "none", onUpdate() { show(clock.t); } }, 0);
+tl.to("#__ID__-card", { opacity: 0, duration: 0.25, ease: "power2.in" }, D - 0.28);
+window.__timelines["__ID__"] = tl;
+</script>
+</template>
+</html>

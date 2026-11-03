@@ -724,6 +724,37 @@
     "min": 2,
     "max": 6
    }
+  },
+  "motion_card": {
+   "kind": "scene",
+   "label": "Motion card (one checked Lottie animation)",
+   "file": "motion_card.html",
+   "layer": 25,
+   "purpose": "A short animated icon (check mark, bell, cart...) when he says the thing it shows. Only files that passed the motion check (library/assets/motion/).",
+   "inputs": {
+    "motion": {
+     "type": "string",
+     "required": true,
+     "maxLength": 80,
+     "help": "file name in library/assets/motion/ (must have passed the motion check)"
+    },
+    "label": {
+     "type": "string",
+     "maxLength": 24,
+     "default": "",
+     "help": "optional short label, his own words"
+    }
+   },
+   "duration_s": {
+    "min": 1.5,
+    "max": 4.0
+   },
+   "rules": [
+    "motion must be a checked file in library/assets/motion/"
+   ],
+   "sfx": {
+    "in": "pop"
+   }
   }
  }
 }

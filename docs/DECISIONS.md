@@ -246,3 +246,9 @@ Verified 2026-11-03 on Hesham's Mac (screenshot): `install_assets.install(<attac
 - `scripts/asset_batch.py` now also checks `.json`/`.lottie` with `lib/motion_check.py`; passes go to `library/assets/motion/` (+ `.placement.json`), icons stay in `ok/`. Result on the pack: 297 pass, 2 refused (they contain JavaScript expressions: alerts/error.json, social-media/twitter.json). Only `index.json` is skipped by name.
 - `make_asset_pack.py --motion <folder>` adds the checked files + licence; `install_assets.py` re-checks them on the new computer. A motion folder without licence text is left out.
 - Not done yet: AI tags for motion files, the player block (Lottie in the video), director use. No paid AI used.
+
+## 2026-11-03 — Motion card block (Lottie player)
+- New block `motion_card` (templates/blocks/motion_card.html, registry entry, 1.5–4 s): a checked Lottie animation on a light tile inside a card in the safe zone, plus an optional short label. Player: lottie-web 5.13.0 "light" build (MIT, vendored in templates/vendor/, SVG only, no JavaScript expressions), driven by the timeline so every render is identical.
+- Safety: `hfbuild.lottie_json` accepts only a bare file name from library/assets/motion/ and re-runs the motion check at build time; the animation is embedded in the scene file (no network, no file access). Tests: tests/test_motion_card.py.
+- Proven with a still render (shopping-bag animation, Arabic label, test video), pixels inside the tile change between frames. Not yet proven on a real reel.
+- NOT done: the Director (AI) cannot pick motion files yet (it is not in DIRECTOR_BLOCKS); AI tags for motion files. Both need Hesham's go (small paid AI cost for tags).
