@@ -607,10 +607,20 @@ def st_plan(c):
     for model in [m for m in (M_DIR, M_DIR_FALLBACK) if m] if not c.a.no_repair else []:
         if not err: break
         print(f"   plan errors -> repair with {model.split('/')[1]}:", *err[:8], sep="\n     - ")
-        plan = parse_json(c.llm("repair", model, [{"type": "text", "text":
-            "Fix this reel plan JSON so every error below is solved. Change only what is needed, keep the schema, "
-            "return ONLY the full JSON.\n\nERRORS:\n" + "\n".join(err) + "\n\nPLAN:\n" + json.dumps(plan, ensure_ascii=False)
-            + "\n\nTRANSCRIPT:\n" + director.numbered_transcript(words)}], 9000, eff(c, "repair")))
+        ask = ("Fix this reel plan JSON so every error below is solved. Change only what is needed, keep the schema, "
+               "return ONLY the full JSON.\n\nERRORS:\n" + "\n".join(err) + "\n\nPLAN:\n" + json.dumps(plan, ensure_ascii=False)
+               + "\n\nTRANSCRIPT:\n" + director.numbered_transcript(words))
+        fixed = None
+        for tryno in (1, 2):                    # an answer that is a sentence instead of JSON is asked for once more (strictly), then the next model is tried
+            try:
+                fixed = parse_json(c.llm("repair", model, [{"type": "text", "text": ask + ("" if tryno == 1 else
+                    "\n\nYOUR LAST ANSWER WAS NOT JSON. Reply with the JSON object only: no sentence before or after it, no explanation.")}], 9000, eff(c, "repair")))
+                break
+            except Stop as stop_err:                # (not "e": the plan resolver below uses an outer variable called e)
+                if "not readable JSON" not in str(stop_err): raise
+                print("   repair answer was not JSON" + (": asking once more" if tryno == 1 else ": trying the next model"))
+        if fixed is None: continue
+        plan = fixed
         attempts.append((model, plan)); tl, err, warn = resolve(plan)
         plan, tl, err, warn = free_fixes(plan, tl, err, warn)
     jsave(os.path.join(c.job, "scene_plan.json"), plan)
