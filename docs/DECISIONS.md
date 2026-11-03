@@ -267,3 +267,6 @@ Verified 2026-11-03 on Hesham's Mac (screenshot): `install_assets.install(<attac
 
 ## 2026-11-03 — Fix: an AI repair answer in words no longer stops the reel
 - Found on Hesham's real reel: "the AI's answer was not readable JSON ... it began: 'The reel ends at 43.3s ...'". The repair step now asks once more with a strict "JSON only" reminder, then tries the fallback model; it stops only if both fail. The audit's mock AI was too polite (never overshot, never answered in words): added a "nasty AI" mode (pre_uat_report/tools/e2e.py NASTY, `suite.py nasty`), result in pre_uat_report/regression_results.json (2/2 PASS). It also caught a bug in my own first version of the fix (a variable name reused), fixed before release.
+
+## 2026-11-03 — Fix: a card with no room left at the end is dropped, not an error
+- Hesham's real reel stopped three times on "moments[n] ends at 43.7s, after the reel ends (43.3s)": the AI keeps placing a card in the last second or two. Rule now: shorten if the shortest card still fits, otherwise DROP the card with a warning (the Edit page keeps the strict error). Tests updated (test_p3) and added (test_motion_director).
