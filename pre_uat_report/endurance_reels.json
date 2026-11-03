@@ -1,0 +1,31 @@
+{
+ "times_s": [
+  160.5,
+  148.7,
+  147.4,
+  131.6,
+  148.8
+ ],
+ "disk": [
+  {
+   "job_mb": 211,
+   "jobs_total_mb": 211
+  },
+  {
+   "job_mb": 211,
+   "jobs_total_mb": 422
+  },
+  {
+   "job_mb": 211,
+   "jobs_total_mb": 633
+  },
+  {
+   "job_mb": 210,
+   "jobs_total_mb": 844
+  },
+  {
+   "job_mb": 211,
+   "jobs_total_mb": 1055
+  }
+ ]
+}

@@ -1,0 +1,81 @@
+{
+ "environment": {
+  "cpus": 4,
+  "python": "3.13.18"
+ },
+ "startup_seconds": [
+  0.75,
+  0.59,
+  0.46,
+  0.53,
+  0.4
+ ],
+ "idle": {
+  "rss_mb": 24,
+  "threads": 3,
+  "fds": 4
+ },
+ "endpoints": {
+  "/api/health": {
+   "n": 300,
+   "errors": 0,
+   "p50_ms": 148.1,
+   "p95_ms": 177.9,
+   "p99_ms": 200.3,
+   "mean_ms": 150.7
+  },
+  "/api/progress": {
+   "n": 300,
+   "errors": 0,
+   "p50_ms": 0.6,
+   "p95_ms": 0.7,
+   "p99_ms": 0.8,
+   "mean_ms": 0.6
+  },
+  "/api/reels": {
+   "n": 300,
+   "errors": 0,
+   "p50_ms": 0.6,
+   "p95_ms": 0.8,
+   "p99_ms": 2.0,
+   "mean_ms": 0.6
+  },
+  "/api/tasks": {
+   "n": 300,
+   "errors": 0,
+   "p50_ms": 1.8,
+   "p95_ms": 2.6,
+   "p99_ms": 3.0,
+   "mean_ms": 1.9
+  },
+  "/api/spend": {
+   "n": 300,
+   "errors": 0,
+   "p50_ms": 0.7,
+   "p95_ms": 0.8,
+   "p99_ms": 1.2,
+   "mean_ms": 0.7
+  },
+  "/api/version": {
+   "n": 300,
+   "errors": 0,
+   "p50_ms": 3.7,
+   "p95_ms": 4.0,
+   "p99_ms": 4.9,
+   "mean_ms": 3.8
+  },
+  "/make.html": {
+   "n": 300,
+   "errors": 0,
+   "p50_ms": 0.7,
+   "p95_ms": 0.9,
+   "p99_ms": 1.9,
+   "mean_ms": 0.7
+  }
+ },
+ "after": {
+  "rss_mb": 25,
+  "threads": 3,
+  "fds": 4
+ }
+}

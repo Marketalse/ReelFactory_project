@@ -1,0 +1,50 @@
+[
+ {
+  "group": "endurance",
+  "name": "E1 sequential reel 1 of 5",
+  "verdict": "PASS",
+  "detail": "160.5 s; job 211 MB; leftover helper processes 12"
+ },
+ {
+  "group": "endurance",
+  "name": "E2 sequential reel 2 of 5",
+  "verdict": "PASS",
+  "detail": "148.7 s; job 211 MB; leftover helper processes 7"
+ },
+ {
+  "group": "endurance",
+  "name": "E3 sequential reel 3 of 5",
+  "verdict": "PASS",
+  "detail": "147.4 s; job 211 MB; leftover helper processes 7"
+ },
+ {
+  "group": "endurance",
+  "name": "E4 sequential reel 4 of 5",
+  "verdict": "PASS",
+  "detail": "131.6 s; job 210 MB; leftover helper processes 7"
+ },
+ {
+  "group": "endurance",
+  "name": "E5 sequential reel 5 of 5",
+  "verdict": "PASS",
+  "detail": "148.8 s; job 211 MB; leftover helper processes 7"
+ },
+ {
+  "group": "endurance",
+  "name": "E6 render time does not drift upward over 5 reels",
+  "verdict": "PASS",
+  "detail": "first 160.5 s, last 148.8 s, change -7.3%"
+ },
+ {
+  "group": "endurance",
+  "name": "E7 no temporary files left behind in finished reels",
+  "verdict": "PASS",
+  "detail": "[]"
+ },
+ {
+  "group": "endurance",
+  "name": "E8 flaky AI service (every 3rd call fails): the reel still finishes by resuming",
+  "verdict": "PASS",
+  "detail": "1 runs needed"
+ }
+]

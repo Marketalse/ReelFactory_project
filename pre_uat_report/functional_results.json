@@ -1,0 +1,82 @@
+[
+ {
+  "group": "functional",
+  "name": "F1 full pipeline to draft (Format Pack reel, mock AI)",
+  "verdict": "PASS",
+  "detail": "AI looked at 8 stills): 7.0/10 - readable 8.0, layout 7.0, consistency 8.0, variety 5.0 |      mock verdict |      3.0s: mock: plain frame | critic      ok    0.8s  +$0.0010  7.0/10, 1 issues | report      ok    0.0s  +$0.0000  report.md |  | GATE 2: watch /tmp/rf-e2e-a6rip84u/jobs/2026-11-03-f1-pack/review/draft_540p.mp4 |   approve:  python3 scripts/reel.py jobs/2026-11-03-f1-pack --approve |   or fix:   python3 scripts/reel.py jobs/2026-11-03-f1-pack --fix \"what to change\" | TOTAL this job $0.0060 | wall 176s | ",
+  "seconds": 176.2,
+  "rss_mb": 400,
+  "state": {
+   "draft": true,
+   "critic": true,
+   "outline": true,
+   "timeline": true,
+   "report": true
+  }
+ },
+ {
+  "group": "functional",
+  "name": "F1b compile_info says Format Pack used",
+  "verdict": "PASS",
+  "detail": "{'platform': 'instagram', 'final': False, 'face_cuts': [{'id': 'seg0', 't_in': 0.0, 't_out': 1.46, 'src_in': 0.32, 'scale': 1.0, 'cy': 0.29, 'y': 0}, {'id': 'seg1', 't_in': 1.46, 't_out': 3.93, 'src_in': 2.52, 'scale': 1.08, 'cy': 0.29, 'y': 0}, {'id': 'seg2', 't_in': 3.93, 't_out': 5.53, 'src_in': 4.99, 'scale': 1.2, 'cy': 0.29, 'y': 0}, {'id': 'seg3', 't_in': 5.53, 't_out': 6.29, 'src_in': 6.59, 'scale': 1.08, 'cy': 0.29, 'y': 0}, {'id': 'seg4', 't_in': 6.29, 't_out': 7.89, 'src_in': 7.35, 'scale': 1.25, 'cy': 0.29, 'y': 0}, {'id': 'seg5', 't_in': 7.89, 't_out': 10.17, 'src_in': 8.95, 'scale"
+ },
+ {
+  "group": "functional",
+  "name": "F1c draft QA result present",
+  "verdict": "PASS",
+  "detail": "{\"video\": \"review/_draft_full.mp4\", \"final\": false, \"errors\": [], \"warnings\": [], \"metrics\": {\"duration\": 54.1, \"black\": [], \"frozen\": [], \"lufs\": -14.0, \"true_peak\": -11.0, \"caption_words\": 136, \"spoken_words_shown\": 136, \"sync\": {\"onsets_matched\": 0, \"onsets\": 0}}}"
+ },
+ {
+  "group": "functional",
+  "name": "F1d cost.json written for every AI call",
+  "verdict": "PASS",
+  "detail": "6 calls, $0.0060"
+ },
+ {
+  "group": "functional",
+  "name": "F9 re-running a finished reel makes no AI call",
+  "verdict": "PASS",
+  "detail": "extra calls 0; raft_540p.mp4 |   approve:  python3 scripts/reel.py jobs/2026-11-03-f1-pack --approve |   or fix:   python3 scripts/reel.py jobs/2026-11-03-f1-pack --fix \"what to change\" | TOTAL this job $0.0060 | wall 0s | "
+ },
+ {
+  "group": "functional",
+  "name": "F2 'fix' comment re-plans and re-renders the draft",
+  "verdict": "PASS",
+  "detail": "k    0.0s  +$0.0000  report.md |  | GATE 2: watch /tmp/rf-e2e-a6rip84u/jobs/2026-11-03-f1-pack/review/draft_540p.mp4 |   approve:  python3 scripts/reel.py jobs/2026-11-03-f1-pack --approve |   or fix:   python3 scripts/reel.py jobs/2026-11-03-f1-pack --fix \"what to change\" | TOTAL this job $0.0090 | wall 44s | ; AI calls +3",
+  "seconds": 43.8
+ },
+ {
+  "group": "functional",
+  "name": "F3 approve -> final video(s) + cover",
+  "verdict": "PASS",
+  "detail": "1 final file(s);  | ===== run 2026-11-03 11:56:24 | /tmp/rf-e2e-a6rip84u/jobs/2026-11-03-f1-pack --approve | JOB 2026-11-03-f1-pack | budget $1.50 | spent so far $0.0090 |    cover not made: 't' | FINAL: |   /tmp/rf-e2e-a6rip84u/jobs/2026-11-03-f1-pack/final/reel_v1.mp4 | TOTAL this job $0.0090 | wall 150s | ",
+  "seconds": 150.3,
+  "rss_mb": 400
+ },
+ {
+  "group": "functional",
+  "name": "F3b final video is 1080x1920 with audio",
+  "verdict": "PASS",
+  "detail": "{     \"programs\": [      ],     \"streams\": [         {             \"codec_type\": \"video\",             \"width\": 1080,             \"height\": 1920,             \"duration\": \"54.066667\"         },         {             \"codec_type\": \"audio\",             \"duration\": \"54.100000\"         }     ] } "
+ },
+ {
+  "group": "functional",
+  "name": "F3c loudness near the -14 LUFS target",
+  "verdict": "PASS",
+  "detail": "['-14.0']"
+ },
+ {
+  "group": "functional",
+  "name": "F4 silent clip (no audio track)",
+  "verdict": "PASS",
+  "detail": "ayout 7.0, consistency 8.0, variety 5.0 |      mock verdict |      3.0s: mock: plain frame | critic      ok    0.8s  +$0.0010  7.0/10, 1 issues | report      ok    0.0s  +$0.0000  report.md |  | GATE 2: watch /tmp/rf-e2e-a6rip84u/jobs/2026-11-03-f4-silent-clip-no-audio/review/draft_540p.mp4 |   approve:  python3 scripts/reel.py jobs/2026-11-03-f4-silent-clip-no-audio --approve |   or fix:   python3 scripts/reel.py jobs/2026-11-03-f4-silent-clip-no-audio --fix \"what to change\" | TOTAL this job $0.0070 | wall 119s | ",
+  "seconds": 118.9
+ },
+ {
+  "group": "functional",
+  "name": "F4 4K portrait",
+  "verdict": "PASS",
+  "detail": "s): 7.0/10 - readable 8.0, layout 7.0, consistency 8.0, variety 5.0 |      mock verdict |      3.0s: mock: plain frame | critic      ok    0.8s  +$0.0010  7.0/10, 1 issues | report      ok    0.0s  +$0.0000  report.md |  | GATE 2: watch /tmp/rf-e2e-a6rip84u/jobs/2026-11-03-f4-4k-portrait/review/draft_540p.mp4 |   approve:  python3 scripts/reel.py jobs/2026-11-03-f4-4k-portrait --approve |   or fix:   python3 scripts/reel.py jobs/2026-11-03-f4-4k-portrait --fix \"what to change\" | TOTAL this job $0.0060 | wall 87s | ",
+  "seconds": 87.2
+ }
+]

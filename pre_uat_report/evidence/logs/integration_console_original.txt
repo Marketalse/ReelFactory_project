@@ -1,0 +1,17 @@
+[PASS   ] integration: I1 AI answers 'err500'
+[PASS   ] integration: I1b resume after 'err500' once the AI is back
+[PASS   ] integration: I1 AI answers 'err429'
+[PASS   ] integration: I1b resume after 'err429' once the AI is back
+[PASS   ] integration: I1 AI answers 'err401'
+[PASS   ] integration: I1b resume after 'err401' once the AI is back
+[PASS   ] integration: I1 AI answers 'garbage'
+[PASS   ] integration: I1b resume after 'garbage' once the AI is back
+[PASS   ] integration: I1 AI answers 'empty'
+[PASS   ] integration: I1b resume after 'empty' once the AI is back
+[PASS   ] integration: I1 AI answers 'truncated'
+[PASS   ] integration: I1b resume after 'truncated' once the AI is back
+[PASS   ] integration: I1 AI answers 'drop'
+[PASS   ] integration: I1b resume after 'drop' once the AI is back
+[PASS   ] integration: I2 per-reel budget guard stops before the cap is passed
+[PASS   ] integration: I3 reel killed mid-render resumes and finishes
+[PASS   ] integration: I4 two reel.py runs on the same reel at once

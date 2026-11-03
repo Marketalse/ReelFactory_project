@@ -22,7 +22,10 @@ def ff(args):
 def duration(path):
     out = subprocess.run(["ffprobe", "-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0", path],
                          capture_output=True, text=True).stdout.strip()
-    return float(out) if out else 0.0
+    try:
+        return float(out) if out else 0.0
+    except ValueError:                                    # ffprobe says 'N/A' for a half-written or damaged file: report it as length 0, never crash
+        return 0.0
 
 
 def black_spans(path, min_d=0.25):
@@ -57,7 +60,7 @@ def screen_texts(project):
                 out.append((m.group(1), k, v))
     caps = os.path.join(project, "compositions", "caps.html")
     if os.path.exists(caps):
-        for w in re.findall(r'<span class="caps-w[^"]*" data-t="[0-9.]+">([^<]*)</span>', open(caps, encoding="utf-8").read()):
+        for w in re.findall(r'<span class="caps-w[^"]*"[^>]*? data-t="[0-9.]+">([^<]*)</span>', open(caps, encoding="utf-8").read()):
             out.append(("caps", "word", h.unescape(w)))
     return out
 
@@ -104,7 +107,12 @@ def run(job, video, final=False, project=None):
     # captions cover every spoken word outside full-screen cards and the CTA
     texts = screen_texts(project)
     cap_words = [t for s, k, t in texts if s == "caps"]
-    expected = [w["text"] for w in edl["words"] if not any(a - 0.05 <= w["start"] < b for a, b in tl["caption_gaps"])]
+    try:                                                  # a Format Pack reel shows captions through the whole reel (its frame has no full-screen cards)
+        packed = bool(json.load(open(os.path.join(project, "compile_info.json"), encoding="utf-8")).get("format_pack"))
+    except (OSError, ValueError):
+        packed = False
+    gaps = [] if packed else tl["caption_gaps"]
+    expected = [w["text"] for w in edl["words"] if not any(a - 0.05 <= w["start"] < b for a, b in gaps)]
     m["caption_words"], m["spoken_words_shown"] = len(cap_words), len(expected)
     if cap_words != expected:
         missing = len(expected) - len(cap_words)

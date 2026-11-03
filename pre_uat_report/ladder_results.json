@@ -1,0 +1,140 @@
+{
+ "environment": {
+  "cpus": 4,
+  "note": "load generator and server share the same 4 CPUs: numbers are conservative"
+ },
+ "levels": [
+  {
+   "clients": 1,
+   "requests": 289,
+   "rps": 35.9,
+   "errors": 0,
+   "error_rate": 0.0,
+   "p50_ms": 2.0,
+   "p95_ms": 155.3,
+   "p99_ms": 188.0,
+   "rss_mb": 25,
+   "threads": 3,
+   "alive_after": true
+  },
+  {
+   "clients": 2,
+   "requests": 612,
+   "rps": 75.3,
+   "errors": 0,
+   "error_rate": 0.0,
+   "p50_ms": 1.8,
+   "p95_ms": 149.9,
+   "p99_ms": 177.4,
+   "rss_mb": 25,
+   "threads": 3,
+   "alive_after": true
+  },
+  {
+   "clients": 4,
+   "requests": 1144,
+   "rps": 141.1,
+   "errors": 0,
+   "error_rate": 0.0,
+   "p50_ms": 1.9,
+   "p95_ms": 158.6,
+   "p99_ms": 176.8,
+   "rss_mb": 26,
+   "threads": 3,
+   "alive_after": true
+  },
+  {
+   "clients": 8,
+   "requests": 1156,
+   "rps": 141.8,
+   "errors": 0,
+   "error_rate": 0.0,
+   "p50_ms": 6.4,
+   "p95_ms": 317.2,
+   "p99_ms": 364.3,
+   "rss_mb": 26,
+   "threads": 3,
+   "alive_after": true
+  },
+  {
+   "clients": 16,
+   "requests": 1222,
+   "rps": 146.2,
+   "errors": 0,
+   "error_rate": 0.0,
+   "p50_ms": 11.3,
+   "p95_ms": 605.4,
+   "p99_ms": 696.7,
+   "rss_mb": 28,
+   "threads": 3,
+   "alive_after": true
+  },
+  {
+   "clients": 32,
+   "requests": 1189,
+   "rps": 140.0,
+   "errors": 0,
+   "error_rate": 0.0,
+   "p50_ms": 27.6,
+   "p95_ms": 1110.7,
+   "p99_ms": 1852.4,
+   "rss_mb": 30,
+   "threads": 3,
+   "alive_after": true
+  },
+  {
+   "clients": 64,
+   "requests": 1221,
+   "rps": 133.1,
+   "errors": 0,
+   "error_rate": 0.0,
+   "p50_ms": 52.2,
+   "p95_ms": 1876.6,
+   "p99_ms": 2878.1,
+   "rss_mb": 30,
+   "threads": 3,
+   "alive_after": true
+  },
+  {
+   "clients": 128,
+   "requests": 1279,
+   "rps": 45.9,
+   "errors": 0,
+   "error_rate": 0.0,
+   "p50_ms": 77.1,
+   "p95_ms": 3717.0,
+   "p99_ms": 7254.3,
+   "rss_mb": 31,
+   "threads": 3,
+   "alive_after": true
+  },
+  {
+   "clients": 256,
+   "requests": 1434,
+   "rps": 58.1,
+   "errors": 0,
+   "error_rate": 0.0,
+   "p50_ms": 1027.7,
+   "p95_ms": 6930.9,
+   "p99_ms": 11753.0,
+   "rss_mb": 30,
+   "threads": 3,
+   "alive_after": true
+  },
+  {
+   "clients": 512,
+   "requests": 1648,
+   "rps": 39.8,
+   "errors": 27,
+   "error_rate": 0.0164,
+   "p50_ms": 1301.2,
+   "p95_ms": 18029.2,
+   "p99_ms": 32069.2,
+   "rss_mb": 31,
+   "threads": 3,
+   "alive_after": true
+  }
+ ],
+ "first_error_level": 512,
+ "first_p95_over_2s_level": 128
+}

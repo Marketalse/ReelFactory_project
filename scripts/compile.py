@@ -48,6 +48,7 @@ def compile_job(job, platform="instagram", final=False, out=None, layer="full"):
                    "groups_html": hfbuild.caption_groups(cap_words, cap_kw, "caps", stops=[a for a, _ in gaps],
                                                          pill_idx=hl, pill_style=pk["pill_style"] if pk else "")})
     # FORMAT PACK (T129): an explainer/tips reel gets ONE designed frame; the director's loose cards are replaced by it
+    pack_dropped = [x["id"] for x in tl["scenes"]] if pk else []          # the director's loose cards are replaced by the pack: tell the render check they are gone on purpose
     if pk:
         scenes = (pk["scenes"] if layer != "video" else [])  + [s for s in scenes if s["block"] == "captions" and layer != "video"]
         tl = dict(tl, scenes=[])                                  # no split/zoom cards: the face window stays put (punch-ins still work)
@@ -103,7 +104,7 @@ def compile_job(job, platform="instagram", final=False, out=None, layer="full"):
             print("   sound effects skipped:", ex)
     hfbuild.build_project(out, duration=tl["duration"], face_cuts=[] if layer == "graphics" else cuts, scenes=scenes,
                           video_src=os.path.join(job, "proxy.mp4"), transparent=layer == "graphics", audio=audio or None)
-    json.dump({"platform": platform, "final": final, "face_cuts": cuts, "caption_words": len(cap_words), "dropped_scenes": dropped, "sfx": len(audio), "format_pack": bool(pk)},
+    json.dump({"platform": platform, "final": final, "face_cuts": cuts, "caption_words": len(cap_words), "dropped_scenes": dropped + pack_dropped, "sfx": len(audio), "format_pack": bool(pk)},
               open(os.path.join(out, "compile_info.json"), "w"), indent=1)
     return out
 

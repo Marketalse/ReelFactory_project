@@ -21,7 +21,7 @@ import argparse, base64, glob, json, os, re, shutil, subprocess, sys, threading,
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from lib import config as cfg   # noqa: E402  (all settings live in config/*.json)
-from lib import pipeline, outline, critic, icon_tags, asset_check, transcript as tr, edl as edlmod, director, speech_intel, editorial, visual_plan, brand_memory, creative_brief, content_intel, frames_dedup, learning, doctor, sequence, broll_ai, tighten   # noqa: E402
+from lib import pipeline, joblock, outline, critic, icon_tags, asset_check, transcript as tr, edl as edlmod, director, speech_intel, editorial, visual_plan, brand_memory, creative_brief, content_intel, frames_dedup, learning, doctor, sequence, broll_ai, tighten   # noqa: E402
 from lib.hfbuild import BuildError   # noqa: E402
 
 ROOT = cfg.ROOT
@@ -967,6 +967,11 @@ def main():
         if r.returncode: sys.exit("ingest failed")
         inp = sorted(glob.glob(os.path.join(ROOT, "jobs", "*-" + a.slug)))[-1]
     job = os.path.abspath(inp)
+    if not a.doctor:                                   # one run per reel (the doctor only reads); the lock lives as long as this process
+        try:
+            _lock = joblock.acquire(job)
+        except joblock.Busy as e:
+            print("STOP:", e); sys.exit(3)
     if not a.doctor:                                   # the doctor's question must not rewrite the reel's own run log (its stop message stays)
         sys.stdout = Tee(os.path.join(job, "run.log"), sys.stdout)
     print(f"\n===== run {time.strftime('%Y-%m-%d %H:%M:%S')} | {' '.join(sys.argv[1:])}")

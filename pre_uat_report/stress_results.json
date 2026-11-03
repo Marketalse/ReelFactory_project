@@ -1,0 +1,26 @@
+[
+ {
+  "group": "stress",
+  "name": "S 1 reel(s) at once",
+  "verdict": "PASS",
+  "detail": "{\"concurrent_reels\": 1, \"completed\": 1, \"failed\": 0, \"wall_s\": 185, \"per_reel_s\": [185.0], \"ai_calls\": 6, \"max_rss_mb\": 399, \"ingest_s_total\": 25}"
+ },
+ {
+  "group": "stress",
+  "name": "S 2 reel(s) at once",
+  "verdict": "PASS",
+  "detail": "{\"concurrent_reels\": 2, \"completed\": 2, \"failed\": 0, \"wall_s\": 193, \"per_reel_s\": [192.9, 192.3], \"ai_calls\": 12, \"max_rss_mb\": 400, \"ingest_s_total\": 50}"
+ },
+ {
+  "group": "stress",
+  "name": "S 3 reel(s) at once",
+  "verdict": "PASS",
+  "detail": "{\"concurrent_reels\": 3, \"completed\": 3, \"failed\": 0, \"wall_s\": 245, \"per_reel_s\": [245.0, 243.3, 241.7], \"ai_calls\": 18, \"max_rss_mb\": 1131, \"ingest_s_total\": 74}"
+ },
+ {
+  "group": "stress",
+  "name": "S 4 reel(s) at once",
+  "verdict": "PASS",
+  "detail": "{\"concurrent_reels\": 4, \"completed\": 4, \"failed\": 0, \"wall_s\": 322, \"per_reel_s\": [322.1, 321.0, 319.2, 320.7], \"ai_calls\": 24, \"max_rss_mb\": 1516, \"ingest_s_total\": 101}"
+ }
+]

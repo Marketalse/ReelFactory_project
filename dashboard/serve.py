@@ -57,13 +57,28 @@ def save(d):
         old = sorted(os.listdir(BACKUPS))
         for f in old[:-50]:
             os.remove(os.path.join(BACKUPS, f))
-    tmp = TASKS + ".tmp"
+    tmp = f"{TASKS}.{os.getpid()}.{threading.get_ident()}.tmp"
     with open(tmp, "w", encoding="utf-8") as f:
         json.dump(d, f, indent=1, ensure_ascii=False)
     os.replace(tmp, TASKS)
 
 
+PAGES = {"/make.html", "/index.html", "/edit.html", "/timeline.html"}      # the only static files served: no source code, ledger or backups
+_board_lock = threading.Lock()                                                 # one board save at a time (check version, then write)
+
+
+class Server(ThreadingHTTPServer):
+    daemon_threads = True
+
+    def handle_error(self, request, client_address):
+        if isinstance(sys.exc_info()[1], (BrokenPipeError, ConnectionResetError, TimeoutError)):
+            return                                                             # a browser tab closed mid-answer: not an error
+        super().handle_error(request, client_address)
+
+
 class H(SimpleHTTPRequestHandler):
+    timeout = 120                  # a connection that sends nothing for 2 minutes is dropped (idle or half-open sockets must not pile up forever)
+
     def __init__(self, *a, **k):
         super().__init__(*a, directory=HERE, **k)
 
@@ -98,6 +113,28 @@ class H(SimpleHTTPRequestHandler):
                 self.wfile.write(chunk); left -= len(chunk)
 
     def do_GET(self):
+        try:
+            self._get()
+        except (BrokenPipeError, ConnectionResetError, TimeoutError):
+            self.close_connection = True
+        except Exception as e:                                               # noqa: BLE001 - the page gets a plain message, never a dropped connection
+            print("GET error:", self.path[:120], type(e).__name__, e, flush=True)
+            self.close_connection = True
+            try: self.send_json(500, {"ok": False, "message": "something went wrong on this page; try again, and tell Claude if it repeats"})
+            except Exception: pass                                           # noqa: BLE001
+
+    def do_POST(self):
+        try:
+            self._post()
+        except (BrokenPipeError, ConnectionResetError, TimeoutError):
+            self.close_connection = True
+        except Exception as e:                                               # noqa: BLE001
+            print("POST error:", self.path[:120], type(e).__name__, e, flush=True)
+            self.close_connection = True
+            try: self.send_json(500, {"ok": False, "message": "something went wrong; nothing was changed. Try again, and tell Claude if it repeats"})
+            except Exception: pass                                           # noqa: BLE001
+
+    def _get(self):
         q = {k: v[0] for k, v in parse_qs(urlparse(self.path).query).items()}
         if self.path.startswith("/api/upload/status"):
             return self.send_json(200, reels_api.upload_status(q.get("slug"), q.get("kind"), unquote(q.get("name", "")), q.get("session"),
@@ -153,6 +190,8 @@ class H(SimpleHTTPRequestHandler):
             return self.send_json(200, load(EXPENSES, {"rows": []}))
         if self.path in ("/", ""):
             self.path = "/make.html"
+        if urlparse(self.path).path not in PAGES:
+            return self.send_json(404, {"error": "not found"})
         return super().do_GET()
 
     def stream_progress(self, ref, every=1.0, limit=4 * 3600, notify=False):
@@ -179,7 +218,7 @@ class H(SimpleHTTPRequestHandler):
         o = self.headers.get("Origin")
         return o in (None, f"http://127.0.0.1:{PORT}", f"http://localhost:{PORT}", f"http://reelfactory.localhost:{PORT}")
 
-    def do_POST(self):
+    def _post(self):
         if not self.same_origin():
             self.close_connection = True
             return self.send_json(403, {"ok": False, "message": "not allowed"})
@@ -187,6 +226,7 @@ class H(SimpleHTTPRequestHandler):
             try:
                 n = int(self.headers.get("Content-Length", 0))
                 body = json.loads(self.rfile.read(min(n, 4096)).decode("utf-8") or "{}")
+                if not isinstance(body, dict): raise ValueError("not an object")
             except Exception:
                 return self.send_json(400, {"ok": False, "message": "bad request"})
             action = self.path.split("/")[3].split("?")[0]
@@ -236,6 +276,7 @@ class H(SimpleHTTPRequestHandler):
                 if n > 2_000_000:
                     raise ValueError("too big")
                 body = json.loads(self.rfile.read(n).decode("utf-8") or "{}")
+                if not isinstance(body, dict): raise ValueError("not an object")
             except Exception:
                 return self.send_json(400, {"ok": False, "message": "bad request"})
             action = self.path.split("/")[3].split("?")[0]
@@ -259,6 +300,7 @@ class H(SimpleHTTPRequestHandler):
                 if n > 2_000_000:
                     raise ValueError("too big")
                 body = json.loads(self.rfile.read(n).decode("utf-8") or "{}")
+                if not isinstance(body, dict): raise ValueError("not an object")
             except Exception:
                 return self.send_json(400, {"ok": False, "message": "bad request"})
             action = self.path.split("/")[3].split("?")[0]
@@ -275,22 +317,26 @@ class H(SimpleHTTPRequestHandler):
         if self.path.startswith("/api/reels/"):
             try:
                 n = int(self.headers.get("Content-Length", 0))
+                if not 0 <= n <= 1_000_000: raise ValueError("too big")
                 body = json.loads(self.rfile.read(n).decode("utf-8") or "{}")
+                if not isinstance(body, dict): raise ValueError("not an object")
             except Exception:
                 return self.send_json(400, {"error": "bad JSON"})
             action = self.path.split("/")[3].split("?")[0]
-            fn = {"start": lambda: reels_api.start(body.get("slug")), "resume": lambda: reels_api.resume(body.get("job")),
-                  "fix": lambda: reels_api.fix(body.get("job"), body.get("text")), "approve": lambda: reels_api.approve(body.get("job")),
-                  "reveal": lambda: reels_api.reveal(body.get("job")),
-                  "use_version": lambda: reels_api.use_version(body.get("job"), body.get("n")),
-                  "use_hook": lambda: reels_api.use_hook(body.get("job"), body.get("n")),
-                  "ask_doctor": lambda: reels_api.ask_doctor(body.get("job")),
-                  "variation": lambda: reels_api.make_variation(body.get("job"), body.get("id")),
-                  "cover_reset": lambda: reels_api.cover_reset(body.get("job")),
-                  "performance": lambda: reels_api.save_performance(body.get("job"), body.get("data")),
-                  "posted": lambda: reels_api.save_posted(body.get("job"), body.get("platform")),
-                  "check": lambda: reels_api.check_name(body.get("slug"), body.get("session")),
-                  "notes": lambda: reels_api.save_notes(body.get("slug"), body.get("session"), body.get("text"), body.get("brief"))}.get(action)
+            T = lambda k: body.get(k) if isinstance(body.get(k), str) else ""            # text fields: anything else counts as empty
+            data = body.get("data") if isinstance(body.get("data"), dict) else {}
+            fn = {"start": lambda: reels_api.start(T("slug")), "resume": lambda: reels_api.resume(T("job")),
+                  "fix": lambda: reels_api.fix(T("job"), T("text")), "approve": lambda: reels_api.approve(T("job")),
+                  "reveal": lambda: reels_api.reveal(T("job")),
+                  "use_version": lambda: reels_api.use_version(T("job"), body.get("n")),
+                  "use_hook": lambda: reels_api.use_hook(T("job"), body.get("n")),
+                  "ask_doctor": lambda: reels_api.ask_doctor(T("job")),
+                  "variation": lambda: reels_api.make_variation(T("job"), T("id")),
+                  "cover_reset": lambda: reels_api.cover_reset(T("job")),
+                  "performance": lambda: reels_api.save_performance(T("job"), data),
+                  "posted": lambda: reels_api.save_posted(T("job"), T("platform")),
+                  "check": lambda: reels_api.check_name(T("slug"), T("session")),
+                  "notes": lambda: reels_api.save_notes(T("slug"), T("session"), T("text"), body.get("brief") if isinstance(body.get("brief"), dict) else None)}.get(action)
             if not fn:
                 return self.send_json(404, {"error": "unknown action"})
             ok, msg = fn()
@@ -299,18 +345,22 @@ class H(SimpleHTTPRequestHandler):
             return self.send_json(404, {"error": "not found"})
         try:
             n = int(self.headers.get("Content-Length", 0))
+            if not 0 <= n <= 8_000_000: raise ValueError("too big")
             d = json.loads(self.rfile.read(n).decode("utf-8"))
+            if not isinstance(d, dict): raise ValueError("not an object")
         except Exception as e:
             return self.send_json(400, {"error": f"bad JSON: {e}"})
-        cur = load(TASKS, {"version": 0})
-        if d.get("version") != cur.get("version"):
-            return self.send_json(409, {"error": "tasks.json changed since you loaded it (Hermes or another tab). Reload, then redo your change.",
-                                        "current_version": cur.get("version")})
-        err = check(d)
-        if err:
-            return self.send_json(400, {"error": err})
-        d["version"] = (cur.get("version") or 0) + 1
-        save(d)
+        with _board_lock:                                                    # check the version and write as ONE step: two saves can never both win
+            cur = load(TASKS, {"version": 0})
+            if not isinstance(cur, dict): cur = {"version": 0}
+            if d.get("version") != cur.get("version"):
+                return self.send_json(409, {"error": "tasks.json changed since you loaded it (Hermes or another tab). Reload, then redo your change.",
+                                            "current_version": cur.get("version")})
+            err = check(d)
+            if err:
+                return self.send_json(400, {"error": err})
+            d["version"] = (cur.get("version") or 0) + 1
+            save(d)
         return self.send_json(200, {"ok": True, "version": d["version"]})
 
 
@@ -343,8 +393,8 @@ if __name__ == "__main__":
     if not os.path.exists(TASKS):
         sys.exit(f"missing {TASKS}")
     print(f"Reel Factory dashboard: http://127.0.0.1:{PORT}  (Ctrl+C to stop)")
-    ThreadingHTTPServer.allow_reuse_address = True
-    SERVER = ThreadingHTTPServer(("127.0.0.1", PORT), H)
+    Server.allow_reuse_address = True
+    SERVER = Server(("127.0.0.1", PORT), H)
     threading.Thread(target=daily_backup, daemon=True).start()
     threading.Thread(target=it_agent.watch, daemon=True).start()
     SERVER.serve_forever()

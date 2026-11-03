@@ -1,0 +1,11 @@
+[PASS   ] functional: F1 full pipeline to draft (Format Pack reel, mock AI)
+[PASS   ] functional: F1b compile_info says Format Pack used
+[PASS   ] functional: F1c draft QA result present
+[PASS   ] functional: F1d cost.json written for every AI call
+[PASS   ] functional: F9 re-running a finished reel makes no AI call
+[PASS   ] functional: F2 'fix' comment re-plans and re-renders the draft
+[PASS   ] functional: F3 approve -> final video(s) + cover
+[PASS   ] functional: F3b final video is 1080x1920 with audio
+[PASS   ] functional: F3c loudness near the -14 LUFS target
+[PASS   ] functional: F4 silent clip (no audio track)
+[PASS   ] functional: F4 4K portrait
