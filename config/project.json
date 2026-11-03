@@ -167,6 +167,13 @@
       "explainer",
       "tips"
     ],
-    "_note": "T129: when the outline finds an explainer or tips reel with enough sections, the reel gets ONE designed frame (header, face window, step panel with progress, recap chain) instead of loose cards. mode: auto | off | always. theme: dark | violet."
+    "_note": "T129: when the outline finds an explainer or tips reel with enough sections, the reel gets ONE designed frame (header, face window, step panel with progress, recap chain) instead of loose cards. mode: auto | off | always. theme: dark | violet.",
+    "closing_buttons": false,
+    "closing_labels": [
+      "لايك",
+      "اشتراك",
+      "تابعني"
+    ],
+    "_closing_note": "Closing like / subscribe / follow buttons under the recap chain. OFF because the project rule keeps the call to action off (AGENTS.md, Hesham 2026-11-01); set closing_buttons true to switch on."
   }
 }

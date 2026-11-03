@@ -110,7 +110,9 @@ class SafeZoneTests(unittest.TestCase):
             from lib import pack
             o = {"sections": [{"title": long_text(24), "kind": "step", "t_in": k * 0.4} for k in range(7)]}
             ic = ["icon-truck.svg"] * 7
-            groups = (pack.frame_groups("b", o, dur, ic, "dark", long_text(18), long_text(22)) if block == "pack_frame" else pack.recap_groups("b", o, ic, "dark"))
+            o4 = {"sections": o["sections"][:4]}
+            groups = (pack.frame_groups("b", o, dur, ic, "dark", long_text(18), long_text(22)) if block == "pack_frame"
+                      else pack.recap_groups("b", o4, ic[:4], "dark", [long_text(10)] * 3))
         src = hfbuild.stamp(block, "b", dur, groups, sample_values(block))
         inner = src.split("<template>", 1)[1].rsplit("</template>", 1)[0]
         style = re.search(r"<style>.*?</style>", inner, re.S).group(0)

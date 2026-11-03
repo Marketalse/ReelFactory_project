@@ -1791,11 +1791,11 @@
    "phase": "P18",
    "title": "Learn from a reference video: turn a video like the two Higgsfield reels into a layout spec for a new Format Pack",
    "owner": "Claude",
-   "status": "todo",
+   "status": "review",
    "depends": [],
    "done_when": "Give a video, get a pack draft you can approve.",
    "notes": "From the quality-gap report 2026-11-02 (docs/DECISIONS.md). Starts when Hesham says go.",
-   "evidence": "",
+   "evidence": "scripts/ref_learn.py (free, local: structure, loudness, palette, footage-window layout; --apply sets a custom Format Pack theme); tests/test_ref_learn.py; 327 tests OK. Reads numbers and colours only; no AI (paid calls stay in reel.py).",
    "updated": "2026-11-02"
   },
   {

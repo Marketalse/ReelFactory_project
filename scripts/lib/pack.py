@@ -58,7 +58,24 @@ def highlight_idx(outline, words, keyword_ids=()):
 
 
 def pill_style(theme):
+    st = theme_style()
+    if st:
+        k = conf()["colors"]; return f"--kw-bg:{k['accent']};--kw-fg:{k['on']}"
     return "--kw-bg:var(--pk-v-ac);--kw-fg:var(--pk-v-on)" if theme == "violet" else "--kw-bg:var(--pk-d-ac);--kw-fg:var(--pk-d-on)"
+
+
+def theme_style(c=None):
+    """Inline colour variables for the 'custom' theme (colours learned from a reference video, T135); '' for the built-in themes."""
+    c = c or conf()
+    if c.get("theme") != "custom": return ""
+    k = c.get("colors") or {}
+    need = ("bg", "accent", "surface", "text", "on")
+    if not all(re_hex.match(str(k.get(x, ""))) for x in need): return ""
+    return f'--pk-bg:{k["bg"]};--pk-ac:{k["accent"]};--pk-sf:{k["surface"]};--pk-tx:{k["text"]};--pk-on:{k["on"]}'
+
+
+import re
+re_hex = re.compile(r"^#[0-9A-Fa-f]{6}$")
 
 
 def _e(s): return html.escape(str(s), quote=True)
@@ -80,14 +97,19 @@ def frame_groups(inst, outline, duration, icons, theme="dark", series="", presen
     pills = ""
     if series: pills += f'<div class="{inst}-pill" id="{inst}-series">{_e(series)}</div>'
     if presenter: pills += f'<div class="{inst}-pill" id="{inst}-who">{_e(presenter)}</div>'
-    return (f'<div id="{inst}-wrap" class="{inst}-{_e(theme)}"><svg id="{inst}-bg" viewBox="0 0 1080 1920"><path fill-rule="evenodd" style="fill:var(--pk-bg)" d="{path}"/></svg>'
+    return (f'<div id="{inst}-wrap" class="{inst}-{_e(theme if theme in ("dark", "violet") else "dark")}" style="{theme_style()}"><svg id="{inst}-bg" viewBox="0 0 1080 1920"><path fill-rule="evenodd" style="fill:var(--pk-bg)" d="{path}"/></svg>'
             f'<div id="{inst}-glow"></div>{pills}<div id="{inst}-panel"></div>'
             f'<div id="{inst}-prog">{"<i></i>" * n}</div>{"".join(steps)}</div>')
 
 
-def recap_groups(inst, outline, icons, theme="dark"):
+BUTTON_ICONS = ("icon-thumbs-up.svg", "icon-play.svg", "icon-users.svg")        # like, subscribe, follow
+
+
+def recap_groups(inst, outline, icons, theme="dark", buttons=()):
+    """buttons: up to 3 labels (like / subscribe / follow); shown under the chain, only when the chain has at most 4 rows (room)."""
     n = len(outline["sections"]); top, bottom = 486, 1070
-    pitch = min(124, (bottom - top) / n)
+    buttons = list(buttons)[:3] if n <= 4 else []
+    pitch = min(100 if buttons else 124, (bottom - top) / n)
     rows, links = [], []
     for k, s in enumerate(outline["sections"]):
         y = int(top + k * pitch)
@@ -97,8 +119,9 @@ def recap_groups(inst, outline, icons, theme="dark"):
                     f'<span class="{inst}-name" style="font-size:{size}px">{_e(s["title"])}</span></div>')
         if k < n - 1:
             links.append(f'<div class="{inst}-link" style="top:{y + 58}px;height:{int(pitch - 58)}px"></div>')
-    return (f'<div id="{inst}-wrap" class="{inst}-{_e(theme)}"><div id="{inst}-panel"></div><div id="{inst}-head">RECAP</div>'
-            f'{"".join(links)}{"".join(rows)}</div>')
+    btns = "".join(f'<div class="{inst}-btn" style="left:{140 + k * 256}px"><img src="assets/icons/{BUTTON_ICONS[k]}" alt=""><span>{_e(t)}</span></div>' for k, t in enumerate(buttons))
+    return (f'<div id="{inst}-wrap" class="{inst}-{_e(theme if theme in ("dark", "violet") else "dark")}" style="{theme_style()}"><div id="{inst}-panel"></div><div id="{inst}-head">RECAP</div>'
+            f'{"".join(links)}{"".join(rows)}{btns}</div>')
 
 
 def plan(job, tl, edl, root=None):
@@ -108,15 +131,16 @@ def plan(job, tl, edl, root=None):
     except (OSError, ValueError):
         return None
     if not active(outline): return None
-    c = conf(); theme = c.get("theme", "dark") if c.get("theme") in ("dark", "violet") else "dark"
+    c = conf(); theme = c.get("theme", "dark") if c.get("theme") in ("dark", "violet", "custom") else "dark"
     dur = tl["duration"]; words = edl["words"]
     icons = pick_icons(outline, words, root)
     scenes = [{"id": "pk", "block": "pack_frame", "t_in": 0.0, "t_out": dur,
                "values": {"theme": theme, "series": c.get("series", ""), "presenter": c.get("presenter", "")},
                "groups_html": frame_groups("pk", outline, dur, icons, theme, c.get("series", ""), c.get("presenter", ""))}]
+    buttons = c.get("closing_labels", ["لايك", "اشتراك", "تابعني"]) if c.get("closing_buttons", False) else []     # OFF by default: the project rule keeps the call to action off
     last = outline["sections"][-1]
     start = round(dur - RECAP_LEN, 2)
     if len(outline["sections"]) >= 3 and start > last["t_in"] + 1.0:          # never cover the last section's first second
         scenes.append({"id": "pkr", "block": "recap_chain", "t_in": start, "t_out": round(dur, 2), "values": {"theme": theme},
-                       "groups_html": recap_groups("pkr", outline, icons, theme)})
-    return {"scenes": scenes, "icons": sorted({i for i in icons if i}), "highlight": highlight_idx(outline, words, tl.get("keyword_ids")), "pill_style": pill_style(theme)}
+                       "groups_html": recap_groups("pkr", outline, icons, theme, buttons)})
+    return {"scenes": scenes, "icons": sorted({i for i in icons if i} | (set(BUTTON_ICONS) if buttons else set())), "highlight": highlight_idx(outline, words, tl.get("keyword_ids")), "pill_style": pill_style(theme)}

@@ -61,3 +61,20 @@ class Highlights(unittest.TestCase):
         g = hfbuild.caption_groups(W[:3], [], "c", pill_idx=[1], pill_style="--kw-bg:red")
         self.assertEqual(g.count("c-kwp"), 1); self.assertIn("--kw-bg:red", g)
         self.assertEqual(hfbuild.caption_groups(W[:3], [], "c").count("c-kwp"), 0)
+
+
+class Closing(unittest.TestCase):
+    def test_buttons_only_when_asked_and_when_there_is_room(self):
+        o = outline.clean(ANS, W)
+        self.assertNotIn("-btn", pack.recap_groups("r", o, ["icon-truck.svg"] * 3))                       # off by default
+        g = pack.recap_groups("r", o, ["icon-truck.svg"] * 3, "dark", ["لايك", "اشتراك", "تابعني"])
+        self.assertEqual(g.count('class="r-btn"'), 3)
+        big = {"sections": o["sections"] * 2}                                                             # 6 rows: no room, no buttons
+        self.assertNotIn("r-btn", pack.recap_groups("r", big, ["icon-truck.svg"] * 6, "dark", ["a", "b", "c"]))
+        self.assertEqual(pack.conf().get("closing_buttons"), False)                                       # the project rule: call to action stays off
+
+    def test_custom_theme_uses_learned_colours_only_when_valid(self):
+        good = {"theme": "custom", "colors": {"bg": "#101010", "accent": "#FF0000", "surface": "#202020", "text": "#FFFFFF", "on": "#000000"}}
+        self.assertIn("--pk-ac:#FF0000", pack.theme_style(good))
+        self.assertEqual(pack.theme_style(dict(good, colors={"bg": "red"})), "")
+        self.assertEqual(pack.theme_style({"theme": "dark"}), "")
