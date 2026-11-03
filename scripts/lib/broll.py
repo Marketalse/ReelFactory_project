@@ -34,7 +34,7 @@ def index(root=None):
         if not f.lower().endswith(EXT) or f.startswith("."):
             continue
         stem = os.path.splitext(f)[0]
-        tags = {_norm(t) for t in re.split(r"[-_ ]+", stem)} | {_norm(stem)} | {_norm(t) for t in extra.get(f, [])}
+        tags = {_norm(t) for t in re.split(r"[-_ ]+", stem) if t.lower() != "icon"} | {_norm(stem)} | {_norm(t) for t in extra.get(f, [])}
         out.append({"file": f, "tags": sorted(t for t in tags if len(t) >= 3)})
     return out
 
@@ -99,7 +99,7 @@ def match(words, idx):
 
 def attach(job, words, root=None):
     """Copy the matching files into jobs/<job>/assets/. Returns the names attached (never overwrites an existing file)."""
-    files = match(words, index(root))[:MAX_ATTACH]
+    files = sorted(match(words, index(root)), key=lambda f: f.startswith("icon-"))[:MAX_ATTACH]        # his own logos first, bundled icons after
     if not files:
         return []
     dst = os.path.join(job, "assets")

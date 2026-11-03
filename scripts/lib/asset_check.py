@@ -81,14 +81,15 @@ def placements(info):
 def check(path):
     """-> the placement record for one asset (also tells why it failed)."""
     name = os.path.basename(path); ext = os.path.splitext(name)[1].lower()
-    rec = {"asset": name, "ok": False, "problems": [], "never": [{"where": k, "why": v} for k, v in FORBIDDEN]}
+    rec = {"asset": name, "ok": False, "problems": [], "hard": [], "never": [{"where": k, "why": v} for k, v in FORBIDDEN]}
     if ext not in (".svg", ".png"):
         rec["problems"] = [f"{ext or 'this file'} is not accepted: bring an SVG or a transparent PNG"]; return rec
     if os.path.getsize(path) > MAX_BYTES:
         rec["problems"].append(f"the file is over {MAX_BYTES // 1000} KB: simplify it")
     info, why = (_svg if ext == ".svg" else _png)(path)
     rec["problems"] += why
-    if info is None: return rec
+    if info is None:
+        rec["hard"] = list(why); return rec          # unsafe or unreadable: never usable
     rec.update({k: info[k] for k in ("kind", "w", "h", "recolourable", "colours")}); rec["aspect"] = round(info["w"] / info["h"], 3)
     rec["may_sit"] = placements(info)
     rec["ok"] = not rec["problems"] and any(p["ok"] for p in rec["may_sit"])
@@ -112,6 +113,21 @@ def inside_safe(x, y, w, h):
     """Does a rectangle rest completely inside the safe box and clear of the captions band? (the test applied at placement time)"""
     if x < BOX[0] or y < BOX[1] or x + w > BOX[2] or y + h > BOX[3]: return False
     return y + h <= CAP[0] or y >= CAP[1]
+
+
+def job_problems(asset_dir):
+    """{file: reason} for the assets of ONE reel that must never be used (unsafe or unreadable SVG/PNG, or a library check that failed hard).
+    Quality notes (no transparency, small size) do not block a reel: his screenshots and logos keep working. Free."""
+    bad = {}
+    if not os.path.isdir(asset_dir): return bad
+    for f in sorted(os.listdir(asset_dir)):
+        if not f.lower().endswith((".svg", ".png")): continue
+        try:
+            r = check(os.path.join(asset_dir, f))
+        except Exception as e:                                           # noqa: BLE001
+            bad[f] = f"cannot be checked: {e}"; continue
+        if r["hard"]: bad[f] = r["hard"][0]
+    return bad
 
 
 def rule_for(asset_dir, filename):

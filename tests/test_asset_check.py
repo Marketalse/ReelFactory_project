@@ -43,3 +43,18 @@ class Check(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class Enforcement(unittest.TestCase):
+    def test_director_refuses_a_failed_asset_and_job_problems_only_flags_hard_failures(self):
+        from lib import director
+        d = tempfile.mkdtemp(); a = os.path.join(d, "assets"); os.makedirs(a)
+        open(os.path.join(a, "evil.svg"), "w").write(SVG.replace("<path", "<script>x</script><path"))
+        open(os.path.join(a, "ok.svg"), "w").write(SVG)
+        open(os.path.join(a, "white.png"), "wb").write(png(512, 512, alpha=False))     # soft problem only: still usable
+        bad = ac.job_problems(a)
+        self.assertIn("evil.svg", bad); self.assertNotIn("ok.svg", bad); self.assertNotIn("white.png", bad)
+        words = [{"text": "انستغرام", "start": 0.0, "end": 0.5}] * 3
+        plan = {"moments": [{"block": "logo_card", "at_word": 0, "values": {"logo_a": "evil.svg", "name_a": "X"}}]}
+        _, err, _ = director.resolve(plan, [dict(w, i=i) for i, w in enumerate(words)], 5.0, logos=["evil.svg"], asset_bad=bad)
+        self.assertTrue(any("failed the asset check" in e for e in err), err)

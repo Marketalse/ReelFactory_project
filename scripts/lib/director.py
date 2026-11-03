@@ -193,7 +193,7 @@ def cta_dur():
 HOOK_DUR = 2.6
 
 
-def resolve(plan, edl_words, duration, *, logos=(), platform_handle="@handle", relaxed=False):
+def resolve(plan, edl_words, duration, *, logos=(), platform_handle="@handle", relaxed=False, asset_bad=None):
     """Turn a plan into an exact timeline. Returns (timeline, errors, warnings).
     timeline = {"duration", "scenes": [...], "frames": [(t, scale, y)], "keyword_ids", "caption_gaps": [(a,b)]}"""
     err, warn = [], []
@@ -257,6 +257,8 @@ def resolve(plan, edl_words, duration, *, logos=(), platform_handle="@handle", r
             f = vals["image"]
             if os.path.basename(f) not in logos:
                 err.append(f"{where}: image {f!r} is not in the reel's assets/ (have: {', '.join(logos) or 'none'})")
+            elif (asset_bad or {}).get(os.path.basename(f)):
+                err.append(f"{where}: image {f!r} failed the asset check: {asset_bad[os.path.basename(f)]}")
             else:
                 vals["image"] = "assets/logos/" + os.path.basename(f)
         if b == "logo_card":
@@ -264,6 +266,8 @@ def resolve(plan, edl_words, duration, *, logos=(), platform_handle="@handle", r
                 f = vals.get(key)
                 if f and os.path.basename(f) not in logos:
                     err.append(f"{where}: {key} {f!r} is not in the reel's assets/ (have: {', '.join(logos) or 'none'})")
+                elif f and (asset_bad or {}).get(os.path.basename(f)):
+                    err.append(f"{where}: {key} {f!r} failed the asset check: {asset_bad[os.path.basename(f)]}")
                 elif f:
                     vals[key] = "assets/logos/" + os.path.basename(f)
         gap = r["moments"].get(b, {}).get("min_gap_s")

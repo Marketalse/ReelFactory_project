@@ -21,7 +21,7 @@ import argparse, base64, glob, json, os, re, shutil, subprocess, sys, threading,
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from lib import config as cfg   # noqa: E402  (all settings live in config/*.json)
-from lib import pipeline, transcript as tr, edl as edlmod, director, speech_intel, editorial, visual_plan, brand_memory, creative_brief, content_intel, frames_dedup, learning, doctor, sequence, broll_ai, tighten   # noqa: E402
+from lib import pipeline, asset_check, transcript as tr, edl as edlmod, director, speech_intel, editorial, visual_plan, brand_memory, creative_brief, content_intel, frames_dedup, learning, doctor, sequence, broll_ai, tighten   # noqa: E402
 from lib.hfbuild import BuildError   # noqa: E402
 
 ROOT = cfg.ROOT
@@ -473,7 +473,8 @@ def st_edl(c):
 
 def job_logos(c):
     d = os.path.join(c.job, "assets")
-    return sorted(f for f in os.listdir(d) if f.lower().endswith((".svg", ".png", ".jpg", ".jpeg", ".webp"))) if os.path.isdir(d) else []
+    bad = asset_check.job_problems(d)                        # unsafe/unreadable files are never offered to the director (T146)
+    return sorted(f for f in os.listdir(d) if f.lower().endswith((".svg", ".png", ".jpg", ".jpeg", ".webp")) and f not in bad) if os.path.isdir(d) else []
 
 
 def broll_ai_step(c, words, root=None):
@@ -563,7 +564,7 @@ def st_plan(c):
     attempts = [(M_DIR, plan)]
 
     def resolve(p):
-        tl, err, warn = director.resolve(p, words, e["duration"], logos=job_logos(c))
+        tl, err, warn = director.resolve(p, words, e["duration"], logos=job_logos(c), asset_bad=asset_check.job_problems(os.path.join(c.job, "assets")))
         if not err:
             err = director.check_rhythm(tl, director.face_cuts(tl, e["segments"]))
         return tl, err, warn
