@@ -1719,11 +1719,11 @@
    "phase": "P18",
    "title": "Format Pack engine: pick ONE designed layout per reel (persistent frame + face window + bottom panel + theme colours) instead of loose cards",
    "owner": "Claude",
-   "status": "todo",
+   "status": "review",
    "depends": [],
    "done_when": "A reel made with the pack has the same frame from start to end and 2 colour themes.",
    "notes": "From the quality-gap report 2026-11-02 (docs/DECISIONS.md). Starts when Hesham says go.",
-   "evidence": "",
+   "evidence": "scripts/lib/pack.py, templates/blocks/pack_frame.html + recap_chain.html, compile.py hook; sample rendered and viewed (dark + violet); tests/test_pack.py; safe-zone test covers both blocks; 322 tests OK. Not yet run on a real reel.",
    "updated": "2026-11-02"
   },
   {
@@ -1731,11 +1731,11 @@
    "phase": "P18",
    "title": "Outline AI step (strong model, once per reel): turn the talk into hook, steps (title, one line, icon name, key words) and a recap, checked against his words",
    "owner": "Claude",
-   "status": "todo",
+   "status": "review",
    "depends": [],
    "done_when": "outline.json exists for each reel and every word on screen comes from what he said.",
    "notes": "From the quality-gap report 2026-11-02 (docs/DECISIONS.md). Starts when Hesham says go.",
-   "evidence": "",
+   "evidence": "scripts/lib/outline.py + step \"outline\" (Sonnet, high); tests/test_outline.py",
    "updated": "2026-11-02"
   },
   {
@@ -1746,7 +1746,7 @@
    "status": "todo",
    "depends": [],
    "done_when": "Steps and a recap diagram render from the outline with no manual work.",
-   "notes": "From the quality-gap report 2026-11-02 (docs/DECISIONS.md). Starts when Hesham says go.",
+   "notes": "From the quality-gap report 2026-11-02 (docs/DECISIONS.md). Starts when Hesham says go. DONE so far: step panel with progress bar + STEP n/N + icon + title, recap chain. NOT done: LIKE/SUBSCRIBE/FOLLOW closing buttons (CTA is off by project rule).",
    "evidence": "",
    "updated": "2026-11-02"
   },
@@ -1755,11 +1755,11 @@
    "phase": "P18",
    "title": "Bundled open icon set (licence-safe) + AI chooses icons by name from a fixed list",
    "owner": "Claude",
-   "status": "todo",
+   "status": "review",
    "depends": [],
    "done_when": "Every step has a fitting icon; no icon is invented.",
    "notes": "From the quality-gap report 2026-11-02 (docs/DECISIONS.md). Starts when Hesham says go.",
-   "evidence": "",
+   "evidence": "67 Lucide icons in library/broll (icon-*.svg), Arabic tags, asset check",
    "updated": "2026-11-02"
   },
   {
@@ -1767,11 +1767,11 @@
    "phase": "P18",
    "title": "Kinetic highlight text: his sentence as designed text with key words in highlight pills, timed to the voice",
    "owner": "Claude",
-   "status": "todo",
+   "status": "review",
    "depends": [],
    "done_when": "Key words get highlight pills at the moment he says them.",
    "notes": "From the quality-gap report 2026-11-02 (docs/DECISIONS.md). Starts when Hesham says go.",
-   "evidence": "",
+   "evidence": "highlight bar wipes in behind 1-2 title words per section (pack.highlight_idx, captions .kwp, pill_style per theme); no caption gaps in pack mode; tests/test_pack.py; safe-zone test covers pills; 324 tests OK. Not yet seen on a real reel.",
    "updated": "2026-11-02"
   },
   {
@@ -1779,11 +1779,11 @@
    "phase": "P18",
    "title": "Critique loop: render stills of the draft, a vision model scores them (hierarchy, consistency, readability), one automatic revision",
    "owner": "Claude",
-   "status": "todo",
+   "status": "review",
    "depends": [],
    "done_when": "The report shows the score before and after the revision.",
    "notes": "From the quality-gap report 2026-11-02 (docs/DECISIONS.md). Starts when Hesham says go.",
-   "evidence": "",
+   "evidence": "scripts/lib/critic.py + step \"critic\" (Haiku), shown on the draft page; report only, no auto-revision yet; tests/test_critic.py",
    "updated": "2026-11-02"
   },
   {
@@ -1791,11 +1791,11 @@
    "phase": "P18",
    "title": "Learn from a reference video: turn a video like the two Higgsfield reels into a layout spec for a new Format Pack",
    "owner": "Claude",
-   "status": "todo",
+   "status": "review",
    "depends": [],
    "done_when": "Give a video, get a pack draft you can approve.",
    "notes": "From the quality-gap report 2026-11-02 (docs/DECISIONS.md). Starts when Hesham says go.",
-   "evidence": "",
+   "evidence": "scripts/ref_learn.py (free, local: structure, loudness, palette, footage-window layout; --apply sets a custom Format Pack theme); tests/test_ref_learn.py; 327 tests OK. Reads numbers and colours only; no AI (paid calls stay in reel.py).",
    "updated": "2026-11-02"
   },
   {
@@ -1803,11 +1803,11 @@
    "phase": "P19",
    "title": "Roles config: every AI job (outline, story, tighten, director, critic, cover, shot log) gets its own model + effort in config/project.json, changeable in Settings",
    "owner": "Claude",
-   "status": "todo",
+   "status": "review",
    "depends": [],
    "done_when": "One place decides which model does which job; Settings page shows it.",
    "notes": "Hesham 2026-11-02: enhance structure, AI models, creativity, accept higher cost. Estimate: scripts/cost_estimate.py.",
-   "evidence": "",
+   "evidence": "config/project.json roles; scripts/lib/config.py role(); scripts/reel.py eff(); 298 tests OK",
    "updated": "2026-11-02"
   },
   {
@@ -1815,11 +1815,11 @@
    "phase": "P19",
    "title": "Pipeline as one list of steps (each step: inputs, outputs, cost, model) so new steps (outline, critic) plug in without editing reel.py",
    "owner": "Claude",
-   "status": "todo",
+   "status": "review",
    "depends": [],
    "done_when": "Adding the outline step needs no change to the runner.",
    "notes": "Hesham 2026-11-02: enhance structure, AI models, creativity, accept higher cost. Estimate: scripts/cost_estimate.py.",
-   "evidence": "",
+   "evidence": "scripts/lib/pipeline.py (step list, register, check); reel.py uses it; tests/test_pipeline_steps.py; 303 tests OK",
    "updated": "2026-11-02"
   },
   {
@@ -1851,11 +1851,11 @@
    "phase": "P19",
    "title": "Raise caps to fit the new design (needs Hesham's written number)",
    "owner": "Hesham",
-   "status": "todo",
+   "status": "done",
    "depends": [],
    "done_when": "per-reel stop, warn and monthly stop in config match the approved numbers.",
    "notes": "Hesham 2026-11-02: enhance structure, AI models, creativity, accept higher cost. Estimate: scripts/cost_estimate.py.",
-   "evidence": "",
+   "evidence": "config/project.json budget_usd: warn 1.00, stop 1.50, monthly 100; approval in docs/DECISIONS.md 2026-11-02",
    "updated": "2026-11-02"
   },
   {
@@ -1869,6 +1869,54 @@
    "notes": "Hesham 2026-11-02: enhance structure, AI models, creativity, accept higher cost. Estimate: scripts/cost_estimate.py.",
    "evidence": "",
    "updated": "2026-11-02"
+  },
+  {
+   "id": "T145",
+   "phase": "P19",
+   "title": "Asset check: tool tests each icon/picture against the safe zone and writes where it may and may not sit",
+   "owner": "Claude",
+   "status": "review",
+   "depends": [],
+   "done_when": "Hesham's icon passes the check and the director places it inside the safe zone.",
+   "notes": "Hesham 2026-11-03. Tool: scripts/asset_check.py, scripts/lib/asset_check.py, folder library/assets.",
+   "evidence": "tests/test_asset_check.py",
+   "updated": "2026-11-03"
+  },
+  {
+   "id": "T146",
+   "phase": "P19",
+   "title": "Director follows the asset's placement file (only 'may_sit' zones; error if an unchecked or failed asset is used)",
+   "owner": "Claude",
+   "status": "review",
+   "depends": [],
+   "done_when": "Hesham's icon passes the check and the director places it inside the safe zone.",
+   "notes": "Hesham 2026-11-03. Tool: scripts/asset_check.py, scripts/lib/asset_check.py, folder library/assets.",
+   "evidence": "asset_check.job_problems + director asset_bad; 67 Lucide icons in library/broll (icon-*.svg + Arabic tags.json); scripts/asset_batch.py; 309 tests OK",
+   "updated": "2026-11-03"
+  },
+  {
+   "id": "T147",
+   "phase": "P19",
+   "title": "Bundle an open icon set + shortlist of HyperFrames blocks, each run through the asset check / safe-zone test",
+   "owner": "Claude",
+   "status": "review",
+   "depends": [],
+   "done_when": "Hesham's icon passes the check and the director places it inside the safe zone.",
+   "notes": "Hesham 2026-11-03. Tool: scripts/asset_check.py, scripts/lib/asset_check.py, folder library/assets.",
+   "evidence": "asset_check.job_problems + director asset_bad; 67 Lucide icons in library/broll (icon-*.svg + Arabic tags.json); scripts/asset_batch.py; 309 tests OK",
+   "updated": "2026-11-03"
+  },
+  {
+   "id": "T148",
+   "phase": "P19",
+   "title": "Motion assets: Lottie / transparent WebM intake with the same safe-zone check + preset SVG motions (pop, draw-on, float, count-up)",
+   "owner": "Claude",
+   "status": "todo",
+   "depends": [],
+   "done_when": "A Lottie file Hesham brings passes the check and plays inside a block in the safe zone.",
+   "notes": "Hesham 2026-11-03. HyperFrames supports Lottie/dotLottie and alpha WebM.",
+   "evidence": "",
+   "updated": "2026-11-03"
   }
  ],
  "log": [

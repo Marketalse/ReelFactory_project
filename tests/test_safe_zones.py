@@ -105,13 +105,20 @@ class SafeZoneTests(unittest.TestCase):
         groups = ""
         if block == "captions":
             words = [{"text": t, "start": 0.2 + i * 0.3, "end": 0.45 + i * 0.3} for i, t in enumerate(["الاستراتيجية", "التسويقية", "الإلكترونية"])]
-            groups = hfbuild.caption_groups(words, [1], "b", max_words=3)
+            groups = hfbuild.caption_groups(words, [1], "b", max_words=3, pill_idx=[0, 2], pill_style="--kw-bg:var(--pk-v-ac);--kw-fg:var(--pk-v-on)")
+        if block in ("pack_frame", "recap_chain"):                  # Format Pack: longest titles, 7 sections, both themes' worst case
+            from lib import pack
+            o = {"sections": [{"title": long_text(24), "kind": "step", "t_in": k * 0.4} for k in range(7)]}
+            ic = ["icon-truck.svg"] * 7
+            o4 = {"sections": o["sections"][:4]}
+            groups = (pack.frame_groups("b", o, dur, ic, "dark", long_text(18), long_text(22)) if block == "pack_frame"
+                      else pack.recap_groups("b", o4, ic[:4], "dark", [long_text(10)] * 3))
         src = hfbuild.stamp(block, "b", dur, groups, sample_values(block))
         inner = src.split("<template>", 1)[1].rsplit("</template>", 1)[0]
         style = re.search(r"<style>.*?</style>", inner, re.S).group(0)
         script = re.search(r"<script>.*?</script>", inner, re.S).group(0)
         markup = style + re.sub(r"<style>.*?</style>|<script>.*?</script>", "", inner, flags=re.S)
-        seek = 0.9 if block == "captions" else round(dur * 0.55, 2)
+        seek = 0.9 if block == "captions" else (2.9 if block in ("pack_frame", "recap_chain") else round(dur * 0.55, 2))
         f = os.path.join(self.d, block + ".html")
         open(f, "w", encoding="utf-8").write(PAGE.format(vars=hfbuild.brand_vars(), markup=markup, script=script, seek=seek,
                                                           vals=json.dumps(sample_values(block), ensure_ascii=False), logo=LOGO))

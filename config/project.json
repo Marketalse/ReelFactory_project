@@ -8,8 +8,8 @@
   "models": {
     "transcript_fix": "anthropic/claude-haiku-5.5",
     "selects": "anthropic/claude-sonnet-5.5",
-    "director": "anthropic/claude-haiku-5.5",
-    "director_fallback": "anthropic/claude-sonnet-5.5",
+    "director": "anthropic/claude-sonnet-5.5",
+    "director_fallback": "anthropic/claude-opus-5.5",
     "committee": "anthropic/claude-sonnet-5.5",
     "vision": "anthropic/claude-sonnet-5.5"
   },
@@ -25,13 +25,18 @@
     "anthropic/claude-opus-5": {
       "in": 5.0,
       "out": 25.0
+    },
+    "anthropic/claude-opus-5.5": {
+      "in": 5.0,
+      "out": 25.0,
+      "_note": "assumed equal to claude-opus-5 until checked on the Nous price list"
     }
   },
   "budget_usd": {
-    "per_reel_warn": 0.3,
-    "per_reel_stop": 1.0,
-    "monthly_stop": 50.0,
-    "_pending": "warn 0.45 proposed (T14)"
+    "per_reel_warn": 1.0,
+    "per_reel_stop": 1.5,
+    "monthly_stop": 100.0,
+    "_note": "Hesham 2026-11-02: about 90 reels a month (3 a day) at premium quality, about $1.10 per reel on average, $100 a month."
   },
   "asr": {
     "engine": "whisper",
@@ -85,5 +90,90 @@
     "max_new_per_reel": 8,
     "max_pick": 6,
     "_note": "T123 (Hesham approved the cost 2026-11-02): each new library picture is described once by the vision model; each reel makes one small text call to pick matching files. Set enabled false to switch off."
+  },
+  "roles": {
+    "_note": "One place that decides which AI does which job (T136). Brain = Sonnet 5.5; Haiku 5.5 = words and QA (Hesham 2026-11-03). Effort = how long it thinks. The 'models' list is built from these roles.",
+    "word_fix": {
+      "model": "anthropic/claude-haiku-5.5",
+      "effort": "low",
+      "note": "fixes mistakes in the raw words"
+    },
+    "proofread": {
+      "model": "anthropic/claude-haiku-5.5",
+      "effort": "low",
+      "note": "second check of the words"
+    },
+    "shot_log": {
+      "model": "anthropic/claude-sonnet-5.5",
+      "effort": "low",
+      "note": "looks at key frames"
+    },
+    "story": {
+      "model": "anthropic/claude-sonnet-5.5",
+      "effort": "medium",
+      "note": "picks the story and hooks"
+    },
+    "tighten": {
+      "model": "anthropic/claude-sonnet-5.5",
+      "effort": "medium",
+      "note": "cuts weak lines"
+    },
+    "broll": {
+      "model": "anthropic/claude-sonnet-5.5",
+      "effort": "low",
+      "note": "matches library pictures"
+    },
+    "outline": {
+      "model": "anthropic/claude-sonnet-5.5",
+      "effort": "high",
+      "note": "(T130) hook, steps, recap, concept"
+    },
+    "director": {
+      "model": "anthropic/claude-sonnet-5.5",
+      "effort": "medium",
+      "note": "first plan of the visuals"
+    },
+    "repair": {
+      "model": "anthropic/claude-sonnet-5.5",
+      "effort": "medium",
+      "note": "fixes a plan that breaks rules; also the revision after the critic"
+    },
+    "critic": {
+      "model": "anthropic/claude-haiku-5.5",
+      "effort": "low",
+      "note": "(T134) QA: looks at the draft and scores it (Hesham 2026-11-03)"
+    },
+    "cover": {
+      "model": "anthropic/claude-sonnet-5.5",
+      "effort": "low",
+      "note": "(T128+) picks the cover frame and words"
+    }
+  },
+  "outline": {
+    "enabled": true,
+    "_note": "T130: one Sonnet call per reel (about $0.14) finds hook/steps/recap before the director plans. Set enabled false to switch off."
+  },
+  "critic": {
+    "enabled": true,
+    "_note": "T134: Haiku looks at ~8 stills of the draft and scores it (about $0.002). Report only for now. Set enabled false to switch off."
+  },
+  "format_pack": {
+    "mode": "auto",
+    "theme": "dark",
+    "series": "",
+    "presenter": "هشام الشكرجي",
+    "min_sections": 3,
+    "formats": [
+      "explainer",
+      "tips"
+    ],
+    "_note": "T129: when the outline finds an explainer or tips reel with enough sections, the reel gets ONE designed frame (header, face window, step panel with progress, recap chain) instead of loose cards. mode: auto | off | always. theme: dark | violet.",
+    "closing_buttons": false,
+    "closing_labels": [
+      "لايك",
+      "اشتراك",
+      "تابعني"
+    ],
+    "_closing_note": "Closing like / subscribe / follow buttons under the recap chain. OFF because the project rule keeps the call to action off (AGENTS.md, Hesham 2026-11-01); set closing_buttons true to switch on."
   }
 }

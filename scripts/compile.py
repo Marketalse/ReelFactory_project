@@ -9,7 +9,7 @@ import argparse, json, os, shutil, sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from lib import config as cfg, matte, sfx_mix       # noqa: E402
-from lib import hfbuild, director   # noqa: E402
+from lib import hfbuild, director, pack, broll   # noqa: E402
 
 
 def handle_for(platform, final):
@@ -38,11 +38,22 @@ def compile_job(job, platform="instagram", final=False, out=None, layer="full"):
             s["values"] = dict(s["values"], handle=handle_for(platform, final))
     words = edl["words"]
     kw = set(tl["keyword_ids"])
-    keep = [i for i, w in enumerate(words) if not any(a - 0.05 <= w["start"] < b for a, b in tl["caption_gaps"])]
+    pk = pack.plan(job, tl, edl)                              # FORMAT PACK (T129) decided first: no loose cards = no caption gaps; its highlight words shape the captions (T133)
+    gaps = [] if pk else tl["caption_gaps"]
+    keep = [i for i, w in enumerate(words) if not any(a - 0.05 <= w["start"] < b for a, b in gaps)]
     cap_words = [words[i] for i in keep]
     cap_kw = [k for k, i in enumerate(keep) if i in kw]
+    hl = [k for k, i in enumerate(keep) if pk and i in pk["highlight"]]
     scenes.append({"id": "caps", "block": "captions", "t_in": 0.0, "t_out": tl["duration"], "values": {},
-                   "groups_html": hfbuild.caption_groups(cap_words, cap_kw, "caps", stops=[a for a, _ in tl["caption_gaps"]])})
+                   "groups_html": hfbuild.caption_groups(cap_words, cap_kw, "caps", stops=[a for a, _ in gaps],
+                                                         pill_idx=hl, pill_style=pk["pill_style"] if pk else "")})
+    # FORMAT PACK (T129): an explainer/tips reel gets ONE designed frame; the director's loose cards are replaced by it
+    if pk:
+        scenes = (pk["scenes"] if layer != "video" else [])  + [s for s in scenes if s["block"] == "captions" and layer != "video"]
+        tl = dict(tl, scenes=[])                                  # no split/zoom cards: the face window stays put (punch-ins still work)
+        os.makedirs(os.path.join(out, "assets", "icons"), exist_ok=True)
+        for f in pk["icons"]:
+            shutil.copy(os.path.join(broll.lib_dir(), f), os.path.join(out, "assets", "icons", f))
     # text behind the head (T119): the person cutout is made here (local AI model, cached); a moment that can't get one is dropped, not fatal
     behind = [s for s in scenes if s["block"] == "text_behind"]
     dropped = []
@@ -86,7 +97,7 @@ def compile_job(job, platform="instagram", final=False, out=None, layer="full"):
             print("   sound effects skipped:", ex)
     hfbuild.build_project(out, duration=tl["duration"], face_cuts=[] if layer == "graphics" else cuts, scenes=scenes,
                           video_src=os.path.join(job, "proxy.mp4"), transparent=layer == "graphics", audio=audio or None)
-    json.dump({"platform": platform, "final": final, "face_cuts": cuts, "caption_words": len(cap_words), "dropped_scenes": dropped, "sfx": len(audio)},
+    json.dump({"platform": platform, "final": final, "face_cuts": cuts, "caption_words": len(cap_words), "dropped_scenes": dropped, "sfx": len(audio), "format_pack": bool(pk)},
               open(os.path.join(out, "compile_info.json"), "w"), indent=1)
     return out
 

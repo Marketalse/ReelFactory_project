@@ -1,0 +1,41 @@
+<html data-composition-variables='[{"id":"theme","type":"enum","label":"Colour theme","default":"dark","options":[{"value":"dark","label":"Dark + lime"},{"value":"violet","label":"Violet"}]},{"id":"series","type":"string","label":"Series name","default":"","maxLength":18},{"id":"presenter","type":"string","label":"Presenter","default":"","maxLength":22},{"id":"groups","type":"string","label":"Made by the compiler","default":""}]'>
+<template>
+<style>
+#root{position:absolute;inset:0;pointer-events:none}
+.__ID__-dark{--pk-bg:var(--pk-d-bg);--pk-ac:var(--pk-d-ac);--pk-on:var(--pk-d-on);--pk-sf:var(--pk-d-sf);--pk-tx:var(--pk-d-tx)}
+.__ID__-violet{--pk-bg:var(--pk-v-bg);--pk-ac:var(--pk-v-ac);--pk-on:var(--pk-v-on);--pk-sf:var(--pk-v-sf);--pk-tx:var(--pk-v-tx)}
+#__ID__-wrap{position:absolute;inset:0;font-family:var(--font)}
+#__ID__-bg{position:absolute;left:0;top:0;width:1080px;height:1920px}
+#__ID__-glow{position:absolute;left:108px;top:380px;width:812px;height:720px;border-radius:44px;border:5px solid var(--pk-ac);box-sizing:border-box}
+.__ID__-pill{position:absolute;top:268px;height:64px;padding:0 28px;border-radius:32px;display:flex;align-items:center;font-size:34px;font-weight:700;direction:rtl;white-space:nowrap}
+#__ID__-series{left:108px;background:var(--pk-ac);color:var(--pk-on)}
+#__ID__-who{right:160px;background:var(--pk-sf);color:var(--pk-tx);border:2px solid rgba(255,255,255,.14)}
+#__ID__-panel{position:absolute;left:108px;top:1128px;width:812px;height:372px;border-radius:40px;background:var(--pk-sf);border:2px solid rgba(255,255,255,.1);box-sizing:border-box}
+#__ID__-prog{position:absolute;left:140px;top:1150px;width:748px;height:10px;display:flex;gap:8px}
+#__ID__-prog i{flex:1;border-radius:5px;background:rgba(255,255,255,.18)}
+.__ID__-s{position:absolute;left:140px;top:1176px;width:748px;height:64px;display:flex;align-items:center;gap:18px;direction:ltr;opacity:0}
+.__ID__-s img{width:54px;height:54px;object-fit:contain;flex:none}
+.__ID__-lab{flex:none;font-size:30px;font-weight:700;letter-spacing:2px;color:var(--pk-ac)}
+.__ID__-ttl{flex:1;min-width:0;direction:rtl;text-align:right;color:var(--pk-tx);font-weight:700;white-space:nowrap}
+</style>
+<div id="root" data-composition-id="__ID__" data-width="1080" data-height="1920" data-layout-allow-overflow>
+<!--GROUPS-->
+</div>
+<script>
+const tl = gsap.timeline({ paused: true });
+const D = __DUR__;
+tl.fromTo("#__ID__-bg", { opacity: 0 }, { opacity: 1, duration: 0.3 }, 0);
+tl.fromTo("#__ID__-glow", { opacity: 0, scale: 0.97 }, { opacity: 1, scale: 1, duration: 0.45, ease: "power2.out" }, 0.05);
+tl.fromTo("#__ID__-panel", { opacity: 0, y: 40 }, { opacity: 1, y: 0, duration: 0.45, ease: "power2.out" }, 0.1);
+tl.fromTo(".__ID__-pill", { opacity: 0, y: -24 }, { opacity: 1, y: 0, duration: 0.4, ease: "back.out(1.6)", stagger: 0.08 }, 0.15);
+const segs = document.querySelectorAll("#__ID__-prog i");
+document.querySelectorAll(".__ID__-s").forEach((s, k) => {
+  const a = parseFloat(s.dataset.from), b = parseFloat(s.dataset.to);
+  tl.fromTo(s, { opacity: 0, y: 18 }, { opacity: 1, y: 0, duration: 0.3, ease: "power2.out" }, a + 0.02);
+  if (segs[k]) tl.to(segs[k], { backgroundColor: getComputedStyle(document.querySelector("#__ID__-wrap")).getPropertyValue("--pk-ac").trim(), duration: 0.35 }, a + 0.05);
+  if (b < D - 0.05) tl.to(s, { opacity: 0, y: -14, duration: 0.2, ease: "power2.in" }, b - 0.2);
+});
+window.__timelines["__ID__"] = tl;
+</script>
+</template>
+</html>

@@ -43,7 +43,7 @@ def pending(root=None, limit=MAX_IMAGES_PER_CALL):
     d, items = broll.lib_dir(root), _load(root)["items"]
     out = []
     for f in sorted(os.listdir(d)) if os.path.isdir(d) else []:
-        if f.lower().endswith(PIC_EXT) and not f.startswith("."):
+        if f.lower().endswith(PIC_EXT) and not f.startswith(".") and not f.startswith("icon-"):   # bundled icons are matched by name and tags, no AI
             fp = fingerprint(os.path.join(d, f))
             if items.get(f, {}).get("sha") != fp:
                 out.append(f)

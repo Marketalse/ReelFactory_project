@@ -21,7 +21,7 @@ import argparse, base64, glob, json, os, re, shutil, subprocess, sys, threading,
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from lib import config as cfg   # noqa: E402  (all settings live in config/*.json)
-from lib import transcript as tr, edl as edlmod, director, speech_intel, editorial, visual_plan, brand_memory, creative_brief, content_intel, frames_dedup, learning, doctor, sequence, broll_ai, tighten   # noqa: E402
+from lib import pipeline, outline, critic, asset_check, transcript as tr, edl as edlmod, director, speech_intel, editorial, visual_plan, brand_memory, creative_brief, content_intel, frames_dedup, learning, doctor, sequence, broll_ai, tighten   # noqa: E402
 from lib.hfbuild import BuildError   # noqa: E402
 
 ROOT = cfg.ROOT
@@ -32,8 +32,13 @@ M_VIS = cfg.MODELS["vision"]
 M_SEL = cfg.MODELS["selects"]
 M_DIR = cfg.MODELS["director"]
 M_DIR_FALLBACK = cfg.MODELS.get("director_fallback")
+
+
+def eff(c, role):
+    """How long the AI thinks: the --effort given on the command line wins, else the role's setting."""
+    return getattr(c.a, "effort", None) or cfg.role(role)[1]
 LEN_MIN, LEN_MAX = cfg.RULES["reel_length_s"]["min"], cfg.RULES["reel_length_s"]["max"]
-STAGES = ["ingest", "transcribe", "fix", "review", "selects", "tighten", "edl", "keyframes", "shotlog", "plan", "compile", "draft", "report"]
+STAGES = pipeline.order()          # the list of steps lives in scripts/lib/pipeline.py (T137); new steps register themselves there
 STATUS_AFTER = {"ingest": "ingested", "transcribe": "transcribed", "fix": "transcript_fixed", "review": "transcript_reviewed",
                 "selects": "story_picked", "tighten": "story_picked", "edl": "cut", "plan": "planned", "compile": "built", "draft": "preview_ready"}
 
@@ -195,10 +200,12 @@ def set_status(c, stage):
         j["status"] = STATUS_AFTER[stage]; jsave(jp, j)
 
 
+@pipeline.step("ingest")
 def st_ingest(c):
     if os.path.exists(os.path.join(c.job, "proxy.mp4")): return "cached"
     raise Stop("job has no proxy.mp4; start from an inbox folder: python3 scripts/reel.py inbox/<slug> --slug <slug>")
 
+@pipeline.step("transcribe")
 def st_transcribe(c):
     out = os.path.join(c.job, "transcript_asr.json")
     if os.path.exists(out): return "cached"
@@ -238,6 +245,7 @@ def speech_intel_run(c):
         print(f"   speech: analysis skipped ({e})")
 
 
+@pipeline.step("fix")
 def st_fix(c):
     out = os.path.join(c.job, "transcript.json")
     asr = jload(os.path.join(c.job, "transcript_asr.json"))
@@ -245,7 +253,7 @@ def st_fix(c):
         if not os.path.exists(os.path.join(c.job, "speech_intel.json")): speech_intel_run(c)
         return "cached"
     prompt = FIX_PROMPT.replace("{glossary}", glossary_text()) + "\n".join(f"{i}:{w['text']}" for i, w in enumerate(asr))
-    txt = c.llm("fix", M_FIX, [{"type": "text", "text": prompt}], 4000, "low")   # longer clip = longer answer
+    txt = c.llm("fix", M_FIX, [{"type": "text", "text": prompt}], 4000, eff(c, "word_fix"))   # longer clip = longer answer
     fx = parse_json(txt)
     words = [dict(w) for w in asr]; applied = []
     for f in fx.get("fixes", []):
@@ -271,7 +279,7 @@ def proofread(c, words):
         topic = ", ".join(k["word"] for k in si.get("key_terms", [])[:8]) or "none yet"
         done = []
         for chunk in tr.proof_chunks(words, doubtful)[:5]:
-            ans = parse_json(c.llm("proof", M_FIX, [{"type": "text", "text": tr.PROOF_PROMPT.format(glossary=glossary_text(), topic=topic) + chunk}], 2500, "low"))
+            ans = parse_json(c.llm("proof", M_FIX, [{"type": "text", "text": tr.PROOF_PROMPT.format(glossary=glossary_text(), topic=topic) + chunk}], 2500, eff(c, "proofread")))
             done += tr.apply_proof(words, ans.get("fixes", []) if isinstance(ans, dict) else [])
         if done: print(f"   proofreader: {len(done)} word(s) corrected in context")
         return done
@@ -286,6 +294,7 @@ def glossary_text():
     return "; ".join(f'{t["spoken"]} -> {t["write"]}' for t in terms) or "none yet"
 
 
+@pipeline.step("review")
 def st_review(c):
     """GATE 0: Hesham fixes words in transcript_review.txt; timings are kept."""
     path = os.path.join(c.job, "transcript_review.txt"); meta = os.path.join(c.job, "transcript_review_meta.json")
@@ -306,6 +315,29 @@ def st_review(c):
     jsave(os.path.join(c.job, "transcript.json"), new); jsave(meta, stats)
     return f"{stats['changed']} of {stats['words_before']} words changed by Hesham (error rate {stats['error_rate']:.0%})"
 
+@pipeline.step("outline", after="edl", role="outline", needs=["edl.json"], makes=["outline.json"], label="Find the structure (hook, steps, recap)")
+def st_outline(c):
+    """T130: one strong-model call finds the structure of the cut talk; the director builds visuals around it. Never stops a reel
+    (except the money guard): without an outline the director works as before."""
+    out = os.path.join(c.job, "outline.json")
+    if os.path.exists(out) and not c.a.replan: return "cached"
+    if not cfg.PROJECT.get("outline", {}).get("enabled", True): return "off"
+    words = jload(os.path.join(c.job, "edl.json"))["words"]
+    try:
+        model, effort = cfg.role("outline")
+        ans = parse_json(c.llm("outline", model, [{"type": "text", "text": outline.PROMPT.format(
+            max_sections=outline.MAX_SECTIONS, tw=outline.TITLE_WORDS, transcript=director.numbered_transcript(words))}], 3000, c.a.effort or effort))
+        o = outline.clean(ans, words)
+    except Stop as ex:
+        if str(ex).startswith(("BUDGET GUARD", "MONTHLY CAP")): raise
+        print("   outline skipped:", ex); return "skipped"
+    except (ValueError, KeyError) as ex:
+        print("   outline skipped (answer not usable):", ex); return "skipped"
+    jsave(out, o)
+    return f"{o['format']}, {len(o['sections'])} sections"
+
+
+@pipeline.step("keyframes")
 def st_keyframes(c):
     s0, s1 = jload(os.path.join(c.job, "chosen_select.json"))["range"]
     s0, s1 = max(0.0, s0 - 0.5), min(proxy_duration(c.job), s1 + 0.5)
@@ -324,6 +356,7 @@ SHOT_PROMPT = """You are the shot-logger for a short-form video editor. Below ar
 {{"t":<seconds>,"face":{{"x":<0-1 left edge>,"y":<0-1 top edge>,"w":<0-1>,"h":<0-1>}}|null,"eyes":"open|closed|away","energy":<1 flat - 5 animated>,"gesture":"none|hand|point|nod|other","headroom":"ok|tight","bg":"low|med|high clutter","text":"any readable on-screen text or empty","usable":["hook","punch_in","cut","avoid"],"note":"<=10 words"}}
 face = bounding box of the speaker's face as fractions of the frame (approximate is fine). usable = what an editor could use this moment for: hook (strong first frame), punch_in (good moment for a zoom), cut (clean place to cut/transition), avoid (blink, half-closed eyes, awkward mid-word face, motion blur). Be honest: if frames are near-identical, say so in note. No commentary outside the JSON."""
 
+@pipeline.step("shotlog")
 def st_shotlog(c):
     out = os.path.join(c.job, "shot_log.json")
     if os.path.exists(out): return "cached"
@@ -341,7 +374,7 @@ def st_shotlog(c):
         content.append({"type": "text", "text": "t=%.2f" % f["t"]})
         b = base64.b64encode(open(os.path.join(c.job, f["file"]), "rb").read()).decode()
         content.append({"type": "image_url", "image_url": {"url": "data:image/jpeg;base64," + b}})
-    log = parse_json(c.llm("shotlog", M_VIS, content, 9000, "low"))
+    log = parse_json(c.llm("shotlog", M_VIS, content, 9000, eff(c, "shot_log")))
     if len(log) != len(frames): raise Stop(f"shot log returned {len(log)} rows for {len(frames)} frames")
     jsave(out, log); return f"{len(log)} rows"
 
@@ -361,6 +394,7 @@ def transcript_lines(c):
     words = jload(os.path.join(c.job, "transcript.json"))
     return words, "\n".join(f"[{a:.1f}-{b:.1f}] {t}" for a, b, t, _ in lines_from_words(words))
 
+@pipeline.step("selects")
 def st_selects(c):
     jp = os.path.join(c.job, "job.json"); job = jload(jp, {})
     words, lines = transcript_lines(c)
@@ -380,7 +414,7 @@ def st_selects(c):
     if not os.path.exists(sp):
         dur = proxy_duration(c.job)
         res = parse_json(c.llm("selects", M_SEL, [{"type": "text", "text": SELECTS_PROMPT.format(dur=dur, lines=lines, lmin=lmin, lmax=lmax) + legend + (
-            "\n\n" + creative_brief.to_text(cb) + (f"\nPrefer candidates whose style is {cb['style']}." if cb.get("style") else "") if cb else "")}], 5000, c.a.effort))
+            "\n\n" + creative_brief.to_text(cb) + (f"\nPrefer candidates whose style is {cb['style']}." if cb.get("style") else "") if cb else "")}], 5000, eff(c, "story")))
         try:                                          # score with the formula, check hooks are his own words (free)
             w8 = editorial.weights(cfg.RULES); si = jload(os.path.join(c.job, "speech_intel.json")); tw = jload(os.path.join(c.job, "transcript.json"), [])
             for x in res.get("selects", []):
@@ -413,6 +447,7 @@ def st_selects(c):
     jsave(os.path.join(c.job, "chosen_select.json"), dict(s, picked_by=by))
     return f"select {s['id']} {s['range']}"
 
+@pipeline.step("tighten")
 def st_tighten(c):
     """T124: an AI editor removes weak, repeated or off-topic LINES from the chosen story (and may move its start/end); code checks every cut."""
     tp = os.path.join(c.job, "tighten.json")
@@ -430,7 +465,7 @@ def st_tighten(c):
             jsave(tp, {"range_before": [s0, s1], "range": [s0, s1], "drops": [], "removed_s": 0, "summary": "too short to tighten"})
             return "nothing to tighten (very short)"
         sl = jload(os.path.join(c.job, "selects.json"), {}) or {}
-        ans = parse_json(c.llm("tighten", M_SEL, [{"type": "text", "text": tighten.build_prompt(us, sl.get("main_message"), sl.get("audience"), ch.get("style") or cb.get("style"), lmin, lmax)}], 2500, c.a.effort))
+        ans = parse_json(c.llm("tighten", M_SEL, [{"type": "text", "text": tighten.build_prompt(us, sl.get("main_message"), sl.get("audience"), ch.get("style") or cb.get("style"), lmin, lmax)}], 2500, eff(c, "tighten")))
         dec = tighten.decide(ans, us, lmin)
         rng, rows = tighten.apply(us, dec)
     except Stop as ex:
@@ -444,6 +479,7 @@ def st_tighten(c):
     return f"AI cut {len(rows)} line(s), {dec['removed_s']:.0f} s removed; range {s0:.0f}-{s1:.0f} -> {rng[0]:.0f}-{rng[1]:.0f}"
 
 
+@pipeline.step("edl")
 def st_edl(c):
     out = os.path.join(c.job, "edl.json")
     if os.path.exists(out) and not c.a.replan: return "cached"
@@ -459,7 +495,8 @@ def st_edl(c):
 
 def job_logos(c):
     d = os.path.join(c.job, "assets")
-    return sorted(f for f in os.listdir(d) if f.lower().endswith((".svg", ".png", ".jpg", ".jpeg", ".webp"))) if os.path.isdir(d) else []
+    bad = asset_check.job_problems(d)                        # unsafe/unreadable files are never offered to the director (T146)
+    return sorted(f for f in os.listdir(d) if f.lower().endswith((".svg", ".png", ".jpg", ".jpeg", ".webp")) and f not in bad) if os.path.isdir(d) else []
 
 
 def broll_ai_step(c, words, root=None):
@@ -477,7 +514,7 @@ def broll_ai_step(c, words, root=None):
         if todo:
             content, sent = broll_ai.describe_content(root, todo)
             if sent:
-                rows = parse_json(c.llm("broll_describe", M_VIS, content, 1800, "low"))
+                rows = parse_json(c.llm("broll_describe", M_VIS, content, 1800, eff(c, "broll")))
                 new = broll_ai.clean_descriptions(rows, sent)
                 broll_ai.save(root, new)
                 print(f"   b-roll: described {len(new)} new library picture(s) once (kept for next time)")
@@ -485,7 +522,7 @@ def broll_ai_step(c, words, root=None):
         if not cat:
             return [], ""
         lines = "\n".join(f"[{a:.0f}] {t}" for a, b, t, _ in lines_from_words(words))
-        ans = parse_json(c.llm("broll_pick", M_SEL, [{"type": "text", "text": broll_ai.pick_prompt(lines, cat, int(conf.get("max_pick", 6)))}], 700, "low"))
+        ans = parse_json(c.llm("broll_pick", M_SEL, [{"type": "text", "text": broll_ai.pick_prompt(lines, cat, int(conf.get("max_pick", 6)))}], 700, eff(c, "broll")))
         picks = broll_ai.clean_picks(ans, cat, int(conf.get("max_pick", 6)))
         got = []
         for p in picks:
@@ -506,6 +543,7 @@ def broll_ai_step(c, words, root=None):
         return [], ""
 
 
+@pipeline.step("plan")
 def st_plan(c):
     """Director (Haiku) -> plan; code resolves word anchors to exact times and checks every rule;
     one repair with the Director, then one with the fallback model; still failing -> stop."""
@@ -521,6 +559,8 @@ def st_plan(c):
     brief = open(os.path.join(c.job, "brief.md"), encoding="utf-8").read() if os.path.exists(os.path.join(c.job, "brief.md")) else ""
     _got, note = broll_ai_step(c, words)               # pictures matched by what is IN them (AI, cents; cached descriptions)
     if note: brief += "\n\n" + note
+    ol = jload(os.path.join(c.job, "outline.json"))
+    if ol: brief += "\n\n" + outline.brief_note(ol)       # T130: the structure the visuals are built around
     job = jload(os.path.join(c.job, "job.json"), {})
     feedback = c.a.fix or ""
     ch = jload(os.path.join(c.job, "chosen_select.json"), {}) or {}; sl = jload(os.path.join(c.job, "selects.json"), {}) or {}
@@ -544,11 +584,11 @@ def st_plan(c):
     prompt = director.build_prompt(words, e["duration"], brief, job_logos(c), feedback, director.taste(), marks=marks)
     if feedback and os.path.exists(os.path.join(c.job, "scene_plan.json")):
         prompt += "\n\nPREVIOUS PLAN:\n" + json.dumps(jload(os.path.join(c.job, "scene_plan.json")), ensure_ascii=False)
-    plan = parse_json(c.llm("plan", M_DIR, [{"type": "text", "text": prompt}], 9000, c.a.effort))
+    plan = parse_json(c.llm("plan", M_DIR, [{"type": "text", "text": prompt}], 9000, eff(c, "director")))
     attempts = [(M_DIR, plan)]
 
     def resolve(p):
-        tl, err, warn = director.resolve(p, words, e["duration"], logos=job_logos(c))
+        tl, err, warn = director.resolve(p, words, e["duration"], logos=job_logos(c), asset_bad=asset_check.job_problems(os.path.join(c.job, "assets")))
         if not err:
             err = director.check_rhythm(tl, director.face_cuts(tl, e["segments"]))
         return tl, err, warn
@@ -570,7 +610,7 @@ def st_plan(c):
         plan = parse_json(c.llm("repair", model, [{"type": "text", "text":
             "Fix this reel plan JSON so every error below is solved. Change only what is needed, keep the schema, "
             "return ONLY the full JSON.\n\nERRORS:\n" + "\n".join(err) + "\n\nPLAN:\n" + json.dumps(plan, ensure_ascii=False)
-            + "\n\nTRANSCRIPT:\n" + director.numbered_transcript(words)}], 9000, c.a.effort))
+            + "\n\nTRANSCRIPT:\n" + director.numbered_transcript(words)}], 9000, eff(c, "repair")))
         attempts.append((model, plan)); tl, err, warn = resolve(plan)
         plan, tl, err, warn = free_fixes(plan, tl, err, warn)
     jsave(os.path.join(c.job, "scene_plan.json"), plan)
@@ -596,6 +636,7 @@ def st_plan(c):
     return f"{n} moments, {len(tl['punch_ins'])} punch-ins, {len(tl['keyword_ids'])} keywords ({len(warn)} warnings)"
 
 
+@pipeline.step("compile")
 def st_compile(c):
     sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
     from compile import compile_job
@@ -612,6 +653,7 @@ def st_compile(c):
     return os.path.relpath(p, c.job)
 
 
+@pipeline.step("draft")
 def st_draft(c):
     sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
     import render
@@ -630,6 +672,31 @@ def st_draft(c):
     return f"draft ready: QA passed ({len(qa.get('warnings', []))} QA warnings, {len(res.get('check_warnings', []))} check warnings)"
 
 
+@pipeline.step("critic", after="draft", role="critic", needs=["review/draft_540p.mp4", "timeline.json"], makes=["review/critic.json"], label="AI looks at the draft and scores it")
+def st_critic(c):
+    """T134: a small vision model looks at ~8 stills of the draft and scores it. Report only; never stops a reel (except the money guard)."""
+    out = os.path.join(c.job, "review", "critic.json")
+    if os.path.exists(out) and not c.a.replan: return "cached"
+    if not cfg.PROJECT.get("critic", {}).get("enabled", True): return "off"
+    video = os.path.join(c.job, "review", "draft_540p.mp4")
+    try:
+        tl = jload(os.path.join(c.job, "timeline.json"), {}); dur = (jload(os.path.join(c.job, "edl.json"), {}) or {}).get("duration") or tl.get("duration") or 60
+        parts, sent = critic.content(video, critic.pick_times(tl, dur))
+        if not sent: return "skipped (no stills)"
+        model, effort = cfg.role("critic")
+        o = critic.clean(parse_json(c.llm("critic", model, parts, 1500, c.a.effort or effort)))
+        o["stills"] = len(sent); o["model"] = model
+    except Stop as ex:
+        if str(ex).startswith(("BUDGET GUARD", "MONTHLY CAP")): raise
+        print("   quality check skipped:", ex); return "skipped"
+    except (ValueError, KeyError, OSError) as ex:
+        print("   quality check skipped (answer not usable):", ex); return "skipped"
+    jsave(out, o)
+    for l in critic.summary_lines(o): print("   " + l)
+    return f"{o['average']}/10, {len(o['issues'])} issues"
+
+
+@pipeline.step("report")
 def st_report(c):
     cost = c.cost["calls"]; tot = sum(x["cost"] for x in cost)
     e = jload(os.path.join(c.job, "edl.json"), {}); tl = jload(os.path.join(c.job, "timeline.json"), {})
@@ -771,9 +838,8 @@ def bakeoff(job, models, a):
     return os.path.join(out, "report.md")
 
 
-FUNCS = {"ingest": st_ingest, "transcribe": st_transcribe, "fix": st_fix, "review": st_review, "selects": st_selects,
-         "tighten": st_tighten, "edl": st_edl, "keyframes": st_keyframes, "shotlog": st_shotlog, "plan": st_plan, "compile": st_compile,
-         "draft": st_draft, "report": st_report}
+FUNCS = pipeline.FUNCS
+STAGES = pipeline.order()          # refreshed now that every step has registered itself
 
 
 def join_shots(c):
@@ -804,7 +870,7 @@ def can_overlap_shotlog(c, a):
 def run_stages(c, a, job):
     """All pipeline stages in order. Returns True when every stage ran (False when it stopped early on --stop-after)."""
     try:
-        for s in STAGES:
+        for s in pipeline.order():
             if s == "shotlog" and can_overlap_shotlog(c, a):
                 box = {}
                 def work(box=box):
@@ -836,9 +902,9 @@ def run_stages(c, a, job):
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("input"); ap.add_argument("--slug"); ap.add_argument("--select"); ap.add_argument("--stop-after", choices=STAGES)
+    ap.add_argument("input"); ap.add_argument("--slug"); ap.add_argument("--select"); ap.add_argument("--stop-after", choices=pipeline.order())
     ap.add_argument("--budget", type=float, default=cfg.BUDGET["per_reel_stop"]); ap.add_argument("--width", type=int, default=540)
-    ap.add_argument("--every", type=float, default=2.0); ap.add_argument("--effort", default="low", choices=["low", "medium", "high"])
+    ap.add_argument("--every", type=float, default=2.0); ap.add_argument("--effort", default=None, choices=["low", "medium", "high"])
     ap.add_argument("--force", default=""); ap.add_argument("--asr-model", default=None); ap.add_argument("--retranscribe", action="store_true")
     ap.add_argument("--fresh-selects", action="store_true"); ap.add_argument("--no-repair", action="store_true")
     ap.add_argument("--skip-review", action="store_true", help="skip Gate 0 for this reel")
