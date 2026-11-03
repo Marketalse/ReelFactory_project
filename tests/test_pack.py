@@ -44,3 +44,20 @@ class Pack(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class Highlights(unittest.TestCase):
+    def test_up_to_two_words_per_section_from_inside_the_title(self):
+        o = outline.clean(ANS, W)
+        hl = pack.highlight_idx(o, W)
+        for s in o["sections"]:
+            mine = [i for i in hl if s["title_from"] <= i <= s["title_to"]]
+            self.assertTrue(1 <= len(mine) <= 2)
+        self.assertEqual(pack.highlight_idx(o, W, keyword_ids=[1]) & {1}, {1})          # a director keyword inside a title wins
+        self.assertIn("--kw-bg", pack.pill_style("violet"))
+
+    def test_pill_markup_and_no_caption_gaps_in_pack_mode(self):
+        from lib import hfbuild
+        g = hfbuild.caption_groups(W[:3], [], "c", pill_idx=[1], pill_style="--kw-bg:red")
+        self.assertEqual(g.count("c-kwp"), 1); self.assertIn("--kw-bg:red", g)
+        self.assertEqual(hfbuild.caption_groups(W[:3], [], "c").count("c-kwp"), 0)

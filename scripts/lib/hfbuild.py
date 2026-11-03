@@ -105,16 +105,16 @@ def caption_events(words, t_offset=0.0, max_words=None, gap=0.15, hold=0.35, sto
     return out
 
 
-def caption_groups(words, keyword_idx, inst_id, t_offset=0.0, max_words=None, gap=0.15, hold=0.35, stops=()):
+def caption_groups(words, keyword_idx, inst_id, t_offset=0.0, max_words=None, gap=0.15, hold=0.35, stops=(), pill_idx=(), pill_style=""):
     """Group transcript words (reel time) into caption groups of up to max_words; returns HTML.
     words: [{"text","start","end"}] already on the reel timeline. keyword_idx: indices into words.
     stops: times where a full-screen card or the CTA begins; a caption never stays on screen past one."""
-    kw = set(keyword_idx or [])
+    kw = set(keyword_idx or []); pills = set(pill_idx or [])      # pills (T133): a highlight bar wipes in behind the word as it is said
     out = []
     for n, ev in enumerate(caption_events(words, t_offset, max_words, gap, hold, stops)):
         s, e, g = ev["start"], ev["end"], ev["idx"]
         spans = "".join(
-            f'<span class="{inst_id}-w{" " + inst_id + "-kw" if i in kw else ""}" data-t="{_num(max(s, words[i]["start"] - t_offset))}">'
+            f'<span class="{inst_id}-w{" " + inst_id + "-kw" if i in kw else ""}{" " + inst_id + "-kwp" if i in pills else ""}"{f" style=\'{pill_style}\'" if i in pills and pill_style else ""} data-t="{_num(max(s, words[i]["start"] - t_offset))}">'
             f'{html.escape(words[i]["text"])}</span>' for i in g)
         out.append(f'  <div id="{inst_id}-g{n}" class="clip {inst_id}-g" data-start="{_num(s)}" data-duration="{_num(e - s)}">'
                    f'<div class="{inst_id}-pill">{spans}</div></div>')

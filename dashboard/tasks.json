@@ -1767,11 +1767,11 @@
    "phase": "P18",
    "title": "Kinetic highlight text: his sentence as designed text with key words in highlight pills, timed to the voice",
    "owner": "Claude",
-   "status": "todo",
+   "status": "review",
    "depends": [],
    "done_when": "Key words get highlight pills at the moment he says them.",
    "notes": "From the quality-gap report 2026-11-02 (docs/DECISIONS.md). Starts when Hesham says go.",
-   "evidence": "",
+   "evidence": "highlight bar wipes in behind 1-2 title words per section (pack.highlight_idx, captions .kwp, pill_style per theme); no caption gaps in pack mode; tests/test_pack.py; safe-zone test covers pills; 324 tests OK. Not yet seen on a real reel.",
    "updated": "2026-11-02"
   },
   {

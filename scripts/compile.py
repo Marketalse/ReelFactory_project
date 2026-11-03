@@ -38,13 +38,16 @@ def compile_job(job, platform="instagram", final=False, out=None, layer="full"):
             s["values"] = dict(s["values"], handle=handle_for(platform, final))
     words = edl["words"]
     kw = set(tl["keyword_ids"])
-    keep = [i for i, w in enumerate(words) if not any(a - 0.05 <= w["start"] < b for a, b in tl["caption_gaps"])]
+    pk = pack.plan(job, tl, edl)                              # FORMAT PACK (T129) decided first: no loose cards = no caption gaps; its highlight words shape the captions (T133)
+    gaps = [] if pk else tl["caption_gaps"]
+    keep = [i for i, w in enumerate(words) if not any(a - 0.05 <= w["start"] < b for a, b in gaps)]
     cap_words = [words[i] for i in keep]
     cap_kw = [k for k, i in enumerate(keep) if i in kw]
+    hl = [k for k, i in enumerate(keep) if pk and i in pk["highlight"]]
     scenes.append({"id": "caps", "block": "captions", "t_in": 0.0, "t_out": tl["duration"], "values": {},
-                   "groups_html": hfbuild.caption_groups(cap_words, cap_kw, "caps", stops=[a for a, _ in tl["caption_gaps"]])})
+                   "groups_html": hfbuild.caption_groups(cap_words, cap_kw, "caps", stops=[a for a, _ in gaps],
+                                                         pill_idx=hl, pill_style=pk["pill_style"] if pk else "")})
     # FORMAT PACK (T129): an explainer/tips reel gets ONE designed frame; the director's loose cards are replaced by it
-    pk = pack.plan(job, tl, edl)
     if pk:
         scenes = (pk["scenes"] if layer != "video" else [])  + [s for s in scenes if s["block"] == "captions" and layer != "video"]
         tl = dict(tl, scenes=[])                                  # no split/zoom cards: the face window stays put (punch-ins still work)

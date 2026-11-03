@@ -105,7 +105,7 @@ class SafeZoneTests(unittest.TestCase):
         groups = ""
         if block == "captions":
             words = [{"text": t, "start": 0.2 + i * 0.3, "end": 0.45 + i * 0.3} for i, t in enumerate(["الاستراتيجية", "التسويقية", "الإلكترونية"])]
-            groups = hfbuild.caption_groups(words, [1], "b", max_words=3)
+            groups = hfbuild.caption_groups(words, [1], "b", max_words=3, pill_idx=[0, 2], pill_style="--kw-bg:var(--pk-v-ac);--kw-fg:var(--pk-v-on)")
         if block in ("pack_frame", "recap_chain"):                  # Format Pack: longest titles, 7 sections, both themes' worst case
             from lib import pack
             o = {"sections": [{"title": long_text(24), "kind": "step", "t_in": k * 0.4} for k in range(7)]}

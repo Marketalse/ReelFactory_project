@@ -6,6 +6,7 @@
 .__ID__-pill{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:6px 20px;max-width:100%;padding:14px 30px;border-radius:30px;background:rgba(20,22,30,.62)}
 .__ID__-w{color:var(--text);font-size:var(--cap-size,76px);font-weight:600;line-height:1.08;text-shadow:0 4px 18px rgba(0,0,0,.75),0 0 3px rgba(0,0,0,.9);display:inline-block}
 .__ID__-kw{color:var(--lime);font-weight:700}
+.__ID__-kwp{color:var(--text);padding:0 16px;border-radius:18px;background-image:linear-gradient(var(--kw-bg,var(--lime)),var(--kw-bg,var(--lime)));background-repeat:no-repeat;background-position:100% 0;background-size:0% 100%;text-shadow:none}
 </style>
 <div id="root" data-composition-id="__ID__" data-width="1080" data-height="1920" data-layout-allow-overflow>
 <!--GROUPS-->
@@ -19,7 +20,10 @@ document.querySelectorAll(".__ID__-g").forEach((g) => {
   g.querySelectorAll(".__ID__-w").forEach((w) => {
     const t = parseFloat(w.dataset.t);
     tl.fromTo(w, { opacity: 0.68 }, { opacity: 1, duration: 0.06 }, Math.max(s, t));
-    if (w.classList.contains("__ID__-kw")) tl.fromTo(w, { scale: 1 }, { scale: 1.14, duration: 0.12, ease: "power2.out", yoyo: true, repeat: 1 }, Math.max(s, t));
+    if (w.classList.contains("__ID__-kwp")) {
+      tl.to(w, { backgroundSize: "100% 100%", color: getComputedStyle(w).getPropertyValue("--kw-fg").trim() || getComputedStyle(document.documentElement).getPropertyValue("--bg").trim(), duration: 0.2, ease: "power2.out" }, Math.max(s, t));
+      tl.fromTo(w, { scale: 1 }, { scale: 1.1, duration: 0.14, ease: "power2.out", yoyo: true, repeat: 1 }, Math.max(s, t));
+    } else if (w.classList.contains("__ID__-kw")) tl.fromTo(w, { scale: 1 }, { scale: 1.14, duration: 0.12, ease: "power2.out", yoyo: true, repeat: 1 }, Math.max(s, t));
   });
   tl.to(g, { opacity: 0, duration: 0.08, ease: "power2.in" }, e - 0.08);
 });

@@ -46,6 +46,21 @@ def pick_icons(outline, words, root=None):
     return out
 
 
+def highlight_idx(outline, words, keyword_ids=()):
+    """Which spoken words get the highlight bar: up to 2 per section, inside the section's title (his words): the director's keywords
+    first, then the longest words. -> set of edl word indices."""
+    kw, out = set(keyword_ids or ()), set()
+    for s in outline["sections"]:
+        ids = [i for i in range(s["title_from"], s["title_to"] + 1) if len(words[i]["text"].strip(" ،,.!؟?")) >= 3]
+        ids.sort(key=lambda i: (i not in kw, -len(words[i]["text"])))
+        out.update(ids[:2])
+    return out
+
+
+def pill_style(theme):
+    return "--kw-bg:var(--pk-v-ac);--kw-fg:var(--pk-v-on)" if theme == "violet" else "--kw-bg:var(--pk-d-ac);--kw-fg:var(--pk-d-on)"
+
+
 def _e(s): return html.escape(str(s), quote=True)
 
 
@@ -104,4 +119,4 @@ def plan(job, tl, edl, root=None):
     if len(outline["sections"]) >= 3 and start > last["t_in"] + 1.0:          # never cover the last section's first second
         scenes.append({"id": "pkr", "block": "recap_chain", "t_in": start, "t_out": round(dur, 2), "values": {"theme": theme},
                        "groups_html": recap_groups("pkr", outline, icons, theme)})
-    return {"scenes": scenes, "icons": sorted({i for i in icons if i})}
+    return {"scenes": scenes, "icons": sorted({i for i in icons if i}), "highlight": highlight_idx(outline, words, tl.get("keyword_ids")), "pill_style": pill_style(theme)}
