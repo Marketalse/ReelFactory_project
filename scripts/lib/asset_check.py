@@ -98,6 +98,18 @@ def check(path):
     return rec
 
 
+def check_bytes(name, data, tmp_dir):
+    """check() for a file that is only in memory (zip member): written to a private temp file for the check, then removed."""
+    import tempfile
+    fd, p = tempfile.mkstemp(suffix=os.path.splitext(name)[1].lower(), dir=tmp_dir)
+    try:
+        with os.fdopen(fd, "wb") as f: f.write(data)
+        r = check(p); r["asset"] = os.path.basename(name); return r
+    finally:
+        try: os.remove(p)
+        except OSError: pass
+
+
 def run(path, out_dir=None):
     """Check one file or every SVG/PNG in a folder; writes <name>.placement.json next to each. -> list of records."""
     files = [path] if os.path.isfile(path) else sorted(os.path.join(path, f) for f in os.listdir(path) if f.lower().endswith((".svg", ".png", ".jpg", ".gif", ".json")))
