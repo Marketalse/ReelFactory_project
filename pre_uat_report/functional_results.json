@@ -64,5 +64,19 @@
   "name": "F3c loudness near the -14 LUFS target",
   "verdict": "PASS",
   "detail": "['-14.0']"
+ },
+ {
+  "group": "functional",
+  "name": "F4 silent clip (no audio track)",
+  "verdict": "PASS",
+  "detail": "ayout 7.0, consistency 8.0, variety 5.0 |      mock verdict |      3.0s: mock: plain frame | critic      ok    0.8s  +$0.0010  7.0/10, 1 issues | report      ok    0.0s  +$0.0000  report.md |  | GATE 2: watch /tmp/rf-e2e-a6rip84u/jobs/2026-11-03-f4-silent-clip-no-audio/review/draft_540p.mp4 |   approve:  python3 scripts/reel.py jobs/2026-11-03-f4-silent-clip-no-audio --approve |   or fix:   python3 scripts/reel.py jobs/2026-11-03-f4-silent-clip-no-audio --fix \"what to change\" | TOTAL this job $0.0070 | wall 119s | ",
+  "seconds": 118.9
+ },
+ {
+  "group": "functional",
+  "name": "F4 4K portrait",
+  "verdict": "PASS",
+  "detail": "s): 7.0/10 - readable 8.0, layout 7.0, consistency 8.0, variety 5.0 |      mock verdict |      3.0s: mock: plain frame | critic      ok    0.8s  +$0.0010  7.0/10, 1 issues | report      ok    0.0s  +$0.0000  report.md |  | GATE 2: watch /tmp/rf-e2e-a6rip84u/jobs/2026-11-03-f4-4k-portrait/review/draft_540p.mp4 |   approve:  python3 scripts/reel.py jobs/2026-11-03-f4-4k-portrait --approve |   or fix:   python3 scripts/reel.py jobs/2026-11-03-f4-4k-portrait --fix \"what to change\" | TOTAL this job $0.0060 | wall 87s | ",
+  "seconds": 87.2
  }
 ]
