@@ -1,0 +1,11 @@
+[
+ {"id":"BUG-001","severity":"High","status":"FIXED","title":"Format Pack reels stopped before render (dropped-scene check counted every scene as dropped)","fix":"compile.py pack_dropped","regression_test":"tests/test_pack_compile.py"},
+ {"id":"BUG-002","severity":"Medium","status":"FIXED","title":"QA ignored highlighted caption words and flagged caption gaps in packed reels","fix":"qa_check.py caption regex and gaps","regression_test":"tests/test_pack.py"},
+ {"id":"BUG-005","severity":"High","status":"FIXED","title":"Two runs of the same reel could start at once and corrupt its files","fix":"scripts/lib/joblock.py (flock), reel.py exit 3","regression_test":"tests/test_joblock.py + strict I4 (integration_i4_results.json)"},
+ {"id":"BUG-006","severity":"Medium","status":"FIXED","title":"QA crashed on a half-written video","fix":"qa_check.duration returns 0.0 on ValueError","regression_test":"tests/test_pack_compile.py"},
+ {"id":"BUG-007","severity":"Low","status":"OPEN","title":"/api/health takes ~150 ms (all other endpoints 1-4 ms)","fix":"none yet; cosmetic, not blocking"},
+ {"id":"OBS-001","severity":"Low","status":"OPEN","title":"At 512 simultaneous browser clients, 1.6% of requests failed (dashboard never crashed). One person uses it; not realistic.","fix":"none needed"},
+ {"id":"OBS-002","severity":"Low","status":"OPEN","title":"HyperFrames leaves a warm browser running for a few minutes after a render; it exits by itself (checked: 0 left).","fix":"none needed"},
+ {"id":"OBS-003","severity":"Low","status":"OPEN","title":"Caption-gap logic duplicated in visual_plan.py and render.py","fix":"refactor later"},
+ {"id":"OBS-004","severity":"Low","status":"OPEN","title":"AI call timeout is 600 s; no automatic disk cleanup of old jobs (each job ~210 MB)","fix":"add cleanup button later"}
+]
