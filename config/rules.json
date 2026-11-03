@@ -64,6 +64,11 @@
       "min_gap_s": 10,
       "max_per_reel": 2,
       "requires": "face in the middle of the frame (checked from the shot log)"
+    },
+    "motion_card": {
+      "min_gap_s": 6,
+      "max_per_reel": 3,
+      "requires": "a checked motion file whose Arabic tag matches a word he says"
     }
   },
   "sfx": {

@@ -63,6 +63,26 @@ def fit_size(text, big, small, width=None):
     return int(max(small, min(big, width / (GLYPH_EM * n))))
 
 
+MOTION_DIR = os.path.join(cfg.ROOT, "library", "assets", "motion")
+
+
+def lottie_json(name, motion_dir=None):
+    """The animation, as JSON text to put inside the scene file. Only a bare file name from library/assets/motion/ that passes the
+    motion check again right now (no expressions, no internet links, a size that fits the safe zone). Anything else stops the build."""
+    from . import motion_check
+    d = motion_dir or MOTION_DIR
+    f = os.path.basename(str(name or ""))
+    if not f or f != name or not f.lower().endswith(".json"):
+        raise BuildError(f"motion file {name!r}: give only a file name from library/assets/motion/")
+    p = os.path.join(d, f)
+    if not os.path.isfile(p):
+        raise BuildError(f"motion file {f!r} is not in library/assets/motion/ (run scripts/asset_batch.py on your motion pack first)")
+    rec = motion_check.check(p)
+    if not rec["ok"]:
+        raise BuildError(f"motion file {f!r} failed the motion check: {'; '.join(rec['problems'])[:160]}")
+    return json.dumps(json.load(open(p, encoding="utf-8")), separators=(",", ":")).replace("</", "<\\/")
+
+
 def stamp(block, inst_id, dur, groups_html="", values=None):
     """Return the scene file text for one use of a block."""
     if not ID_RE.match(inst_id):
@@ -76,6 +96,8 @@ def stamp(block, inst_id, dur, groups_html="", values=None):
     full.update(values or {})
     for key, v in full.items():                                  # asset paths and numbers that must be in the file text itself (video src, positions)
         src = src.replace(f"__VAR_{key}__", html.escape(str(v if v is not None else ""), quote=True))
+    if "__LOTTIE_JSON__" in src:
+        src = src.replace("__LOTTIE_JSON__", lottie_json(full.get("motion")))
     return src.replace("__ID__", inst_id).replace("__DUR__", _num(dur)).replace("<!--GROUPS-->", groups_html)
 
 
@@ -127,6 +149,7 @@ ROOT_TEMPLATE = """<!doctype html>
 <meta charset="UTF-8">
 <meta name="viewport" content="width={W}, height={H}">
 <script src="vendor/gsap.min.js"></script>
+<script src="vendor/lottie_light.min.js"></script>
 <style>
 @font-face {{ font-family: "Readex Pro"; src: url("assets/fonts/ReadexPro.ttf"); font-weight: 160 700; }}
 :root {{ {vars} }}
@@ -185,6 +208,7 @@ def build_project(out_dir, *, duration, face_cuts, scenes, video_src, audio=None
         raise BuildError("no .ttf font in style/fonts")
     shutil.copy(os.path.join(cfg.ROOT, "style", "fonts", fonts[0]), os.path.join(out_dir, "assets", "fonts", "ReadexPro.ttf"))
     shutil.copy(os.path.join(cfg.ROOT, "templates", "vendor", "gsap.min.js"), os.path.join(out_dir, "vendor", "gsap.min.js"))
+    shutil.copy(os.path.join(cfg.ROOT, "templates", "vendor", "lottie_light.min.js"), os.path.join(out_dir, "vendor", "lottie_light.min.js"))
     vid = os.path.join(out_dir, "assets", "proxy.mp4")
     if face_cuts and not os.path.exists(vid):
         try:

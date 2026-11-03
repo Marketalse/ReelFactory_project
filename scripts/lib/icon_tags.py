@@ -11,8 +11,11 @@ STYLE = {"fill", "filled", "outline", "outlined", "solid", "line", "lines", "thi
 BATCH = 220
 
 
-def ok_dir(root=None): return os.path.join(root or cfg.ROOT, "library", "assets", "ok")
-def index_path(root=None): return os.path.join(root or cfg.ROOT, "library", "assets", "icon_index.json")
+KINDS = {"icons": ("ok", "icon_index.json", ".svg"), "motion": ("motion", "motion_index.json", ".json")}      # the motion library is tagged the same way (library/assets/motion/)
+
+
+def ok_dir(root=None, kind="icons"): return os.path.join(root or cfg.ROOT, "library", "assets", KINDS[kind][0])
+def index_path(root=None, kind="icons"): return os.path.join(root or cfg.ROOT, "library", "assets", KINDS[kind][1])
 
 
 def concept(filename):
@@ -22,28 +25,28 @@ def concept(filename):
     return " ".join(words)
 
 
-def scan(root=None):
-    """{concept: [files]} for every svg in the checked library."""
+def scan(root=None, kind="icons"):
+    """{concept: [files]} for every svg (or, for kind "motion", every checked Lottie .json) in the checked library."""
     out = {}
-    d = ok_dir(root)
+    d = ok_dir(root, kind)
     for f in sorted(os.listdir(d)) if os.path.isdir(d) else []:
-        if f.lower().endswith(".svg"):
+        if f.lower().endswith(KINDS[kind][2]) and not f.endswith(".placement.json"):
             c = concept(f)
             if c: out.setdefault(c, []).append(f)
     return out
 
 
-def load(root=None):
+def load(root=None, kind="icons"):
     try:
-        return json.load(open(index_path(root), encoding="utf-8"))
+        return json.load(open(index_path(root, kind), encoding="utf-8"))
     except (OSError, ValueError):
         return {"concepts": {}, "files": {}}
 
 
-def pending(root=None, limit=0):
+def pending(root=None, limit=0, kind="icons"):
     """Concepts that still need tags (new library files), at most `limit` (0 = all)."""
-    have = load(root)["concepts"]
-    todo = [c for c in scan(root) if c not in have]
+    have = load(root, kind)["concepts"]
+    todo = [c for c in scan(root, kind) if c not in have]
     return todo[:limit] if limit else todo
 
 
@@ -77,26 +80,26 @@ def clean(ans, sent):
     return out
 
 
-def save(new, root=None):
-    d = load(root)
-    files = scan(root)
+def save(new, root=None, kind="icons"):
+    d = load(root, kind)
+    files = scan(root, kind)
     d["concepts"].update(new)
     d["files"] = {f: c for c, fs in files.items() for f in fs if c in d["concepts"]}
-    os.makedirs(os.path.dirname(index_path(root)), exist_ok=True)
-    tmp = index_path(root) + ".tmp"
+    os.makedirs(os.path.dirname(index_path(root, kind)), exist_ok=True)
+    tmp = index_path(root, kind) + ".tmp"
     json.dump(d, open(tmp, "w", encoding="utf-8"), ensure_ascii=False)
-    os.replace(tmp, index_path(root))
+    os.replace(tmp, index_path(root, kind))
     return d
 
 
 _CACHE = {}
 
 
-def _inverted(root=None):
-    p = index_path(root)
+def _inverted(root=None, kind="icons"):
+    p = index_path(root, kind)
     m = os.path.getmtime(p) if os.path.exists(p) else 0
-    if _CACHE.get("k") != (p, m):
-        inv, d = {}, load(root)
+    if _CACHE.get(kind + "k") != (p, m):
+        inv, d = {}, load(root, kind)
         by_concept = {}
         for f, c in d["files"].items(): by_concept.setdefault(c, []).append(f)
         for c, tags in d["concepts"].items():
@@ -104,19 +107,26 @@ def _inverted(root=None):
             if not fs: continue
             for t in tags:
                 inv.setdefault(broll._norm(t), []).append(fs[0])
-        _CACHE.update(k=(p, m), inv=inv)
-    return _CACHE["inv"]
+        _CACHE.update({kind + "k": (p, m), kind + "inv": inv})
+    return _CACHE[kind + "inv"]
 
 
-def match(words, exclude=(), root=None):
-    """The best big-library icon for the spoken words of one section: exact or attached-letter match on an Arabic tag. -> file or None. Fast (dictionary)."""
-    inv = _inverted(root)
+def match(words, exclude=(), root=None, kind="icons", with_word=False):
+    """The best big-library icon (or motion file) for the spoken words of one section: exact or attached-letter match on an Arabic tag. -> file or None. Fast (dictionary).
+    with_word=True -> (file, the spoken word that matched) or (None, None)."""
+    inv = _inverted(root, kind)
     best = None
     for w in words:
         sp = broll._norm(w.get("text"))
         for key, rank in ((sp, 0), (broll._strip(sp), 1)):
             for f in inv.get(key, []):
                 if f not in exclude and (best is None or rank < best[0]):
-                    best = (rank, f)
+                    best = (rank, f, w.get("text"))
                     break
+    if with_word: return (best[1], best[2]) if best else (None, None)
     return best[1] if best else None
+
+
+def motion_ready(root=None):
+    """True when at least one motion file has Arabic tags (the Director is only offered the motion card then)."""
+    return any(v for v in load(root, "motion")["concepts"].values())

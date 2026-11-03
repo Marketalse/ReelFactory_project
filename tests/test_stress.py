@@ -38,7 +38,7 @@ def plan(e):
                 "ui_card": {"title": "لوحة الإعلانات", "headline": "هنا النتيجة", "image": "store.svg"},
                 "doc_card": {"title": "خطة المحتوى", "highlight": "رد خلال دقيقة"},
                 "pixel_scene": {"scene": "meeting", "headline": "فريق التسويق"},
-                "text_behind": {"text": "التسويق"}}[b]
+                "text_behind": {"text": "التسويق"}, "motion_card": {}}[b]
         moments.append({"block": b, "at_word": random.randint(0, n - 1), "duration": round(random.uniform(0.5, 6.5), 2), "values": vals})
     return {"hook": {"line1": "حاط بيج وما حاط رقم؟", "line2": "شنو تتصور؟"},
             "keyword_ids": random.sample(range(n), min(n, random.randint(0, 6))), "moments": moments,

@@ -23,6 +23,24 @@ class Batch(unittest.TestCase):
         self.assertEqual(res["bad.svg"], "FAIL"); self.assertEqual(res["photo.jpg"], "FAIL"); self.assertEqual(res["b/truck-copy.svg"], "DUPLICATE")
         self.assertNotIn("../evil.svg", res); self.assertNotIn("__MACOSX/x.svg", res)
 
+    def test_lottie_files_are_checked_by_the_motion_check_and_kept_in_the_motion_folder(self):
+        import json
+        good = {"v": "5.5", "fr": 30, "ip": 0, "op": 30, "w": 100, "h": 100, "layers": [{"ty": 4, "ks": {}}]}
+        bad = dict(good, layers=[{"ty": 4, "ks": {"p": {"x": "time*10"}}}])      # an expression = JavaScript
+        d = tempfile.mkdtemp(); z = os.path.join(d, "m.zip"); out = os.path.join(d, "out")
+        with zipfile.ZipFile(z, "w") as f:
+            f.writestr("Pack/index.json", json.dumps({"catalogue": 1})); f.writestr("Pack/a/ok.json", json.dumps(good))
+            f.writestr("Pack/a/package.json", json.dumps(dict(good, w=120)))          # a real animation that happens to be called package
+            f.writestr("Pack/a/evil.json", json.dumps(bad))
+        r = subprocess.run([sys.executable, os.path.join(ROOT, "scripts", "asset_batch.py"), z, "--out", out], capture_output=True, text=True)
+        self.assertEqual(r.returncode, 0, r.stderr)
+        got = sorted(f for f in os.listdir(os.path.join(out, "motion")) if not f.endswith(".placement.json"))
+        self.assertEqual(got, ["ok.json", "package.json"])
+        self.assertFalse([f for f in os.listdir(os.path.join(out, "ok")) if f.endswith(".json")])
+        rep = os.path.join(out, "_reports"); rows = list(csv.DictReader(open(os.path.join(rep, os.listdir(rep)[0], "report.csv"), encoding="utf-8")))
+        res = {x["file"]: x["result"] for x in rows}
+        self.assertEqual(res["Pack/a/evil.json"], "FAIL"); self.assertNotIn("Pack/index.json", res)
+
     def test_a_second_run_skips_what_was_already_checked(self):
         d = tempfile.mkdtemp(); z = os.path.join(d, "p.zip"); out = os.path.join(d, "out")
         with zipfile.ZipFile(z, "w") as f:

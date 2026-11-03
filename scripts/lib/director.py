@@ -16,16 +16,22 @@ from . import config as cfg
 from .hfbuild import REGISTRY, check_values, BuildError
 
 FULL_SCREEN = {"text_card", "flash", "number_graph", "before_after", "tier_list", "pixel_scene"}          # the face is hidden: captions pause
-DIRECTOR_BLOCKS = ["text_card", "split", "flash", "logo_card", "name_tag", "info_card", "number_graph", "before_after", "tier_list", "ui_card", "doc_card", "pixel_scene", "text_behind"]   # what the Director may place as moments
+DIRECTOR_BLOCKS = ["text_card", "split", "flash", "logo_card", "name_tag", "info_card", "number_graph", "before_after", "tier_list", "ui_card", "doc_card", "pixel_scene", "text_behind", "motion_card"]   # what the Director may place as moments (motion_card only once motion files have Arabic tags)
 DIGITS = re.compile(r"[0-9][0-9,.]*")
+
+
+def offered_blocks():
+    """The blocks the Director may use now: motion_card only when the motion library has Arabic tags."""
+    from . import icon_tags
+    return [b for b in DIRECTOR_BLOCKS if b != "motion_card" or icon_tags.motion_ready()]
 
 
 def catalogue():
     lines = []
-    for name in DIRECTOR_BLOCKS:
+    for name in offered_blocks():
         b = REGISTRY["blocks"][name]
         ins = ", ".join(f'{k}{"*" if v.get("required") else ""}({v["type"]}{", max " + str(v["maxLength"]) if v.get("maxLength") else ""})'
-                        for k, v in b["inputs"].items())
+                        for k, v in b["inputs"].items() if not (name == "motion_card" and k in ("motion", "label")))   # file and label are filled in from his words, not by the AI
         d = b["duration_s"]
         rules = "; ".join(b.get("rules", []))
         lines.append(f'- {name}: {b["purpose"]} values: {ins}. duration {d["min"]}-{d["max"]} s.{" Rules: " + rules + "." if rules else ""}')
@@ -71,7 +77,7 @@ RULES:
 - keyword_ids: 1 keyword per 2-4 seconds of speech, the words that carry the meaning.
 - flash: at most {flash_max}, only on a payoff or a spoken number. text_card: at least {tc_gap} s apart; one every {chapter} s on long reels.
 - Never two full-screen moments (text_card, flash, number_graph, before_after, tier_list, pixel_scene) back to back.
-- BE VISUALLY AMBITIOUS, never basic: a new visual (card, graphic or zoom) every 2.5-3 s, and VARIETY: in a 60 s reel use at least 4 different block types and never the same block twice in a row. Match the visual to what he says: text_behind for the ONE most important keyword (once per reel), pixel_scene when he describes a team, a person or a place, ui_card or doc_card when he mentions a tool, dashboard, document or plan (ui_card.image only from the LIBRARY PICTURES in the brief), number_graph/split when he says a number, before_after/tier_list when he compares or ranks, info_card for one explained point.
+- BE VISUALLY AMBITIOUS, never basic: a new visual (card, graphic or zoom) every 2.5-3 s, and VARIETY: in a 60 s reel use at least 4 different block types and never the same block twice in a row. Match the visual to what he says: text_behind for the ONE most important keyword (once per reel), pixel_scene when he describes a team, a person or a place, ui_card or doc_card when he mentions a tool, dashboard, document or plan (ui_card.image only from the LIBRARY PICTURES in the brief), number_graph/split when he says a number, before_after/tier_list when he compares or ranks, info_card for one explained point, motion_card (no values needed) when he says a thing that has a small animated icon (order, cart, delivery, money, message, bell, check): the animation is picked automatically from the word he says.
 - name_tag only when he says a name out loud; before_after and tier_list only when he really compares or ranks; info_card to explain one point.{cta_rules}
 - values must fit the max lengths exactly.
 - cover = the reel's cover image (thumbnail). Its big title is the hook. Add, only if it fits what he said:
@@ -227,6 +233,14 @@ def resolve(plan, edl_words, duration, *, logos=(), platform_handle="@handle", r
         t = at(m.get("at_word"), where)
         if t is None:
             continue
+        mvals = None
+        if b == "motion_card":                           # the animation and its label come from the words he says around that point, never from the AI
+            from . import icon_tags
+            w0 = m.get("at_word")
+            f_, spoken_w = icon_tags.match(edl_words[max(0, w0 - 2):w0 + 8], kind="motion", with_word=True)
+            if not f_:
+                warn.append(f"{where}: no motion file matches the words he says here: dropped"); continue
+            mvals = {"motion": f_, "label": re.sub(r"[^\w\s]", "", spoken_w or "")[:24]}
         spec = REGISTRY["blocks"][b]["duration_s"]
         if relaxed:                              # Edit page: you may stretch or shrink a clip well beyond the AI's usual range
             spec = {"min": 0.5, "max": max(spec["max"] * 3, 8.0)}
@@ -235,6 +249,7 @@ def resolve(plan, edl_words, duration, *, logos=(), platform_handle="@handle", r
             warn.append(f"{where}: duration {d} clamped to {spec['min']}-{spec['max']} s")
             d = min(max(d, spec["min"]), spec["max"])
         vals = dict(m.get("values") or {})
+        if mvals: vals = mvals
         try:
             check_values(b, vals, where)
         except BuildError as e:

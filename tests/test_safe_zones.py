@@ -17,8 +17,14 @@ def long_text(n):
     return t[:n].rstrip() or t[:n]
 
 
+GOOD_LOTTIE = {"v": "5.5", "fr": 30, "ip": 0, "op": 30, "w": 100, "h": 100, "layers": [{"ty": 4, "ks": {}}]}
+
+
 def sample_values(block):
     vals = {}
+    if block == "motion_card":                       # a tiny checked animation stands in for the (git-ignored) motion library
+        d = tempfile.mkdtemp(); json.dump(GOOD_LOTTIE, open(os.path.join(d, "spin.json"), "w")); hfbuild.MOTION_DIR = d
+        return {"motion": "spin.json", "label": long_text(24)}
     for k, v in hfbuild.REGISTRY["blocks"][block]["inputs"].items():
         if v["type"] == "string":
             vals[k] = long_text(v.get("maxLength") or 20)

@@ -5,6 +5,7 @@
 Checks every icon against the pack's checksum list, refuses unsafe paths, never overwrites an icon that differs from the pack, and
 puts the licences in library/assets/LICENSES/. Safe to run again."""
 import hashlib, json, os, shutil, sys, tempfile, urllib.request, zipfile
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__))))
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 
@@ -35,6 +36,21 @@ def install(src, root=ROOT):
         if "icon_index.json" in z.namelist():
             ip = os.path.join(root, "library", "assets", "icon_index.json")
             if not os.path.exists(ip): open(ip, "wb").write(z.read("icon_index.json"))            # never replaces tags he made himself
+        mnew = mbad = 0
+        mot = os.path.join(root, "library", "assets", "motion"); mman = json.loads(z.read("MANIFEST.json")).get("motion", {})
+        if mman:
+            os.makedirs(mot, exist_ok=True)
+            from lib import motion_check                                                          # the same safety check, run again on this computer
+            for name, info in mman.items():
+                if "/" in name or "\\" in name or name.startswith("."): mbad += 1; continue
+                data = z.read("motion/" + name)
+                p = os.path.join(mot, name)
+                if hashlib.sha256(data).hexdigest() != info["sha256"]: mbad += 1; continue
+                if not os.path.exists(p): open(p, "wb").write(data); mnew += 1
+                rec = motion_check.check(p)
+                if not rec["ok"]: os.remove(p); mbad += 1; mnew -= 1; continue                    # unsafe here: removed
+                json.dump(rec, open(os.path.join(mot, os.path.splitext(name)[0] + ".placement.json"), "w"), indent=1, ensure_ascii=False)
+            print(f"motion: {mnew} new Lottie files, {len(mman) - mnew - mbad} already there, {mbad} skipped (damaged or unsafe).")
         print(f"installed: {new} new icons, {same} already there, {clash} kept (different from the pack), {bad} skipped (damaged or unsafe).")
         return new, same, clash, bad
     finally:

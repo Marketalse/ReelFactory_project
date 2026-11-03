@@ -16,7 +16,7 @@ MAX_CPS = 20.0          # characters per second on screen: faster than this is h
 MIN_SHOW = 0.35         # a caption shown for less than this is a flicker
 ROLE = {"hook_two_tone": "editorial title", "text_card": "editorial title", "name_tag": "editorial title", "info_card": "editorial title",
         "number_graph": "editorial graphic", "before_after": "editorial graphic", "tier_list": "editorial graphic", "split": "editorial graphic",
-        "logo_card": "editorial graphic", "cta_card": "call to action", "flash": "emphasis"}
+        "logo_card": "editorial graphic", "cta_card": "call to action", "flash": "emphasis", "motion_card": "animated icon"}
 NOT_GRAPHICS = ("captions", "face_cut")
 
 
