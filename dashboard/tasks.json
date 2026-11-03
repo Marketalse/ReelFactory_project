@@ -1719,11 +1719,11 @@
    "phase": "P18",
    "title": "Format Pack engine: pick ONE designed layout per reel (persistent frame + face window + bottom panel + theme colours) instead of loose cards",
    "owner": "Claude",
-   "status": "todo",
+   "status": "review",
    "depends": [],
    "done_when": "A reel made with the pack has the same frame from start to end and 2 colour themes.",
    "notes": "From the quality-gap report 2026-11-02 (docs/DECISIONS.md). Starts when Hesham says go.",
-   "evidence": "",
+   "evidence": "scripts/lib/pack.py, templates/blocks/pack_frame.html + recap_chain.html, compile.py hook; sample rendered and viewed (dark + violet); tests/test_pack.py; safe-zone test covers both blocks; 322 tests OK. Not yet run on a real reel.",
    "updated": "2026-11-02"
   },
   {
@@ -1746,7 +1746,7 @@
    "status": "todo",
    "depends": [],
    "done_when": "Steps and a recap diagram render from the outline with no manual work.",
-   "notes": "From the quality-gap report 2026-11-02 (docs/DECISIONS.md). Starts when Hesham says go.",
+   "notes": "From the quality-gap report 2026-11-02 (docs/DECISIONS.md). Starts when Hesham says go. DONE so far: step panel with progress bar + STEP n/N + icon + title, recap chain. NOT done: LIKE/SUBSCRIBE/FOLLOW closing buttons (CTA is off by project rule).",
    "evidence": "",
    "updated": "2026-11-02"
   },
@@ -1755,11 +1755,11 @@
    "phase": "P18",
    "title": "Bundled open icon set (licence-safe) + AI chooses icons by name from a fixed list",
    "owner": "Claude",
-   "status": "todo",
+   "status": "review",
    "depends": [],
    "done_when": "Every step has a fitting icon; no icon is invented.",
    "notes": "From the quality-gap report 2026-11-02 (docs/DECISIONS.md). Starts when Hesham says go.",
-   "evidence": "",
+   "evidence": "67 Lucide icons in library/broll (icon-*.svg), Arabic tags, asset check",
    "updated": "2026-11-02"
   },
   {

@@ -159,6 +159,10 @@ def brand_vars():
     c = cfg.BRAND["colors"]
     pairs = {"bg": c["bg"], "lime": c["accent"], "violet": c["secondary"], "coral": c["negative"],
              "text": c["text"], "surface": c["surface"], "muted": c["muted"], "font": '"Readex Pro", sans-serif'}
+    v = c["secondary"]                                           # Format Pack themes (T129), all derived from the brand colours
+    pairs.update({"pk-d-bg": c["bg"], "pk-d-ac": c["accent"], "pk-d-on": c["bg"], "pk-d-sf": c["surface"], "pk-d-tx": c["text"],
+                  "pk-v-bg": f"color-mix(in srgb, {v} 16%, black)", "pk-v-ac": f"color-mix(in srgb, {v} 55%, white)",
+                  "pk-v-on": f"color-mix(in srgb, {v} 14%, black)", "pk-v-sf": f"color-mix(in srgb, {v} 28%, black)", "pk-v-tx": c["text"]})
     z = cfg.RULES["safe_zone"]
     W_, H_ = z["canvas"]
     pairs.update({"safe-top": f'{z["top"]}px', "safe-bottom": f'{H_ - z["bottom"]}px', "safe-left": f'{z["left"]}px',

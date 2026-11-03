@@ -156,5 +156,17 @@
   "critic": {
     "enabled": true,
     "_note": "T134: Haiku looks at ~8 stills of the draft and scores it (about $0.002). Report only for now. Set enabled false to switch off."
+  },
+  "format_pack": {
+    "mode": "auto",
+    "theme": "dark",
+    "series": "",
+    "presenter": "هشام الشكرجي",
+    "min_sections": 3,
+    "formats": [
+      "explainer",
+      "tips"
+    ],
+    "_note": "T129: when the outline finds an explainer or tips reel with enough sections, the reel gets ONE designed frame (header, face window, step panel with progress, recap chain) instead of loose cards. mode: auto | off | always. theme: dark | violet."
   }
 }
