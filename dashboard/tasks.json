@@ -1939,7 +1939,7 @@
    "depends": [],
    "done_when": "Hesham builds the zip on his Mac, uploads it as a GitHub release file, sets assets_pack.url, and a fresh install gets the icons with python3 scripts/install_assets.py.",
    "notes": "Hesham 2026-11-03: other users must not have asset problems. Sets seen: Tabler, Bootstrap-Icons, Heroicons, Phosphor, Lucide, each with a LICENSE file. A set without a LICENSE file is left out.",
-   "evidence": "tests/test_asset_pack.py",
+   "evidence": "tests/test_asset_pack.py | Hesham 2026-11-03 tested on his Mac: install from the attachment link gave \"installed: 20704 new icons, 0 skipped\".",
    "updated": "2026-11-03"
   }
  ],
