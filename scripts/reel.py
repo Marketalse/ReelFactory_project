@@ -21,7 +21,7 @@ import argparse, base64, glob, json, os, re, shutil, subprocess, sys, threading,
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from lib import config as cfg   # noqa: E402  (all settings live in config/*.json)
-from lib import transcript as tr, edl as edlmod, director, speech_intel, editorial, visual_plan, brand_memory, creative_brief, content_intel, frames_dedup, learning, doctor, sequence, broll_ai, tighten   # noqa: E402
+from lib import pipeline, transcript as tr, edl as edlmod, director, speech_intel, editorial, visual_plan, brand_memory, creative_brief, content_intel, frames_dedup, learning, doctor, sequence, broll_ai, tighten   # noqa: E402
 from lib.hfbuild import BuildError   # noqa: E402
 
 ROOT = cfg.ROOT
@@ -38,7 +38,7 @@ def eff(c, role):
     """How long the AI thinks: the --effort given on the command line wins, else the role's setting."""
     return getattr(c.a, "effort", None) or cfg.role(role)[1]
 LEN_MIN, LEN_MAX = cfg.RULES["reel_length_s"]["min"], cfg.RULES["reel_length_s"]["max"]
-STAGES = ["ingest", "transcribe", "fix", "review", "selects", "tighten", "edl", "keyframes", "shotlog", "plan", "compile", "draft", "report"]
+STAGES = pipeline.order()          # the list of steps lives in scripts/lib/pipeline.py (T137); new steps register themselves there
 STATUS_AFTER = {"ingest": "ingested", "transcribe": "transcribed", "fix": "transcript_fixed", "review": "transcript_reviewed",
                 "selects": "story_picked", "tighten": "story_picked", "edl": "cut", "plan": "planned", "compile": "built", "draft": "preview_ready"}
 
@@ -200,10 +200,12 @@ def set_status(c, stage):
         j["status"] = STATUS_AFTER[stage]; jsave(jp, j)
 
 
+@pipeline.step("ingest")
 def st_ingest(c):
     if os.path.exists(os.path.join(c.job, "proxy.mp4")): return "cached"
     raise Stop("job has no proxy.mp4; start from an inbox folder: python3 scripts/reel.py inbox/<slug> --slug <slug>")
 
+@pipeline.step("transcribe")
 def st_transcribe(c):
     out = os.path.join(c.job, "transcript_asr.json")
     if os.path.exists(out): return "cached"
@@ -243,6 +245,7 @@ def speech_intel_run(c):
         print(f"   speech: analysis skipped ({e})")
 
 
+@pipeline.step("fix")
 def st_fix(c):
     out = os.path.join(c.job, "transcript.json")
     asr = jload(os.path.join(c.job, "transcript_asr.json"))
@@ -291,6 +294,7 @@ def glossary_text():
     return "; ".join(f'{t["spoken"]} -> {t["write"]}' for t in terms) or "none yet"
 
 
+@pipeline.step("review")
 def st_review(c):
     """GATE 0: Hesham fixes words in transcript_review.txt; timings are kept."""
     path = os.path.join(c.job, "transcript_review.txt"); meta = os.path.join(c.job, "transcript_review_meta.json")
@@ -311,6 +315,7 @@ def st_review(c):
     jsave(os.path.join(c.job, "transcript.json"), new); jsave(meta, stats)
     return f"{stats['changed']} of {stats['words_before']} words changed by Hesham (error rate {stats['error_rate']:.0%})"
 
+@pipeline.step("keyframes")
 def st_keyframes(c):
     s0, s1 = jload(os.path.join(c.job, "chosen_select.json"))["range"]
     s0, s1 = max(0.0, s0 - 0.5), min(proxy_duration(c.job), s1 + 0.5)
@@ -329,6 +334,7 @@ SHOT_PROMPT = """You are the shot-logger for a short-form video editor. Below ar
 {{"t":<seconds>,"face":{{"x":<0-1 left edge>,"y":<0-1 top edge>,"w":<0-1>,"h":<0-1>}}|null,"eyes":"open|closed|away","energy":<1 flat - 5 animated>,"gesture":"none|hand|point|nod|other","headroom":"ok|tight","bg":"low|med|high clutter","text":"any readable on-screen text or empty","usable":["hook","punch_in","cut","avoid"],"note":"<=10 words"}}
 face = bounding box of the speaker's face as fractions of the frame (approximate is fine). usable = what an editor could use this moment for: hook (strong first frame), punch_in (good moment for a zoom), cut (clean place to cut/transition), avoid (blink, half-closed eyes, awkward mid-word face, motion blur). Be honest: if frames are near-identical, say so in note. No commentary outside the JSON."""
 
+@pipeline.step("shotlog")
 def st_shotlog(c):
     out = os.path.join(c.job, "shot_log.json")
     if os.path.exists(out): return "cached"
@@ -366,6 +372,7 @@ def transcript_lines(c):
     words = jload(os.path.join(c.job, "transcript.json"))
     return words, "\n".join(f"[{a:.1f}-{b:.1f}] {t}" for a, b, t, _ in lines_from_words(words))
 
+@pipeline.step("selects")
 def st_selects(c):
     jp = os.path.join(c.job, "job.json"); job = jload(jp, {})
     words, lines = transcript_lines(c)
@@ -418,6 +425,7 @@ def st_selects(c):
     jsave(os.path.join(c.job, "chosen_select.json"), dict(s, picked_by=by))
     return f"select {s['id']} {s['range']}"
 
+@pipeline.step("tighten")
 def st_tighten(c):
     """T124: an AI editor removes weak, repeated or off-topic LINES from the chosen story (and may move its start/end); code checks every cut."""
     tp = os.path.join(c.job, "tighten.json")
@@ -449,6 +457,7 @@ def st_tighten(c):
     return f"AI cut {len(rows)} line(s), {dec['removed_s']:.0f} s removed; range {s0:.0f}-{s1:.0f} -> {rng[0]:.0f}-{rng[1]:.0f}"
 
 
+@pipeline.step("edl")
 def st_edl(c):
     out = os.path.join(c.job, "edl.json")
     if os.path.exists(out) and not c.a.replan: return "cached"
@@ -511,6 +520,7 @@ def broll_ai_step(c, words, root=None):
         return [], ""
 
 
+@pipeline.step("plan")
 def st_plan(c):
     """Director (Haiku) -> plan; code resolves word anchors to exact times and checks every rule;
     one repair with the Director, then one with the fallback model; still failing -> stop."""
@@ -601,6 +611,7 @@ def st_plan(c):
     return f"{n} moments, {len(tl['punch_ins'])} punch-ins, {len(tl['keyword_ids'])} keywords ({len(warn)} warnings)"
 
 
+@pipeline.step("compile")
 def st_compile(c):
     sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
     from compile import compile_job
@@ -617,6 +628,7 @@ def st_compile(c):
     return os.path.relpath(p, c.job)
 
 
+@pipeline.step("draft")
 def st_draft(c):
     sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
     import render
@@ -635,6 +647,7 @@ def st_draft(c):
     return f"draft ready: QA passed ({len(qa.get('warnings', []))} QA warnings, {len(res.get('check_warnings', []))} check warnings)"
 
 
+@pipeline.step("report")
 def st_report(c):
     cost = c.cost["calls"]; tot = sum(x["cost"] for x in cost)
     e = jload(os.path.join(c.job, "edl.json"), {}); tl = jload(os.path.join(c.job, "timeline.json"), {})
@@ -776,9 +789,7 @@ def bakeoff(job, models, a):
     return os.path.join(out, "report.md")
 
 
-FUNCS = {"ingest": st_ingest, "transcribe": st_transcribe, "fix": st_fix, "review": st_review, "selects": st_selects,
-         "tighten": st_tighten, "edl": st_edl, "keyframes": st_keyframes, "shotlog": st_shotlog, "plan": st_plan, "compile": st_compile,
-         "draft": st_draft, "report": st_report}
+FUNCS = pipeline.FUNCS
 
 
 def join_shots(c):
@@ -809,7 +820,7 @@ def can_overlap_shotlog(c, a):
 def run_stages(c, a, job):
     """All pipeline stages in order. Returns True when every stage ran (False when it stopped early on --stop-after)."""
     try:
-        for s in STAGES:
+        for s in pipeline.order():
             if s == "shotlog" and can_overlap_shotlog(c, a):
                 box = {}
                 def work(box=box):
@@ -841,7 +852,7 @@ def run_stages(c, a, job):
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("input"); ap.add_argument("--slug"); ap.add_argument("--select"); ap.add_argument("--stop-after", choices=STAGES)
+    ap.add_argument("input"); ap.add_argument("--slug"); ap.add_argument("--select"); ap.add_argument("--stop-after", choices=pipeline.order())
     ap.add_argument("--budget", type=float, default=cfg.BUDGET["per_reel_stop"]); ap.add_argument("--width", type=int, default=540)
     ap.add_argument("--every", type=float, default=2.0); ap.add_argument("--effort", default=None, choices=["low", "medium", "high"])
     ap.add_argument("--force", default=""); ap.add_argument("--asr-model", default=None); ap.add_argument("--retranscribe", action="store_true")

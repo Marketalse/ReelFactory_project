@@ -1815,11 +1815,11 @@
    "phase": "P19",
    "title": "Pipeline as one list of steps (each step: inputs, outputs, cost, model) so new steps (outline, critic) plug in without editing reel.py",
    "owner": "Claude",
-   "status": "todo",
+   "status": "review",
    "depends": [],
    "done_when": "Adding the outline step needs no change to the runner.",
    "notes": "Hesham 2026-11-02: enhance structure, AI models, creativity, accept higher cost. Estimate: scripts/cost_estimate.py.",
-   "evidence": "",
+   "evidence": "scripts/lib/pipeline.py (step list, register, check); reel.py uses it; tests/test_pipeline_steps.py; 303 tests OK",
    "updated": "2026-11-02"
   },
   {
