@@ -49,3 +49,4 @@ library/assets/ok/
 library/assets/_reports/
 stress_report.md
 stress_server.log
+pre_uat_report/evidence/logs/*.log

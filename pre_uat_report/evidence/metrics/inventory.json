@@ -1,0 +1,2281 @@
+{
+ "commit": "b3a2630175643f84f46a63d3fbebd532babb3d61",
+ "modules": {
+  "scripts/asset_batch.py": {
+   "loc": 153,
+   "functions": 7,
+   "classes": [],
+   "imports": [
+    "argparse",
+    "asset_check",
+    "csv",
+    "hashlib",
+    "json",
+    "multiprocessing",
+    "os",
+    "re",
+    "shutil",
+    "sys",
+    "tempfile",
+    "time",
+    "zipfile"
+   ],
+   "longest": [
+    [
+     "main",
+     85,
+     148
+    ],
+    [
+     "members",
+     23,
+     45
+    ],
+    [
+     "jobs",
+     68,
+     82
+    ]
+   ]
+  },
+  "scripts/asset_check.py": {
+   "loc": 15,
+   "functions": 0,
+   "classes": [],
+   "imports": [
+    "asset_check",
+    "os",
+    "sys"
+   ],
+   "longest": []
+  },
+  "scripts/block_samples.py": {
+   "loc": 115,
+   "functions": 2,
+   "classes": [],
+   "imports": [
+    "argparse",
+    "config",
+    "hfbuild",
+    "os",
+    "subprocess",
+    "sys"
+   ],
+   "longest": [
+    [
+     "main",
+     36,
+     110
+    ],
+    [
+     "test_pattern",
+     29,
+     33
+    ]
+   ]
+  },
+  "scripts/compile.py": {
+   "loc": 117,
+   "functions": 3,
+   "classes": [],
+   "imports": [
+    "argparse",
+    "broll",
+    "config",
+    "director",
+    "hfbuild",
+    "json",
+    "matte",
+    "os",
+    "pack",
+    "sfx_mix",
+    "shutil",
+    "sys"
+   ],
+   "longest": [
+    [
+     "compile_job",
+     30,
+     108
+    ],
+    [
+     "handle_for",
+     15,
+     21
+    ],
+    [
+     "_behind_top",
+     24,
+     27
+    ]
+   ]
+  },
+  "scripts/cost_estimate.py": {
+   "loc": 79,
+   "functions": 5,
+   "classes": [],
+   "imports": [
+    "argparse",
+    "director",
+    "json",
+    "os",
+    "sys",
+    "tighten",
+    "transcript"
+   ],
+   "longest": [
+    [
+     "scenario",
+     27,
+     54
+    ],
+    [
+     "show",
+     57,
+     62
+    ],
+    [
+     "real",
+     65,
+     69
+    ]
+   ]
+  },
+  "scripts/cover.py": {
+   "loc": 367,
+   "functions": 15,
+   "classes": [
+    "CoverError"
+   ],
+   "imports": [
+    "config",
+    "glob",
+    "hfbuild",
+    "html",
+    "json",
+    "os",
+    "re",
+    "shutil",
+    "subprocess",
+    "sys"
+   ],
+   "longest": [
+    [
+     "build",
+     254,
+     300
+    ],
+    [
+     "pick_frame",
+     88,
+     112
+    ],
+    [
+     "values",
+     52,
+     69
+    ]
+   ]
+  },
+  "scripts/energy.py": {
+   "loc": 70,
+   "functions": 5,
+   "classes": [],
+   "imports": [
+    "json",
+    "os",
+    "re",
+    "statistics",
+    "subprocess",
+    "sys"
+   ],
+   "longest": [
+    [
+     "measure",
+     24,
+     40
+    ],
+    [
+     "targets",
+     43,
+     49
+    ],
+    [
+     "duration",
+     19,
+     21
+    ]
+   ]
+  },
+  "scripts/fetch_icons.py": {
+   "loc": 58,
+   "functions": 1,
+   "classes": [],
+   "imports": [
+    "asset_check",
+    "config",
+    "json",
+    "os",
+    "re",
+    "sys",
+    "urllib"
+   ],
+   "longest": [
+    [
+     "main",
+     34,
+     53
+    ]
+   ]
+  },
+  "scripts/ingest_folder.py": {
+   "loc": 151,
+   "functions": 7,
+   "classes": [],
+   "imports": [
+    "argparse",
+    "concurrent",
+    "config",
+    "datetime",
+    "json",
+    "media_check",
+    "media_index",
+    "os",
+    "re",
+    "shutil",
+    "subprocess",
+    "sys"
+   ],
+   "longest": [
+    [
+     "main",
+     44,
+     146
+    ],
+    [
+     "clean_svg",
+     36,
+     41
+    ],
+    [
+     "one",
+     75,
+     80
+    ]
+   ]
+  },
+  "scripts/install_assets.py": {
+   "loc": 49,
+   "functions": 1,
+   "classes": [],
+   "imports": [
+    "hashlib",
+    "json",
+    "os",
+    "shutil",
+    "sys",
+    "tempfile",
+    "urllib",
+    "zipfile"
+   ],
+   "longest": [
+    [
+     "install",
+     11,
+     41
+    ]
+   ]
+  },
+  "scripts/keyframes.py": {
+   "loc": 54,
+   "functions": 2,
+   "classes": [],
+   "imports": [
+    "argparse",
+    "config",
+    "json",
+    "os",
+    "re",
+    "subprocess",
+    "sys"
+   ],
+   "longest": [
+    [
+     "main",
+     19,
+     51
+    ],
+    [
+     "scene_times",
+     14,
+     17
+    ]
+   ]
+  },
+  "scripts/make_asset_pack.py": {
+   "loc": 75,
+   "functions": 3,
+   "classes": [],
+   "imports": [
+    "argparse",
+    "csv",
+    "glob",
+    "hashlib",
+    "json",
+    "os",
+    "sys",
+    "zipfile"
+   ],
+   "longest": [
+    [
+     "build",
+     39,
+     62
+    ],
+    [
+     "licences",
+     27,
+     36
+    ],
+    [
+     "provenance",
+     16,
+     24
+    ]
+   ]
+  },
+  "scripts/make_sfx.py": {
+   "loc": 50,
+   "functions": 1,
+   "classes": [],
+   "imports": [
+    "json",
+    "os",
+    "subprocess",
+    "sys"
+   ],
+   "longest": [
+    [
+     "make",
+     30,
+     44
+    ]
+   ]
+  },
+  "scripts/models_refresh.py": {
+   "loc": 88,
+   "functions": 5,
+   "classes": [],
+   "imports": [
+    "argparse",
+    "config",
+    "json",
+    "os",
+    "sys",
+    "urllib"
+   ],
+   "longest": [
+    [
+     "main",
+     62,
+     83
+    ],
+    [
+     "per_mtok",
+     17,
+     34
+    ],
+    [
+     "compare",
+     45,
+     59
+    ]
+   ]
+  },
+  "scripts/qa_check.py": {
+   "loc": 141,
+   "functions": 7,
+   "classes": [],
+   "imports": [
+    "argparse",
+    "config",
+    "creative_brief",
+    "director",
+    "glob",
+    "html",
+    "json",
+    "os",
+    "re",
+    "subprocess",
+    "sys"
+   ],
+   "longest": [
+    [
+     "run",
+     65,
+     129
+    ],
+    [
+     "screen_texts",
+     48,
+     62
+    ],
+    [
+     "freeze_spans",
+     33,
+     38
+    ]
+   ]
+  },
+  "scripts/ready_score.py": {
+   "loc": 156,
+   "functions": 4,
+   "classes": [],
+   "imports": [
+    "config",
+    "creative_brief",
+    "director",
+    "json",
+    "os",
+    "sys"
+   ],
+   "longest": [
+    [
+     "score",
+     34,
+     142
+    ],
+    [
+     "_j",
+     18,
+     23
+    ],
+    [
+     "_band",
+     26,
+     31
+    ]
+   ]
+  },
+  "scripts/reel.py": {
+   "loc": 1059,
+   "functions": 50,
+   "classes": [
+    "Stop",
+    "Tee",
+    "Ctx"
+   ],
+   "imports": [
+    "argparse",
+    "asset_check",
+    "base64",
+    "brand_memory",
+    "broll",
+    "broll_ai",
+    "config",
+    "content_intel",
+    "creative_brief",
+    "critic",
+    "director",
+    "doctor",
+    "editorial",
+    "edl",
+    "frames_dedup",
+    "glob",
+    "hfbuild",
+    "icon_tags",
+    "json",
+    "learning",
+    "os",
+    "outline",
+    "pipeline",
+    "re",
+    "render",
+    "sequence",
+    "shutil",
+    "speech_intel",
+    "subprocess",
+    "sys",
+    "threading",
+    "tighten",
+    "time",
+    "traceback",
+    "transcript",
+    "urllib",
+    "visual_plan"
+   ],
+   "longest": [
+    [
+     "main",
+     933,
+     1055
+    ],
+    [
+     "st_plan",
+     547,
+     636
+    ],
+    [
+     "st_selects",
+     398,
+     448
+    ]
+   ]
+  },
+  "scripts/ref_learn.py": {
+   "loc": 144,
+   "functions": 11,
+   "classes": [],
+   "imports": [
+    "argparse",
+    "io",
+    "json",
+    "os",
+    "re",
+    "statistics",
+    "subprocess",
+    "sys",
+    "tempfile"
+   ],
+   "longest": [
+    [
+     "layout",
+     77,
+     97
+    ],
+    [
+     "main",
+     120,
+     139
+    ],
+    [
+     "palette",
+     58,
+     74
+    ]
+   ]
+  },
+  "scripts/render.py": {
+   "loc": 428,
+   "functions": 23,
+   "classes": [
+    "RenderError"
+   ],
+   "imports": [
+    "argparse",
+    "config",
+    "cover",
+    "glob",
+    "hfbuild",
+    "json",
+    "os",
+    "qa_check",
+    "re",
+    "ready_score",
+    "render_guard",
+    "segcache",
+    "shutil",
+    "subprocess",
+    "sys",
+    "time",
+    "versions"
+   ],
+   "longest": [
+    [
+     "draft_render",
+     244,
+     293
+    ],
+    [
+     "final",
+     375,
+     414
+    ],
+    [
+     "draft",
+     337,
+     372
+    ]
+   ]
+  },
+  "scripts/safe_zone_preview.py": {
+   "loc": 43,
+   "functions": 2,
+   "classes": [],
+   "imports": [
+    "argparse",
+    "config",
+    "os",
+    "subprocess",
+    "sys"
+   ],
+   "longest": [
+    [
+     "overlay_filter",
+     15,
+     27
+    ],
+    [
+     "main",
+     30,
+     38
+    ]
+   ]
+  },
+  "scripts/stress_dashboard.py": {
+   "loc": 414,
+   "functions": 27,
+   "classes": [
+    "Server"
+   ],
+   "imports": [
+    "argparse",
+    "http",
+    "json",
+    "os",
+    "re",
+    "shutil",
+    "signal",
+    "socket",
+    "subprocess",
+    "sys",
+    "tempfile",
+    "threading",
+    "time",
+    "traceback",
+    "urllib"
+   ],
+   "longest": [
+    [
+     "state_probes",
+     201,
+     254
+    ],
+    [
+     "http_probes",
+     74,
+     116
+    ],
+    [
+     "upload_probes",
+     162,
+     198
+    ]
+   ]
+  },
+  "scripts/lib/__init__.py": {
+   "loc": 1,
+   "functions": 0,
+   "classes": [],
+   "imports": [],
+   "longest": []
+  },
+  "scripts/lib/asset_check.py": {
+   "loc": 152,
+   "functions": 9,
+   "classes": [],
+   "imports": [
+    "config",
+    "json",
+    "os",
+    "re",
+    "struct",
+    "tempfile",
+    "xml"
+   ],
+   "longest": [
+    [
+     "_svg",
+     30,
+     53
+    ],
+    [
+     "check",
+     81,
+     98
+    ],
+    [
+     "job_problems",
+     130,
+     142
+    ]
+   ]
+  },
+  "scripts/lib/board_merge.py": {
+   "loc": 60,
+   "functions": 5,
+   "classes": [],
+   "imports": [
+    "json",
+    "os",
+    "subprocess",
+    "sys"
+   ],
+   "longest": [
+    [
+     "merge3",
+     9,
+     27
+    ],
+    [
+     "from_stash",
+     46,
+     54
+    ],
+    [
+     "save_file",
+     39,
+     43
+    ]
+   ]
+  },
+  "scripts/lib/brand_memory.py": {
+   "loc": 101,
+   "functions": 7,
+   "classes": [],
+   "imports": [
+    "json",
+    "os",
+    "time"
+   ],
+   "longest": [
+    [
+     "profile",
+     50,
+     70
+    ],
+    [
+     "compare",
+     84,
+     100
+    ],
+    [
+     "record",
+     38,
+     47
+    ]
+   ]
+  },
+  "scripts/lib/broll.py": {
+   "loc": 113,
+   "functions": 9,
+   "classes": [],
+   "imports": [
+    "json",
+    "os",
+    "re",
+    "shutil"
+   ],
+   "longest": [
+    [
+     "index",
+     23,
+     39
+    ],
+    [
+     "_kind",
+     63,
+     76
+    ],
+    [
+     "suggest",
+     79,
+     92
+    ]
+   ]
+  },
+  "scripts/lib/broll_ai.py": {
+   "loc": 143,
+   "functions": 12,
+   "classes": [],
+   "imports": [
+    "base64",
+    "hashlib",
+    "json",
+    "os",
+    "re",
+    "subprocess"
+   ],
+   "longest": [
+    [
+     "describe_content",
+     66,
+     77
+    ],
+    [
+     "clean_descriptions",
+     80,
+     90
+    ],
+    [
+     "pending",
+     41,
+     50
+    ]
+   ]
+  },
+  "scripts/lib/config.py": {
+   "loc": 150,
+   "functions": 11,
+   "classes": [],
+   "imports": [
+    "glob",
+    "json",
+    "os",
+    "shutil"
+   ],
+   "longest": [
+    [
+     "find_ffmpeg",
+     75,
+     91
+    ],
+    [
+     "adopt_ffmpeg",
+     58,
+     72
+    ],
+    [
+     "ffmpeg_on_path",
+     94,
+     103
+    ]
+   ]
+  },
+  "scripts/lib/content_intel.py": {
+   "loc": 107,
+   "functions": 5,
+   "classes": [],
+   "imports": [
+    "json",
+    "os"
+   ],
+   "longest": [
+    [
+     "build",
+     35,
+     76
+    ],
+    [
+     "marks",
+     79,
+     96
+    ],
+    [
+     "phrases",
+     24,
+     32
+    ]
+   ]
+  },
+  "scripts/lib/creative_brief.py": {
+   "loc": 86,
+   "functions": 5,
+   "classes": [],
+   "imports": [
+    "json",
+    "os",
+    "re"
+   ],
+   "longest": [
+    [
+     "to_text",
+     43,
+     60
+    ],
+    [
+     "clean",
+     21,
+     35
+    ],
+    [
+     "save",
+     63,
+     77
+    ]
+   ]
+  },
+  "scripts/lib/critic.py": {
+   "loc": 65,
+   "functions": 5,
+   "classes": [],
+   "imports": [
+    "base64",
+    "subprocess"
+   ],
+   "longest": [
+    [
+     "clean",
+     43,
+     56
+    ],
+    [
+     "content",
+     31,
+     40
+    ],
+    [
+     "pick_times",
+     16,
+     23
+    ]
+   ]
+  },
+  "scripts/lib/director.py": {
+   "loc": 508,
+   "functions": 18,
+   "classes": [],
+   "imports": [
+    "glob",
+    "hfbuild",
+    "json",
+    "os",
+    "re"
+   ],
+   "longest": [
+    [
+     "resolve",
+     196,
+     324
+    ],
+    [
+     "fix_rhythm",
+     424,
+     470
+    ],
+    [
+     "face_cuts",
+     327,
+     371
+    ]
+   ]
+  },
+  "scripts/lib/doctor.py": {
+   "loc": 97,
+   "functions": 6,
+   "classes": [],
+   "imports": [
+    "json",
+    "os",
+    "re"
+   ],
+   "longest": [
+    [
+     "clean_answer",
+     71,
+     80
+    ],
+    [
+     "known",
+     40,
+     45
+    ],
+    [
+     "save",
+     83,
+     88
+    ]
+   ]
+  },
+  "scripts/lib/editorial.py": {
+   "loc": 191,
+   "functions": 12,
+   "classes": [],
+   "imports": [
+    "json",
+    "os",
+    "re"
+   ],
+   "longest": [
+    [
+     "build",
+     136,
+     173
+    ],
+    [
+     "continuity",
+     116,
+     133
+    ],
+    [
+     "score_select",
+     50,
+     66
+    ]
+   ]
+  },
+  "scripts/lib/edl.py": {
+   "loc": 112,
+   "functions": 3,
+   "classes": [],
+   "imports": [
+    "transcript"
+   ],
+   "longest": [
+    [
+     "build",
+     40,
+     111
+    ],
+    [
+     "find_retakes",
+     17,
+     37
+    ],
+    [
+     "_norm",
+     13,
+     14
+    ]
+   ]
+  },
+  "scripts/lib/frames_dedup.py": {
+   "loc": 43,
+   "functions": 2,
+   "classes": [],
+   "imports": [
+    "os",
+    "subprocess"
+   ],
+   "longest": [
+    [
+     "distinct",
+     27,
+     42
+    ],
+    [
+     "image_hash",
+     14,
+     24
+    ]
+   ]
+  },
+  "scripts/lib/hfbuild.py": {
+   "loc": 241,
+   "functions": 8,
+   "classes": [
+    "BuildError"
+   ],
+   "imports": [
+    "html",
+    "json",
+    "os",
+    "re",
+    "shutil"
+   ],
+   "longest": [
+    [
+     "build_project",
+     175,
+     240
+    ],
+    [
+     "check_values",
+     25,
+     48
+    ],
+    [
+     "caption_events",
+     82,
+     105
+    ]
+   ]
+  },
+  "scripts/lib/icon_tags.py": {
+   "loc": 123,
+   "functions": 11,
+   "classes": [],
+   "imports": [
+    "json",
+    "os",
+    "re"
+   ],
+   "longest": [
+    [
+     "_inverted",
+     95,
+     108
+    ],
+    [
+     "clean",
+     65,
+     77
+    ],
+    [
+     "match",
+     111,
+     122
+    ]
+   ]
+  },
+  "scripts/lib/learning.py": {
+   "loc": 106,
+   "functions": 9,
+   "classes": [],
+   "imports": [
+    "json",
+    "math",
+    "os",
+    "time"
+   ],
+   "longest": [
+    [
+     "analyze",
+     58,
+     84
+    ],
+    [
+     "update",
+     87,
+     97
+    ],
+    [
+     "_load",
+     22,
+     28
+    ]
+   ]
+  },
+  "scripts/lib/manual_edit.py": {
+   "loc": 173,
+   "functions": 10,
+   "classes": [
+    "EditError"
+   ],
+   "imports": [
+    "hfbuild",
+    "json",
+    "os",
+    "shutil",
+    "subprocess",
+    "time"
+   ],
+   "longest": [
+    [
+     "compute",
+     67,
+     106
+    ],
+    [
+     "state",
+     109,
+     132
+    ],
+    [
+     "save",
+     135,
+     153
+    ]
+   ]
+  },
+  "scripts/lib/matte.py": {
+   "loc": 86,
+   "functions": 6,
+   "classes": [
+    "MatteError"
+   ],
+   "imports": [
+    "hashlib",
+    "json",
+    "os",
+    "subprocess"
+   ],
+   "longest": [
+    [
+     "cutout",
+     53,
+     79
+    ],
+    [
+     "slices",
+     22,
+     29
+    ],
+    [
+     "window_command",
+     44,
+     50
+    ]
+   ]
+  },
+  "scripts/lib/media_check.py": {
+   "loc": 265,
+   "functions": 14,
+   "classes": [],
+   "imports": [
+    "glob",
+    "hashlib",
+    "json",
+    "os",
+    "re",
+    "subprocess"
+   ],
+   "longest": [
+    [
+     "analyze",
+     145,
+     215
+    ],
+    [
+     "check_batch",
+     234,
+     264
+    ],
+    [
+     "footage_scan",
+     113,
+     131
+    ]
+   ]
+  },
+  "scripts/lib/media_index.py": {
+   "loc": 104,
+   "functions": 6,
+   "classes": [],
+   "imports": [
+    "json",
+    "media_check",
+    "os",
+    "subprocess"
+   ],
+   "longest": [
+    [
+     "build",
+     61,
+     103
+    ],
+    [
+     "thumbnails",
+     46,
+     58
+    ],
+    [
+     "_scenes",
+     37,
+     43
+    ]
+   ]
+  },
+  "scripts/lib/outline.py": {
+   "loc": 76,
+   "functions": 3,
+   "classes": [],
+   "imports": [
+    "re"
+   ],
+   "longest": [
+    [
+     "clean",
+     37,
+     64
+    ],
+    [
+     "brief_note",
+     67,
+     75
+    ],
+    [
+     "_int",
+     29,
+     34
+    ]
+   ]
+  },
+  "scripts/lib/pack.py": {
+   "loc": 170,
+   "functions": 12,
+   "classes": [],
+   "imports": [
+    "html",
+    "json",
+    "os",
+    "re"
+   ],
+   "longest": [
+    [
+     "pick_icons",
+     50,
+     70
+    ],
+    [
+     "plan",
+     150,
+     169
+    ],
+    [
+     "frame_groups",
+     107,
+     125
+    ]
+   ]
+  },
+  "scripts/lib/pipeline.py": {
+   "loc": 65,
+   "functions": 6,
+   "classes": [],
+   "imports": [],
+   "longest": [
+    [
+     "step",
+     30,
+     40
+    ],
+    [
+     "check",
+     55,
+     64
+    ],
+    [
+     "deco",
+     32,
+     39
+    ]
+   ]
+  },
+  "scripts/lib/render_guard.py": {
+   "loc": 277,
+   "functions": 15,
+   "classes": [],
+   "imports": [
+    "config",
+    "hashlib",
+    "json",
+    "os",
+    "re",
+    "shutil",
+    "subprocess",
+    "sys",
+    "time"
+   ],
+   "longest": [
+    [
+     "preflight",
+     33,
+     79
+    ],
+    [
+     "verify_video",
+     134,
+     173
+    ],
+    [
+     "caption_checks",
+     223,
+     252
+    ]
+   ]
+  },
+  "scripts/lib/segcache.py": {
+   "loc": 167,
+   "functions": 11,
+   "classes": [],
+   "imports": [
+    "hashlib",
+    "json",
+    "os",
+    "re",
+    "subprocess"
+   ],
+   "longest": [
+    [
+     "piece_keys",
+     48,
+     92
+    ],
+    [
+     "join",
+     130,
+     166
+    ],
+    [
+     "cut_pieces",
+     115,
+     127
+    ]
+   ]
+  },
+  "scripts/lib/sequence.py": {
+   "loc": 317,
+   "functions": 21,
+   "classes": [],
+   "imports": [
+    "json",
+    "os",
+    "re",
+    "shutil",
+    "subprocess",
+    "time"
+   ],
+   "longest": [
+    [
+     "check_cuts",
+     124,
+     171
+    ],
+    [
+     "apply",
+     219,
+     259
+    ],
+    [
+     "validate",
+     61,
+     84
+    ]
+   ]
+  },
+  "scripts/lib/sfx_mix.py": {
+   "loc": 89,
+   "functions": 5,
+   "classes": [],
+   "imports": [
+    "json",
+    "make_sfx",
+    "os",
+    "shutil",
+    "subprocess",
+    "sys"
+   ],
+   "longest": [
+    [
+     "plan",
+     45,
+     71
+    ],
+    [
+     "ensure_files",
+     26,
+     42
+    ],
+    [
+     "project_audio",
+     74,
+     88
+    ]
+   ]
+  },
+  "scripts/lib/speech_intel.py": {
+   "loc": 298,
+   "functions": 19,
+   "classes": [],
+   "imports": [
+    "array",
+    "json",
+    "math",
+    "os",
+    "re",
+    "transcript",
+    "wave"
+   ],
+   "longest": [
+    [
+     "delivery",
+     125,
+     160
+    ],
+    [
+     "analyze",
+     231,
+     266
+    ],
+    [
+     "languages",
+     48,
+     75
+    ]
+   ]
+  },
+  "scripts/lib/tighten.py": {
+   "loc": 111,
+   "functions": 7,
+   "classes": [],
+   "imports": [
+    "content_intel",
+    "json",
+    "os",
+    "re"
+   ],
+   "longest": [
+    [
+     "decide",
+     49,
+     79
+    ],
+    [
+     "apply",
+     82,
+     90
+    ],
+    [
+     "units",
+     33,
+     40
+    ]
+   ]
+  },
+  "scripts/lib/transcript.py": {
+   "loc": 147,
+   "functions": 8,
+   "classes": [],
+   "imports": [
+    "re"
+   ],
+   "longest": [
+    [
+     "apply_review",
+     76,
+     108
+    ],
+    [
+     "clean_asr",
+     25,
+     39
+    ],
+    [
+     "proof_chunks",
+     126,
+     136
+    ]
+   ]
+  },
+  "scripts/lib/variations.py": {
+   "loc": 86,
+   "functions": 6,
+   "classes": [],
+   "imports": [
+    "json",
+    "os",
+    "re",
+    "shutil",
+    "time"
+   ],
+   "longest": [
+    [
+     "prepare",
+     54,
+     85
+    ],
+    [
+     "alternatives",
+     30,
+     36
+    ],
+    [
+     "_jl",
+     17,
+     22
+    ]
+   ]
+  },
+  "scripts/lib/versions.py": {
+   "loc": 116,
+   "functions": 7,
+   "classes": [],
+   "imports": [
+    "json",
+    "os",
+    "shutil",
+    "time"
+   ],
+   "longest": [
+    [
+     "save",
+     29,
+     53
+    ],
+    [
+     "restore",
+     56,
+     78
+    ],
+    [
+     "summary",
+     81,
+     101
+    ]
+   ]
+  },
+  "scripts/lib/visual_plan.py": {
+   "loc": 126,
+   "functions": 6,
+   "classes": [],
+   "imports": [
+    "brand_memory",
+    "config",
+    "hfbuild",
+    "json",
+    "os",
+    "re"
+   ],
+   "longest": [
+    [
+     "build",
+     48,
+     110
+    ],
+    [
+     "intensity",
+     36,
+     45
+    ],
+    [
+     "_jl",
+     23,
+     28
+    ]
+   ]
+  },
+  "dashboard/add_expense.py": {
+   "loc": 45,
+   "functions": 3,
+   "classes": [],
+   "imports": [
+    "argparse",
+    "json",
+    "sys"
+   ],
+   "longest": [
+    [
+     "main",
+     22,
+     41
+    ],
+    [
+     "load",
+     15,
+     17
+    ],
+    [
+     "save",
+     19,
+     20
+    ]
+   ]
+  },
+  "dashboard/backup_api.py": {
+   "loc": 127,
+   "functions": 9,
+   "classes": [],
+   "imports": [
+    "glob",
+    "json",
+    "os",
+    "re",
+    "time",
+    "zipfile"
+   ],
+   "longest": [
+    [
+     "run",
+     81,
+     116
+    ],
+    [
+     "files_to_save",
+     61,
+     78
+    ],
+    [
+     "targets",
+     20,
+     32
+    ]
+   ]
+  },
+  "dashboard/it_agent.py": {
+   "loc": 220,
+   "functions": 11,
+   "classes": [],
+   "imports": [
+    "json",
+    "os",
+    "re",
+    "reels_api",
+    "settings_api",
+    "threading",
+    "time"
+   ],
+   "longest": [
+    [
+     "tick",
+     151,
+     197
+    ],
+    [
+     "find_issues",
+     96,
+     132
+    ],
+    [
+     "_allowed",
+     136,
+     148
+    ]
+   ]
+  },
+  "dashboard/reels_api.py": {
+   "loc": 937,
+   "functions": 52,
+   "classes": [],
+   "imports": [
+    "calendar",
+    "creative_brief",
+    "director",
+    "doctor",
+    "glob",
+    "json",
+    "learning",
+    "manual_edit",
+    "os",
+    "re",
+    "ready_score",
+    "sequence",
+    "subprocess",
+    "sys",
+    "threading",
+    "time",
+    "variations",
+    "versions"
+   ],
+   "longest": [
+    [
+     "progress",
+     548,
+     695
+    ],
+    [
+     "upload",
+     380,
+     425
+    ],
+    [
+     "list_reels",
+     39,
+     76
+    ]
+   ]
+  },
+  "dashboard/serve.py": {
+   "loc": 401,
+   "functions": 16,
+   "classes": [
+    "Server",
+    "H"
+   ],
+   "imports": [
+    "backup_api",
+    "it_agent",
+    "json",
+    "os",
+    "reels_api",
+    "settings_api",
+    "shutil",
+    "sys",
+    "threading",
+    "time"
+   ],
+   "longest": [
+    [
+     "_post",
+     221,
+     364
+    ],
+    [
+     "_get",
+     137,
+     195
+    ],
+    [
+     "stream_progress",
+     197,
+     214
+    ]
+   ]
+  },
+  "dashboard/settings_api.py": {
+   "loc": 193,
+   "functions": 11,
+   "classes": [],
+   "imports": [
+    "board_merge",
+    "config",
+    "json",
+    "os",
+    "platform",
+    "shutil",
+    "subprocess",
+    "sys",
+    "time",
+    "urllib"
+   ],
+   "longest": [
+    [
+     "update",
+     143,
+     192
+    ],
+    [
+     "health",
+     23,
+     43
+    ],
+    [
+     "test_key",
+     61,
+     77
+    ]
+   ]
+  }
+ },
+ "tests_per_module": {
+  "scripts/asset_batch.py": [
+   "test_asset_batch.py"
+  ],
+  "scripts/asset_check.py": [
+   "test_asset_check.py"
+  ],
+  "scripts/block_samples.py": [],
+  "scripts/compile.py": [
+   "test_it_agent.py",
+   "test_manual_edit.py",
+   "test_p3.py",
+   "test_pipeline_steps.py",
+   "test_render_errors.py",
+   "test_safe_zones.py",
+   "test_sfx_mix.py",
+   "test_stress.py",
+   "test_text_behind.py"
+  ],
+  "scripts/cost_estimate.py": [],
+  "scripts/cover.py": [
+   "test_backup.py",
+   "test_cover.py",
+   "test_cover_hero.py",
+   "test_cuts.py",
+   "test_dashboard.py",
+   "test_hook_picker.py",
+   "test_pack.py",
+   "test_ready_score.py",
+   "test_render_errors.py",
+   "test_safe_zones.py",
+   "test_text_behind.py"
+  ],
+  "scripts/energy.py": [
+   "test_cover_hero.py",
+   "test_energy.py"
+  ],
+  "scripts/fetch_icons.py": [],
+  "scripts/ingest_folder.py": [
+   "test_ingest_stage2.py"
+  ],
+  "scripts/install_assets.py": [
+   "test_asset_pack.py"
+  ],
+  "scripts/keyframes.py": [
+   "test_pipeline_steps.py"
+  ],
+  "scripts/make_asset_pack.py": [
+   "test_asset_pack.py"
+  ],
+  "scripts/make_sfx.py": [
+   "test_sfx.py"
+  ],
+  "scripts/models_refresh.py": [
+   "test_models_refresh.py"
+  ],
+  "scripts/qa_check.py": [
+   "test_qa.py",
+   "test_render_errors.py",
+   "test_sound.py"
+  ],
+  "scripts/ready_score.py": [
+   "test_learning.py",
+   "test_ready_score.py"
+  ],
+  "scripts/reel.py": [
+   "test_backup.py",
+   "test_bakeoff.py",
+   "test_broll_ai.py",
+   "test_content_intel.py",
+   "test_creative_brief.py",
+   "test_critic.py",
+   "test_cuts.py",
+   "test_dashboard.py",
+   "test_doctor.py",
+   "test_errors.py",
+   "test_icon_tags.py",
+   "test_it_agent.py",
+   "test_learning.py",
+   "test_llm_empty.py",
+   "test_manual_edit.py",
+   "test_outline.py",
+   "test_overlap.py",
+   "test_p3.py",
+   "test_pipeline.py",
+   "test_pipeline_steps.py",
+   "test_proof.py",
+   "test_ready_score.py",
+   "test_taste.py",
+   "test_text_behind.py",
+   "test_tighten.py",
+   "test_variations.py"
+  ],
+  "scripts/ref_learn.py": [
+   "test_ref_learn.py"
+  ],
+  "scripts/render.py": [
+   "test_cuts.py",
+   "test_dashboard.py",
+   "test_render_errors.py",
+   "test_render_guard.py",
+   "test_safe_zones.py",
+   "test_segcache.py",
+   "test_sound.py"
+  ],
+  "scripts/safe_zone_preview.py": [],
+  "scripts/stress_dashboard.py": [],
+  "scripts/lib/__init__.py": [
+   "test_icon_tags.py"
+  ],
+  "scripts/lib/asset_check.py": [
+   "test_asset_check.py"
+  ],
+  "scripts/lib/board_merge.py": [
+   "test_update_merge.py"
+  ],
+  "scripts/lib/brand_memory.py": [
+   "test_visual_plan.py"
+  ],
+  "scripts/lib/broll.py": [
+   "test_broll.py",
+   "test_broll_ai.py"
+  ],
+  "scripts/lib/broll_ai.py": [
+   "test_broll_ai.py"
+  ],
+  "scripts/lib/config.py": [
+   "test_auth.py",
+   "test_backup.py",
+   "test_cover.py",
+   "test_dashboard.py",
+   "test_dashboard_robust.py",
+   "test_editorial.py",
+   "test_ffmpeg_path.py",
+   "test_ingest_stage2.py",
+   "test_p3.py",
+   "test_pipeline.py",
+   "test_pipeline_steps.py",
+   "test_safe_zones.py",
+   "test_settings.py",
+   "test_sfx_mix.py"
+  ],
+  "scripts/lib/content_intel.py": [
+   "test_content_intel.py",
+   "test_tighten.py"
+  ],
+  "scripts/lib/creative_brief.py": [
+   "test_creative_brief.py"
+  ],
+  "scripts/lib/critic.py": [
+   "test_critic.py",
+   "test_pipeline_steps.py"
+  ],
+  "scripts/lib/director.py": [
+   "test_asset_check.py",
+   "test_cuts.py",
+   "test_manual_edit.py",
+   "test_outline.py",
+   "test_p3.py",
+   "test_pack.py",
+   "test_pipeline.py",
+   "test_sfx_mix.py",
+   "test_stress.py",
+   "test_taste.py",
+   "test_text_behind.py",
+   "test_versions.py"
+  ],
+  "scripts/lib/doctor.py": [
+   "test_doctor.py"
+  ],
+  "scripts/lib/editorial.py": [
+   "test_editorial.py",
+   "test_hook_picker.py",
+   "test_visual_plan.py"
+  ],
+  "scripts/lib/edl.py": [
+   "test_bakeoff.py",
+   "test_cover.py",
+   "test_cuts.py",
+   "test_editorial.py",
+   "test_hook_picker.py",
+   "test_manual_edit.py",
+   "test_outline.py",
+   "test_p3.py",
+   "test_pipeline_steps.py",
+   "test_qa.py",
+   "test_ready_score.py",
+   "test_render_guard.py",
+   "test_sfx_mix.py",
+   "test_stress.py",
+   "test_text_behind.py",
+   "test_tighten.py",
+   "test_versions.py",
+   "test_visual_plan.py"
+  ],
+  "scripts/lib/frames_dedup.py": [
+   "test_frames_dedup.py"
+  ],
+  "scripts/lib/hfbuild.py": [
+   "test_blocks.py",
+   "test_cuts.py",
+   "test_p3.py",
+   "test_pack.py",
+   "test_qa.py",
+   "test_safe_zones.py",
+   "test_sfx_mix.py",
+   "test_stress.py",
+   "test_text_behind.py",
+   "test_visual_plan.py"
+  ],
+  "scripts/lib/icon_tags.py": [
+   "test_icon_tags.py"
+  ],
+  "scripts/lib/learning.py": [
+   "test_learning.py"
+  ],
+  "scripts/lib/manual_edit.py": [
+   "test_manual_edit.py",
+   "test_tighten.py",
+   "test_versions.py"
+  ],
+  "scripts/lib/matte.py": [
+   "test_text_behind.py"
+  ],
+  "scripts/lib/media_check.py": [
+   "test_media_check.py"
+  ],
+  "scripts/lib/media_index.py": [
+   "test_content_intel.py",
+   "test_ingest_stage2.py",
+   "test_sequence.py"
+  ],
+  "scripts/lib/outline.py": [
+   "test_icon_tags.py",
+   "test_outline.py",
+   "test_pack.py",
+   "test_pipeline_steps.py"
+  ],
+  "scripts/lib/pack.py": [
+   "test_asset_check.py",
+   "test_asset_pack.py",
+   "test_icon_tags.py",
+   "test_pack.py",
+   "test_safe_zones.py"
+  ],
+  "scripts/lib/pipeline.py": [
+   "test_manual_edit.py",
+   "test_pipeline.py",
+   "test_pipeline_steps.py"
+  ],
+  "scripts/lib/render_guard.py": [
+   "test_render_errors.py",
+   "test_render_guard.py",
+   "test_text_behind.py"
+  ],
+  "scripts/lib/segcache.py": [
+   "test_segcache.py"
+  ],
+  "scripts/lib/sequence.py": [
+   "test_sequence.py",
+   "test_timeline_api.py"
+  ],
+  "scripts/lib/sfx_mix.py": [
+   "test_sfx_mix.py"
+  ],
+  "scripts/lib/speech_intel.py": [
+   "test_content_intel.py",
+   "test_speech_intel.py"
+  ],
+  "scripts/lib/tighten.py": [
+   "test_pipeline_steps.py",
+   "test_tighten.py"
+  ],
+  "scripts/lib/transcript.py": [
+   "test_bakeoff.py",
+   "test_content_intel.py",
+   "test_creative_brief.py",
+   "test_editorial.py",
+   "test_hook_picker.py",
+   "test_manual_edit.py",
+   "test_p3.py",
+   "test_proof.py",
+   "test_sequence.py",
+   "test_speech_intel.py",
+   "test_stress.py",
+   "test_tighten.py",
+   "test_variations.py"
+  ],
+  "scripts/lib/variations.py": [
+   "test_variations.py"
+  ],
+  "scripts/lib/versions.py": [
+   "test_versions.py"
+  ],
+  "scripts/lib/visual_plan.py": [
+   "test_versions.py",
+   "test_visual_plan.py"
+  ],
+  "dashboard/add_expense.py": [],
+  "dashboard/backup_api.py": [
+   "test_backup.py"
+  ],
+  "dashboard/it_agent.py": [
+   "test_it_agent.py"
+  ],
+  "dashboard/reels_api.py": [
+   "test_cover.py",
+   "test_dashboard.py",
+   "test_dashboard_robust.py",
+   "test_hook_picker.py",
+   "test_it_agent.py",
+   "test_posted.py",
+   "test_timeline_api.py"
+  ],
+  "dashboard/serve.py": [
+   "test_dashboard_robust.py"
+  ],
+  "dashboard/settings_api.py": [
+   "test_dashboard_robust.py",
+   "test_it_agent.py",
+   "test_settings.py",
+   "test_update_merge.py"
+  ]
+ },
+ "modules_without_tests": [
+  "dashboard/add_expense.py",
+  "scripts/block_samples.py",
+  "scripts/cost_estimate.py",
+  "scripts/fetch_icons.py",
+  "scripts/safe_zone_preview.py",
+  "scripts/stress_dashboard.py"
+ ],
+ "unused_function_candidates": [
+  [
+   "scripts/reel.py",
+   "numbers_spoken",
+   193
+  ],
+  [
+   "dashboard/serve.py",
+   "log_message",
+   85
+  ]
+ ],
+ "functions_over_80_lines": [
+  [
+   "dashboard/reels_api.py",
+   "progress",
+   548,
+   148
+  ],
+  [
+   "dashboard/serve.py",
+   "_post",
+   221,
+   144
+  ],
+  [
+   "scripts/lib/director.py",
+   "resolve",
+   196,
+   129
+  ],
+  [
+   "scripts/reel.py",
+   "main",
+   933,
+   123
+  ],
+  [
+   "scripts/ready_score.py",
+   "score",
+   34,
+   109
+  ],
+  [
+   "scripts/ingest_folder.py",
+   "main",
+   44,
+   103
+  ],
+  [
+   "scripts/reel.py",
+   "st_plan",
+   547,
+   90
+  ]
+ ],
+ "dashboard_endpoints": [
+  "/api/backup",
+  "/api/cover",
+  "/api/editor",
+  "/api/editor/",
+  "/api/events",
+  "/api/expenses",
+  "/api/health",
+  "/api/it",
+  "/api/performance",
+  "/api/performance.csv",
+  "/api/progress",
+  "/api/reels",
+  "/api/reels/",
+  "/api/root",
+  "/api/settings/",
+  "/api/spend",
+  "/api/tasks",
+  "/api/timeline",
+  "/api/timeline/",
+  "/api/upload",
+  "/api/upload/status",
+  "/api/version",
+  "/api/watching"
+ ],
+ "reel_actions": [
+  "approve",
+  "ask_doctor",
+  "check",
+  "cover_reset",
+  "fix",
+  "notes",
+  "performance",
+  "posted",
+  "resume",
+  "reveal",
+  "start",
+  "use_hook",
+  "use_version",
+  "variation"
+ ],
+ "config_keys": [
+  "_note",
+  "route",
+  "models",
+  "prices_per_mtok",
+  "budget_usd",
+  "asr",
+  "gates",
+  "review",
+  "committee",
+  "tools",
+  "sound",
+  "broll_ai",
+  "roles",
+  "outline",
+  "critic",
+  "format_pack",
+  "assets_pack"
+ ],
+ "config_keys_never_read_in_code": [],
+ "loc_total": 10821,
+ "test_files": 62
+}

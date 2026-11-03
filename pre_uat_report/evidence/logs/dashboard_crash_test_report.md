@@ -1,0 +1,154 @@
+# Dashboard crash test
+141 checks in 472 s: 140 passed, 1 warnings, 0 FAILED
+
+## FAILED
+- none
+
+## WARNINGS
+- [recovery] background reel keeps running after the dashboard is killed: 1 orphan process(es): it may write while a restarted dashboard starts it again
+
+## Errors the dashboard printed to its own log
+- none
+
+## All checks
+- PASS [http] GET /
+- PASS [http] GET /index.html
+- PASS [http] GET /make.html
+- PASS [http] GET /edit.html
+- PASS [http] GET /timeline.html
+- PASS [http] GET /api/health
+- PASS [http] GET /api/version
+- PASS [http] GET /api/tasks
+- PASS [http] GET /api/reels
+- PASS [http] GET /api/progress
+- PASS [http] GET /api/it
+- PASS [http] GET /api/backup
+- PASS [http] GET /api/root
+- PASS [http] GET /api/spend
+- PASS [http] GET /api/expenses
+- PASS [http] GET /api/performance
+- PASS [http] GET /api/performance.csv
+- PASS [http] GET /api/upload/status
+- PASS [http] GET /api/watching
+- PASS [http] path tricks / file leaks
+- PASS [http] 100 KB query string
+- PASS [http] alive after probes
+- PASS [http] method PUT
+- PASS [http] method DELETE
+- PASS [http] method PATCH
+- PASS [http] method OPTIONS
+- PASS [http] method HEAD
+- PASS [http] method TRACE
+- PASS [http] method CONNECT
+- PASS [http] garbage request line
+- PASS [http] no HTTP version
+- PASS [http] huge header
+- PASS [http] negative content-length
+- PASS [http] 2 GB content-length, no body
+- PASS [http] chunked body
+- PASS [http] bad Origin
+- PASS [http] 1000 headers
+- PASS [load] 150 requests at once
+- PASS [load] 120 idle half-open connections
+- PASS [load] idle connections are dropped after the server's time-out (2 minutes)
+- PASS [load] recovers after idle sockets close
+- PASS [load] event stream open while others work
+- PASS [uploads] normal small clip
+- PASS [uploads] zero-byte file
+- PASS [uploads] wrong file type (.exe)
+- PASS [uploads] double extension .mp4.exe
+- PASS [uploads] path traversal in name
+- PASS [uploads] file written outside the reel folder
+- PASS [uploads] 2,000-character name
+- PASS [uploads] emoji + Arabic name
+- PASS [uploads] bad slug with ../
+- PASS [uploads] slug with spaces / capitals
+- PASS [uploads] missing session
+- PASS [uploads] unknown kind
+- PASS [uploads] size above the limit declared
+- PASS [uploads] another session takes the same name
+- PASS [uploads] interrupted upload keeps its part
+- PASS [uploads] resume at a wrong offset is refused
+- PASS [uploads] resume at the right offset finishes
+- PASS [uploads] 30 uploads at once (6 reels)
+- PASS [uploads] 60 MB upload
+- PASS [uploads] alive after uploads
+- PASS [state] tasks board is empty
+- PASS [state] tasks board is truncated
+- PASS [state] tasks board is binary garbage
+- PASS [state] tasks board is wrong shape []
+- PASS [state] tasks board is null
+- PASS [state] expense ledger is empty
+- PASS [state] expense ledger is truncated
+- PASS [state] expense ledger is binary garbage
+- PASS [state] expense ledger is wrong shape []
+- PASS [state] expense ledger is null
+- PASS [state] project config is empty
+- PASS [state] project config is truncated
+- PASS [state] project config is binary garbage
+- PASS [state] project config is wrong shape []
+- PASS [state] project config is null
+- PASS [state] rules is empty
+- PASS [state] rules is truncated
+- PASS [state] rules is binary garbage
+- PASS [state] rules is wrong shape []
+- PASS [state] rules is null
+- PASS [state] brand is empty
+- PASS [state] brand is truncated
+- PASS [state] brand is binary garbage
+- PASS [state] brand is wrong shape []
+- PASS [state] brand is null
+- PASS [state] broken job files + dangling link + odd folder in jobs/
+- PASS [state] POST /api/reels/start with bad data
+- PASS [state] POST /api/reels/resume with bad data
+- PASS [state] POST /api/reels/fix with bad data
+- PASS [state] POST /api/reels/approve with bad data
+- PASS [state] POST /api/reels/posted with bad data
+- PASS [state] POST /api/reels/performance with bad data
+- PASS [state] POST /api/reels/use_hook with bad data
+- PASS [state] POST /api/reels/variation with bad data
+- PASS [state] POST /api/reels/check with bad data
+- PASS [state] POST /api/reels/notes with bad data
+- PASS [state] timeline/save with bad data
+- PASS [state] timeline/check with bad data
+- PASS [state] timeline/apply with bad data
+- PASS [state] timeline/undo with bad data
+- PASS [state] editor/preview with bad data
+- PASS [state] editor/save with bad data
+- PASS [state] editor/rebuild with bad data
+- PASS [state] 25 board saves at once with the same version
+- PASS [state] board save with bad shape {'version': 25, 'tasks': [{'id
+- PASS [state] board save with bad shape {'version': 25, 'tasks': 'x'}
+- PASS [state] board save with bad shape {'version': 'abc'}
+- PASS [state] board save with bad shape {'tasks': [{}]}
+- PASS [settings] save key: empty key
+- PASS [settings] save key: huge key
+- PASS [settings] save key: newline in key
+- PASS [settings] save key: path-like key
+- PASS [settings] save key: unicode key
+- PASS [settings] save key: number
+- PASS [settings] save key: list
+- PASS [settings] save key: null
+- PASS [settings] settings/test with odd values
+- PASS [settings] settings/backup with odd values
+- PASS [settings] settings/it_agent with odd values
+- PASS [settings] settings/backup_auto with odd values
+- PASS [settings] settings/update with odd values
+- PASS [settings] settings/nonsense with odd values
+- PASS [settings] alive after settings abuse
+- PASS [videos] reel from: normal 1080x1920 h264+aac
+- PASS [videos] reel from: phone MOV rotated 90 (metadata)
+- PASS [videos] reel from: silent video (no audio track)
+- PASS [videos] reel from: variable frame rate
+- PASS [videos] reel from: audio only in an .mp4
+- PASS [videos] reel from: truncated file (a third)
+- PASS [videos] reel from: corrupt middle
+- PASS [videos] reel from: text file named .mp4
+- PASS [recovery] server killed (kill -9) in the middle of a reel
+- WARN [recovery] background reel keeps running after the dashboard is killed
+- PASS [recovery] dashboard starts again after kill -9
+- PASS [recovery] dashboard shows the cut-off reel plainly
+- PASS [recovery] reel list after the crash
+- PASS [recovery] expenses.json still valid JSON after kill -9
+- PASS [recovery] tasks.json still valid JSON after kill -9
+- PASS [recovery] 3 quick restarts in a row
