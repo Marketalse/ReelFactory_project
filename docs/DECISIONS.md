@@ -257,3 +257,7 @@ Verified 2026-11-03 on Hesham's Mac (screenshot): `install_assets.install(<attac
 - `reel.py --tag-motion` (and free `--estimate-motion`): same one-time Haiku pass as the icons, behind the money guard, index in library/assets/motion_index.json. 265 distinct names, estimated under 1 cent.
 - Director: `motion_card` is offered only once motion files have tags. The AI only chooses WHERE (a spoken word); the file and the label are filled from the words he says around that point (Arabic tag match). No match → the moment is dropped. Max 3 per reel, 6 s apart (config/rules.json). No extra prompt cost.
 - Tests: tests/test_motion_director.py.
+
+## 2026-11-03 — Asset pack link is now a GitHub Release file
+- `config/project.json → assets_pack.url` = https://github.com/Marketalse/ReelFactory_project/releases/download/assets-v1/reelfactory-assets.zip (icons + 298 motion files + licences). Verified: downloaded and installed into an empty folder: 20,704 icons, 298 motion files, motion licence, 0 skipped.
+- The pack builder now also includes motion_index.json (Arabic tags) so new installs get the editor's motion cards; installer never overwrites tags he made.
