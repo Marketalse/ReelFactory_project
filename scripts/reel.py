@@ -946,12 +946,18 @@ def main():
     ap.add_argument("--doctor", action="store_true", help="T84: ask the AI doctor why this reel stopped (about 1 cent); it only proposes, never acts")
     ap.add_argument("--tag-icons", action="store_true", help="T149: add Arabic tags to the big icon library (one-time, about a cent per 100 names)")
     ap.add_argument("--estimate-icons", action="store_true", help="T149: how many icon names need tags and what it would cost; free")
+    ap.add_argument("--project", help="with --tag-icons: the real project folder to read the icons from and write the tags and the cost to (when this copy is a temporary one)")
     ap.add_argument("--max-names", type=int, default=0, help="with --tag-icons: only this many names in this run (0 = all)")
     a = ap.parse_args()
     a.img_tok = {1080: 2800, 720: 1300, 540: 800, 384: 420}.get(a.width, 800)
     a.rekey = False; a.replan = bool(a.fix)
     if a.tag_icons or a.estimate_icons:
         a.budget = max(a.budget, 1.0)
+        if a.project:                                       # a temporary copy of the code working on the real project's library, tags, jobs and expense ledger
+            global ROOT
+            ROOT = os.path.abspath(os.path.expanduser(a.project))
+            if not os.path.isdir(os.path.join(ROOT, "library")): sys.exit(f"{ROOT} has no library folder: is this the Reel Factory project folder?")
+            cfg.ROOT = ROOT; cfg.LEDGER = os.path.join(ROOT, "dashboard", "expenses.json")
         return run_tag_icons(a)
     if not a.input: sys.exit("give a reel folder or a clip (or use --tag-icons)")
     inp = a.input

@@ -1929,6 +1929,18 @@
    "notes": "Hesham 2026-11-03. Run: python3 scripts/reel.py --estimate-icons ; python3 scripts/reel.py --tag-icons. Paid calls stay in reel.py (money guard).",
    "evidence": "scripts/lib/icon_tags.py, reel.py --tag-icons, pack.pick_icons uses it, compile paints dark icons; tests/test_icon_tags.py",
    "updated": "2026-11-03"
+  },
+  {
+   "id": "T150",
+   "phase": "P19",
+   "title": "Asset pack: the big icon library + Arabic tags + licences as ONE installable zip (make_asset_pack.py / install_assets.py)",
+   "owner": "Claude",
+   "status": "review",
+   "depends": [],
+   "done_when": "Hesham builds the zip on his Mac, uploads it as a GitHub release file, sets assets_pack.url, and a fresh install gets the icons with python3 scripts/install_assets.py.",
+   "notes": "Hesham 2026-11-03: other users must not have asset problems. Sets seen: Tabler, Bootstrap-Icons, Heroicons, Phosphor, Lucide, each with a LICENSE file. A set without a LICENSE file is left out.",
+   "evidence": "tests/test_asset_pack.py",
+   "updated": "2026-11-03"
   }
  ],
  "log": [
