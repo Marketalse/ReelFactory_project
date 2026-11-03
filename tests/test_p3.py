@@ -128,9 +128,9 @@ class DirectorTests(unittest.TestCase):
         p["moments"] += [{"block": "flash", "at_word": 40, "duration": 0.8, "values": {"word": "300"}},
                          {"block": "flash", "at_word": 62, "duration": 0.8, "values": {"word": "300"}},
                          {"block": "text_card", "at_word": len(self.words) - 2, "duration": 2.0, "values": {"headline": "x"}}]
-        _, err, _ = director.resolve(p, self.words, self.dur)
+        _, err, warn = director.resolve(p, self.words, self.dur)
         self.assertTrue(any("flashes; maximum" in e for e in err), err)
-        self.assertTrue(any("inside the CTA" in e for e in err), err)
+        self.assertTrue(any("too close to the end" in w and "dropped" in w for w in warn), warn)     # a card with no room left is dropped, not an error
 
     def test_missing_rhythm_is_reported_with_times(self):
         p = good_plan(len(self.words)); p["punch_ins"] = []
@@ -206,8 +206,9 @@ class CleanEndingTests(unittest.TestCase):
     def test_moment_past_the_end_is_named(self):
         p = good_plan(len(self.words))
         p["moments"].append({"block": "text_card", "at_word": len(self.words) - 1, "duration": 2.0, "values": {"headline": "x"}})
-        _, err, _ = director.resolve(p, self.words, self.dur)
-        self.assertTrue(any("after the reel ends" in e for e in err), err)
+        _, err, warn = director.resolve(p, self.words, self.dur)
+        self.assertEqual(err, [], err)
+        self.assertTrue(any("too close to the end" in w for w in warn), warn)                        # named in the warnings, the reel is not stopped
 
     def test_prompt_asks_for_no_cta(self):
         pr = director.build_prompt(self.words, self.dur)

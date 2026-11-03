@@ -58,8 +58,9 @@ class MotionDirector(unittest.TestCase):
         self.assertEqual(err, [], err)
         sc = [s for s in tl["scenes"] if s["block"] == "info_card"][0]
         self.assertLessEqual(sc["t_out"], 13.0 + 0.01); self.assertTrue(any("shortened" in x for x in warn))
-        plan["moments"][0]["at_word"] = 29                           # starts too close to the end for even the shortest card: that is still an error
-        self.assertTrue(director.resolve(plan, w, 13.0)[1])
+        plan["moments"][0]["at_word"] = 29                           # starts too close to the end for even the shortest card: it is DROPPED with a warning, the reel is not stopped
+        tl2, err2, warn2 = director.resolve(plan, w, 13.0)
+        self.assertEqual(err2, [], err2); self.assertFalse([s for s in tl2["scenes"] if s["block"] == "info_card"]); self.assertTrue(any("dropped" in x for x in warn2))
 
 
 if __name__ == "__main__":

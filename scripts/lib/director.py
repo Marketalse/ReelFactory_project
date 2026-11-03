@@ -259,6 +259,9 @@ def resolve(plan, edl_words, duration, *, logos=(), platform_handle="@handle", r
         if t + d > cta_t + 0.01 and cta_t - t >= spec["min"] - 0.01:         # a moment that runs a little past the end is SHORTENED to fit (not a reason to stop the reel)
             warn.append(f"{where}: shortened from {d:.1f} s to {cta_t - t:.1f} s to end with the reel")
             d = cta_t - t
+        if t + d > cta_t + 0.01 and not relaxed:                # not even room for the shortest card: drop it (the reel is better without it than stopped)
+            warn.append(f"{where}: starts too close to the end ({t:.1f}s of {cta_t:.1f}s) for a {b}: dropped")
+            continue
         if t + d > cta_t + 0.01:
             err.append(f"{where}: ends at {t + d:.1f}s, inside the CTA (from {cta_t:.1f}s)" if cta_on()
                        else f"{where}: ends at {t + d:.1f}s, after the reel ends ({duration:.1f}s)")
