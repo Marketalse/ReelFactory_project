@@ -1,0 +1,70 @@
+{
+ "levels": [
+  {
+   "parallel_uploads": 1,
+   "size_mb_each": 20,
+   "ok": 1,
+   "failed": 0,
+   "seconds": 0.0,
+   "throughput_mb_s": 1438.4,
+   "p95_s": 0.0,
+   "server_rss_mb": 26,
+   "alive": true
+  },
+  {
+   "parallel_uploads": 2,
+   "size_mb_each": 20,
+   "ok": 2,
+   "failed": 0,
+   "seconds": 0.0,
+   "throughput_mb_s": 1337.7,
+   "p95_s": 0.0,
+   "server_rss_mb": 28,
+   "alive": true
+  },
+  {
+   "parallel_uploads": 4,
+   "size_mb_each": 20,
+   "ok": 4,
+   "failed": 0,
+   "seconds": 0.1,
+   "throughput_mb_s": 585.6,
+   "p95_s": 0.1,
+   "server_rss_mb": 30,
+   "alive": true
+  },
+  {
+   "parallel_uploads": 8,
+   "size_mb_each": 20,
+   "ok": 8,
+   "failed": 0,
+   "seconds": 0.2,
+   "throughput_mb_s": 761.2,
+   "p95_s": 0.2,
+   "server_rss_mb": 40,
+   "alive": true
+  },
+  {
+   "parallel_uploads": 16,
+   "size_mb_each": 20,
+   "ok": 16,
+   "failed": 0,
+   "seconds": 0.5,
+   "throughput_mb_s": 619.2,
+   "p95_s": 0.5,
+   "server_rss_mb": 51,
+   "alive": true
+  },
+  {
+   "parallel_uploads": 32,
+   "size_mb_each": 20,
+   "ok": 32,
+   "failed": 0,
+   "seconds": 1.4,
+   "throughput_mb_s": 459.3,
+   "p95_s": 1.4,
+   "server_rss_mb": 51,
+   "alive": true
+  }
+ ]
+}
