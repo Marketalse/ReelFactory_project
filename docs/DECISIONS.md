@@ -252,3 +252,8 @@ Verified 2026-11-03 on Hesham's Mac (screenshot): `install_assets.install(<attac
 - Safety: `hfbuild.lottie_json` accepts only a bare file name from library/assets/motion/ and re-runs the motion check at build time; the animation is embedded in the scene file (no network, no file access). Tests: tests/test_motion_card.py.
 - Proven with a still render (shopping-bag animation, Arabic label, test video), pixels inside the tile change between frames. Not yet proven on a real reel.
 - NOT done: the Director (AI) cannot pick motion files yet (it is not in DIRECTOR_BLOCKS); AI tags for motion files. Both need Hesham's go (small paid AI cost for tags).
+
+## 2026-11-03 — Editor uses motion cards; motion files get Arabic tags (Hesham: "yes, teach the editor and add the Arabic names")
+- `reel.py --tag-motion` (and free `--estimate-motion`): same one-time Haiku pass as the icons, behind the money guard, index in library/assets/motion_index.json. 265 distinct names, estimated under 1 cent.
+- Director: `motion_card` is offered only once motion files have tags. The AI only chooses WHERE (a spoken word); the file and the label are filled from the words he says around that point (Arabic tag match). No match → the moment is dropped. Max 3 per reel, 6 s apart (config/rules.json). No extra prompt cost.
+- Tests: tests/test_motion_director.py.

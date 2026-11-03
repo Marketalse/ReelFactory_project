@@ -900,12 +900,12 @@ def run_stages(c, a, job):
             th.join()                                       # never leave a paid call running behind our back
 
 
-def run_tag_icons(a):
+def run_tag_icons(a, kind="icons"):
     """T149: one-time Arabic tags for the big icon library. Paid (Haiku, about a cent per 100 names) and therefore HERE, behind the money guard.
     Saves after every batch, so it can be stopped and started again."""
-    todo = icon_tags.pending(limit=a.max_names)
-    total = len(icon_tags.scan()); done = total - len(icon_tags.pending())
-    print(f"icon library: {total} distinct icon names, {done} already tagged, {len(todo)} to do in this run")
+    todo = icon_tags.pending(limit=a.max_names, kind=kind)
+    total = len(icon_tags.scan(kind=kind)); done = total - len(icon_tags.pending(kind=kind))
+    print(f"{'motion' if kind == 'motion' else 'icon'} library: {total} distinct names, {done} already tagged, {len(todo)} to do in this run")
     est = icon_tags.estimate(len(todo))
     print(f"estimated cost for this run: about ${est:.2f} ({cfg.role('icon_tags')[0].split('/')[1]})")
     if a.estimate_icons or not todo:
@@ -917,7 +917,7 @@ def run_tag_icons(a):
             names = todo[i:i + icon_tags.BATCH]
             ans = parse_json(c.llm("icon_tags", model, [{"type": "text", "text": icon_tags.PROMPT.format(names="\n".join(names))}], 9000, a.effort or effort))
             new = {n: [] for n in names}; new.update(icon_tags.clean(ans, set(names)))
-            icon_tags.save(new)
+            icon_tags.save(new, kind=kind)
             print(f"   tagged {min(i + icon_tags.BATCH, len(todo))}/{len(todo)}  (spent ${c.spent():.4f})", flush=True)
     except Stop as e:
         status = "stopped"; print("STOP:", e, "\nWhat was tagged is saved; run the same command again to carry on.")
@@ -946,19 +946,22 @@ def main():
     ap.add_argument("--doctor", action="store_true", help="T84: ask the AI doctor why this reel stopped (about 1 cent); it only proposes, never acts")
     ap.add_argument("--tag-icons", action="store_true", help="T149: add Arabic tags to the big icon library (one-time, about a cent per 100 names)")
     ap.add_argument("--estimate-icons", action="store_true", help="T149: how many icon names need tags and what it would cost; free")
+    ap.add_argument("--tag-motion", action="store_true", help="Arabic tags for the checked motion (Lottie) files in library/assets/motion/ (one-time, about 2 cents)")
+    ap.add_argument("--estimate-motion", action="store_true", help="how many motion names need tags and what it would cost; free")
     ap.add_argument("--project", help="with --tag-icons: the real project folder to read the icons from and write the tags and the cost to (when this copy is a temporary one)")
     ap.add_argument("--max-names", type=int, default=0, help="with --tag-icons: only this many names in this run (0 = all)")
     a = ap.parse_args()
     a.img_tok = {1080: 2800, 720: 1300, 540: 800, 384: 420}.get(a.width, 800)
     a.rekey = False; a.replan = bool(a.fix)
-    if a.tag_icons or a.estimate_icons:
+    if a.tag_icons or a.estimate_icons or a.tag_motion or a.estimate_motion:
         a.budget = max(a.budget, 1.0)
         if a.project:                                       # a temporary copy of the code working on the real project's library, tags, jobs and expense ledger
             global ROOT
             ROOT = os.path.abspath(os.path.expanduser(a.project))
             if not os.path.isdir(os.path.join(ROOT, "library")): sys.exit(f"{ROOT} has no library folder: is this the Reel Factory project folder?")
             cfg.ROOT = ROOT; cfg.LEDGER = os.path.join(ROOT, "dashboard", "expenses.json")
-        return run_tag_icons(a)
+        a.estimate_icons = a.estimate_icons or a.estimate_motion
+        return run_tag_icons(a, "motion" if (a.tag_motion or a.estimate_motion) else "icons")
     if not a.input: sys.exit("give a reel folder or a clip (or use --tag-icons)")
     inp = a.input
     if not os.path.isdir(os.path.join(inp, "")) or not os.path.exists(os.path.join(inp, "job.json")):
