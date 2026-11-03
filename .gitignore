@@ -43,3 +43,7 @@ dashboard/.runs/
 !library/broll/
 library/broll/*
 !library/broll/README.md
+
+# 20,000+ bulk-checked icons and reports (made by scripts/asset_batch.py; local only)
+library/assets/ok/
+library/assets/_reports/
