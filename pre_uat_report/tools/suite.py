@@ -121,11 +121,53 @@ def i4(work, g="integration"):
     rec(g, "I4 two reel.py runs on the same reel at once (strict)", "PASS" if ok else "FAIL", f"exits {codes}; refused {refused}; corrupt {corrupt}; traceback {tb}; AI calls logged {n} (one run = 6-7); draft {job_state(jd)['draft']}")
 
 
+def stress():
+    """Pipeline concurrency ladder: 1, 2, 3, 4 reels rendering at the same time on this 4-CPU machine (mock AI, real render)."""
+    e2e.start_mock(); work = e2e.make_copy(); g = "stress"; rows = []
+    for n in (1, 2, 3, 4):
+        t0 = time.time(); jobs = []
+        for k in range(n): jobs.append(e2e.seed_job(work, f"s{n}-{k}", 50, 10 + k)[0])
+        seed_s = time.time() - t0; calls0 = e2e.STATE["calls"]; t1 = time.time(); res = [None] * n
+        def go(k): res[k] = e2e.run(work, [jobs[k], "--budget", "1.5"], 1500, f"s{n}-{k}")
+        ts = [threading.Thread(target=go, args=(k,)) for k in range(n)]; [t.start() for t in ts]; [t.join(1600) for t in ts]
+        ok = sum(1 for k in range(n) if res[k] and res[k]["code"] == 0 and job_state(jobs[k])["draft"]); wall = time.time() - t1
+        row = {"concurrent_reels": n, "completed": ok, "failed": n - ok, "wall_s": round(wall), "per_reel_s": [r["seconds"] for r in res if r], "ai_calls": e2e.STATE["calls"] - calls0,
+               "max_rss_mb": max((r["max_rss_mb"] for r in res if r), default=None), "ingest_s_total": round(seed_s)}
+        rows.append(row); rec(g, f"S {n} reel(s) at once", "PASS" if ok == n else "FAIL", json.dumps(row)); save(g)
+        if ok < n: break
+    json.dump(rows, open(os.path.join(OUT, "stress_pipeline_levels.json"), "w"), indent=1)
+
+
+def endurance():
+    """Repeated reels one after another (time drift, disk growth, leftover processes/files) and a flaky AI service."""
+    e2e.start_mock(); work = e2e.make_copy(); g = "endurance"; times = []; disk = []
+    def du(path):
+        return round(sum(os.path.getsize(os.path.join(dp, f)) for dp, _, fs in os.walk(path) for f in fs if os.path.exists(os.path.join(dp, f))) / 1e6)
+    for k in range(5):
+        jd, r0, r = one_reel(work, f"e-{k}", 50, 20 + k)
+        okk = r and r["code"] == 0 and job_state(jd)["draft"]
+        times.append(r["seconds"] if r else None); disk.append({"job_mb": du(jd), "jobs_total_mb": du(os.path.join(work, "jobs"))})
+        procs = subprocess.run("pgrep -fc 'chromium|hyperframes|ffmpeg'", shell=True, capture_output=True, text=True).stdout.strip()
+        rec(g, f"E{k + 1} sequential reel {k + 1} of 5", "PASS" if okk else "FAIL", f"{times[-1]} s; job {disk[-1]['job_mb']} MB; leftover helper processes {procs}")
+    drift = round((times[-1] - times[0]) / times[0] * 100, 1) if times[0] and times[-1] else None
+    rec(g, "E6 render time does not drift upward over 5 reels", "PASS" if drift is not None and drift < 25 else "WARN", f"first {times[0]} s, last {times[-1]} s, change {drift}%")
+    tmp = [f for f in glob.glob(os.path.join(work, "jobs", "*", "_*")) + glob.glob(os.path.join(work, "jobs", "*", "*.part")) + glob.glob(os.path.join(work, "jobs", "*", "*.tmp"))]
+    rec(g, "E7 no temporary files left behind in finished reels", "PASS" if not tmp else "WARN", tmp[:6])
+    # flaky AI: every 3rd call fails (HTTP 500) -> the reel stops; each resume must make progress and the reel must finish
+    jd, _ = e2e.seed_job(work, "e-flaky", 50, 31); e2e.STATE["fail_every"] = 3; e2e.STATE["calls"] = 0; tries = 0; done = False
+    while tries < 8 and not done:
+        tries += 1; r = e2e.run(work, [jd, "--budget", "1.5"], 600, "flaky"); done = r["code"] == 0 and job_state(jd)["draft"]
+    e2e.STATE["fail_every"] = 0
+    rec(g, "E8 flaky AI service (every 3rd call fails): the reel still finishes by resuming", "PASS" if done else "FAIL", f"{tries} runs needed")
+    json.dump({"times_s": times, "disk": disk}, open(os.path.join(OUT, "endurance_reels.json"), "w"), indent=1)
+    save(g)
+
+
 def i4only():
     e2e.start_mock(); work = e2e.make_copy(); i4(work, "integration_i4"); save("integration_i4")
 
 
-GROUPS = {"functional": functional, "integration": integration, "i4": i4only}
+GROUPS = {"functional": functional, "integration": integration, "i4": i4only, "stress": stress, "endurance": endurance}
 if __name__ == "__main__":
     for g in sys.argv[1:]:
         GROUPS[g](); save(g)
