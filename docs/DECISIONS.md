@@ -236,3 +236,5 @@ Hesham wants the assets to ship with the project. The 20,604 checked icons (164 
 
 ## 2026-11-03 · Asset pack address set (Hesham)
 `config/project.json -> assets_pack.url` = https://github.com/user-attachments/files/34316034/reelfactory-assets.zip (20,704 icons, all sets had a licence file, Arabic tags included). Note: this is a GitHub "attachment" link (made by dropping the file into a comment/issue box), not a Release file. Claude could not download it from its own sandbox (HTTP 403), so the install was NOT tested against this address; it IS tested with a local zip (tests/test_asset_pack.py). Attachment links can stop working if the comment or issue is deleted; a Release file (`assets-v1`) is the stable home. Hesham must test once on his Mac: `python3 scripts/install_assets.py` in a fresh copy.
+
+Verified 2026-11-03 on Hesham's Mac (screenshot): `install_assets.install(<attachment link>, <empty folder>)` printed "installed: 20704 new icons, 0 already there, 0 kept, 0 skipped": the link downloads, every checksum matches, licences and tags are installed. The attachment link stays usable for now; a Release file is still the safer long-term home.
