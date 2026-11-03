@@ -182,7 +182,7 @@
     "_closing_note": "Closing like / subscribe / follow buttons under the recap chain. OFF because the project rule keeps the call to action off (AGENTS.md, Hesham 2026-11-01); set closing_buttons true to switch on."
   },
   "assets_pack": {
-    "url": "https://github.com/user-attachments/files/34316034/reelfactory-assets.zip",
+    "url": "https://github.com/user-attachments/files/34316297/reelfactory-assets.zip",
     "_note": "Web address of the asset pack zip (a GitHub release file). Build it with scripts/make_asset_pack.py; install with scripts/install_assets.py. URL set by Hesham 2026-11-03 (a GitHub attachment link, not a Release file: see docs/DECISIONS.md)."
   }
 }
