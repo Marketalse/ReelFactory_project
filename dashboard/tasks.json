@@ -113,6 +113,11 @@
    "id": "P19",
    "name": "NEXT · Foundation upgrade (structure, models, cost)",
    "goal": "One clear structure, a strong model per job, a cost you can see and set"
+  },
+  {
+   "id": "P20",
+   "name": "LATER · Video AI (LTX 2.5)",
+   "goal": "A ready place for LTX to make B-roll or short extensions, off until you approve"
   }
  ],
  "tasks": [
@@ -1869,6 +1874,42 @@
    "notes": "Hesham 2026-11-02: enhance structure, AI models, creativity, accept higher cost. Estimate: scripts/cost_estimate.py.",
    "evidence": "",
    "updated": "2026-11-02"
+  },
+  {
+   "id": "T142",
+   "phase": "P20",
+   "title": "Fill in the LTX 2.5 call (endpoint, key, request) after checking the LTX docs; test one 3 s clip",
+   "owner": "Claude",
+   "status": "todo",
+   "depends": [],
+   "done_when": "A real clip made, viewed, cost logged.",
+   "notes": "Slot ready: scripts/lib/ltx.py, config video_ai (off), library/ltx/. Needs your key + approval.",
+   "evidence": "",
+   "updated": "2026-11-03"
+  },
+  {
+   "id": "T143",
+   "phase": "P20",
+   "title": "Show LTX clips in the director's menu and the cost screen; per-reel approval button",
+   "owner": "Claude",
+   "status": "todo",
+   "depends": [],
+   "done_when": "A real clip made, viewed, cost logged.",
+   "notes": "Slot ready: scripts/lib/ltx.py, config video_ai (off), library/ltx/. Needs your key + approval.",
+   "evidence": "",
+   "updated": "2026-11-03"
+  },
+  {
+   "id": "T144",
+   "phase": "P20",
+   "title": "Check if LTX 2.5 can change an existing clip (video-to-video) and try it on one B-roll shot",
+   "owner": "Claude",
+   "status": "todo",
+   "depends": [],
+   "done_when": "A real clip made, viewed, cost logged.",
+   "notes": "Slot ready: scripts/lib/ltx.py, config video_ai (off), library/ltx/. Needs your key + approval.",
+   "evidence": "",
+   "updated": "2026-11-03"
   }
  ],
  "log": [
