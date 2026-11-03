@@ -1869,6 +1869,42 @@
    "notes": "Hesham 2026-11-02: enhance structure, AI models, creativity, accept higher cost. Estimate: scripts/cost_estimate.py.",
    "evidence": "",
    "updated": "2026-11-02"
+  },
+  {
+   "id": "T145",
+   "phase": "P19",
+   "title": "Asset check: tool tests each icon/picture against the safe zone and writes where it may and may not sit",
+   "owner": "Claude",
+   "status": "review",
+   "depends": [],
+   "done_when": "Hesham's icon passes the check and the director places it inside the safe zone.",
+   "notes": "Hesham 2026-11-03. Tool: scripts/asset_check.py, scripts/lib/asset_check.py, folder library/assets.",
+   "evidence": "tests/test_asset_check.py",
+   "updated": "2026-11-03"
+  },
+  {
+   "id": "T146",
+   "phase": "P19",
+   "title": "Director follows the asset's placement file (only 'may_sit' zones; error if an unchecked or failed asset is used)",
+   "owner": "Claude",
+   "status": "todo",
+   "depends": [],
+   "done_when": "Hesham's icon passes the check and the director places it inside the safe zone.",
+   "notes": "Hesham 2026-11-03. Tool: scripts/asset_check.py, scripts/lib/asset_check.py, folder library/assets.",
+   "evidence": "",
+   "updated": "2026-11-03"
+  },
+  {
+   "id": "T147",
+   "phase": "P19",
+   "title": "Bundle an open icon set + shortlist of HyperFrames blocks, each run through the asset check / safe-zone test",
+   "owner": "Claude",
+   "status": "todo",
+   "depends": [],
+   "done_when": "Hesham's icon passes the check and the director places it inside the safe zone.",
+   "notes": "Hesham 2026-11-03. Tool: scripts/asset_check.py, scripts/lib/asset_check.py, folder library/assets.",
+   "evidence": "",
+   "updated": "2026-11-03"
   }
  ],
  "log": [

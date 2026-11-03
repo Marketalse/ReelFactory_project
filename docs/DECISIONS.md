@@ -212,3 +212,6 @@ Hesham wants LTX 2.5 to "manage the video editing". Finding (web search): LTX-2.
 
 ## 2026-11-03 · LTX 2.5 dropped (Hesham)
 After the cost and effect calculation (LTX only makes pictures; it does not decide cuts; +$0.45 to +$2.70 per reel; rule conflict with "everything on screen comes from what he said"), Hesham dropped it. Removed: `video_ai` config, `scripts/lib/ltx.py`, its test, `library/ltx/`, board P20 (T142-T144). Models stay: Sonnet 5.5 brain, Haiku 5.5 words and QA (about $0.60 per full-quality reel). Can be reopened later; see the 2026-11-03 entry above for the findings.
+
+## 2026-11-03 · Asset check (Hesham): every icon is tested once against the safe zone and gets a placement rule
+Formats: SVG (preferred) or PNG with transparent background, at least 512 px. No JSON from Hesham: `python3 scripts/asset_check.py library/assets` writes `<name>.placement.json` per file (where it may sit, max size, where it may never sit: top 250, below y 1500, right 160, left 108, captions band 1200-1450, speaker's face). The test is geometric (the resting rectangle must be fully inside x 108-920, y 250-1500 and clear of the captions band) and the SVG is refused if it holds scripts, outside links or entities. Next: the director must obey these files (T146) and the bundled icon set / HyperFrames blocks go through the same check (T147).
