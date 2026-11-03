@@ -46,6 +46,13 @@ class Pack(unittest.TestCase):
         make_asset_pack.build(self.src, self.assets, z2, motion_src=ms)
         self.assertNotIn("motion/spin.json", zipfile.ZipFile(z2).namelist())
 
+    def test_a_zip_that_is_not_the_pack_gets_a_plain_message_not_a_traceback(self):
+        z = os.path.join(self.d, "plain.zip")
+        with zipfile.ZipFile(z, "w") as f: f.writestr("a.json", "{}")
+        root = os.path.join(self.d, "u4"); os.makedirs(os.path.join(root, "library"))
+        with self.assertRaises(SystemExit) as cm: install_assets.install(z, root)
+        self.assertIn("not the Reel Factory asset pack", str(cm.exception))
+
     def test_damaged_icons_are_skipped(self):
         z = os.path.join(self.d, "p.zip"); make_asset_pack.build(self.src, self.assets, z)
         bad = os.path.join(self.d, "bad.zip")
