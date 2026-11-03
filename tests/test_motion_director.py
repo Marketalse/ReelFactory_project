@@ -50,6 +50,17 @@ class MotionDirector(unittest.TestCase):
         tl, err, warn = director.resolve(self.plan(5), w, 12.0)
         self.assertFalse([s for s in tl["scenes"] if s["block"] == "motion_card"]); self.assertTrue(any("no motion file" in x for x in warn))
 
+    def test_a_card_that_runs_a_little_past_the_end_is_shortened_not_a_reason_to_stop_the_reel(self):
+        w = words(["كلمة"] * 30)                                    # word 24 starts at 10.55 s; the reel ends at 13 s
+        plan = {"hook": {"line1": "يعني لما انت", "line2": "حاط بيج"},
+                "moments": [{"block": "info_card", "at_word": 24, "duration": 4.0, "values": {"kicker": "ك", "headline": "كلمة", "caption": "كلمة"}}]}
+        tl, err, warn = director.resolve(plan, w, 13.0)
+        self.assertEqual(err, [], err)
+        sc = [s for s in tl["scenes"] if s["block"] == "info_card"][0]
+        self.assertLessEqual(sc["t_out"], 13.0 + 0.01); self.assertTrue(any("shortened" in x for x in warn))
+        plan["moments"][0]["at_word"] = 29                           # starts too close to the end for even the shortest card: that is still an error
+        self.assertTrue(director.resolve(plan, w, 13.0)[1])
+
 
 if __name__ == "__main__":
     unittest.main()

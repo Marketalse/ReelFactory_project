@@ -261,3 +261,6 @@ Verified 2026-11-03 on Hesham's Mac (screenshot): `install_assets.install(<attac
 ## 2026-11-03 — Asset pack link is now a GitHub Release file
 - `config/project.json → assets_pack.url` = https://github.com/Marketalse/ReelFactory_project/releases/download/assets-v1/reelfactory-assets.zip (icons + 298 motion files + licences). Verified: downloaded and installed into an empty folder: 20,704 icons, 298 motion files, motion licence, 0 skipped.
 - The pack builder now also includes motion_index.json (Arabic tags) so new installs get the editor's motion cards; installer never overwrites tags he made.
+
+## 2026-11-03 — Fix: a card ending a little after the reel no longer stops the reel
+- Found on Hesham's real reel: "moments[7] (doc_card): ends at 43.7s, after the reel ends (43.3s)" stopped step 5 even after the repair. `director.resolve` now shortens such a moment to end with the reel (warning), and only errors when there is not even room for the shortest card. Test: tests/test_motion_director.py.
