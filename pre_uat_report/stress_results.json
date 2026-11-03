@@ -1,0 +1,8 @@
+[
+ {
+  "group": "stress",
+  "name": "S 1 reel(s) at once",
+  "verdict": "PASS",
+  "detail": "{\"concurrent_reels\": 1, \"completed\": 1, \"failed\": 0, \"wall_s\": 185, \"per_reel_s\": [185.0], \"ai_calls\": 6, \"max_rss_mb\": 399, \"ingest_s_total\": 25}"
+ }
+]
