@@ -1,0 +1,8 @@
+[
+ {
+  "group": "integration_i4",
+  "name": "I4 two reel.py runs on the same reel at once (strict)",
+  "verdict": "PASS",
+  "detail": "exits [0, 3]; refused 1; corrupt []; traceback False; AI calls logged 6 (one run = 6-7); draft True"
+ }
+]
