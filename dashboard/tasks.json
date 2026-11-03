@@ -1887,11 +1887,11 @@
    "phase": "P19",
    "title": "Director follows the asset's placement file (only 'may_sit' zones; error if an unchecked or failed asset is used)",
    "owner": "Claude",
-   "status": "todo",
+   "status": "review",
    "depends": [],
    "done_when": "Hesham's icon passes the check and the director places it inside the safe zone.",
    "notes": "Hesham 2026-11-03. Tool: scripts/asset_check.py, scripts/lib/asset_check.py, folder library/assets.",
-   "evidence": "",
+   "evidence": "asset_check.job_problems + director asset_bad; 67 Lucide icons in library/broll (icon-*.svg + Arabic tags.json); scripts/asset_batch.py; 309 tests OK",
    "updated": "2026-11-03"
   },
   {
@@ -1899,10 +1899,22 @@
    "phase": "P19",
    "title": "Bundle an open icon set + shortlist of HyperFrames blocks, each run through the asset check / safe-zone test",
    "owner": "Claude",
-   "status": "todo",
+   "status": "review",
    "depends": [],
    "done_when": "Hesham's icon passes the check and the director places it inside the safe zone.",
    "notes": "Hesham 2026-11-03. Tool: scripts/asset_check.py, scripts/lib/asset_check.py, folder library/assets.",
+   "evidence": "asset_check.job_problems + director asset_bad; 67 Lucide icons in library/broll (icon-*.svg + Arabic tags.json); scripts/asset_batch.py; 309 tests OK",
+   "updated": "2026-11-03"
+  },
+  {
+   "id": "T148",
+   "phase": "P19",
+   "title": "Motion assets: Lottie / transparent WebM intake with the same safe-zone check + preset SVG motions (pop, draw-on, float, count-up)",
+   "owner": "Claude",
+   "status": "todo",
+   "depends": [],
+   "done_when": "A Lottie file Hesham brings passes the check and plays inside a block in the safe zone.",
+   "notes": "Hesham 2026-11-03. HyperFrames supports Lottie/dotLottie and alpha WebM.",
    "evidence": "",
    "updated": "2026-11-03"
   }
