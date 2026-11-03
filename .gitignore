@@ -47,3 +47,5 @@ library/broll/*
 # 20,000+ bulk-checked icons and reports (made by scripts/asset_batch.py; local only)
 library/assets/ok/
 library/assets/_reports/
+stress_report.md
+stress_server.log

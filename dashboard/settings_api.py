@@ -44,7 +44,7 @@ def health():
 
 
 def save_key(key):
-    key = (key or "").strip()
+    key = key.strip() if isinstance(key, str) else ""
     if any(c.isspace() for c in key) or not (MIN_KEY <= len(key) <= MAX_KEY):
         return False, "That doesn't look like an API key. Copy it again from portal.nousresearch.com and paste only the key."
     path = cfg.key_file()

@@ -502,7 +502,8 @@ def expected_secs():
     seen = {}
     if os.path.isdir(JOBS):
         for n in os.listdir(JOBS):
-            t = _j(os.path.join(JOBS, n, "timing.json"), {}) or {}
+            t = _j(os.path.join(JOBS, n, "timing.json"), {})
+            if not isinstance(t, dict): continue                          # a damaged timing file must not break the progress page
             for k, v in t.items():
                 if isinstance(v, (int, float)) and v > 1:
                     seen.setdefault(k, []).append(v)
@@ -732,11 +733,14 @@ def spend(month=None):
     by_step, by_model, reels, total = {}, {}, set(), 0.0
     for p in glob.glob(os.path.join(ROOT, "jobs", month + "-*", "cost.json")):
         try:
-            calls = json.load(open(p, encoding="utf-8")).get("calls") or []
+            d_ = json.load(open(p, encoding="utf-8")); calls = d_.get("calls") if isinstance(d_, dict) else []
+            calls = [c for c in (calls or []) if isinstance(c, dict)]
         except (OSError, ValueError):
             continue
         for c in calls:
-            amt = float(c.get("cost") or 0); total += amt
+            try: amt = float(c.get("cost") or 0)
+            except (TypeError, ValueError): amt = 0.0
+            total += amt
             st = str(c.get("stage", "?")).split(":")[0]
             step = STAGE_WORDS.get(st, st)
             by_step[step] = by_step.get(step, 0) + amt
@@ -826,7 +830,7 @@ def save_performance(job, data):
     """Hesham types the numbers from Instagram/TikTok Insights. Kept per reel in jobs/<job>/performance.json."""
     if not JOB.match(job or "") or not os.path.isdir(os.path.join(JOBS, job)):
         return False, "unknown reel"
-    data = data or {}
+    if not isinstance(data, dict): return False, "bad data"
     platform, when = data.get("platform"), data.get("when")
     if platform not in PLATFORMS:
         return False, "choose Instagram or TikTok"
