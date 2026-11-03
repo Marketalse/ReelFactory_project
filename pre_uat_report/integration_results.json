@@ -1,0 +1,100 @@
+[
+ {
+  "group": "integration",
+  "name": "I1 AI answers 'err500'",
+  "verdict": "PASS",
+  "detail": "stop: fix: the AI service is busy or having problems right now (already retried). Wait a few minutes, then click Try again. [HTTP 500: {\"error\": \"boom\"}]",
+  "seconds": 20.1
+ },
+ {
+  "group": "integration",
+  "name": "I1b resume after 'err500' once the AI is back",
+  "verdict": "PASS",
+  "detail": "0s  +$0.0000  report.md |  | GATE 2: watch /tmp/rf-e2e-eebr74p0/jobs/2026-11-03-i1-err500/review/draft_540p.mp4 |   approve:  python3 scripts/reel.py jobs/2026-11-03-i1-err500 --approve |   or fix:   python3 scripts/reel.py jobs/2026-11-03-i1-err500 --fix \"what to change\" | TOTAL this job $0.0070 | wall 147s | ",
+  "seconds": 147.1
+ },
+ {
+  "group": "integration",
+  "name": "I1 AI answers 'err429'",
+  "verdict": "PASS",
+  "detail": "stop: fix: the AI service is busy or having problems right now (already retried). Wait a few minutes, then click Try again. [HTTP 429: {}]",
+  "seconds": 1.1
+ },
+ {
+  "group": "integration",
+  "name": "I1b resume after 'err429' once the AI is back",
+  "verdict": "PASS",
+  "detail": "0s  +$0.0000  report.md |  | GATE 2: watch /tmp/rf-e2e-eebr74p0/jobs/2026-11-03-i1-err429/review/draft_540p.mp4 |   approve:  python3 scripts/reel.py jobs/2026-11-03-i1-err429 --approve |   or fix:   python3 scripts/reel.py jobs/2026-11-03-i1-err429 --fix \"what to change\" | TOTAL this job $0.0070 | wall 141s | ",
+  "seconds": 141.5
+ },
+ {
+  "group": "integration",
+  "name": "I1 AI answers 'err401'",
+  "verdict": "PASS",
+  "detail": "stop: fix: the AI service refused the API key (the RF_API_KEY setting): it is wrong, expired or the account is out of credit. Check credit at portal.nousresearch.com; to replace the key, click Settings on t",
+  "seconds": 0.1
+ },
+ {
+  "group": "integration",
+  "name": "I1b resume after 'err401' once the AI is back",
+  "verdict": "PASS",
+  "detail": "0s  +$0.0000  report.md |  | GATE 2: watch /tmp/rf-e2e-eebr74p0/jobs/2026-11-03-i1-err401/review/draft_540p.mp4 |   approve:  python3 scripts/reel.py jobs/2026-11-03-i1-err401 --approve |   or fix:   python3 scripts/reel.py jobs/2026-11-03-i1-err401 --fix \"what to change\" | TOTAL this job $0.0070 | wall 140s | ",
+  "seconds": 140.0
+ },
+ {
+  "group": "integration",
+  "name": "I1 AI answers 'garbage'",
+  "verdict": "PASS",
+  "detail": "stop: the AI's answer was not readable JSON (Expecting value: line 1 column 1 (char 0)); it began: \"I'm sorry, here is my answer: not json at all\". Click Try again.",
+  "seconds": 0.1
+ },
+ {
+  "group": "integration",
+  "name": "I1b resume after 'garbage' once the AI is back",
+  "verdict": "PASS",
+  "detail": " +$0.0000  report.md |  | GATE 2: watch /tmp/rf-e2e-eebr74p0/jobs/2026-11-03-i1-garbage/review/draft_540p.mp4 |   approve:  python3 scripts/reel.py jobs/2026-11-03-i1-garbage --approve |   or fix:   python3 scripts/reel.py jobs/2026-11-03-i1-garbage --fix \"what to change\" | TOTAL this job $0.0080 | wall 138s | ",
+  "seconds": 137.9
+ },
+ {
+  "group": "integration",
+  "name": "I1 AI answers 'empty'",
+  "verdict": "PASS",
+  "detail": "stop: fix: the AI sent an empty answer twice (finish: stop, thinking tokens: None). Click Try again; if it repeats, send Claude this message.",
+  "seconds": 0.2
+ },
+ {
+  "group": "integration",
+  "name": "I1b resume after 'empty' once the AI is back",
+  "verdict": "PASS",
+  "detail": " 0.0s  +$0.0000  report.md |  | GATE 2: watch /tmp/rf-e2e-eebr74p0/jobs/2026-11-03-i1-empty/review/draft_540p.mp4 |   approve:  python3 scripts/reel.py jobs/2026-11-03-i1-empty --approve |   or fix:   python3 scripts/reel.py jobs/2026-11-03-i1-empty --fix \"what to change\" | TOTAL this job $0.0090 | wall 150s | ",
+  "seconds": 149.9
+ },
+ {
+  "group": "integration",
+  "name": "I1 AI answers 'truncated'",
+  "verdict": "PASS",
+  "detail": "stop: the AI's answer was not readable JSON (Unterminated string starting at: line 1 column 15 (char 14)); it began: '{\"fixes\": [], \"'. Click Try again.",
+  "seconds": 0.1
+ },
+ {
+  "group": "integration",
+  "name": "I1b resume after 'truncated' once the AI is back",
+  "verdict": "PASS",
+  "detail": "000  report.md |  | GATE 2: watch /tmp/rf-e2e-eebr74p0/jobs/2026-11-03-i1-truncated/review/draft_540p.mp4 |   approve:  python3 scripts/reel.py jobs/2026-11-03-i1-truncated --approve |   or fix:   python3 scripts/reel.py jobs/2026-11-03-i1-truncated --fix \"what to change\" | TOTAL this job $0.0080 | wall 145s | ",
+  "seconds": 145.3
+ },
+ {
+  "group": "integration",
+  "name": "I1 AI answers 'drop'",
+  "verdict": "PASS",
+  "detail": "stop: fix: could not reach the AI service (internet down?). Check the connection, then click Try again. [Remote end closed connection without response]",
+  "seconds": 20.1
+ },
+ {
+  "group": "integration",
+  "name": "I1b resume after 'drop' once the AI is back",
+  "verdict": "PASS",
+  "detail": "    0.0s  +$0.0000  report.md |  | GATE 2: watch /tmp/rf-e2e-eebr74p0/jobs/2026-11-03-i1-drop/review/draft_540p.mp4 |   approve:  python3 scripts/reel.py jobs/2026-11-03-i1-drop --approve |   or fix:   python3 scripts/reel.py jobs/2026-11-03-i1-drop --fix \"what to change\" | TOTAL this job $0.0070 | wall 151s | ",
+  "seconds": 151.3
+ }
+]
