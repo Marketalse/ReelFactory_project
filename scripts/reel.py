@@ -21,7 +21,7 @@ import argparse, base64, glob, json, os, re, shutil, subprocess, sys, threading,
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from lib import config as cfg   # noqa: E402  (all settings live in config/*.json)
-from lib import pipeline, asset_check, transcript as tr, edl as edlmod, director, speech_intel, editorial, visual_plan, brand_memory, creative_brief, content_intel, frames_dedup, learning, doctor, sequence, broll_ai, tighten   # noqa: E402
+from lib import pipeline, outline, asset_check, transcript as tr, edl as edlmod, director, speech_intel, editorial, visual_plan, brand_memory, creative_brief, content_intel, frames_dedup, learning, doctor, sequence, broll_ai, tighten   # noqa: E402
 from lib.hfbuild import BuildError   # noqa: E402
 
 ROOT = cfg.ROOT
@@ -315,6 +315,28 @@ def st_review(c):
     jsave(os.path.join(c.job, "transcript.json"), new); jsave(meta, stats)
     return f"{stats['changed']} of {stats['words_before']} words changed by Hesham (error rate {stats['error_rate']:.0%})"
 
+@pipeline.step("outline", after="edl", role="outline", needs=["edl.json"], makes=["outline.json"], label="Find the structure (hook, steps, recap)")
+def st_outline(c):
+    """T130: one strong-model call finds the structure of the cut talk; the director builds visuals around it. Never stops a reel
+    (except the money guard): without an outline the director works as before."""
+    out = os.path.join(c.job, "outline.json")
+    if os.path.exists(out) and not c.a.replan: return "cached"
+    if not cfg.PROJECT.get("outline", {}).get("enabled", True): return "off"
+    words = jload(os.path.join(c.job, "edl.json"))["words"]
+    try:
+        model, effort = cfg.role("outline")
+        ans = parse_json(c.llm("outline", model, [{"type": "text", "text": outline.PROMPT.format(
+            max_sections=outline.MAX_SECTIONS, tw=outline.TITLE_WORDS, transcript=director.numbered_transcript(words))}], 3000, c.a.effort or effort))
+        o = outline.clean(ans, words)
+    except Stop as ex:
+        if str(ex).startswith(("BUDGET GUARD", "MONTHLY CAP")): raise
+        print("   outline skipped:", ex); return "skipped"
+    except (ValueError, KeyError) as ex:
+        print("   outline skipped (answer not usable):", ex); return "skipped"
+    jsave(out, o)
+    return f"{o['format']}, {len(o['sections'])} sections"
+
+
 @pipeline.step("keyframes")
 def st_keyframes(c):
     s0, s1 = jload(os.path.join(c.job, "chosen_select.json"))["range"]
@@ -537,6 +559,8 @@ def st_plan(c):
     brief = open(os.path.join(c.job, "brief.md"), encoding="utf-8").read() if os.path.exists(os.path.join(c.job, "brief.md")) else ""
     _got, note = broll_ai_step(c, words)               # pictures matched by what is IN them (AI, cents; cached descriptions)
     if note: brief += "\n\n" + note
+    ol = jload(os.path.join(c.job, "outline.json"))
+    if ol: brief += "\n\n" + outline.brief_note(ol)       # T130: the structure the visuals are built around
     job = jload(os.path.join(c.job, "job.json"), {})
     feedback = c.a.fix or ""
     ch = jload(os.path.join(c.job, "chosen_select.json"), {}) or {}; sl = jload(os.path.join(c.job, "selects.json"), {}) or {}
@@ -791,6 +815,7 @@ def bakeoff(job, models, a):
 
 
 FUNCS = pipeline.FUNCS
+STAGES = pipeline.order()          # refreshed now that every step has registered itself
 
 
 def join_shots(c):

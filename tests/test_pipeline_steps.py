@@ -9,20 +9,20 @@ class Steps(unittest.TestCase):
         self.assertEqual(pipeline.check(cfg.ROLES), [])
 
     def test_order_is_the_old_order(self):
-        self.assertEqual(pipeline.order(), ["ingest", "transcribe", "fix", "review", "selects", "tighten", "edl", "keyframes",
+        self.assertEqual(pipeline.order(), ["ingest", "transcribe", "fix", "review", "selects", "tighten", "edl", "outline", "keyframes",
                                             "shotlog", "plan", "compile", "draft", "report"])
         self.assertEqual(reel.STAGES, pipeline.order())
 
     def test_ai_steps_have_roles(self):
-        self.assertEqual({r["name"] for r in pipeline.ai_steps()}, {"fix", "selects", "tighten", "shotlog", "plan"})
+        self.assertEqual({r["name"] for r in pipeline.ai_steps()}, {"fix", "selects", "tighten", "outline", "shotlog", "plan"})
 
     def test_a_new_step_plugs_in_without_touching_the_runner(self):
         rows, funcs = list(pipeline.ROWS), dict(pipeline.FUNCS)
         try:
-            @pipeline.step("outline", after="tighten", role="outline", needs=["chosen_select.json"], makes=["outline.json"])
-            def st_outline(c): return "ok"
+            @pipeline.step("critic", after="plan", role="critic", needs=["timeline.json"], makes=["critic.json"])
+            def st_critic(c): return "ok"
             o = pipeline.order()
-            self.assertEqual(o[o.index("tighten") + 1], "outline")
+            self.assertEqual(o[o.index("plan") + 1], "critic")
             self.assertEqual(pipeline.check(cfg.ROLES), [])
             with self.assertRaises(ValueError):
                 pipeline.step("x", after="nope")(lambda c: 1)
