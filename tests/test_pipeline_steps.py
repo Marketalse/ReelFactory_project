@@ -9,7 +9,7 @@ class Steps(unittest.TestCase):
         self.assertEqual(pipeline.check(cfg.ROLES), [])
 
     def test_order_is_the_old_order(self):
-        self.assertEqual(pipeline.order(), ["ingest", "transcribe", "fix", "review", "selects", "tighten", "edl", "outline", "keyframes",
+        self.assertEqual(pipeline.order(), ["ingest", "transcribe", "fix", "review", "selects", "tighten", "edl", "cleancut", "outline", "keyframes",
                                             "shotlog", "plan", "compile", "draft", "critic", "report"])
         self.assertEqual(reel.STAGES, pipeline.order())
 

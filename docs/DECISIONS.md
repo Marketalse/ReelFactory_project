@@ -270,3 +270,12 @@ Verified 2026-11-03 on Hesham's Mac (screenshot): `install_assets.install(<attac
 
 ## 2026-11-03 — Fix: a card with no room left at the end is dropped, not an error
 - Hesham's real reel stopped three times on "moments[n] ends at 43.7s, after the reel ends (43.3s)": the AI keeps placing a card in the last second or two. Rule now: shorten if the shortest card still fits, otherwise DROP the card with a warning (the Edit page keeps the strict error). Tests updated (test_p3) and added (test_motion_director).
+
+## 2026-11-03 — Creative-engine step 1 (Hesham: "yes, start with step 1")
+Built, in this order (see docs/CREATIVE_ENGINE_ASSESSMENT.md section 6):
+- **Meaning check** (`scripts/lib/integrity.py`, runs in the `edl` step, writes integrity.json): hard errors stop the reel BEFORE any paid plan if the cut would reorder, repeat or reword his words, or leave a gap/overlap; warnings (shown in the report) for a word cut short or a removed filler still audible. Free.
+- **Cut log**: edl.json `cut_log` lists every cut (filler, retake, pause, the AI editor's cut with its reason, manual cut) with the words, source time, reel time and a plain reason; the report summarises it.
+- **Dramatic pauses** (config/rules.json `cut.dramatic_pause`, on by default: min gap 0.6 s, keep 0.5 s, at most 1 per 10 s): a long pause right after a spoken number or right before a word he said clearly louder (>= 3 dB above usual) is shortened to 0.5 s instead of removed. All other pauses over 0.35 s are still removed. UNPROVEN on real reels: Hesham must compare; switch off with `"enabled": false`.
+- **Plain cut** (new free step `cleancut`, ffmpeg, seconds): `review/clean_cut_540p.mp4` = only him, cut as planned, no graphics; length/sound checks in review/clean_cut.json. There is NO approval gate yet (it never stops the reel); a gate needs a dashboard button (next).
+- Fixed on the way: the report promised `edit_package/clean_cut.mp4`, which was never made; and a number detector that matched "الفكرة" as a number (caught by its test).
+- Tests: tests/test_cut_integrity.py (10), audit regression R3-R6 (`suite.py regression`, 6/6 PASS with real ffmpeg).

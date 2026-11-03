@@ -39,6 +39,24 @@ def nasty():
     save("regression"); srv.shutdown(); shutil.rmtree(work, ignore_errors=True)
 
 
+def cleancut():
+    """Step 1 of the creative-engine plan: the cut list has a reason for every cut, the meaning check passes, and a plain cut (no graphics) is made."""
+    work = e2e.make_copy(); srv = e2e.start_mock()
+    jd, r0 = e2e.seed_job(work, "cleancut", 45, 11)
+    r = e2e.run(work, [jd, "--budget", "1.5", "--stop-after", "outline"], 600, "cleancut")
+    ok = r["code"] == 0
+    rec("regression", "R3 reel runs to the plain-cut step", "PASS" if ok else "FAIL", f"exit {r['code']}; {tail(r, 240)}")
+    edl = json.load(open(os.path.join(jd, "edl.json"))) if os.path.exists(os.path.join(jd, "edl.json")) else {}
+    ig = json.load(open(os.path.join(jd, "integrity.json"))) if os.path.exists(os.path.join(jd, "integrity.json")) else {}
+    cc = json.load(open(os.path.join(jd, "review", "clean_cut.json"))) if os.path.exists(os.path.join(jd, "review", "clean_cut.json")) else {}
+    rec("regression", "R4 meaning check passes on a real cut", "PASS" if ig.get("ok") else "FAIL", json.dumps(ig.get("stats")) + " " + str(ig.get("errors")))
+    log = edl.get("cut_log", [])
+    rec("regression", "R5 every cut has a reason and a place on the reel", "PASS" if log and all(c.get("why") and "reel_t" in c for c in log) else "FAIL", f"{len(log)} cuts; kinds {sorted({c['kind'] for c in log})}; dramatic pauses kept {len(edl.get('kept_pauses', []))}")
+    p = os.path.join(jd, "review", "clean_cut_540p.mp4")
+    rec("regression", "R6 plain cut exists, right length, has picture and sound", "PASS" if os.path.exists(p) and not cc.get("problems") and cc.get("duration") else "FAIL", json.dumps(cc))
+    save("regression"); srv.shutdown(); shutil.rmtree(work, ignore_errors=True)
+
+
 def one_reel(work, slug, dur=56, seed=1, extra=(), audio=True, size="1080x1920", timeout=700):
     jd, r0 = e2e.seed_job(work, slug, dur, seed, audio, size)
     if not jd: return None, r0, None
@@ -184,5 +202,7 @@ def i4only():
 GROUPS = {"functional": functional, "integration": integration, "i4": i4only, "stress": stress, "endurance": endurance}
 if __name__ == "__main__":
     if sys.argv[1:2] == ["nasty"]: nasty(); sys.exit(0)
+    if sys.argv[1:2] == ["cleancut"]: cleancut(); sys.exit(0)
+    if sys.argv[1:2] == ["regression"]: nasty(); cleancut(); sys.exit(0)
     for g in sys.argv[1:]:
         GROUPS[g](); save(g)

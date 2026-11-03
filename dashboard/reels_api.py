@@ -483,7 +483,7 @@ def save_notes(slug, session, text, brief=None):
 STEPS = [
     ("prepare", "Preparing your video", "Joining your takes and making a working copy", ["ingest"]),
     ("listen", "Listening to your words", "Writing down every word with its timing, then fixing spellings", ["transcribe", "fix", "review"]),
-    ("story", "Choosing the story and cutting", "Picking the strongest part and removing pauses and false starts", ["selects", "tighten", "edl", "outline"]),
+    ("story", "Choosing the story and cutting", "Picking the strongest part and removing pauses and false starts", ["selects", "tighten", "edl", "cleancut", "outline"]),
     ("plan", "Planning captions and visuals", "Placing captions, titles, cards and zooms on your words", ["keyframes", "shotlog", "plan", "compile"]),
     ("render", "Rendering and checking the draft", "Making the draft video and checking every frame", ["draft", "critic", "report"]),
 ]
@@ -491,7 +491,7 @@ FINAL_STEPS = [
     ("video", "Making your final video", "High quality, one video for Instagram and TikTok"),
     ("cover", "Making your cover image", "A suggestion; you can upload your own after"),
 ]
-DEFAULT_SECS = {"ingest": 60, "transcribe": 270, "fix": 15, "review": 1, "selects": 20, "tighten": 20, "edl": 2, "outline": 25, "keyframes": 15,
+DEFAULT_SECS = {"ingest": 60, "transcribe": 270, "fix": 15, "review": 1, "selects": 20, "tighten": 20, "edl": 2, "cleancut": 6, "outline": 25, "keyframes": 15,
                 "shotlog": 25, "plan": 25, "compile": 5, "draft": 300, "critic": 15, "report": 2}
 FINAL_SECS = {"video": 300, "cover": 40}
 ORDER = [s for st in STEPS for s in st[3]]
