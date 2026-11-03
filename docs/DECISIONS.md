@@ -240,3 +240,9 @@ Hesham wants the assets to ship with the project. The 20,604 checked icons (164 
 Verified 2026-11-03 on Hesham's Mac (screenshot): `install_assets.install(<attachment link>, <empty folder>)` printed "installed: 20704 new icons, 0 already there, 0 kept, 0 skipped": the link downloads, every checksum matches, licences and tags are installed. The attachment link stays usable for now; a Release file is still the safer long-term home.
 
 2026-11-03: a second attachment link (.../files/34316297/reelfactory-assets.zip) also installed 20,704 icons with 0 skipped on Hesham's Mac; `assets_pack.url` now points to it (newer upload, same content count).
+
+## 2026-11-03 — Motion (Lottie) files: intake done (Hesham's Drive pack)
+- Pack: "Motion Asset Library", 300 Lottie .json from useAnimations, MIT licence (text is in the pack's index.json; the README states it; I did not check the website myself). Other sites in the README were deliberately not copied (their terms forbid compiling libraries).
+- `scripts/asset_batch.py` now also checks `.json`/`.lottie` with `lib/motion_check.py`; passes go to `library/assets/motion/` (+ `.placement.json`), icons stay in `ok/`. Result on the pack: 297 pass, 2 refused (they contain JavaScript expressions: alerts/error.json, social-media/twitter.json). Only `index.json` is skipped by name.
+- `make_asset_pack.py --motion <folder>` adds the checked files + licence; `install_assets.py` re-checks them on the new computer. A motion folder without licence text is left out.
+- Not done yet: AI tags for motion files, the player block (Lottie in the video), director use. No paid AI used.

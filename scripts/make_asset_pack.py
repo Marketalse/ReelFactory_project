@@ -36,7 +36,27 @@ def licences(src):
     return out
 
 
-def build(src, assets_dir, out_zip):
+def add_motion(z, assets_dir, motion_src):
+    """Lottie files that PASSED the motion check (library/assets/motion/) go in motion/, with the pack's own licence text (from its index.json).
+    A motion folder with no licence text in its index.json is LEFT OUT, the same rule as for icons."""
+    try:
+        lic = json.load(open(os.path.join(motion_src, "index.json"), encoding="utf-8")).get("license") or {}
+    except (OSError, ValueError):
+        lic = {}
+    text = lic.get("license_text") if isinstance(lic, dict) else None
+    mdir = os.path.join(assets_dir, "motion")
+    if not text or not os.path.isdir(mdir): return {}
+    name = "motion-" + "".join(c if c.isalnum() else "-" for c in str(lic.get("name", "licence")).lower()).strip("-")
+    z.writestr(f"LICENSES/{name}.txt", text)
+    out = {}
+    for f in sorted(os.listdir(mdir)):
+        if f.endswith(".json") and not f.endswith(".placement.json"):
+            data = open(os.path.join(mdir, f), "rb").read()
+            z.writestr("motion/" + f, data); out[f] = {"licence": name, "sha256": hashlib.sha256(data).hexdigest()}
+    return out
+
+
+def build(src, assets_dir, out_zip, motion_src=None):
     ok = os.path.join(assets_dir, "ok")
     prov, lic = provenance(assets_dir), licences(src)
     files = sorted(f for f in os.listdir(ok) if f.lower().endswith(".svg"))
@@ -55,7 +75,8 @@ def build(src, assets_dir, out_zip):
             if os.path.isfile(os.path.join(src, rd)): z.write(os.path.join(src, rd), "LICENSES/_collection_" + rd); break
         idx = os.path.join(assets_dir, "icon_index.json")
         if os.path.exists(idx): z.write(idx, "icon_index.json")
-        z.writestr("MANIFEST.json", json.dumps({"icons": manifest, "sets": sorted({m["set"] for m in manifest.values()})}, ensure_ascii=False, indent=1))
+        motion = add_motion(z, assets_dir, motion_src) if motion_src else {}
+        z.writestr("MANIFEST.json", json.dumps({"icons": manifest, "motion": motion, "sets": sorted({m["set"] for m in manifest.values()})}, ensure_ascii=False, indent=1))
         z.writestr("EXCLUDED.txt", "Icons left out because their set has no LICENSE file next to it:\n" + "".join(f"  {s}: {n} icons\n" for s, n in sorted(excluded.items())) if excluded else "Nothing left out.\n")
         z.writestr("README.txt", "Reel Factory asset pack: icons with their original licences (LICENSES/), Arabic tags (icon_index.json) and a checksum list (MANIFEST.json).\n"
                    "Install: python3 scripts/install_assets.py <this zip or its web address>. Keep the LICENSES folder with the icons if you share them.\n")
@@ -66,9 +87,10 @@ if __name__ == "__main__":
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("source", help="the folder with the original icon sets (the one that holds the LICENSE files)")
     ap.add_argument("--out", default=os.path.expanduser("~/Desktop/reelfactory-assets.zip"))
+    ap.add_argument("--motion", default=None, help="the folder of the motion pack (has index.json with the licence text); adds the checked Lottie files")
     ap.add_argument("--assets", default=os.path.join(ROOT, "library", "assets"))
     a = ap.parse_args()
-    n, ex = build(os.path.expanduser(a.source), a.assets, os.path.expanduser(a.out))
+    n, ex = build(os.path.expanduser(a.source), a.assets, os.path.expanduser(a.out), os.path.expanduser(a.motion) if a.motion else None)
     print(f"asset pack: {n} icons -> {a.out}")
     for s, c in sorted(ex.items()): print(f"  LEFT OUT (no licence file): {s}: {c} icons")
     print("Upload this zip as a release file on GitHub, then put its web address in config/project.json -> assets_pack.url")

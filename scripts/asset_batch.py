@@ -14,8 +14,11 @@ is written as it goes. Zip members are read one by one (never unpacked wholesale
 import argparse, csv, hashlib, json, multiprocessing as mp, os, re, shutil, sys, tempfile, time, zipfile
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from lib import asset_check as ac        # noqa: E402
+from lib import motion_check as mc      # noqa: E402
 
-EXT = (".svg", ".png", ".jpg", ".jpeg", ".gif", ".webp", ".json", ".ico", ".pdf", ".eps", ".ai")
+EXT = (".svg", ".png", ".jpg", ".jpeg", ".gif", ".webp", ".json", ".lottie", ".ico", ".pdf", ".eps", ".ai")
+MOTION = (".json", ".lottie")                    # Lottie animations: checked by lib/motion_check.py, saved to <out>/motion/ (not ok/)
+SKIP = ("index.json",)                       # the catalogue file that comes inside motion packs: not an asset (a real animation may be called "package.json")
 BIG = ac.MAX_BYTES * 4
 _TMP = None
 
@@ -51,6 +54,14 @@ def work(job):
     i, name, data = job
     _TMP = _TMP or tempfile.mkdtemp(prefix="assetcheck-")
     try:
+        if os.path.splitext(name)[1].lower() in MOTION:
+            fd, p = tempfile.mkstemp(suffix=os.path.splitext(name)[1].lower(), dir=_TMP)
+            try:
+                with os.fdopen(fd, "wb") as f: f.write(data)
+                r = mc.check(p); r["asset"] = os.path.basename(name); return i, r
+            finally:
+                try: os.remove(p)
+                except OSError: pass
         return i, ac.check_bytes(name, data, _TMP)
     except Exception as e:                                                          # noqa: BLE001
         return i, {"ok": False, "problems": [f"could not be checked: {e}"], "may_sit": []}
@@ -70,7 +81,7 @@ def jobs(sources, seen, counters, limit):
     n = 0
     for src in sources:
         for name, data in members(src):
-            if os.path.splitext(name)[1].lower() not in EXT: continue
+            if os.path.splitext(name)[1].lower() not in EXT or os.path.basename(name).lower() in SKIP: continue
             n += 1
             if limit and n > limit: return
             if data is None:
@@ -91,6 +102,7 @@ def main():
     a = ap.parse_args()
     t0 = time.time(); stamp = time.strftime("%Y%m%d-%H%M%S")
     okdir, repdir = os.path.join(a.out, "ok"), os.path.join(a.out, "_reports", stamp)
+    motdir = os.path.join(a.out, "motion"); os.makedirs(motdir, exist_ok=True)
     os.makedirs(okdir, exist_ok=True); os.makedirs(repdir, exist_ok=True)
     done_p = os.path.join(okdir, ".checked")
     seen = {}
@@ -98,7 +110,7 @@ def main():
         for line in open(done_p, encoding="utf-8"):
             h = line.strip()
             if h: seen[h] = "an earlier run"
-    taken = set(os.listdir(okdir)); counters = {"refused": [], "dups": []}
+    taken = set(os.listdir(okdir)); taken_m = set(os.listdir(motdir)); counters = {"refused": [], "dups": []}
     csvf = open(os.path.join(repdir, "report.csv"), "w", newline="", encoding="utf-8")
     cols = ["file", "result", "reason", "kind", "size", "zones", "saved_as"]
     w = csv.DictWriter(csvf, fieldnames=cols); w.writeheader()
@@ -124,10 +136,12 @@ def main():
             count += 1
             row = {"file": name, "result": "FAIL", "reason": "", "kind": r.get("kind", ""), "size": f"{r.get('w', '')}x{r.get('h', '')}" if r.get("w") else "", "zones": "", "saved_as": ""}
             if r["ok"]:
-                out = safe_name(name, taken)
-                with open(os.path.join(okdir, out), "wb") as f: f.write(data)
+                is_m = r.get("kind") == "lottie"
+                dest = motdir if is_m else okdir
+                out = safe_name(name, taken_m if is_m else taken)
+                with open(os.path.join(dest, out), "wb") as f: f.write(data)
                 r["asset"] = out
-                json.dump(r, open(os.path.join(okdir, os.path.splitext(out)[0] + ".placement.json"), "w"), indent=1, ensure_ascii=False)
+                json.dump(r, open(os.path.join(dest, os.path.splitext(out)[0] + ".placement.json"), "w"), indent=1, ensure_ascii=False)
                 row.update(result="PASS", saved_as=out, zones=" ".join(f"{z['zone']}:{z['max_w']}x{z['max_h']}" for z in r["may_sit"] if z["ok"]))
             else:
                 row["reason"] = "; ".join(r["problems"]) or "no zone is big enough"
@@ -142,7 +156,7 @@ def main():
     for name, same in counters["dups"]: record({"file": name, "result": "DUPLICATE", "reason": "same file as " + same, "kind": "", "size": "", "zones": "", "saved_as": ""})
     for name in counters["refused"]: record({"file": name, "result": "REFUSED", "reason": f"over {BIG // 1000} KB or unreadable", "kind": "", "size": "", "zones": "", "saved_as": ""})
     csvf.close()
-    lines = [f"Checked {sum(results.values())} files in {time.time() - t0:.0f} s", f"PASS      {results['PASS']}   (copied to {okdir})", f"FAIL      {results['FAIL']}",
+    lines = [f"Checked {sum(results.values())} files in {time.time() - t0:.0f} s", f"PASS      {results['PASS']}   (copied to {okdir}; Lottie motion files to {motdir})", f"FAIL      {results['FAIL']}",
              f"DUPLICATE {results['DUPLICATE']}", f"REFUSED   {results['REFUSED']}", "", "Most common reasons for FAIL/REFUSED:"] + [f"  {v:6d}  {k}" for k, v in sorted(reasons.items(), key=lambda x: -x[1])[:15] if k]
     open(os.path.join(repdir, "summary.txt"), "w", encoding="utf-8").write("\n".join(lines) + "\n")
     print("\n".join(lines)); print(f"\nFull list: {os.path.join(repdir, 'report.csv')}")
