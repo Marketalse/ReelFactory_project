@@ -37,5 +37,32 @@
   "name": "F9 re-running a finished reel makes no AI call",
   "verdict": "PASS",
   "detail": "extra calls 0; raft_540p.mp4 |   approve:  python3 scripts/reel.py jobs/2026-11-03-f1-pack --approve |   or fix:   python3 scripts/reel.py jobs/2026-11-03-f1-pack --fix \"what to change\" | TOTAL this job $0.0060 | wall 0s | "
+ },
+ {
+  "group": "functional",
+  "name": "F2 'fix' comment re-plans and re-renders the draft",
+  "verdict": "PASS",
+  "detail": "k    0.0s  +$0.0000  report.md |  | GATE 2: watch /tmp/rf-e2e-a6rip84u/jobs/2026-11-03-f1-pack/review/draft_540p.mp4 |   approve:  python3 scripts/reel.py jobs/2026-11-03-f1-pack --approve |   or fix:   python3 scripts/reel.py jobs/2026-11-03-f1-pack --fix \"what to change\" | TOTAL this job $0.0090 | wall 44s | ; AI calls +3",
+  "seconds": 43.8
+ },
+ {
+  "group": "functional",
+  "name": "F3 approve -> final video(s) + cover",
+  "verdict": "PASS",
+  "detail": "1 final file(s);  | ===== run 2026-11-03 11:56:24 | /tmp/rf-e2e-a6rip84u/jobs/2026-11-03-f1-pack --approve | JOB 2026-11-03-f1-pack | budget $1.50 | spent so far $0.0090 |    cover not made: 't' | FINAL: |   /tmp/rf-e2e-a6rip84u/jobs/2026-11-03-f1-pack/final/reel_v1.mp4 | TOTAL this job $0.0090 | wall 150s | ",
+  "seconds": 150.3,
+  "rss_mb": 400
+ },
+ {
+  "group": "functional",
+  "name": "F3b final video is 1080x1920 with audio",
+  "verdict": "PASS",
+  "detail": "{     \"programs\": [      ],     \"streams\": [         {             \"codec_type\": \"video\",             \"width\": 1080,             \"height\": 1920,             \"duration\": \"54.066667\"         },         {             \"codec_type\": \"audio\",             \"duration\": \"54.100000\"         }     ] } "
+ },
+ {
+  "group": "functional",
+  "name": "F3c loudness near the -14 LUFS target",
+  "verdict": "PASS",
+  "detail": "['-14.0']"
  }
 ]
