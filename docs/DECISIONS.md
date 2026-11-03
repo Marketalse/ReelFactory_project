@@ -264,3 +264,6 @@ Verified 2026-11-03 on Hesham's Mac (screenshot): `install_assets.install(<attac
 
 ## 2026-11-03 — Fix: a card ending a little after the reel no longer stops the reel
 - Found on Hesham's real reel: "moments[7] (doc_card): ends at 43.7s, after the reel ends (43.3s)" stopped step 5 even after the repair. `director.resolve` now shortens such a moment to end with the reel (warning), and only errors when there is not even room for the shortest card. Test: tests/test_motion_director.py.
+
+## 2026-11-03 — Fix: an AI repair answer in words no longer stops the reel
+- Found on Hesham's real reel: "the AI's answer was not readable JSON ... it began: 'The reel ends at 43.3s ...'". The repair step now asks once more with a strict "JSON only" reminder, then tries the fallback model; it stops only if both fail. The audit's mock AI was too polite (never overshot, never answered in words): added a "nasty AI" mode (pre_uat_report/tools/e2e.py NASTY, `suite.py nasty`), result in pre_uat_report/regression_results.json (2/2 PASS). It also caught a bug in my own first version of the fix (a variable name reused), fixed before release.

@@ -7,6 +7,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 SRC = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 MOCK_PORT = 8791
+NASTY = {"on": False, "repairs": 0}      # "nasty director": a plan like a real AI writes it (a card running past the end, an unknown block) and a repair answer that is a sentence
 STATE = {"mode": "ok", "calls": 0, "by_stage": {}, "lock": threading.Lock(), "delay": 0.0, "fail_every": 0}
 VOC = "يعني لما انت حاط بيج و تبيع بيه ما رقم تواصل وياك شنو تتصور الزبون راح يخسر طلب لان شغلك كله خدمة زبائن اعلان نتيجة مبيعات متجر توصيل شحن".split()
 
@@ -39,6 +40,16 @@ def answer(text, nimg):
             {"from_word": 0, "to_word": a - 1, "kind": "step", "title_from": 1, "title_to": 2},
             {"from_word": a, "to_word": 2 * a - 1, "kind": "step", "title_from": a + 1, "title_to": a + 2},
             {"from_word": 2 * a, "to_word": n - 1, "kind": "point", "title_from": 2 * a + 1, "title_to": 2 * a + 2}]})
+    if NASTY["on"] and "DIRECTOR of an automated reel" in text:
+        idx = [int(x) for x in re.findall(r"\((\d+)\)", text)] or [0]; n = max(idx) + 1
+        w = {int(i): t for i, t in re.findall(r"\((\d+)\)([^\s(]+)", text)}
+        return json.dumps({"hook": {"line1": " ".join(w.get(i, "") for i in (0, 1, 2)).strip(), "line2": ""}, "keyword_ids": [min(n - 1, 5)],
+                           "moments": [{"block": "info_card", "at_word": n - 3, "duration": 4.0, "values": {"kicker": "ك", "headline": w.get(n - 3, "x"), "caption": w.get(n - 2, "x")}},
+                                       {"block": "not_a_real_block", "at_word": 20, "duration": 2.0, "values": {}}],
+                           "punch_ins": [{"at_word": min(n - 1, k), "scale": 1.2} for k in (10, 45)], "cover": {"tag": "", "sticker": "", "card_label": "", "card_value": ""}})
+    if NASTY["on"] and "Fix this reel plan JSON" in text:
+        NASTY["repairs"] += 1
+        if NASTY["repairs"] == 1: return "The reel ends at 43.3s, and moments[1] (not_a_real_block) is not allowed, so I removed it."
     if "DIRECTOR of an automated reel" in text or "Fix this reel plan JSON" in text:
         idx = [int(x) for x in re.findall(r"\((\d+)\)", text)] or [0]; n = max(idx) + 1
         w = {int(i): t for i, t in re.findall(r"\((\d+)\)([^\s(]+)", text)}

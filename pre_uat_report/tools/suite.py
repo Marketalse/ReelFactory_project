@@ -25,6 +25,20 @@ def job_state(jd):
 def tail(r, n=500): return (r["output"] or "")[-n:].replace("\n", " | ")
 
 
+def nasty():
+    """The mock AI behaves like a real one: a card that runs past the end of the reel, an unknown block, and a repair answer that is a sentence."""
+    work = e2e.make_copy(); srv = e2e.start_mock()
+    e2e.NASTY["on"] = True; e2e.NASTY["repairs"] = 0
+    jd, r0 = e2e.seed_job(work, "nasty", 40, 7)
+    r = e2e.run(work, [jd, "--budget", "1.5", "--stop-after", "plan"], 600, "nasty")
+    e2e.NASTY["on"] = False
+    out = r["output"]; plan_ok = os.path.exists(os.path.join(jd, "scene_plan.json")) if jd else False
+    rec("regression", "R1 AI plan that runs past the end + unknown block + repair answer in words: the reel still gets its plan",
+        "PASS" if r["code"] == 0 and plan_ok else "FAIL", f"exit {r['code']}; repair calls {e2e.NASTY['repairs']}; {tail(r, 300)}")
+    rec("regression", "R2 the sentence-answer was asked again (not a stop)", "PASS" if "repair answer was not JSON" in out else "FAIL", "")
+    save("regression"); srv.shutdown(); shutil.rmtree(work, ignore_errors=True)
+
+
 def one_reel(work, slug, dur=56, seed=1, extra=(), audio=True, size="1080x1920", timeout=700):
     jd, r0 = e2e.seed_job(work, slug, dur, seed, audio, size)
     if not jd: return None, r0, None
@@ -169,5 +183,6 @@ def i4only():
 
 GROUPS = {"functional": functional, "integration": integration, "i4": i4only, "stress": stress, "endurance": endurance}
 if __name__ == "__main__":
+    if sys.argv[1:2] == ["nasty"]: nasty(); sys.exit(0)
     for g in sys.argv[1:]:
         GROUPS[g](); save(g)
