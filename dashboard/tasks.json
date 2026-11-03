@@ -1917,6 +1917,18 @@
    "notes": "Hesham 2026-11-03. HyperFrames supports Lottie/dotLottie and alpha WebM.",
    "evidence": "",
    "updated": "2026-11-03"
+  },
+  {
+   "id": "T149",
+   "phase": "P19",
+   "title": "AI tagging pass for the big icon library (Arabic tags, one time) + Format Pack uses it",
+   "owner": "Claude",
+   "status": "review",
+   "depends": [],
+   "done_when": "Run on his Mac: --estimate-icons shows the cost, --tag-icons writes library/assets/icon_index.json, a reel picks icons from it.",
+   "notes": "Hesham 2026-11-03. Run: python3 scripts/reel.py --estimate-icons ; python3 scripts/reel.py --tag-icons. Paid calls stay in reel.py (money guard).",
+   "evidence": "scripts/lib/icon_tags.py, reel.py --tag-icons, pack.pick_icons uses it, compile paints dark icons; tests/test_icon_tags.py",
+   "updated": "2026-11-03"
   }
  ],
  "log": [

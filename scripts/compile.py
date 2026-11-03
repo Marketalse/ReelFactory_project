@@ -52,8 +52,14 @@ def compile_job(job, platform="instagram", final=False, out=None, layer="full"):
         scenes = (pk["scenes"] if layer != "video" else [])  + [s for s in scenes if s["block"] == "captions" and layer != "video"]
         tl = dict(tl, scenes=[])                                  # no split/zoom cards: the face window stays put (punch-ins still work)
         os.makedirs(os.path.join(out, "assets", "icons"), exist_ok=True)
+        accent = (cfg.PROJECT.get("format_pack", {}).get("colors") or {}).get("accent") if cfg.PROJECT.get("format_pack", {}).get("theme") == "custom" else cfg.BRAND["colors"]["accent"]
         for f in pk["icons"]:
-            shutil.copy(os.path.join(broll.lib_dir(), f), os.path.join(out, "assets", "icons", f))
+            src = pack.icon_src(f)
+            if not src: continue
+            if f.lower().endswith(".svg") and not f.startswith("icon-"):         # the big library: paint dark icons in the accent colour
+                open(os.path.join(out, "assets", "icons", f), "w", encoding="utf-8").write(pack.paint(open(src, encoding="utf-8").read(), accent))
+            else:
+                shutil.copy(src, os.path.join(out, "assets", "icons", f))
     # text behind the head (T119): the person cutout is made here (local AI model, cached); a moment that can't get one is dropped, not fatal
     behind = [s for s in scenes if s["block"] == "text_behind"]
     dropped = []

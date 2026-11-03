@@ -21,7 +21,7 @@ import argparse, base64, glob, json, os, re, shutil, subprocess, sys, threading,
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from lib import config as cfg   # noqa: E402  (all settings live in config/*.json)
-from lib import pipeline, outline, critic, asset_check, transcript as tr, edl as edlmod, director, speech_intel, editorial, visual_plan, brand_memory, creative_brief, content_intel, frames_dedup, learning, doctor, sequence, broll_ai, tighten   # noqa: E402
+from lib import pipeline, outline, critic, icon_tags, asset_check, transcript as tr, edl as edlmod, director, speech_intel, editorial, visual_plan, brand_memory, creative_brief, content_intel, frames_dedup, learning, doctor, sequence, broll_ai, tighten   # noqa: E402
 from lib.hfbuild import BuildError   # noqa: E402
 
 ROOT = cfg.ROOT
@@ -900,9 +900,39 @@ def run_stages(c, a, job):
             th.join()                                       # never leave a paid call running behind our back
 
 
+def run_tag_icons(a):
+    """T149: one-time Arabic tags for the big icon library. Paid (Haiku, about a cent per 100 names) and therefore HERE, behind the money guard.
+    Saves after every batch, so it can be stopped and started again."""
+    todo = icon_tags.pending(limit=a.max_names)
+    total = len(icon_tags.scan()); done = total - len(icon_tags.pending())
+    print(f"icon library: {total} distinct icon names, {done} already tagged, {len(todo)} to do in this run")
+    est = icon_tags.estimate(len(todo))
+    print(f"estimated cost for this run: about ${est:.2f} ({cfg.role('icon_tags')[0].split('/')[1]})")
+    if a.estimate_icons or not todo:
+        return
+    job = os.path.join(ROOT, "jobs", "_icon_tags"); os.makedirs(job, exist_ok=True)
+    c = Ctx(job, a); model, effort = cfg.role("icon_tags"); status = "ok"
+    try:
+        for i in range(0, len(todo), icon_tags.BATCH):
+            names = todo[i:i + icon_tags.BATCH]
+            ans = parse_json(c.llm("icon_tags", model, [{"type": "text", "text": icon_tags.PROMPT.format(names="\n".join(names))}], 9000, a.effort or effort))
+            new = {n: [] for n in names}; new.update(icon_tags.clean(ans, set(names)))
+            icon_tags.save(new)
+            print(f"   tagged {min(i + icon_tags.BATCH, len(todo))}/{len(todo)}  (spent ${c.spent():.4f})", flush=True)
+    except Stop as e:
+        status = "stopped"; print("STOP:", e, "\nWhat was tagged is saved; run the same command again to carry on.")
+    finally:
+        new_cost = c.spent() - c.cost.get("logged", 0.0)
+        if new_cost > 0.00005:
+            subprocess.run([sys.executable, os.path.join(ROOT, "dashboard", "add_expense.py"), "--video", "icon-tags", "--category", "LLM", "API",
+                            "--amount", f"{new_cost:.4f}", "--note", f"icon tagging ({status}); measured provider usage.cost"], capture_output=True)
+            c.cost["logged"] = c.spent(); jsave(c.cost_path, c.cost)
+        print(f"TOTAL ${c.spent():.4f}")
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("input"); ap.add_argument("--slug"); ap.add_argument("--select"); ap.add_argument("--stop-after", choices=pipeline.order())
+    ap.add_argument("input", nargs="?"); ap.add_argument("--slug"); ap.add_argument("--select"); ap.add_argument("--stop-after", choices=pipeline.order())
     ap.add_argument("--budget", type=float, default=cfg.BUDGET["per_reel_stop"]); ap.add_argument("--width", type=int, default=540)
     ap.add_argument("--every", type=float, default=2.0); ap.add_argument("--effort", default=None, choices=["low", "medium", "high"])
     ap.add_argument("--force", default=""); ap.add_argument("--asr-model", default=None); ap.add_argument("--retranscribe", action="store_true")
@@ -914,9 +944,16 @@ def main():
     ap.add_argument("--rebuild", action="store_true", help="new draft from the manual edit (Edit page); no AI, no spend")
     ap.add_argument("--apply-sequence", action="store_true", help="T81/T83: build the new footage from the timeline sequence, then run the whole pipeline on it")
     ap.add_argument("--doctor", action="store_true", help="T84: ask the AI doctor why this reel stopped (about 1 cent); it only proposes, never acts")
+    ap.add_argument("--tag-icons", action="store_true", help="T149: add Arabic tags to the big icon library (one-time, about a cent per 100 names)")
+    ap.add_argument("--estimate-icons", action="store_true", help="T149: how many icon names need tags and what it would cost; free")
+    ap.add_argument("--max-names", type=int, default=0, help="with --tag-icons: only this many names in this run (0 = all)")
     a = ap.parse_args()
     a.img_tok = {1080: 2800, 720: 1300, 540: 800, 384: 420}.get(a.width, 800)
     a.rekey = False; a.replan = bool(a.fix)
+    if a.tag_icons or a.estimate_icons:
+        a.budget = max(a.budget, 1.0)
+        return run_tag_icons(a)
+    if not a.input: sys.exit("give a reel folder or a clip (or use --tag-icons)")
     inp = a.input
     if not os.path.isdir(os.path.join(inp, "")) or not os.path.exists(os.path.join(inp, "job.json")):
         if not a.slug: sys.exit("a new reel needs --slug <name>")

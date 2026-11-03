@@ -147,6 +147,11 @@
       "model": "anthropic/claude-sonnet-5.5",
       "effort": "low",
       "note": "(T128+) picks the cover frame and words"
+    },
+    "icon_tags": {
+      "model": "anthropic/claude-haiku-5.5",
+      "effort": "low",
+      "note": "(T149) one-time Arabic tags for the big icon library"
     }
   },
   "outline": {

@@ -5,9 +5,9 @@ sections (titles are his own words) and the bundled icons. Layout (1080x1920, al
   bottom panel                      y 1128-1500: progress bar, STEP n/N, icon, section title; the captions sit inside it (y 1200-1450)
   recap chain                       over the face window in the last seconds (numbered steps connected by a line)
 The compiler swaps the director's loose cards for these two blocks when the pack is active."""
-import html, json, os
+import html, json, os, re
 
-from . import broll, config as cfg, hfbuild
+from . import broll, config as cfg, hfbuild, icon_tags
 
 WIN = (108, 380, 920, 1100)            # x0, y0, x1, y1 of the face window
 FALLBACK = {"step": "icon-arrow-right.svg", "point": "icon-lightbulb.svg", "proof": "icon-chart-bar.svg", "turn": "icon-repeat.svg"}
@@ -29,18 +29,42 @@ def active(outline, c=None):
     return mode == "always" or outline.get("format") in c.get("formats", ["explainer", "tips"])
 
 
+def icon_src(name, root=None):
+    """Where an icon file lives: the bundled set (library/broll) or the big checked library (library/assets/ok). None if neither."""
+    for d in (broll.lib_dir(root), icon_tags.ok_dir(root)):
+        p = os.path.join(d, name)
+        if os.path.exists(p): return p
+    return None
+
+
+def paint(svg, color):
+    """Make a dark/black icon visible on the dark frame: every hex colour (and currentColor/black) becomes the accent colour. Only for SVGs
+    with at most 2 colours (the asset check calls those recolourable); anything else is left alone."""
+    cols = set(re.findall(r"#[0-9a-fA-F]{3,8}\b", svg))
+    if len(cols) > 2: return svg
+    svg = svg.replace("currentColor", color)
+    svg = re.sub(r"#[0-9a-fA-F]{3,8}\b", color, svg)
+    return re.sub(r'(fill|stroke)="(black|white)"', rf'\1="{color}"', svg)
+
+
 def pick_icons(outline, words, root=None):
-    """One bundled icon per section: the best name/tag match for what he says in it, else a neutral one for its kind. Never twice the same
-    while another choice exists. -> [file or None]."""
+    """One icon per section: 1) the hand-tagged bundled icon that matches what he says, 2) the AI-tagged big library (Arabic tags, T149),
+    3) a bundled near-match, 4) a neutral one for the section kind. Never twice the same while another choice exists. -> [file or None]."""
     idx = [i for i in broll.index(root) if i["file"].startswith("icon-")]
     have = {i["file"] for i in idx}
     used, out = set(), []
+    rank = "exact contains prefix close".split()
     for s in outline["sections"]:
         seg = words[s["from_word"]:s["to_word"] + 1]
-        hits = [h for h in broll.suggest(seg, idx) if h["file"] not in used]
-        hits.sort(key=lambda h: ("exact contains prefix close".split().index(h["kind"]), h["t"]))
-        f = hits[0]["file"] if hits else FALLBACK.get(s.get("kind"), FALLBACK["point"])
-        if f not in have: f = None
+        hits = sorted((h for h in broll.suggest(seg, idx) if h["file"] not in used), key=lambda h: (rank.index(h["kind"]), h["t"]))
+        f = hits[0]["file"] if hits and hits[0]["kind"] != "close" else None
+        if not f:
+            f = icon_tags.match(seg, used, root)
+        if not f and hits:
+            f = hits[0]["file"]
+        if not f:
+            f = FALLBACK.get(s.get("kind"), FALLBACK["point"])
+        if f not in have and not icon_src(f, root): f = None
         if f: used.add(f)
         out.append(f)
     return out
@@ -74,7 +98,6 @@ def theme_style(c=None):
     return f'--pk-bg:{k["bg"]};--pk-ac:{k["accent"]};--pk-sf:{k["surface"]};--pk-tx:{k["text"]};--pk-on:{k["on"]}'
 
 
-import re
 re_hex = re.compile(r"^#[0-9A-Fa-f]{6}$")
 
 
