@@ -21,7 +21,7 @@ import argparse, base64, glob, json, os, re, shutil, subprocess, sys, threading,
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from lib import config as cfg   # noqa: E402  (all settings live in config/*.json)
-from lib import pipeline, outline, asset_check, transcript as tr, edl as edlmod, director, speech_intel, editorial, visual_plan, brand_memory, creative_brief, content_intel, frames_dedup, learning, doctor, sequence, broll_ai, tighten   # noqa: E402
+from lib import pipeline, outline, critic, asset_check, transcript as tr, edl as edlmod, director, speech_intel, editorial, visual_plan, brand_memory, creative_brief, content_intel, frames_dedup, learning, doctor, sequence, broll_ai, tighten   # noqa: E402
 from lib.hfbuild import BuildError   # noqa: E402
 
 ROOT = cfg.ROOT
@@ -670,6 +670,30 @@ def st_draft(c):
     if qa.get("errors"):
         raise Stop("QA found problems before Gate 2 (draft kept for inspection): " + "; ".join(qa["errors"][:5]))
     return f"draft ready: QA passed ({len(qa.get('warnings', []))} QA warnings, {len(res.get('check_warnings', []))} check warnings)"
+
+
+@pipeline.step("critic", after="draft", role="critic", needs=["review/draft_540p.mp4", "timeline.json"], makes=["review/critic.json"], label="AI looks at the draft and scores it")
+def st_critic(c):
+    """T134: a small vision model looks at ~8 stills of the draft and scores it. Report only; never stops a reel (except the money guard)."""
+    out = os.path.join(c.job, "review", "critic.json")
+    if os.path.exists(out) and not c.a.replan: return "cached"
+    if not cfg.PROJECT.get("critic", {}).get("enabled", True): return "off"
+    video = os.path.join(c.job, "review", "draft_540p.mp4")
+    try:
+        tl = jload(os.path.join(c.job, "timeline.json"), {}); dur = (jload(os.path.join(c.job, "edl.json"), {}) or {}).get("duration") or tl.get("duration") or 60
+        parts, sent = critic.content(video, critic.pick_times(tl, dur))
+        if not sent: return "skipped (no stills)"
+        model, effort = cfg.role("critic")
+        o = critic.clean(parse_json(c.llm("critic", model, parts, 1500, c.a.effort or effort)))
+        o["stills"] = len(sent); o["model"] = model
+    except Stop as ex:
+        if str(ex).startswith(("BUDGET GUARD", "MONTHLY CAP")): raise
+        print("   quality check skipped:", ex); return "skipped"
+    except (ValueError, KeyError, OSError) as ex:
+        print("   quality check skipped (answer not usable):", ex); return "skipped"
+    jsave(out, o)
+    for l in critic.summary_lines(o): print("   " + l)
+    return f"{o['average']}/10, {len(o['issues'])} issues"
 
 
 @pipeline.step("report")

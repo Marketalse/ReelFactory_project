@@ -688,6 +688,14 @@ async function waitCover(p){
 }
 
 /* ---------------------------------------------------------------- QA report and versions */
+function criticBlock(p){
+  const c=p.critic; if(!c||!c.scores) return "";
+  const s=c.scores, col=c.average>=7.5?"var(--lime)":c.average>=6?"var(--violet)":"var(--coral)";
+  return `<details style="border-top:1px solid var(--line);padding-top:14px"><summary><b>AI look at the draft:</b> <span style="color:${col}">${esc(c.average)}/10</span> <span class="small" style="color:var(--muted)">(${(c.issues||[]).length} things noticed)</span></summary>
+    <p class="small" style="margin:8px 0 0">Readable ${esc(s.readable)} · Layout ${esc(s.layout)} · Consistent ${esc(s.consistency)} · Variety ${esc(s.variety)}</p>
+    ${c.verdict?`<p class="small" style="margin:6px 0 0;color:var(--muted)">${esc(c.verdict)}</p>`:""}
+    <ul style="list-style:none;margin:8px 0 0;padding:0;display:grid;gap:4px">${(c.issues||[]).map(i=>`<li class="small">👀 ${esc(i.t)}s: ${esc(i.what)}</li>`).join("")}</ul></details>`;
+}
 function qaBlock(p){
   const q=p.qa; if(!q) return "";
   const col=q.verdict==="Passed"?"var(--lime)":q.verdict==="Needs attention"?"var(--coral)":"var(--violet)";
@@ -805,7 +813,7 @@ function showResult(p){
         </div>
         ${hooksBlock(p)}
         ${variationsBlock(p)}
-        ${qaBlock(p)}
+        ${criticBlock(p)}${qaBlock(p)}
         ${versionsBlock(p)}
         ${readyBlock(p)}
         ${p.feedback&&p.feedback.length?`<details><summary class="small">Your earlier comments (${p.feedback.length})</summary><div class="history" style="margin-top:6px">${p.feedback.map(f=>`<div>${esc(f.time)} · ${esc(f.fix)}</div>`).join("")}</div></details>`:""}

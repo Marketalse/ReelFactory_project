@@ -1731,11 +1731,11 @@
    "phase": "P18",
    "title": "Outline AI step (strong model, once per reel): turn the talk into hook, steps (title, one line, icon name, key words) and a recap, checked against his words",
    "owner": "Claude",
-   "status": "todo",
+   "status": "review",
    "depends": [],
    "done_when": "outline.json exists for each reel and every word on screen comes from what he said.",
    "notes": "From the quality-gap report 2026-11-02 (docs/DECISIONS.md). Starts when Hesham says go.",
-   "evidence": "",
+   "evidence": "scripts/lib/outline.py + step \"outline\" (Sonnet, high); tests/test_outline.py",
    "updated": "2026-11-02"
   },
   {
@@ -1779,11 +1779,11 @@
    "phase": "P18",
    "title": "Critique loop: render stills of the draft, a vision model scores them (hierarchy, consistency, readability), one automatic revision",
    "owner": "Claude",
-   "status": "todo",
+   "status": "review",
    "depends": [],
    "done_when": "The report shows the score before and after the revision.",
    "notes": "From the quality-gap report 2026-11-02 (docs/DECISIONS.md). Starts when Hesham says go.",
-   "evidence": "",
+   "evidence": "scripts/lib/critic.py + step \"critic\" (Haiku), shown on the draft page; report only, no auto-revision yet; tests/test_critic.py",
    "updated": "2026-11-02"
   },
   {

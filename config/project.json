@@ -152,5 +152,9 @@
   "outline": {
     "enabled": true,
     "_note": "T130: one Sonnet call per reel (about $0.14) finds hook/steps/recap before the director plans. Set enabled false to switch off."
+  },
+  "critic": {
+    "enabled": true,
+    "_note": "T134: Haiku looks at ~8 stills of the draft and scores it (about $0.002). Report only for now. Set enabled false to switch off."
   }
 }
