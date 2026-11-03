@@ -45,11 +45,11 @@ def scenario(raw_s, story_s, name):
     else:
         add("story pick + hooks", S, call(S, tr_raw + 900, 1500, "medium"), "strong model, thinks longer")
         add("tighten", S, call(S, tr_story + 500, 600, "medium"), "cuts weak lines")
-        add("OUTLINE (new): hook, steps, recap", O, call(O, tr_story + 1800, 1800, "high"), "turns the talk into a structure and a concept")
+        add("OUTLINE (new): hook, steps, recap", S, call(S, tr_story + 1800, 1800, "high"), "turns the talk into a structure and a concept")
         add("B-roll match (AI)", S, call(S, 1500 + 6 * IMG, 700, "low"), "when new pictures exist")
         add("director (plan)", S, call(S, tok(len(director.PROMPT)) + tr_story + 3500, 3500, "medium"), "step by step layout + highlights")
-        add("LOOK at the result (new) x2 rounds", S, 2 * call(S, 10 * IMG + 1500, 700, "low"), "10 pictures of the draft, scored")
-        add("revision after the look (new)", O, call(O, tok(len(director.PROMPT)) + tr_story + 5000, 3000, "medium"), "one fix round")
+        add("LOOK at the result (new, QA) x2 rounds", H, 2 * call(H, 10 * IMG + 1500, 700, "low"), "10 pictures of the draft, scored")
+        add("revision after the look (new)", S, call(S, tok(len(director.PROMPT)) + tr_story + 5000, 3000, "medium"), "one fix round")
         add("cover design (new)", S, call(S, 3 * IMG + 1200, 700, "low"), "picks the best face frame + layout")
     return rows
 

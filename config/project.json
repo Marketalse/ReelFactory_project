@@ -92,7 +92,7 @@
     "_note": "T123 (Hesham approved the cost 2026-11-02): each new library picture is described once by the vision model; each reel makes one small text call to pick matching files. Set enabled false to switch off."
   },
   "roles": {
-    "_note": "One place that decides which AI does which job (Hesham 2026-11-02, T136). Change model or effort here; effort = how long it thinks (low/medium/high). The 'models' list below is built from these roles. The 'models' list is built from these roles.",
+    "_note": "One place that decides which AI does which job (T136). Brain = Sonnet 5.5; Haiku 5.5 = words and QA (Hesham 2026-11-03). Effort = how long it thinks. The 'models' list is built from these roles.",
     "word_fix": {
       "model": "anthropic/claude-haiku-5.5",
       "effort": "low",
@@ -124,7 +124,7 @@
       "note": "matches library pictures"
     },
     "outline": {
-      "model": "anthropic/claude-opus-5.5",
+      "model": "anthropic/claude-sonnet-5.5",
       "effort": "high",
       "note": "(T130) hook, steps, recap, concept"
     },
@@ -134,14 +134,14 @@
       "note": "first plan of the visuals"
     },
     "repair": {
-      "model": "anthropic/claude-opus-5.5",
+      "model": "anthropic/claude-sonnet-5.5",
       "effort": "medium",
       "note": "fixes a plan that breaks rules; also the revision after the critic"
     },
     "critic": {
-      "model": "anthropic/claude-sonnet-5.5",
+      "model": "anthropic/claude-haiku-5.5",
       "effort": "low",
-      "note": "(T134) looks at the draft and scores it"
+      "note": "(T134) QA: looks at the draft and scores it (Hesham 2026-11-03)"
     },
     "cover": {
       "model": "anthropic/claude-sonnet-5.5",
