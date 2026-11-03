@@ -56,6 +56,9 @@ def install(src, root=ROOT):
                 rec = motion_check.check(p)
                 if not rec["ok"]: os.remove(p); mbad += 1; mnew -= 1; continue                    # unsafe here: removed
                 json.dump(rec, open(os.path.join(mot, os.path.splitext(name)[0] + ".placement.json"), "w"), indent=1, ensure_ascii=False)
+            if "motion_index.json" in z.namelist():
+                mp_ = os.path.join(root, "library", "assets", "motion_index.json")
+                if not os.path.exists(mp_): open(mp_, "wb").write(z.read("motion_index.json"))      # never replaces tags he made himself
             print(f"motion: {mnew} new Lottie files, {len(mman) - mnew - mbad} already there, {mbad} skipped (damaged or unsafe).")
         print(f"installed: {new} new icons, {same} already there, {clash} kept (different from the pack), {bad} skipped (damaged or unsafe).")
         return new, same, clash, bad

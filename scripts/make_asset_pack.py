@@ -76,6 +76,8 @@ def build(src, assets_dir, out_zip, motion_src=None):
         idx = os.path.join(assets_dir, "icon_index.json")
         if os.path.exists(idx): z.write(idx, "icon_index.json")
         motion = add_motion(z, assets_dir, motion_src) if motion_src else {}
+        mi = os.path.join(assets_dir, "motion_index.json")
+        if motion and os.path.exists(mi): z.write(mi, "motion_index.json")                  # the Arabic tags of the motion files
         z.writestr("MANIFEST.json", json.dumps({"icons": manifest, "motion": motion, "sets": sorted({m["set"] for m in manifest.values()})}, ensure_ascii=False, indent=1))
         z.writestr("EXCLUDED.txt", "Icons left out because their set has no LICENSE file next to it:\n" + "".join(f"  {s}: {n} icons\n" for s, n in sorted(excluded.items())) if excluded else "Nothing left out.\n")
         z.writestr("README.txt", "Reel Factory asset pack: icons with their original licences (LICENSES/), Arabic tags (icon_index.json) and a checksum list (MANIFEST.json).\n"

@@ -36,12 +36,14 @@ class Pack(unittest.TestCase):
         json.dump({"license": {"name": "MIT License", "license_text": "MIT text"}}, open(os.path.join(ms, "index.json"), "w"))
         md = os.path.join(self.assets, "motion"); os.makedirs(md); json.dump(good, open(os.path.join(md, "spin.json"), "w"))
         json.dump({"asset": "spin.json"}, open(os.path.join(md, "spin.placement.json"), "w"))
+        json.dump({"concepts": {"spin": ["دوران"]}, "files": {"spin.json": "spin"}}, open(os.path.join(self.assets, "motion_index.json"), "w"))
         z = os.path.join(self.d, "pm.zip"); make_asset_pack.build(self.src, self.assets, z, motion_src=ms)
         names = zipfile.ZipFile(z).namelist()
         self.assertIn("motion/spin.json", names); self.assertIn("LICENSES/motion-mit-license.txt", names); self.assertNotIn("motion/spin.placement.json", names)
         root = os.path.join(self.d, "u3"); os.makedirs(os.path.join(root, "library")); install_assets.install(z, root)
         m = os.path.join(root, "library", "assets", "motion")
         self.assertTrue(os.path.exists(os.path.join(m, "spin.json"))); self.assertTrue(os.path.exists(os.path.join(m, "spin.placement.json")))
+        self.assertTrue(os.path.exists(os.path.join(root, "library", "assets", "motion_index.json")))                 # the Arabic tags travel too
         z2 = os.path.join(self.d, "nolic.zip"); os.remove(os.path.join(ms, "index.json"))                   # no licence text: motion is LEFT OUT
         make_asset_pack.build(self.src, self.assets, z2, motion_src=ms)
         self.assertNotIn("motion/spin.json", zipfile.ZipFile(z2).namelist())
