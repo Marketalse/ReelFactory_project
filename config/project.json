@@ -148,26 +148,5 @@
       "effort": "low",
       "note": "(T128+) picks the cover frame and words"
     }
-  },
-  "video_ai": {
-    "_note": "Place for an AI VIDEO model (Hesham 2026-11-03: LTX 2.5). OFF until Hesham turns it on. It makes or changes pictures; it does not decide the cuts (Sonnet + the cutting code do that). Fill endpoint/model from the LTX docs before use.",
-    "enabled": false,
-    "provider": "ltx",
-    "model": "ltx-2-5-fast",
-    "endpoint": "",
-    "key_file": "~/.reelfactory/ltx_api_key",
-    "price_per_second_usd": 0.09,
-    "max_seconds_per_reel": 10,
-    "output_dir": "library/ltx",
-    "allowed_uses": [
-      "broll_from_picture",
-      "extend_clip_end"
-    ],
-    "never": [
-      "replace_speaker_face",
-      "replace_speaker_voice",
-      "invent_numbers_or_names"
-    ],
-    "needs_approval_per_reel": true
   }
 }
