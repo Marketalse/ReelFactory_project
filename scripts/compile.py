@@ -9,7 +9,7 @@ import argparse, json, os, shutil, sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from lib import config as cfg, matte, sfx_mix       # noqa: E402
-from lib import hfbuild, director, pack, broll   # noqa: E402
+from lib import hfbuild, director, pack, broll, layouts   # noqa: E402
 
 
 def handle_for(platform, final):
@@ -38,8 +38,9 @@ def compile_job(job, platform="instagram", final=False, out=None, layer="full"):
             s["values"] = dict(s["values"], handle=handle_for(platform, final))
     words = edl["words"]
     kw = set(tl["keyword_ids"])
-    pk = pack.plan(job, tl, edl)                              # FORMAT PACK (T129) decided first: no loose cards = no caption gaps; its highlight words shape the captions (T133)
-    gaps = [] if pk else tl["caption_gaps"]
+    lay_name = layouts.active_name()                          # a chosen LAYOUT (templates/layouts/): stage = animation on top, caption band, cut-out hero at the bottom
+    pk = None if lay_name else pack.plan(job, tl, edl)        # FORMAT PACK (T129) decided first: no loose cards = no caption gaps; its highlight words shape the captions (T133)
+    gaps = [] if (pk or lay_name) else tl["caption_gaps"]
     keep = [i for i, w in enumerate(words) if not any(a - 0.05 <= w["start"] < b for a, b in gaps)]
     cap_words = [words[i] for i in keep]
     cap_kw = [k for k, i in enumerate(keep) if i in kw]
@@ -61,6 +62,25 @@ def compile_job(job, platform="instagram", final=False, out=None, layer="full"):
                 open(os.path.join(out, "assets", "icons", f), "w", encoding="utf-8").write(pack.paint(open(src, encoding="utf-8").read(), accent))
             else:
                 shutil.copy(src, os.path.join(out, "assets", "icons", f))
+    lay_args, lay_dropped, lay_notes = None, [], []
+    if lay_name and layer == "full":
+        spec = layouts.load(lay_name)
+        probs = layouts.problems(spec)
+        if probs: raise RuntimeError(f"layout {lay_name} breaks the safe zone: " + "; ".join(probs))
+        pl = layouts.plan(spec, [x for x in scenes if x["block"] != "captions"], tl["duration"], theme=cfg.PROJECT.get("format_pack", {}).get("theme", "dark"))
+        lay_dropped = list(pl["dropped"])
+        scenes = [dict(pl["frame"], groups_html=layouts.frame_groups("stg", spec, pl["frame"]["values"].get("theme", "dark")))] + pl["stage"] + [x for x in scenes if x["block"] == "captions"]
+        ft = layouts.face_transform(pl["hero"])
+        tl = dict(tl, scenes=[])
+        lay_args = {"stage_rect": pl["stage_rect"], "vars": pl["caption_vars"], "hero": None}
+        try:                                                  # the hero: a cut-out of him for the whole reel (local AI model, cached); without it the container shows the footage plainly
+            src = matte.cutout(job, edl, 0.0, tl["duration"], final)
+            os.makedirs(os.path.join(out, "assets"), exist_ok=True)
+            shutil.copy(src, os.path.join(out, "assets", "hero.webm"))
+            lay_args["hero"] = dict(pl["hero"], src="assets/hero.webm")
+        except matte.MatteError as ex:
+            lay_notes.append(f"hero cut-out skipped (the footage shows plainly in its container): {ex}")
+            print("   ", lay_notes[-1])
     # text behind the head (T119): the person cutout is made here (local AI model, cached); a moment that can't get one is dropped, not fatal
     behind = [s for s in scenes if s["block"] == "text_behind"]
     dropped = []
@@ -86,6 +106,8 @@ def compile_job(job, platform="instagram", final=False, out=None, layer="full"):
         dropped = [s["id"] for s in behind]
         scenes = [s for s in scenes if s["block"] != "text_behind"]
     cuts = director.face_cuts(tl, edl["segments"])
+    if lay_args:                                              # the footage sits in the container; the layout has no punch-ins (the hero stays steady)
+        cuts = [dict(c, scale=ft["scale"], cx=0.5, cy=0.38, y=ft["y"]) for c in cuts]
     # logos used by this reel
     src_logos = os.path.join(job, "assets")
     if os.path.isdir(src_logos):
@@ -103,8 +125,8 @@ def compile_job(job, platform="instagram", final=False, out=None, layer="full"):
         except Exception as ex:                               # noqa: BLE001 - no sound effects is better than no reel
             print("   sound effects skipped:", ex)
     hfbuild.build_project(out, duration=tl["duration"], face_cuts=[] if layer == "graphics" else cuts, scenes=scenes,
-                          video_src=os.path.join(job, "proxy.mp4"), transparent=layer == "graphics", audio=audio or None)
-    json.dump({"platform": platform, "final": final, "face_cuts": cuts, "caption_words": len(cap_words), "dropped_scenes": dropped + pack_dropped, "sfx": len(audio), "format_pack": bool(pk)},
+                          video_src=os.path.join(job, "proxy.mp4"), transparent=layer == "graphics", audio=audio or None, layout=lay_args)
+    json.dump({"platform": platform, "final": final, "face_cuts": cuts, "caption_words": len(cap_words), "dropped_scenes": dropped + pack_dropped + lay_dropped, "layout": lay_name if lay_args else None, "layout_notes": lay_notes, "sfx": len(audio), "format_pack": bool(pk)},
               open(os.path.join(out, "compile_info.json"), "w"), indent=1)
     return out
 

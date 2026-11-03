@@ -119,12 +119,15 @@ class SafeZoneTests(unittest.TestCase):
             o4 = {"sections": o["sections"][:4]}
             groups = (pack.frame_groups("b", o, dur, ic, "dark", long_text(18), long_text(22)) if block == "pack_frame"
                       else pack.recap_groups("b", o4, ic[:4], "dark", [long_text(10)] * 3))
+        if block == "stage_frame":                                  # layout frame: its zones come from templates/layouts/stage.json
+            from lib import layouts
+            groups = layouts.frame_groups("b", layouts.load("stage"), "dark")
         src = hfbuild.stamp(block, "b", dur, groups, sample_values(block))
         inner = src.split("<template>", 1)[1].rsplit("</template>", 1)[0]
         style = re.search(r"<style>.*?</style>", inner, re.S).group(0)
         script = re.search(r"<script>.*?</script>", inner, re.S).group(0)
         markup = style + re.sub(r"<style>.*?</style>|<script>.*?</script>", "", inner, flags=re.S)
-        seek = 0.9 if block == "captions" else (2.9 if block in ("pack_frame", "recap_chain") else round(dur * 0.55, 2))
+        seek = 0.9 if block == "captions" else (2.9 if block in ("pack_frame", "recap_chain", "stage_frame") else round(dur * 0.55, 2))
         f = os.path.join(self.d, block + ".html")
         open(f, "w", encoding="utf-8").write(PAGE.format(vars=hfbuild.brand_vars(), markup=markup, script=script, seek=seek,
                                                           vals=json.dumps(sample_values(block), ensure_ascii=False), logo=LOGO))

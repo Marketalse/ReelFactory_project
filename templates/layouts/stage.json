@@ -1,0 +1,13 @@
+{
+  "name": "stage",
+  "label": "Stage: animation on top, caption band, you (cut-out) at the bottom",
+  "source": "Hesham's drawing 2026-11-03 (dark stage, caption band, hero cut-out popping out of its background container); caption band approved for this layout only (the general caption rule y 1200-1450 does not apply here)",
+  "zones": {
+    "stage": {"rect": [108, 250, 920, 850], "holds": "blocks"},
+    "caption": {"rect": [108, 870, 920, 950]},
+    "container": {"rect": [190, 1080, 890, 1500], "radius": 44, "holds": "footage background (his own wall)"},
+    "hero": {"clip": [190, 960, 890, 1500], "scale": 0.9, "face_at": [540, 1180], "holds": "cut-out of him, may rise above the container"}
+  },
+  "blocks_in_stage": ["hook_two_tone", "pixel_scene", "motion_card", "info_card", "number_graph", "text_card", "logo_card", "name_tag", "doc_card", "ui_card"],
+  "captions": {"size_px": 58}
+}

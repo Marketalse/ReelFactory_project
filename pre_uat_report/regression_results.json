@@ -1,38 +1,20 @@
 [
  {
   "group": "regression",
-  "name": "R1 AI plan that runs past the end + unknown block + repair answer in words: the reel still gets its plan",
+  "name": "R7 stage layout reel reaches a draft",
   "verdict": "PASS",
-  "detail": "exit 0; repair calls 2; 0 think=None $0.0010 0s | shotlog     ok    1.2s  (ran next to the plan)  8 rows |    editorial: message: (not stated) | audience: (not stated) |    editorial: story A [0.0, 40.01] score 0 | plan        ok    1.3s  +$0.0040  0 moments, 10 punch-ins, 3 keywords (0 warnings) | TOTAL this job $0.0070 | wall 24s | "
+  "detail": "exit 0; 2e-u0_qqkmb/jobs/2026-11-03-stage/review/draft_540p.mp4 |   approve:  python3 scripts/reel.py jobs/2026-11-03-stage --approve |   or fix:   python3 scripts/reel.py jobs/2026-11-03-stage --fix \"what to change\" | TOTAL this job $0.0060 | wall 495s | "
  },
  {
   "group": "regression",
-  "name": "R2 the sentence-answer was asked again (not a stop)",
+  "name": "R8 compile used the layout (and says whether the hero cut-out worked)",
   "verdict": "PASS",
-  "detail": ""
+  "detail": "{\"layout\": \"stage\", \"layout_notes\": [], \"dropped_scenes\": []}"
  },
  {
   "group": "regression",
-  "name": "R3 reel runs to the plain-cut step",
+  "name": "R9 QA found no errors on the stage reel",
   "verdict": "PASS",
-  "detail": "exit 0; heck: OK | cleancut    ok   15.6s  +$0.0000  43.0s, 2 pieces | length and sound OK |    [outline] claude-sonnet-5.5 in=1000 out=300 think=None $0.0010 0s | outline     ok    0.0s  +$0.0010  explainer, 3 sections | TOTAL this job $0.0030 | wall 16s | "
- },
- {
-  "group": "regression",
-  "name": "R4 meaning check passes on a real cut",
-  "verdict": "PASS",
-  "detail": "{\"words_kept\": 108, \"pieces\": 2, \"clipped_words\": 0, \"removed_words_still_audible\": 0, \"dramatic_pauses_kept\": 0} []"
- },
- {
-  "group": "regression",
-  "name": "R5 every cut has a reason and a place on the reel",
-  "verdict": "PASS",
-  "detail": "1 cuts; kinds ['pause']; dramatic pauses kept 0"
- },
- {
-  "group": "regression",
-  "name": "R6 plain cut exists, right length, has picture and sound",
-  "verdict": "PASS",
-  "detail": "{\"duration\": 43.01, \"expected\": 43.0, \"streams\": [\"audio\", \"video\"], \"problems\": [], \"pieces\": 2}"
+  "detail": "[] [\"length 27.3s is outside the 40-90s target\", \"2 of 8 sampled captions could not be seen in the video, e.g. '\\u0648 \\u0634\\u063a\\u0644\\u0643 \\u0634\\u063a\\u0644\\u0643' at 4.88s\"]"
  }
 ]

@@ -163,6 +163,7 @@
     "_note": "T134: Haiku looks at ~8 stills of the draft and scores it (about $0.002). Report only for now. Set enabled false to switch off."
   },
   "format_pack": {
+    "layout": "panel",
     "mode": "auto",
     "theme": "dark",
     "series": "",

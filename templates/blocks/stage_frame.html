@@ -1,0 +1,21 @@
+<html data-composition-variables='[{"id":"theme","type":"enum","label":"Colour theme","default":"dark","options":[{"value":"dark","label":"Dark + lime"},{"value":"violet","label":"Violet"}]},{"id":"groups","type":"string","label":"Made by the compiler","default":""}]'>
+<template>
+<style>
+#root{position:absolute;inset:0;pointer-events:none}
+.__ID__-dark{--pk-bg:var(--pk-d-bg);--pk-ac:var(--pk-d-ac);--pk-on:var(--pk-d-on);--pk-sf:var(--pk-d-sf);--pk-tx:var(--pk-d-tx)}
+.__ID__-violet{--pk-bg:var(--pk-v-bg);--pk-ac:var(--pk-v-ac);--pk-on:var(--pk-v-on);--pk-sf:var(--pk-v-sf);--pk-tx:var(--pk-v-tx)}
+#__ID__-wrap{position:absolute;inset:0}
+#__ID__-bg{position:absolute;left:0;top:0;width:1080px;height:1920px}
+#__ID__-glow{position:absolute;border:5px solid var(--pk-ac);box-sizing:border-box}
+</style>
+<div id="root" data-composition-id="__ID__" data-width="1080" data-height="1920" data-layout-allow-overflow>
+<!--GROUPS-->
+</div>
+<script>
+const tl = gsap.timeline({ paused: true });
+tl.fromTo("#__ID__-bg", { opacity: 0 }, { opacity: 1, duration: 0.3 }, 0);
+tl.fromTo("#__ID__-glow", { opacity: 0, scale: 0.97 }, { opacity: 1, scale: 1, duration: 0.45, ease: "power2.out" }, 0.05);
+window.__timelines["__ID__"] = tl;
+</script>
+</template>
+</html>

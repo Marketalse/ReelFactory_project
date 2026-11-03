@@ -22,8 +22,13 @@ DIGITS = re.compile(r"[0-9][0-9,.]*")
 
 def offered_blocks():
     """The blocks the Director may use now: motion_card only when the motion library has Arabic tags."""
-    from . import icon_tags
-    return [b for b in DIRECTOR_BLOCKS if b != "motion_card" or icon_tags.motion_ready()]
+    from . import icon_tags, layouts
+    ok = [b for b in DIRECTOR_BLOCKS if b != "motion_card" or icon_tags.motion_ready()]
+    ln = layouts.active_name()
+    if ln:                                                       # a chosen layout: only blocks that can play inside its stage zone
+        allowed = set(layouts.load(ln).get("blocks_in_stage", []))
+        ok = [b for b in ok if b in allowed]
+    return ok
 
 
 def catalogue():
@@ -148,6 +153,10 @@ def build_prompt(words, dur, brief="", logos=(), feedback="", prefs="", marks=()
         numbers=", ".join(spoken_numbers(words)) or "none", catalogue=catalogue(),
         flash_max=r["moments"]["flash"]["max_per_reel"], tc_gap=r["moments"]["text_card"]["min_gap_s"],
         chapter="-".join(str(x) for x in r["chapter_card_every_s"]), transcript=numbered_transcript(words, marks=marks))
+    from . import layouts
+    if layouts.active_name():
+        p += ("\n\nREEL LAYOUT: this reel has a STAGE on top (small, about 800x600 px) where the cards play, and Hesham is a cut-out at the bottom: his face is NEVER hidden "
+              "and there are no full-screen cards. Use only the blocks listed above; they are shrunk to fit the stage. Keep each one short and change the stage often.")
     if prefs:
         p += ("\n\nHESHAM'S STANDING PREFERENCES (from his earlier comments; follow them unless his notes for this reel say otherwise):\n" + prefs)
     if feedback:

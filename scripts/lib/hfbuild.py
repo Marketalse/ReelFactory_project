@@ -195,11 +195,14 @@ def brand_vars():
     return " ".join(f"--{k}: {v};" for k, v in pairs.items())
 
 
-def build_project(out_dir, *, duration, face_cuts, scenes, video_src, audio=None, transparent=False):
+def build_project(out_dir, *, duration, face_cuts, scenes, video_src, audio=None, transparent=False, layout=None):
     """Write a complete HyperFrames project.
     face_cuts: [{"id","t_in","t_out","src_in","scale","cx","cy","y"}]  (y = vertical shift in px, e.g. 480 for split)
     scenes:    [{"id","block","t_in","t_out","values", "groups_html"?}]
-    video_src: path to proxy.mp4 (copied/linked into assets/)."""
+    video_src: path to proxy.mp4 (copied/linked into assets/).
+    layout (optional, from layouts.plan): {"stage_rect": [x0,y0,x1,y1], "vars": {css var: value}, "hero": {"src": "assets/hero.webm", "clip": [x0,y0,x1,y1], "x", "y", "scale"}}.
+    Scenes carrying a "fit" ({tx,ty,s}) are scaled and moved into the stage rectangle and clipped to it; the hero cut-out is drawn above everything but the
+    captions with the SAME transform as the footage, clipped to the hero rectangle (it may rise above the footage container)."""
     os.makedirs(os.path.join(out_dir, "compositions"), exist_ok=True)
     os.makedirs(os.path.join(out_dir, "assets", "fonts"), exist_ok=True)
     os.makedirs(os.path.join(out_dir, "vendor"), exist_ok=True)
@@ -235,26 +238,47 @@ def build_project(out_dir, *, duration, face_cuts, scenes, video_src, audio=None
         else:                                                   # a cut is instant: set the frame for this segment exactly at its start
             tweens.append(f'tl.set("#face", {{ {state} }}, {_num(f["t_in"])});')
 
+    if layout and layout.get("hero"):                           # the cut-out follows the footage exactly (same cuts, same scale and position)
+        tweens += [t.replace('"#face"', '"#hero"') for t in tweens if '"#face"' in t]
+    fitted = []
     for s in scenes:
         check_values(s["block"], s.get("values", {}), s["id"])
         spec = REGISTRY["blocks"][s["block"]]
         d = s["t_out"] - s["t_in"]
         text = stamp(s["block"], s["id"], d, s.get("groups_html", ""), s.get("values"))
+        if s.get("fit") and layout:                             # inside a stage zone a block's dark full-width backdrop would show as a box: hide it
+            text = text.replace("</style>", f"#{s['id']}-scrim{{display:none}}</style>", 1)
         open(os.path.join(out_dir, "compositions", s["id"] + ".html"), "w", encoding="utf-8").write(text)
         full = {k: v.get("default", "") for k, v in spec["inputs"].items() if v.get("type") != "generated"}
         full.update(s.get("values", {}))
         vals = html.escape(json.dumps(full, ensure_ascii=False), quote=True)
         kind = spec.get("track_kind", "graphics")
-        hosts.append(f'  <div id="{s["id"]}" class="clip" data-composition-id="{s["id"]}" '
-                     f'data-composition-src="compositions/{s["id"]}.html" data-start="{_num(s["t_in"])}" '
-                     f'data-duration="{_num(d)}" data-width="{W}" data-height="{H}" data-track-kind="{kind}" '
-                     f'style="z-index:{spec["layer"]}" data-variable-values="{vals}"></div>')
+        style = f"z-index:{spec['layer']}"
+        fit = s.get("fit")
+        if fit and layout:                                      # fitted into the stage zone: scaled about the top-left, then moved (relative to the clipping box)
+            sr = layout["stage_rect"]
+            style += f";transform-origin:0 0;transform:translate({_num(fit['tx'] - sr[0])}px,{_num(fit['ty'] - sr[1])}px) scale({fit['s']})"
+        host = (f'  <div id="{s["id"]}" class="clip" data-composition-id="{s["id"]}" '
+                f'data-composition-src="compositions/{s["id"]}.html" data-start="{_num(s["t_in"])}" '
+                f'data-duration="{_num(d)}" data-width="{W}" data-height="{H}" data-track-kind="{kind}" '
+                f'style="{style}" data-variable-values="{vals}"></div>')
+        (fitted if fit and layout else hosts).append(host)
+    if fitted:
+        sr = layout["stage_rect"]
+        hosts.append(f'  <div id="stage-clip" style="position:absolute;left:{sr[0]}px;top:{sr[1]}px;width:{sr[2] - sr[0]}px;height:{sr[3] - sr[1]}px;overflow:hidden;z-index:20">\n'
+                     + "\n".join(fitted) + "\n  </div>")
+    if layout and layout.get("hero") and layout["hero"].get("src"):
+        h = layout["hero"]; c = h["clip"]
+        hosts.append(f'  <div id="hero-clip" style="position:absolute;inset:0;clip-path:inset({c[1]}px {W - c[2]}px {H - c[3]}px {c[0]}px);z-index:35;pointer-events:none">'
+                     f'<div id="hero" style="position:absolute;inset:0;transform-origin:50% 38%"><video id="hero-v" class="clip" src="{h["src"]}" data-start="0" '
+                     f'data-duration="{_num(duration)}" data-has-audio="false" muted playsinline style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover"></video></div></div>')
 
     audio_html = ""
     if audio:
         audio_html = "\n".join(f'  <audio id="{a["id"]}" class="clip" src="{a["src"]}" data-start="{_num(a["t_in"])}" '
                                f'data-duration="{_num(a["dur"])}" data-volume="{a.get("volume", 1)}"></audio>' for a in audio)
-    page = ROOT_TEMPLATE.format(W=W, H=H, vars=brand_vars(), page_bg="transparent" if transparent else "var(--bg)", dur=_num(duration), videos="\n".join(videos),
+    extra = " ".join(f"--{k}: {v};" for k, v in ((layout or {}).get("vars") or {}).items())
+    page = ROOT_TEMPLATE.format(W=W, H=H, vars=brand_vars() + " " + extra, page_bg="transparent" if transparent else "var(--bg)", dur=_num(duration), videos="\n".join(videos),
                                 hosts="\n".join(hosts), audio=audio_html, root_tweens="\n".join(tweens))
     open(os.path.join(out_dir, "index.html"), "w", encoding="utf-8").write(page)
     json.dump({"id": os.path.basename(out_dir.rstrip("/")), "name": os.path.basename(out_dir.rstrip("/"))},
