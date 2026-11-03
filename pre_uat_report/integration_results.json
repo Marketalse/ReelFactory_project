@@ -96,5 +96,24 @@
   "verdict": "PASS",
   "detail": "    0.0s  +$0.0000  report.md |  | GATE 2: watch /tmp/rf-e2e-eebr74p0/jobs/2026-11-03-i1-drop/review/draft_540p.mp4 |   approve:  python3 scripts/reel.py jobs/2026-11-03-i1-drop --approve |   or fix:   python3 scripts/reel.py jobs/2026-11-03-i1-drop --fix \"what to change\" | TOTAL this job $0.0070 | wall 151s | ",
   "seconds": 151.3
+ },
+ {
+  "group": "integration",
+  "name": "I2 per-reel budget guard stops before the cap is passed",
+  "verdict": "PASS",
+  "detail": "2 AI calls;   ok    0.1s  +$0.0000  select A [0.0, 50.02] | STOP: BUDGET GUARD: tighten worst case $0.027 + spent $0.002 > budget $0.00. Raise --budget only with Hesham's approval. | TOTAL this job $0.0020 | wall 0s | "
+ },
+ {
+  "group": "integration",
+  "name": "I3 reel killed mid-render resumes and finishes",
+  "verdict": "PASS",
+  "detail": "    0.0s  +$0.0000  report.md |  | GATE 2: watch /tmp/rf-e2e-eebr74p0/jobs/2026-11-03-i3-kill/review/draft_540p.mp4 |   approve:  python3 scripts/reel.py jobs/2026-11-03-i3-kill --approve |   or fix:   python3 scripts/reel.py jobs/2026-11-03-i3-kill --fix \"what to change\" | TOTAL this job $0.0060 | wall 158s | ",
+  "seconds": 157.8
+ },
+ {
+  "group": "integration",
+  "name": "I4 two reel.py runs on the same reel at once",
+  "verdict": "FAIL",
+  "detail": "CORRECTED after reading the evidence: one run crashed with a raw traceback (ValueError N/A in qa_check.duration) and \"sound levelling failed\", exits [0,1]; cost.json kept 5 of ~13 AI calls (lost updates) -> BUG-005, BUG-006. Original automatic criterion was too weak. Fixed afterwards (joblock.py); see regression_results.md"
  }
 ]

@@ -22,7 +22,10 @@ def ff(args):
 def duration(path):
     out = subprocess.run(["ffprobe", "-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0", path],
                          capture_output=True, text=True).stdout.strip()
-    return float(out) if out else 0.0
+    try:
+        return float(out) if out else 0.0
+    except ValueError:                                    # ffprobe says 'N/A' for a half-written or damaged file: report it as length 0, never crash
+        return 0.0
 
 
 def black_spans(path, min_d=0.25):

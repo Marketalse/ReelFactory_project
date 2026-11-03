@@ -101,22 +101,31 @@ def integration():
     subprocess.run(["pkill", "-9", "-f", "hyperframes"], capture_output=True); time.sleep(1)
     r2 = e2e.run(work, [jd, "--budget", "1.5"], 600, "resume-after-kill")
     rec(g, "I3 reel killed mid-render resumes and finishes", "PASS" if r2["code"] == 0 and job_state(jd)["draft"] else "FAIL", tail(r2, 300), seconds=r2["seconds"])
-    # I4 two processes on the same reel at once (CLI has no lock; the dashboard does)
+    # I4 two processes on the same reel at once (strict criteria after the pre-UAT audit found BUG-005)
+    i4(work, g)
+    # I5 dashboard-level duplicate-start prevention + one-reel-at-a-time queue
+    save(g)
+
+
+def i4(work, g="integration"):
     jd, _ = e2e.seed_job(work, "i4-dup", 50, 8)
     ps = [subprocess.Popen([sys.executable, os.path.join(work, "scripts", "reel.py"), jd, "--budget", "1.5"], cwd=work, env=e2e.env_for(work), stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True) for _ in range(2)]
-    outs = [p.communicate(timeout=600)[0] for p in ps]
-    bad = [json.load(open(f)) if False else None for f in ()]
+    outs = [p.communicate(timeout=700)[0] for p in ps]; codes = [p.returncode for p in ps]
     corrupt = []
     for f in glob.glob(os.path.join(jd, "*.json")):
         try: json.load(open(f))
         except Exception: corrupt.append(os.path.basename(f))
     n = len(json.load(open(os.path.join(jd, "cost.json")))["calls"]) if os.path.exists(os.path.join(jd, "cost.json")) else 0
-    rec(g, "I4 two reel.py runs on the same reel at once", "PASS" if not corrupt and n <= 8 else "FAIL", f"corrupt files: {corrupt}; AI calls logged {n} (one run needs 6-7); exits {[p.returncode for p in ps]}")
-    # I5 dashboard-level duplicate-start prevention + one-reel-at-a-time queue
-    save(g)
+    tb = any("Traceback" in o for o in outs); refused = sum("already being made" in o for o in outs)
+    ok = sorted(codes) == [0, 3] and refused == 1 and not corrupt and not tb and 6 <= n <= 7 and job_state(jd)["draft"]
+    rec(g, "I4 two reel.py runs on the same reel at once (strict)", "PASS" if ok else "FAIL", f"exits {codes}; refused {refused}; corrupt {corrupt}; traceback {tb}; AI calls logged {n} (one run = 6-7); draft {job_state(jd)['draft']}")
 
 
-GROUPS = {"functional": functional, "integration": integration}
+def i4only():
+    e2e.start_mock(); work = e2e.make_copy(); i4(work, "integration_i4"); save("integration_i4")
+
+
+GROUPS = {"functional": functional, "integration": integration, "i4": i4only}
 if __name__ == "__main__":
     for g in sys.argv[1:]:
         GROUPS[g](); save(g)
