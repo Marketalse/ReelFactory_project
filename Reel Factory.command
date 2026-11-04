@@ -78,6 +78,15 @@ if ! up; then
   fi
 fi
 
+# 3b. First time only: quietly install the faster cut-out engines in the background (never blocks, never stops a reel)
+if python3 -c 'import json,sys; sys.exit(0 if json.load(open("config/project.json")).get("matte",{}).get("auto_install") else 1)' 2>/dev/null; then
+  if ! python3 scripts/setup_matte.py --check 2>/dev/null | grep -q "rvm: ready"; then
+    mkdir -p "$HOME/.reelfactory"
+    echo "Installing the faster cut-out engines in the background (once; progress: $HOME/.reelfactory/matte_setup.log)."
+    nohup python3 scripts/setup_matte.py > "$HOME/.reelfactory/matte_setup.log" 2>&1 &
+  fi
+fi
+
 # 4. Open it, or say clearly what went wrong
 if up; then
   open_browser

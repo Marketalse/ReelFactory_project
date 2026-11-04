@@ -16,7 +16,13 @@
   ],
   "cut": {
     "remove_pauses_over_s": 0.35,
-    "retakes": "last_take_wins"
+    "retakes": "last_take_wins",
+    "dramatic_pause": {
+      "enabled": true,
+      "min_gap_s": 0.6,
+      "keep_s": 0.5,
+      "max_per_10s": 1
+    }
   },
   "moments": {
     "flash": {

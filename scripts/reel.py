@@ -21,7 +21,7 @@ import argparse, base64, glob, json, os, re, shutil, subprocess, sys, threading,
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from lib import config as cfg   # noqa: E402  (all settings live in config/*.json)
-from lib import pipeline, joblock, outline, critic, icon_tags, asset_check, transcript as tr, edl as edlmod, director, speech_intel, editorial, visual_plan, brand_memory, creative_brief, content_intel, frames_dedup, learning, doctor, sequence, broll_ai, tighten   # noqa: E402
+from lib import pipeline, joblock, integrity, outline, critic, icon_tags, asset_check, transcript as tr, edl as edlmod, director, speech_intel, editorial, visual_plan, brand_memory, creative_brief, content_intel, frames_dedup, learning, doctor, sequence, broll_ai, tighten   # noqa: E402
 from lib.hfbuild import BuildError   # noqa: E402
 
 ROOT = cfg.ROOT
@@ -337,6 +337,41 @@ def st_outline(c):
     return f"{o['format']}, {len(o['sections'])} sections"
 
 
+@pipeline.step("cleancut", after="edl", role=None, needs=["edl.json", "proxy.mp4"], makes=["review/clean_cut_540p.mp4"], label="Plain cut (no graphics) to check the edit")
+def st_cleancut(c):
+    """The editorial foundation: only HIM, cut as planned, with his voice: no cards, captions, zooms or sounds. Free (ffmpeg, seconds). Written to
+    review/clean_cut_540p.mp4 with checks in review/clean_cut.json (length matches the cut list, picture and sound present). It never stops the reel:
+    it exists so the cut can be judged by itself, before any graphics are blamed or praised."""
+    out = os.path.join(c.job, "review", "clean_cut_540p.mp4")
+    if os.path.exists(out) and not c.a.replan: return "cached"
+    os.makedirs(os.path.dirname(out), exist_ok=True)
+    e = jload(os.path.join(c.job, "edl.json")); proxy = os.path.join(c.job, "proxy.mp4")
+    segs = e["segments"]
+    parts = []
+    for k, sg in enumerate(segs):
+        parts.append(f"[0:v]trim=start={sg['src_in']}:end={sg['src_out']},setpts=PTS-STARTPTS,scale=540:-2[v{k}]")
+        parts.append(f"[0:a]atrim=start={sg['src_in']}:end={sg['src_out']},asetpts=PTS-STARTPTS,aresample=48000[a{k}]")
+    parts.append("".join(f"[v{k}][a{k}]" for k in range(len(segs))) + f"concat=n={len(segs)}:v=1:a=1[v][a]")
+    fs = os.path.join(c.job, "review", "clean_cut.filter")
+    open(fs, "w").write(";\n".join(parts))
+    r = subprocess.run(["ffmpeg", "-hide_banner", "-loglevel", "error", "-y", "-i", proxy, "-filter_complex_script", fs, "-map", "[v]", "-map", "[a]",
+                        "-c:v", "libx264", "-preset", "veryfast", "-crf", "28", "-pix_fmt", "yuv420p", "-c:a", "aac", "-b:a", "128k", out], capture_output=True, text=True)
+    try: os.remove(fs)
+    except OSError: pass
+    if r.returncode != 0:
+        print("   plain cut could not be made (the reel carries on):", (r.stderr or "")[-200:].strip())
+        return "failed (not needed to go on)"
+    pr = subprocess.run(["ffprobe", "-v", "error", "-show_entries", "stream=codec_type:format=duration", "-of", "json", out], capture_output=True, text=True)
+    info = json.loads(pr.stdout or "{}"); dur = float((info.get("format") or {}).get("duration") or 0)
+    kinds = sorted({x.get("codec_type") for x in info.get("streams", [])})
+    problems = []
+    if abs(dur - e["duration"]) > 0.25: problems.append(f"length {dur:.2f}s but the cut list says {e['duration']:.2f}s")
+    if "audio" not in kinds: problems.append("no sound")
+    if "video" not in kinds: problems.append("no picture")
+    jsave(os.path.join(c.job, "review", "clean_cut.json"), {"duration": round(dur, 2), "expected": e["duration"], "streams": kinds, "problems": problems, "pieces": len(segs)})
+    return f"{dur:.1f}s, {len(segs)} pieces" + (f" | PROBLEM: {'; '.join(problems)}" if problems else " | length and sound OK")
+
+
 @pipeline.step("keyframes")
 def st_keyframes(c):
     s0, s1 = jload(os.path.join(c.job, "chosen_select.json"))["range"]
@@ -486,11 +521,20 @@ def st_edl(c):
     s0, s1 = jload(os.path.join(c.job, "chosen_select.json"))["range"]
     man = jload(os.path.join(c.job, "manual_edit.json"), {}) or {}          # cuts/restores/spellings from the Edit page
     ai_drop = [i for i in tighten.drop_words(os.path.join(c.job, "tighten.json")) if i not in set(man.get("keep", []))]    # the AI's cuts, unless he restored them
+    si = jload(os.path.join(c.job, "speech_intel.json"), {}) or {}
+    emph = [x["i"] for x in si.get("emphasis_words", []) if x.get("db_above_usual", 0) >= 3.0 and isinstance(x.get("i"), int)]     # words he said clearly louder (dramatic pauses)
     e = edlmod.build(jload(os.path.join(c.job, "transcript.json")), s0, s1,
-                     drop=list(man.get("drop", [])) + ai_drop, keep=man.get("keep", []), texts=man.get("texts", {}))
+                     drop=list(man.get("drop", [])), ai_drop=ai_drop, reasons=tighten.cut_reasons(os.path.join(c.job, "tighten.json")),
+                     keep=man.get("keep", []), texts=man.get("texts", {}), emphasis=emph)
     jsave(out, e)
     r = e["removed"]
-    return f"{e['source_seconds']:.1f}s -> {e['duration']:.1f}s ({r['pauses']} pauses, {len(r['fillers'])} fillers, {len(r['retakes'])} retake words removed)"
+    ig = integrity.run(c.job, man.get("texts", {}))
+    if not ig["ok"]:                                          # the cut would reorder, repeat or reword him: never go on to spend money on a plan built on it
+        os.remove(out)
+        raise Stop("the cut would change what he said (" + "; ".join(ig["errors"][:3]) + "). Nothing was spent on it. Send this message to Claude.")
+    note = f" | meaning check: OK" + (f", {len(ig['warnings'])} warning(s)" if ig["warnings"] else "")
+    return (f"{e['source_seconds']:.1f}s -> {e['duration']:.1f}s ({r['pauses']} pauses, {len(r['fillers'])} fillers, {len(r['retakes'])} retake words removed, "
+            f"{len(e.get('kept_pauses', []))} dramatic pause(s) kept){note}")
 
 
 def job_logos(c):
@@ -727,6 +771,16 @@ def st_report(c):
     si = jload(os.path.join(c.job, "speech_intel.json"), {})
     if si:
         L += ["", "Speech (rough guides, not proof):"] + [f"- {x}" for x in speech_intel.summary_lines(si)]
+    ig = jload(os.path.join(c.job, "integrity.json"), {})
+    if e.get("cut_log") or ig:
+        kinds = {}
+        for x in e.get("cut_log", []): kinds[x["kind"]] = kinds.get(x["kind"], 0) + 1
+        names = {"filler": "filler sounds", "retake": "retakes", "pause": "pauses", "ai": "AI editor cuts", "manual": "your cuts"}
+        L += ["", "Cuts (each one has its reason in `edl.json` -> cut_log):",
+              "- " + (", ".join(f"{n} {names.get(k, k)}" for k, n in kinds.items()) or "no cuts"),
+              f"- dramatic pauses kept (a long pause after a number or before a louder word): {len(e.get('kept_pauses', []))}",
+              f"- meaning check (nothing reordered, repeated or reworded; no word cut short): {'OK' if ig.get('ok', True) else 'PROBLEM'}"
+              + (f", {len(ig.get('warnings', []))} warning(s): " + "; ".join(ig['warnings'][:2]) if ig.get("warnings") else "")]
     L += ["", f"Transcript: {rv.get('changed', 0)} words fixed by you at Gate 0 (error rate {rv.get('error_rate', 0):.0%}).",
           f"Cut: {e.get('source_seconds', 0):.1f}s of the take -> {e.get('duration', 0):.1f}s reel; removed {e.get('removed', {}).get('pauses', 0)} pauses, "
           f"{len(e.get('removed', {}).get('fillers', []))} fillers, {len(e.get('removed', {}).get('retakes', []))} retake words.",
@@ -737,7 +791,7 @@ def st_report(c):
     L += [f"QA: length {qm.get('duration')}s, loudness {qm.get('lufs')} LUFS, captions {qm.get('caption_words')}/{qm.get('spoken_words_shown')} words, "
           f"errors {len(qa.get('errors', []))}.", ""]
     L += [f"- {w}" for w in val.get("warnings", []) + qa.get("warnings", []) + dr.get("check_warnings", [])] or ["- none"]
-    L += ["", "Files: `review/draft_540p.mp4`, `review/contact_sheet.jpg`, `edit_package/` (clean_cut.mp4, captions_ar.srt, hyperframes/)."]
+    L += ["", "Files: `review/draft_540p.mp4`, `review/contact_sheet.jpg`, `review/clean_cut_540p.mp4` (the plain cut, no graphics), `edit_package/` (1_video.mp4 and 2_graphics.mov after Approve, captions_ar.srt, hyperframes/)."]
     open(os.path.join(c.job, "report.md"), "w", encoding="utf-8").write("\n".join(L) + "\n")
     return "report.md"
 

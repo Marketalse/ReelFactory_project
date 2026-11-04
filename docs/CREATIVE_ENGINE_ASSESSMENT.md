@@ -112,3 +112,15 @@ Already true today: AI points at word numbers → code turns that into times (`d
 4. A8, A9.
 5. Only then B1–B5, one at a time.
 Cost: A1–A9 add no paid AI except small extra tokens for A5 (a sentence per moment). B2/B5 add real per-reel AI cost and need his approval of the budget first (AGENTS.md §6).
+
+## 7. Ideas borrowed from how Higgsfield's agent works (added 2026-11-03)
+Checked against Higgsfield's own connector instructions (workflow "katana", read-only, no credits spent), not only against the article. Confirmed there: a per-job **task contract** (explicit locks + creative freedoms), an **energy map** of a reference (cuts, flashes, shake bursts, camera moves, hits, with rates per second) that is carried into the plan and **checked on the output**, **three motion reviews** (rhythm/timing; spatial movement/continuity; detail/polish) before and after render, a **finite spend cap with a price quote before any paid job**, **only recorded CC0 sound effects** (Kenney, OpenGameArt; "do not synthesize SFX in code"), and **"never generate a graphic scene as video: models blur text"** (graphics are drawn in code from time alone). I did not test Higgsfield's output quality.
+| Idea | Reel Factory today | Upgrade | Cost |
+|---|---|---|---|
+| Locks file per reel | brief + AGENTS rules + glossary, checked in different places | `locks` + `freedoms` in the per-reel plan data (`content_intel.json`), checked by `qa_check.py` (e.g. "no text", "keep my colours", "no CTA") | free |
+| Energy map | `ref_learn.py` measures picture changes/min but only the colours are used | extend it to cuts, zooms, flashes, shakes, sound hits per second; director gets them as targets; QA compares output vs target | free (ffmpeg) |
+| Three review passes | one critic on 8 stills, report only | rhythm = rates vs target (free); spatial = face/safe-zone overlap (free); polish = vision look at start/peak/end of each moment; repair only the failed scene | small Haiku cost |
+| Recorded sounds | `make_sfx.py`: tones and noise made by ffmpeg, no recordings | real CC0 recordings (Kenney etc.) via the asset pack, mapped to roles (hit, whoosh, pop, ding, riser); plus a code-driven shake on strong hits | free |
+| Graphics drawn from time alone | already the HyperFrames/GSAP design (and the Lottie player) | nothing to change; confirms the approach | — |
+| Generated stills (not video) for one hero scene | library pictures matched by vision (T123) | optional: generate one still when no library picture fits; needs a price quote and Hesham's per-reel yes, and a DECISIONS entry (AGENTS §5, §6) | credits |
+Order: plain-cut checkpoint + dramatic pauses + integrity proof (section 6) → locks + energy map → recorded sounds + shake → three reviews → generated stills.

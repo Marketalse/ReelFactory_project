@@ -108,7 +108,8 @@ def run(job, video, final=False, project=None):
     texts = screen_texts(project)
     cap_words = [t for s, k, t in texts if s == "caps"]
     try:                                                  # a Format Pack reel shows captions through the whole reel (its frame has no full-screen cards)
-        packed = bool(json.load(open(os.path.join(project, "compile_info.json"), encoding="utf-8")).get("format_pack"))
+        info_ = json.load(open(os.path.join(project, "compile_info.json"), encoding="utf-8"))
+        packed = bool(info_.get("format_pack") or info_.get("layout"))             # a chosen layout never hides the face either
     except (OSError, ValueError):
         packed = False
     gaps = [] if packed else tl["caption_gaps"]

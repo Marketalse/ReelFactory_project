@@ -162,7 +162,9 @@
     "enabled": true,
     "_note": "T134: Haiku looks at ~8 stills of the draft and scores it (about $0.002). Report only for now. Set enabled false to switch off."
   },
+  "matte": {"engine": "hyperframes", "auto_install": true, "_note": "Cut-out engine: hyperframes (original), rvm, mp_selfie, auto. Extra engines install themselves once (scripts/setup_matte.py). Change with scripts/set_matte.py."},
   "format_pack": {
+    "layout": "panel",
     "mode": "auto",
     "theme": "dark",
     "series": "",

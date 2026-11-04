@@ -118,7 +118,13 @@
    ],
    "sfx": {
     "in": "hit"
-   }
+   },
+   "natural_box": [
+    176,
+    418,
+    852,
+    940
+   ]
   },
   "text_card": {
    "kind": "scene",
@@ -156,7 +162,13 @@
    ],
    "sfx": {
     "in": "whoosh"
-   }
+   },
+   "natural_box": [
+    145,
+    560,
+    883,
+    1377
+   ]
   },
   "split": {
    "kind": "scene",
@@ -189,7 +201,13 @@
    "sfx": {
     "in": "whoosh",
     "value": "ding"
-   }
+   },
+   "natural_box": [
+    0,
+    0,
+    1080,
+    960
+   ]
   },
   "flash": {
    "kind": "scene",
@@ -215,7 +233,13 @@
    ],
    "sfx": {
     "in": "hit"
-   }
+   },
+   "natural_box": [
+    226,
+    707,
+    802,
+    837
+   ]
   },
   "logo_card": {
    "kind": "scene",
@@ -263,7 +287,13 @@
    ],
    "sfx": {
     "in": "pop"
-   }
+   },
+   "natural_box": [
+    124,
+    440,
+    904,
+    910
+   ]
   },
   "cta_card": {
    "kind": "scene",
@@ -339,7 +369,13 @@
    ],
    "sfx": {
     "in": "pop"
-   }
+   },
+   "natural_box": [
+    264,
+    300,
+    904,
+    560
+   ]
   },
   "info_card": {
    "kind": "scene",
@@ -376,7 +412,13 @@
    ],
    "sfx": {
     "in": "whoosh"
-   }
+   },
+   "natural_box": [
+    124,
+    790,
+    904,
+    1214
+   ]
   },
   "number_graph": {
    "kind": "scene",
@@ -414,7 +456,13 @@
    ],
    "sfx": {
     "in": "whoosh"
-   }
+   },
+   "natural_box": [
+    124,
+    504,
+    904,
+    936
+   ]
   },
   "before_after": {
    "kind": "scene",
@@ -458,7 +506,13 @@
    ],
    "sfx": {
     "in": "whoosh"
-   }
+   },
+   "natural_box": [
+    124,
+    420,
+    904,
+    1374
+   ]
   },
   "tier_list": {
    "kind": "scene",
@@ -508,7 +562,13 @@
    ],
    "sfx": {
     "in": "whoosh"
-   }
+   },
+   "natural_box": [
+    124,
+    376,
+    904,
+    1409
+   ]
   },
   "ui_card": {
    "kind": "scene",
@@ -545,7 +605,13 @@
    ],
    "sfx": {
     "in": "whoosh"
-   }
+   },
+   "natural_box": [
+    150,
+    777,
+    878,
+    1099
+   ]
   },
   "doc_card": {
    "kind": "scene",
@@ -582,7 +648,13 @@
    ],
    "sfx": {
     "in": "whoosh"
-   }
+   },
+   "natural_box": [
+    171,
+    783,
+    857,
+    1170
+   ]
   },
   "pixel_scene": {
    "kind": "scene",
@@ -624,7 +696,13 @@
    ],
    "sfx": {
     "in": "pop"
-   }
+   },
+   "natural_box": [
+    0,
+    286,
+    1080,
+    1313
+   ]
   },
   "text_behind": {
    "kind": "scene",
@@ -754,7 +832,38 @@
    ],
    "sfx": {
     "in": "pop"
-   }
+   },
+   "natural_box": [
+    124,
+    440,
+    904,
+    960
+   ]
+  },
+  "stage_frame": {
+   "kind": "scene",
+   "label": "Stage layout frame (dark stage, footage container, glow)",
+   "file": "stage_frame.html",
+   "layer": 12,
+   "purpose": "Made by the compiler for the 'stage' layout only (layouts.py); never placed by the director.",
+   "inputs": {
+    "theme": {
+     "type": "enum",
+     "options": [
+      "dark",
+      "violet"
+     ],
+     "default": "dark"
+    },
+    "groups": {
+     "type": "generated"
+    }
+   },
+   "duration_s": {
+    "min": 1.0,
+    "max": 120.0
+   },
+   "sfx": null
   }
  }
 }

@@ -1,0 +1,46 @@
+{
+  "name": "overlay",
+  "label": "Overlay: you full-screen, one animated card over your chest, caption just above it",
+  "source": "Hesham's 2nd style picture 2026-11-04 (full-frame talking head; the animation container sits low over the chest/torso, below the face) | 2026-11-04: lifted so the face sits at y 600 (reference: face centre about 31% of the height), card y 1080-1500",
+  "approved_exceptions": [
+    "the sample's card reaches y 1556; here it is held inside the safe zone (bottom y 1500) as the general rule says; caption band above the card (y 930-1040) is a proposal, to be confirmed"
+  ],
+  "zones": {
+    "stage": {
+      "rect": [
+        108,
+        1080,
+        920,
+        1500
+      ],
+      "holds": "blocks (one card at a time)"
+    },
+    "caption": {
+      "rect": [
+        108,
+        950,
+        920,
+        1050
+      ]
+    },
+    "footage": {
+      "face_y": 600,
+      "max_scale": 1.4,
+      "holds": "him full-screen, lifted so his face sits high like the reference (the card does not cover chest and hands)"
+    }
+  },
+  "blocks_in_stage": [
+    "hook_two_tone",
+    "info_card",
+    "logo_card",
+    "motion_card",
+    "number_graph",
+    "doc_card",
+    "ui_card",
+    "name_tag"
+  ],
+  "captions": {
+    "size_px": 64,
+    "pill": false
+  }
+}

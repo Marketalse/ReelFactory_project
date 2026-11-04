@@ -1,0 +1,69 @@
+{
+  "name": "stage",
+  "label": "Stage: animation on top, caption band, you (cut-out) at the bottom",
+  "source": "Hesham's drawing 2026-11-03 and his corrected picture 2026-11-04 (wider, taller container down to the bottom edge, bigger hero, large plain caption right under the stage)",
+  "zones": {
+    "stage": {
+      "rect": [
+        108,
+        250,
+        920,
+        790
+      ],
+      "holds": "blocks"
+    },
+    "caption": {
+      "rect": [
+        108,
+        790,
+        920,
+        870
+      ]
+    },
+    "container": {
+      "rect": [
+        108,
+        1080,
+        972,
+        1964
+      ],
+      "radius": 44,
+      "bleeds_to_bottom": true,
+      "holds": "footage background (his own wall)"
+    },
+    "hero": {
+      "clip": [
+        108,
+        900,
+        972,
+        1920
+      ],
+      "scale": 1.35,
+      "face_at": [
+        540,
+        1180
+      ],
+      "holds": "cut-out of him, may rise above the container"
+    }
+  },
+  "blocks_in_stage": [
+    "hook_two_tone",
+    "pixel_scene",
+    "motion_card",
+    "info_card",
+    "number_graph",
+    "text_card",
+    "logo_card",
+    "name_tag",
+    "doc_card",
+    "ui_card"
+  ],
+  "captions": {
+    "size_px": 76,
+    "pill": false
+  },
+  "approved_exceptions": [
+    "caption band at y 790-870 instead of the general caption zone y 1200-1450 (Hesham 2026-11-03)",
+    "the footage container and hero reach the bottom of the screen, below y 1500 (Hesham's picture 2026-11-04; he earlier asked for the safe zone: to be confirmed)"
+  ]
+}
