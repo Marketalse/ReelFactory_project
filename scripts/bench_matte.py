@@ -33,6 +33,17 @@ LABEL = {"current": "A  current (HyperFrames u2net)", "rvm": "B  Robust Video Ma
 def say(*a): print(*a, flush=True)
 
 
+def find_ffmpeg():
+    """ffmpeg is where Reel Factory finds it; a fresh Terminal window may not have that folder on its search path, so look in the usual places too."""
+    for c in [shutil.which("ffmpeg"), "/opt/homebrew/bin/ffmpeg", "/usr/local/bin/ffmpeg", "/opt/local/bin/ffmpeg", os.path.expanduser("~/.reelfactory/bin/ffmpeg")]:
+        if c and os.path.exists(c): return c
+    return None
+
+
+FFMPEG = find_ffmpeg() or "ffmpeg"
+os.environ["PATH"] = os.path.dirname(FFMPEG) + os.pathsep + os.environ.get("PATH", "") if os.path.dirname(FFMPEG) else os.environ.get("PATH", "")
+
+
 def download(url, dest):
     if os.path.exists(dest) and os.path.getsize(dest) > 1000: return dest
     say(f"   downloading {os.path.basename(dest)} ...")
@@ -58,9 +69,9 @@ def make_frames(clip, seconds, size=(540, 960)):
     d = os.path.join(HOME, "frames"); shutil.rmtree(d, ignore_errors=True); os.makedirs(d)
     say(f"3/4 cutting the first {seconds} s of the clip into {size[0]}x{size[1]} frames")
     src = os.path.join(HOME, "src540.mp4")
-    subprocess.run(["ffmpeg", "-hide_banner", "-loglevel", "error", "-y", "-i", clip, "-t", str(seconds), "-vf", f"fps=30,scale={size[0]}:{size[1]}:flags=lanczos,format=yuv420p",
+    subprocess.run([FFMPEG, "-hide_banner", "-loglevel", "error", "-y", "-i", clip, "-t", str(seconds), "-vf", f"fps=30,scale={size[0]}:{size[1]}:flags=lanczos,format=yuv420p",
                     "-an", "-c:v", "libx264", "-crf", "14", "-preset", "veryfast", src], check=True)
-    subprocess.run(["ffmpeg", "-hide_banner", "-loglevel", "error", "-y", "-i", src, os.path.join(d, "%04d.png")], check=True)
+    subprocess.run([FFMPEG, "-hide_banner", "-loglevel", "error", "-y", "-i", src, os.path.join(d, "%04d.png")], check=True)
     return src, sorted(os.path.join(d, f) for f in os.listdir(d) if f.endswith(".png"))
 
 
@@ -81,7 +92,7 @@ def run_current(files, src):
     subprocess.run(["npx", "--yes", f"hyperframes@{ver}", "remove-background", src, "-o", out, "--quality", "fast"], check=True, capture_output=True, text=True)
     total = time.time() - t
     d = os.path.join(HOME, "current_frames"); shutil.rmtree(d, ignore_errors=True); os.makedirs(d)
-    subprocess.run(["ffmpeg", "-hide_banner", "-loglevel", "error", "-y", "-c:v", "libvpx-vp9", "-i", out, "-vf", "format=rgba", os.path.join(d, "%04d.png")], check=True)
+    subprocess.run([FFMPEG, "-hide_banner", "-loglevel", "error", "-y", "-c:v", "libvpx-vp9", "-i", out, "-vf", "format=rgba", os.path.join(d, "%04d.png")], check=True)
     alphas = []
     for f in sorted(os.listdir(d))[:len(files)]:
         a = cv2.imread(os.path.join(d, f), cv2.IMREAD_UNCHANGED)
@@ -191,7 +202,7 @@ def main():
     a = ap.parse_args()
     if a.selftest: selftest(); return
     if not a.clip or not os.path.exists(os.path.expanduser(a.clip)): sys.exit("give the path of your clip, e.g.  python3 scripts/bench_matte.py ~/Downloads/IMG_0124.MOV")
-    if not shutil.which("ffmpeg"): sys.exit("ffmpeg is not installed (it is part of Reel Factory's setup).")
+    if not find_ffmpeg(): sys.exit("I cannot find ffmpeg. Run  which ffmpeg  in Terminal; if it prints nothing, run  brew install ffmpeg  and try again.")
     ensure_env()
     clip = os.path.expanduser(a.clip); os.makedirs(HOME, exist_ok=True)
     src, files = make_frames(clip, a.seconds)
