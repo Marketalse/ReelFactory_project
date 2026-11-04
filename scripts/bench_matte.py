@@ -13,7 +13,7 @@ What it does (read this before you run it):
        rembg models u2net_human_seg / isnet-general-use (the rembg package downloads them itself)
   4. cuts the first SECONDS (default 2 s) of your clip into 540x960 frames and runs each method on the SAME frames;
   5. writes  ~/matte_bench/RESULT/compare.jpg  (each method over green, same frames side by side) and  results.txt  (seconds per frame and how long a
-     60 s reel would take). Send both files to Claude.
+     60 s reel would take). Send both files to Claude (and errors.txt if it exists).
 Nothing in your project is touched. To remove everything afterwards:  rm -rf ~/matte_bench
 Models and licences: some are non-commercial or copyleft; this benchmark only LOOKS at quality and speed. Check the licence before using any in reels."""
 import argparse, json, os, shutil, subprocess, sys, time, urllib.request
@@ -24,7 +24,7 @@ RVM_URL = "https://github.com/PeterL1n/RobustVideoMatting/releases/download/v1.0
 MP_URL = "https://storage.googleapis.com/mediapipe-models/image_segmenter/{p}"
 MP_MODELS = {"mp_selfie": "selfie_segmenter/float16/latest/selfie_segmenter.tflite",
              "mp_multiclass": "selfie_multiclass_256x256/float32/latest/selfie_multiclass_256x256.tflite"}
-PACKAGES = ["numpy", "pillow", "opencv-python-headless", "torch", "mediapipe", "rembg", "onnxruntime", "imageio-ffmpeg"]
+PACKAGES = ["numpy", "pillow", "opencv-python-headless", "torch", "mediapipe==0.10.21", "rembg", "onnxruntime", "imageio-ffmpeg"]
 METHODS = ["current", "rvm", "mp_selfie", "mp_multiclass", "rembg_human", "rembg_isnet"]
 LABEL = {"current": "A  current (HyperFrames u2net)", "rvm": "B  Robust Video Matting", "mp_selfie": "C  MediaPipe selfie (OpenReel)", "mp_multiclass": "D  MediaPipe multiclass",
          "rembg_human": "E  rembg u2net_human_seg (OpenMontage)", "rembg_isnet": "F  rembg isnet-general"}
@@ -45,7 +45,12 @@ def find_ffmpeg():
 
 
 FFMPEG = find_ffmpeg() or "ffmpeg"
-os.environ["PATH"] = os.path.dirname(FFMPEG) + os.pathsep + os.environ.get("PATH", "") if os.path.dirname(FFMPEG) else os.environ.get("PATH", "")
+if os.path.dirname(FFMPEG):
+    if os.path.basename(FFMPEG) != "ffmpeg":                              # a bundled copy has a long name; other tools (HyperFrames) look for plain "ffmpeg": make a link with that name
+        _b = os.path.join(HOME, "bin"); os.makedirs(_b, exist_ok=True); _l = os.path.join(_b, "ffmpeg")
+        if os.path.lexists(_l): os.remove(_l)
+        os.symlink(FFMPEG, _l); FFMPEG = _l
+    os.environ["PATH"] = os.path.dirname(FFMPEG) + os.pathsep + os.environ.get("PATH", "")
 
 
 def download(url, dest):
@@ -62,10 +67,11 @@ def ensure_env():
     if not os.path.exists(py):
         say("1/4 making a private Python environment in", VENV); subprocess.run([sys.executable, "-m", "venv", VENV], check=True)
     marker = os.path.join(HOME, ".installed")
-    if not os.path.exists(marker):
+    want = ",".join(PACKAGES)
+    if not os.path.exists(marker) or open(marker).read() != want:                         # (re)install when the package list changed
         say("2/4 installing packages (official Python package index): " + ", ".join(PACKAGES) + "  (a few minutes)")
         subprocess.run([py, "-m", "pip", "install", "-q", "--upgrade", "pip"], check=True)
-        subprocess.run([py, "-m", "pip", "install", "-q"] + PACKAGES, check=True); open(marker, "w").write("ok")
+        subprocess.run([py, "-m", "pip", "install", "-q"] + PACKAGES, check=True); open(marker, "w").write(want)
     os.execv(py, [py, os.path.abspath(__file__)] + sys.argv[1:])
 
 
@@ -93,7 +99,8 @@ def run_current(files, src):
     ver = json.load(open(cfgp)).get("tools", {}).get("hyperframes", "0.8.226") if os.path.exists(cfgp) else "0.8.226"
     out = os.path.join(HOME, "current.webm")
     t = time.time()
-    subprocess.run(["npx", "--yes", f"hyperframes@{ver}", "remove-background", src, "-o", out, "--quality", "fast"], check=True, capture_output=True, text=True)
+    r = subprocess.run(["npx", "--yes", f"hyperframes@{ver}", "remove-background", src, "-o", out, "--quality", "fast"], capture_output=True, text=True)
+    if r.returncode: raise RuntimeError("hyperframes remove-background failed: " + ((r.stderr or r.stdout or "").strip().splitlines() or ["no message"])[-1][:300])
     total = time.time() - t
     d = os.path.join(HOME, "current_frames"); shutil.rmtree(d, ignore_errors=True); os.makedirs(d)
     subprocess.run([FFMPEG, "-hide_banner", "-loglevel", "error", "-y", "-c:v", "libvpx-vp9", "-i", out, "-vf", "format=rgba", os.path.join(d, "%04d.png")], check=True)
@@ -109,7 +116,7 @@ def run_rvm(files, src):
     path = download(RVM_URL, os.path.join(HOME, "rvm_mobilenetv3_fp32.torchscript"))
     dev = "mps" if getattr(torch.backends, "mps", None) and torch.backends.mps.is_available() else "cpu"
     m = torch.jit.load(path, map_location=dev).eval()
-    rec = [torch.zeros(1, device=dev)] * 4; ratio = torch.tensor([0.5], device=dev); alphas, times = [], []
+    rec = [None] * 4; ratio = 0.5; alphas, times = [], []               # TorchScript wants a plain float and empty (None) start-up states
     with torch.no_grad():
         for f in files:
             x = torch.from_numpy(cv2.cvtColor(cv2.imread(f), cv2.COLOR_BGR2RGB)).permute(2, 0, 1)[None].float().to(dev) / 255
@@ -217,7 +224,10 @@ def main():
         try:
             alphas, spf = RUNNERS[name](files, src); results.append((name, alphas, spf)); say(f"   done: {spf:.2f} s per frame; steadiness {steadiness(alphas):.4f}")
         except Exception as e:                                                       # one method failing never stops the others
-            results.append((name, [], 0.0)); say(f"   FAILED: {str(e)[:200]}")
+            import traceback
+            results.append((name, [], 0.0)); say(f"   FAILED: {str(e)[:300]}")
+            os.makedirs(os.path.join(HOME, "RESULT"), exist_ok=True)
+            open(os.path.join(HOME, "RESULT", "errors.txt"), "a").write(f"== {name}\n{traceback.format_exc()}\n")
     out = os.path.join(HOME, "RESULT"); os.makedirs(out, exist_ok=True)
     sheet = build_sheet(files, results, os.path.join(out, "compare.jpg"))
     lines = ["Cut-out benchmark", f"clip: {os.path.basename(clip)}   frames: {len(files)} (540x960)   machine: {os.uname().sysname} {os.uname().machine}", ""]
