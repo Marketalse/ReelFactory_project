@@ -40,7 +40,19 @@ class Layouts(unittest.TestCase):
         pl = layouts.plan(spec, [{"id": "a", "block": "info_card", "t_in": 1, "t_out": 4, "values": {}}, {"id": "b", "block": "tier_list", "t_in": 5, "t_out": 8, "values": {}}], 9.0)
         self.assertIsNone(pl["frame"]); self.assertIsNone(pl["hero"])
         self.assertEqual([s["id"] for s in pl["stage"]], ["a"]); self.assertEqual(pl["dropped"], ["b"])
-        self.assertEqual(pl["stage_rect"], [108, 1060, 920, 1500])
+        self.assertEqual(pl["stage_rect"], [108, 1080, 920, 1500])
+
+    def test_the_overlay_lifts_the_footage_so_the_face_sits_high_and_never_leaves_a_gap(self):
+        spec = layouts.load("overlay")
+        ft = layouts.footage_transform(spec, 0.38)                                            # a normal selfie framing: face centre at 38% of the height
+        self.assertGreater(ft["scale"], 1.0); self.assertLess(ft["y"], 0)
+        origin = 0.38 * 1920
+        face_y = origin + (0.38 * 1920 - origin) * ft["scale"] + ft["y"]                      # where the face centre ends up
+        self.assertAlmostEqual(face_y, 600, delta=1)
+        self.assertGreaterEqual(origin + (1920 - origin) * ft["scale"] + ft["y"], 1920 - 0.5)  # the bottom of the footage still reaches the bottom of the screen
+        self.assertEqual(layouts.footage_transform(spec, 0.28), {"scale": 1.0, "x": 0, "y": 0})   # already high: left alone
+        self.assertLessEqual(layouts.footage_transform(spec, 0.6)["scale"], 1.4)               # never zoomed more than the layout allows
+        self.assertIsNone(layouts.footage_transform(layouts.load("stage")))                    # a layout without a footage zone
 
     def test_the_frame_has_a_hole_exactly_where_the_container_is(self):
         spec = layouts.load("stage"); g = layouts.frame_groups("stg", spec)

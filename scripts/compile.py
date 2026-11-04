@@ -70,7 +70,7 @@ def compile_job(job, platform="instagram", final=False, out=None, layer="full"):
         pl = layouts.plan(spec, [x for x in scenes if x["block"] != "captions"], tl["duration"], theme=cfg.PROJECT.get("format_pack", {}).get("theme", "dark"))
         lay_dropped = list(pl["dropped"])
         scenes = ([dict(pl["frame"], groups_html=layouts.frame_groups("stg", spec, pl["frame"]["values"].get("theme", "dark")))] if pl["frame"] else []) + pl["stage"] + [x for x in scenes if x["block"] == "captions"]
-        ft = layouts.face_transform(pl["hero"]) if pl["hero"] else None
+        ft = layouts.face_transform(pl["hero"]) if pl["hero"] else layouts.footage_transform(spec, tl.get("face_cy", 0.38))
         tl = dict(tl, scenes=[])
         lay_args = {"stage_rect": pl["stage_rect"], "vars": pl["caption_vars"], "hero": None}
         try:

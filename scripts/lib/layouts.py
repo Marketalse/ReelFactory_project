@@ -40,6 +40,7 @@ def problems(spec):
     box = [z["left"], z["top"], W - z["right"], H - z["bottom"]]
     out, zs = [], spec["zones"]
     for name, zone in zs.items():
+        if name == "footage": continue                                      # a transform, not a rectangle
         r = zone.get("rect") or zone.get("clip")
         if not r or len(r) != 4 or r[0] >= r[2] or r[1] >= r[3]: out.append(f"zone {name}: no valid rectangle"); continue
         if name in ("container", "hero") and zone.get("bleeds_to_bottom", name == "hero" and zs.get("container", {}).get("bleeds_to_bottom")):
@@ -112,3 +113,17 @@ def active_name():
     c = cfg.PROJECT.get("format_pack", {})
     n = c.get("layout", "panel")
     return n if c.get("mode", "auto") != "off" and n in names() else None
+
+
+def footage_transform(spec, face_cy=0.38, *, H=1920):
+    """For a layout with a 'footage' zone (he stays full-screen but LIFTED so the card does not cover his chest and hands): the scale and shift of the
+    full-frame footage (about the page's face point, y = 0.38 H) that put his face centre (face_cy, from the shot log) at footage.face_y with the smallest
+    scale that still covers the whole canvas. A face that is already that high is left alone. -> {"scale","x","y"} or None (layout has no footage zone)."""
+    z = spec["zones"].get("footage")
+    if not z: return None
+    origin, fy, target = 0.38 * H, float(face_cy) * H, float(z["face_y"])
+    if fy <= target: return {"scale": 1.0, "x": 0, "y": 0}
+    s = min(float(z.get("max_scale", 1.4)), max(1.0, (H - target) / (H - fy)))            # bottom edge must still reach the bottom of the canvas
+    ty = target - origin - (fy - origin) * s                                                 # the shift that puts the face at the target ...
+    ty = max(ty, H - origin - (H - origin) * s)                                              # ... but never so far that the bottom of the footage leaves a gap
+    return {"scale": round(s, 4), "x": 0, "y": round(ty, 1)}

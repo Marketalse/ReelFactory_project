@@ -3,7 +3,7 @@
   "group": "regression",
   "name": "R7 overlay layout reel reaches a draft",
   "verdict": "PASS",
-  "detail": "exit 0; 2e-1o0o_zmk/jobs/2026-11-04-stage/review/draft_540p.mp4 |   approve:  python3 scripts/reel.py jobs/2026-11-04-stage --approve |   or fix:   python3 scripts/reel.py jobs/2026-11-04-stage --fix \"what to change\" | TOTAL this job $0.0060 | wall 152s | "
+  "detail": "exit 0; 2e-vvd3mtlv/jobs/2026-11-04-stage/review/draft_540p.mp4 |   approve:  python3 scripts/reel.py jobs/2026-11-04-stage --approve |   or fix:   python3 scripts/reel.py jobs/2026-11-04-stage --fix \"what to change\" | TOTAL this job $0.0060 | wall 155s | "
  },
  {
   "group": "regression",
