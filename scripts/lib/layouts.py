@@ -64,7 +64,37 @@ def fit(zone, box):
     return round(tx, 1), round(ty, 1), round(s, 4)
 
 
-def plan(spec, scenes, duration, *, theme="dark", registry=None):
+FILL_MIN_GAP, FILL_MAX, FILL_MIN = 1.8, 3.0, 1.4
+
+
+def fill_stage(kept, words, kw_idx, duration, *, limit=36):
+    """The stage must not sit empty. Any stretch without a stage card longer than FILL_MIN_GAP gets simple text cards made ONLY from his own words in
+    that stretch (the highlighted keyword and the 1-3 words after it, at most `limit` characters). One card per keyword, 1.4-3 s, never overlapping a
+    real card. -> list of scenes (block text_card), no `fit` yet. Nothing is invented: no keyword said there = no card."""
+    cov = sorted((s["t_in"], s["t_out"]) for s in kept)
+    gaps, cur = [], 0.0
+    for a, b in cov + [(duration, duration)]:
+        if a - cur > FILL_MIN_GAP: gaps.append((cur, a))
+        cur = max(cur, b)
+    out, n = [], 0
+    kws = [words[i] for i in sorted(set(kw_idx)) if 0 <= i < len(words)]
+    for ga, gb in gaps:
+        last_end = ga
+        for k, w in enumerate(words):
+            if k not in set(kw_idx) or not (ga + 0.1 <= w["start"] <= gb - FILL_MIN): continue
+            t_in = max(last_end + 0.1, w["start"] - 0.15)
+            t_out = min(gb - 0.1, t_in + FILL_MAX, w["end"] + 2.0)
+            if t_out - t_in < FILL_MIN: continue
+            run = [w["text"]]
+            for nxt in words[k + 1:k + 4]:
+                if len(" ".join(run + [nxt["text"]])) > limit or nxt["start"] > t_out: break
+                run.append(nxt["text"])
+            n += 1; last_end = t_out
+            out.append({"id": f"fill{n}", "block": "text_card", "t_in": round(t_in, 2), "t_out": round(t_out, 2), "values": {"kicker": "", "headline": " ".join(run), "sub": ""}})
+    return out
+
+
+def plan(spec, scenes, duration, *, theme="dark", registry=None, words=None, kw_idx=()):
     """scenes = the director's moments. -> dict(frame (scene), stage (fitted scenes), dropped (ids), caption_vars, hero (dict), face (dict))."""
     reg = registry or hfbuild.REGISTRY["blocks"]
     zs = spec["zones"]
@@ -77,13 +107,16 @@ def plan(spec, scenes, duration, *, theme="dark", registry=None):
             dropped.append(s["id"]); continue
         tx, ty, sc = fit(zs["stage"]["rect"], box)
         keep.append(dict(s, fit={"tx": tx, "ty": ty, "s": sc}))
+    if words and "text_card" in spec.get("blocks_in_stage", []) and reg.get("text_card", {}).get("natural_box"):          # fill the stage gaps from his own words
+        for f in fill_stage(keep, words, kw_idx, duration):
+            tx, ty, sc = fit(zs["stage"]["rect"], reg["text_card"]["natural_box"]); keep.append(dict(f, fit={"tx": tx, "ty": ty, "s": sc}))
     cx = zs.get("container", {}).get("rect")
     frame = {"id": "stg", "block": "stage_frame", "t_in": 0.0, "t_out": duration, "values": {"theme": theme}} if cx else None        # no container = no frame: he stays full-screen
     cap = zs["caption"]["rect"]
     return {"frame": frame, "stage": keep, "dropped": dropped,
             "caption_vars": {"cap-top": f"{cap[1]}px", "cap-h": f"{cap[3] - cap[1]}px", "cap-size": f"{spec.get('captions', {}).get('size_px', 58)}px",
                              **({} if spec.get("captions", {}).get("pill", True) else {"cap-pill-bg": "transparent"})},
-            "hero": ({"clip": zs["hero"]["clip"], "scale": zs["hero"]["scale"], "face_at": zs["hero"]["face_at"]} if "hero" in zs else None),
+            "hero": ({k: v for k, v in zs["hero"].items() if k != "holds"} if "hero" in zs else None),
             "container": cx, "stage_rect": zs["stage"]["rect"]}
 
 
@@ -127,3 +160,45 @@ def footage_transform(spec, face_cy=0.38, *, H=1920):
     ty = target - origin - (fy - origin) * s                                                 # the shift that puts the face at the target ...
     ty = max(ty, H - origin - (H - origin) * s)                                              # ... but never so far that the bottom of the footage leaves a gap
     return {"scale": round(s, 4), "x": 0, "y": round(ty, 1)}
+
+
+def measure_matte(webm, ffmpeg="ffmpeg", n=10, runner=None):
+    """Where his head really is, measured on the cut-out itself (free, stdlib + ffmpeg): median over n frames of the hair-top row, the head width
+    (rows 5-15% of the frame height below the hair top) and the head centre, all in 1080x1920 canvas pixels. -> {"top","head_w","head_cx"} or None."""
+    import subprocess, statistics
+    run = runner or subprocess.run
+    W, H = 108, 192
+    try:
+        r = run([ffmpeg, "-v", "error", "-c:v", "libvpx-vp9", "-i", webm, "-vf", f"fps=4,alphaextract,scale={W}:{H}:flags=area,format=gray", "-f", "rawvideo", "-"], capture_output=True, timeout=300)
+    except Exception:
+        return None
+    raw = r.stdout or b""
+    frames = [raw[i:i + W * H] for i in range(0, len(raw) - W * H + 1, W * H)]
+    if r.returncode or not frames: return None
+    step = max(1, len(frames) // n); tops, widths, cxs = [], [], []
+    for f in frames[::step][:n]:
+        rows = [[f[y * W + x] > 128 for x in range(W)] for y in range(H)]
+        top = next((y for y, row in enumerate(rows) if sum(row) >= 3), None)
+        if top is None: continue
+        ext = [(row.index(True), W - 1 - row[::-1].index(True)) for row in rows[top + int(.05 * H): top + int(.15 * H)] if any(row)]
+        if not ext: continue
+        a, b = min(e[0] for e in ext), max(e[1] for e in ext)
+        tops.append(top * 10.0); widths.append((b - a + 1) * 10.0); cxs.append((a + b + 1) / 2 * 10.0)
+    if not tops: return None
+    return {"top": statistics.median(tops), "head_w": statistics.median(widths), "head_cx": statistics.median(cxs)}
+
+
+def hero_transform(hero, m, *, canvas=(1080, 1920), origin=(540, 730)):
+    """Size and place the footage + cut-out from the MEASURED head (m from measure_matte): head width = hero.head_w_px (scale clamped to
+    hero.min_scale..max_scale), hair top at hero.head_top, head centred sideways as far as the footage still covers its container (no dark gaps).
+    -> {"scale","x","y"} for the page's transform (about `origin`). m=None -> the old fixed-position transform."""
+    if not m or not hero.get("head_w_px"): return face_transform(hero)
+    W, H = canvas; ox, oy = origin
+    cont = hero.get("cover_rect") or [108, 1080, 972, 1964]
+    s = max(hero.get("min_scale", 0.8), min(hero.get("max_scale", 1.5), hero["head_w_px"] / max(m["head_w"], 1.0)))
+    s = max(s, (cont[3] - hero["head_top"]) / max(H - m["top"], 1.0))                       # the footage must reach the bottom of its container
+    y = hero["head_top"] - oy - s * (m["top"] - oy)                                          # hair top lands on head_top
+    x = ox - ox - s * (m["head_cx"] - ox) + (hero.get("head_x", 540) - ox) * 1.0              # head centre lands on head_x ...
+    lo, hi = cont[2] - ox - s * (W - ox), cont[0] - ox + s * ox                              # ... but never so far that the footage leaves a gap in its container
+    x = max(lo, min(hi, x))
+    return {"scale": round(s, 4), "x": round(x, 1), "y": round(y, 1)}
