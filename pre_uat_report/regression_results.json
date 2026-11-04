@@ -3,7 +3,7 @@
   "group": "regression",
   "name": "R7 stage layout reel reaches a draft",
   "verdict": "PASS",
-  "detail": "exit 0; 2e-u0_qqkmb/jobs/2026-11-03-stage/review/draft_540p.mp4 |   approve:  python3 scripts/reel.py jobs/2026-11-03-stage --approve |   or fix:   python3 scripts/reel.py jobs/2026-11-03-stage --fix \"what to change\" | TOTAL this job $0.0060 | wall 495s | "
+  "detail": "exit 0; 2e-g5as5f7h/jobs/2026-11-04-stage/review/draft_540p.mp4 |   approve:  python3 scripts/reel.py jobs/2026-11-04-stage --approve |   or fix:   python3 scripts/reel.py jobs/2026-11-04-stage --fix \"what to change\" | TOTAL this job $0.0060 | wall 487s | "
  },
  {
   "group": "regression",
