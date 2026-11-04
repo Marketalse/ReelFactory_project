@@ -69,18 +69,20 @@ def compile_job(job, platform="instagram", final=False, out=None, layer="full"):
         if probs: raise RuntimeError(f"layout {lay_name} breaks the safe zone: " + "; ".join(probs))
         pl = layouts.plan(spec, [x for x in scenes if x["block"] != "captions"], tl["duration"], theme=cfg.PROJECT.get("format_pack", {}).get("theme", "dark"))
         lay_dropped = list(pl["dropped"])
-        scenes = [dict(pl["frame"], groups_html=layouts.frame_groups("stg", spec, pl["frame"]["values"].get("theme", "dark")))] + pl["stage"] + [x for x in scenes if x["block"] == "captions"]
-        ft = layouts.face_transform(pl["hero"])
+        scenes = ([dict(pl["frame"], groups_html=layouts.frame_groups("stg", spec, pl["frame"]["values"].get("theme", "dark")))] if pl["frame"] else []) + pl["stage"] + [x for x in scenes if x["block"] == "captions"]
+        ft = layouts.face_transform(pl["hero"]) if pl["hero"] else None
         tl = dict(tl, scenes=[])
         lay_args = {"stage_rect": pl["stage_rect"], "vars": pl["caption_vars"], "hero": None}
-        try:                                                  # the hero: a cut-out of him for the whole reel (local AI model, cached); without it the container shows the footage plainly
+        try:
+            if not pl["hero"]: raise matte.MatteError("")        # this layout keeps him full-screen: no cut-out needed
             src = matte.cutout(job, edl, 0.0, tl["duration"], final)
             os.makedirs(os.path.join(out, "assets"), exist_ok=True)
             shutil.copy(src, os.path.join(out, "assets", "hero.webm"))
             lay_args["hero"] = dict(pl["hero"], src="assets/hero.webm")
         except matte.MatteError as ex:
-            lay_notes.append(f"hero cut-out skipped (the footage shows plainly in its container): {ex}")
-            print("   ", lay_notes[-1])
+            if pl["hero"]:
+                lay_notes.append(f"hero cut-out skipped (the footage shows plainly in its container): {ex}")
+                print("   ", lay_notes[-1])
     # text behind the head (T119): the person cutout is made here (local AI model, cached); a moment that can't get one is dropped, not fatal
     behind = [s for s in scenes if s["block"] == "text_behind"]
     dropped = []
@@ -106,7 +108,7 @@ def compile_job(job, platform="instagram", final=False, out=None, layer="full"):
         dropped = [s["id"] for s in behind]
         scenes = [s for s in scenes if s["block"] != "text_behind"]
     cuts = director.face_cuts(tl, edl["segments"])
-    if lay_args:                                              # the footage sits in the container; the layout has no punch-ins (the hero stays steady)
+    if lay_args and ft:                                       # the footage sits in the container; the layout has no punch-ins (the hero stays steady)
         cuts = [dict(c, scale=ft["scale"], cx=0.5, cy=0.38, y=ft["y"]) for c in cuts]
     # logos used by this reel
     src_logos = os.path.join(job, "assets")

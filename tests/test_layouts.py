@@ -35,6 +35,13 @@ class Layouts(unittest.TestCase):
         self.assertEqual(pl["caption_vars"]["cap-top"], "790px"); self.assertEqual(pl["caption_vars"]["cap-pill-bg"], "transparent")
         self.assertEqual(layouts.face_transform(pl["hero"]), {"scale": 1.35, "x": 0, "y": 450.4})
 
+    def test_the_overlay_layout_keeps_him_full_screen_with_one_card_zone_and_no_frame_or_cutout(self):
+        spec = layouts.load("overlay")
+        pl = layouts.plan(spec, [{"id": "a", "block": "info_card", "t_in": 1, "t_out": 4, "values": {}}, {"id": "b", "block": "tier_list", "t_in": 5, "t_out": 8, "values": {}}], 9.0)
+        self.assertIsNone(pl["frame"]); self.assertIsNone(pl["hero"])
+        self.assertEqual([s["id"] for s in pl["stage"]], ["a"]); self.assertEqual(pl["dropped"], ["b"])
+        self.assertEqual(pl["stage_rect"], [108, 1060, 920, 1500])
+
     def test_the_frame_has_a_hole_exactly_where_the_container_is(self):
         spec = layouts.load("stage"); g = layouts.frame_groups("stg", spec)
         self.assertIn("M152 1080H928", g)                                                     # x 108 + radius 44 ... x 972 - radius 44, top of the container

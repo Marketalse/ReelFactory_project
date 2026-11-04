@@ -46,7 +46,7 @@ def problems(spec):
             if not (r[0] >= 0 and r[2] <= W and r[1] >= box[1]): out.append(f"zone {name} {r} is outside the canvas or above y {box[1]}")      # footage may reach the bottom edge, only when the layout says so
         elif not _inside(r, [0, box[1], W, box[3]]): out.append(f"zone {name} {r} leaves the safe zone (y {box[1]}-{box[3]})")
         if name in ("stage", "caption") and not _inside(r, box): out.append(f"text zone {name} {r} is outside x {box[0]}-{box[2]}, y {box[1]}-{box[3]}")
-    for a, b in (("stage", "caption"), ("stage", "container"), ("caption", "container"), ("stage", "hero"), ("caption", "hero")):
+    for a, b in (("stage", "caption"), ("stage", "container"), ("caption", "container"), ("stage", "hero"), ("caption", "hero")):          # (zones a layout does not have are skipped)
         if a in zs and b in zs:
             ra, rb = zs[a].get("rect") or zs[a].get("clip"), zs[b].get("rect") or zs[b].get("clip")
             if _overlap(ra, rb): out.append(f"zones {a} and {b} overlap")
@@ -76,13 +76,13 @@ def plan(spec, scenes, duration, *, theme="dark", registry=None):
             dropped.append(s["id"]); continue
         tx, ty, sc = fit(zs["stage"]["rect"], box)
         keep.append(dict(s, fit={"tx": tx, "ty": ty, "s": sc}))
-    cx = zs["container"]["rect"]
-    frame = {"id": "stg", "block": "stage_frame", "t_in": 0.0, "t_out": duration, "values": {"theme": theme}}
+    cx = zs.get("container", {}).get("rect")
+    frame = {"id": "stg", "block": "stage_frame", "t_in": 0.0, "t_out": duration, "values": {"theme": theme}} if cx else None        # no container = no frame: he stays full-screen
     cap = zs["caption"]["rect"]
     return {"frame": frame, "stage": keep, "dropped": dropped,
             "caption_vars": {"cap-top": f"{cap[1]}px", "cap-h": f"{cap[3] - cap[1]}px", "cap-size": f"{spec.get('captions', {}).get('size_px', 58)}px",
                              **({} if spec.get("captions", {}).get("pill", True) else {"cap-pill-bg": "transparent"})},
-            "hero": {"clip": zs["hero"]["clip"], "scale": zs["hero"]["scale"], "face_at": zs["hero"]["face_at"]},
+            "hero": ({"clip": zs["hero"]["clip"], "scale": zs["hero"]["scale"], "face_at": zs["hero"]["face_at"]} if "hero" in zs else None),
             "container": cx, "stage_rect": zs["stage"]["rect"]}
 
 

@@ -1,20 +1,20 @@
 [
  {
   "group": "regression",
-  "name": "R7 stage layout reel reaches a draft",
+  "name": "R7 overlay layout reel reaches a draft",
   "verdict": "PASS",
-  "detail": "exit 0; 2e-g5as5f7h/jobs/2026-11-04-stage/review/draft_540p.mp4 |   approve:  python3 scripts/reel.py jobs/2026-11-04-stage --approve |   or fix:   python3 scripts/reel.py jobs/2026-11-04-stage --fix \"what to change\" | TOTAL this job $0.0060 | wall 487s | "
+  "detail": "exit 0; 2e-1o0o_zmk/jobs/2026-11-04-stage/review/draft_540p.mp4 |   approve:  python3 scripts/reel.py jobs/2026-11-04-stage --approve |   or fix:   python3 scripts/reel.py jobs/2026-11-04-stage --fix \"what to change\" | TOTAL this job $0.0060 | wall 152s | "
  },
  {
   "group": "regression",
-  "name": "R8 compile used the layout (and says whether the hero cut-out worked)",
+  "name": "R8 overlay: compile used the layout",
   "verdict": "PASS",
-  "detail": "{\"layout\": \"stage\", \"layout_notes\": [], \"dropped_scenes\": []}"
+  "detail": "{\"layout\": \"overlay\", \"layout_notes\": [], \"dropped_scenes\": []}"
  },
  {
   "group": "regression",
-  "name": "R9 QA found no errors on the stage reel",
+  "name": "R9 overlay: QA found no errors",
   "verdict": "PASS",
-  "detail": "[] [\"length 27.3s is outside the 40-90s target\", \"2 of 8 sampled captions could not be seen in the video, e.g. '\\u0648 \\u0634\\u063a\\u0644\\u0643 \\u0634\\u063a\\u0644\\u0643' at 4.88s\"]"
+  "detail": "[] [\"length 27.3s is outside the 40-90s target\"]"
  }
 ]

@@ -57,17 +57,17 @@ def cleancut():
     save("regression"); srv.shutdown(); shutil.rmtree(work, ignore_errors=True)
 
 
-def stage_layout():
+def stage_layout(name="stage"):
     """The 'stage' layout end to end: footage in its container, hero cut-out layer, caption band, QA passes, a draft exists."""
     work = e2e.make_copy(); srv = e2e.start_mock()
-    pj = os.path.join(work, "config", "project.json"); c = json.load(open(pj)); c["format_pack"]["layout"] = "stage"; json.dump(c, open(pj, "w"), indent=1)
+    pj = os.path.join(work, "config", "project.json"); c = json.load(open(pj)); c["format_pack"]["layout"] = name; json.dump(c, open(pj, "w"), indent=1)
     jd, r0 = e2e.seed_job(work, "stage", 30, 12)
     r = e2e.run(work, [jd, "--budget", "1.5"], 1500, "stage")
     info = json.load(open(os.path.join(jd, "hyperframes", "compile_info.json"))) if os.path.exists(os.path.join(jd, "hyperframes", "compile_info.json")) else {}
     qa = json.load(open(os.path.join(jd, "qa.json"))) if os.path.exists(os.path.join(jd, "qa.json")) else {}
-    rec("regression", "R7 stage layout reel reaches a draft", "PASS" if r["code"] == 0 and os.path.exists(os.path.join(jd, "review", "draft_540p.mp4")) else "FAIL", f"exit {r['code']}; {tail(r, 240)}")
-    rec("regression", "R8 compile used the layout (and says whether the hero cut-out worked)", "PASS" if info.get("layout") == "stage" else "FAIL", json.dumps({k: info.get(k) for k in ("layout", "layout_notes", "dropped_scenes")}, ensure_ascii=False))
-    rec("regression", "R9 QA found no errors on the stage reel", "PASS" if not qa.get("errors") else "FAIL", json.dumps(qa.get("errors")) + " " + json.dumps(qa.get("warnings"))[:200])
+    rec("regression", f"R7 {name} layout reel reaches a draft", "PASS" if r["code"] == 0 and os.path.exists(os.path.join(jd, "review", "draft_540p.mp4")) else "FAIL", f"exit {r['code']}; {tail(r, 240)}")
+    rec("regression", f"R8 {name}: compile used the layout", "PASS" if info.get("layout") == name else "FAIL", json.dumps({k: info.get(k) for k in ("layout", "layout_notes", "dropped_scenes")}, ensure_ascii=False))
+    rec("regression", f"R9 {name}: QA found no errors", "PASS" if not qa.get("errors") else "FAIL", json.dumps(qa.get("errors")) + " " + json.dumps(qa.get("warnings"))[:200])
     save("regression"); srv.shutdown(); shutil.rmtree(work, ignore_errors=True)
 
 
@@ -219,5 +219,6 @@ if __name__ == "__main__":
     if sys.argv[1:2] == ["cleancut"]: cleancut(); sys.exit(0)
     if sys.argv[1:2] == ["regression"]: nasty(); cleancut(); stage_layout(); sys.exit(0)
     if sys.argv[1:2] == ["stage"]: stage_layout(); sys.exit(0)
+    if sys.argv[1:2] == ["overlay"]: stage_layout("overlay"); sys.exit(0)
     for g in sys.argv[1:]:
         GROUPS[g](); save(g)
