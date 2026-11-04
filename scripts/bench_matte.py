@@ -24,7 +24,7 @@ RVM_URL = "https://github.com/PeterL1n/RobustVideoMatting/releases/download/v1.0
 MP_URL = "https://storage.googleapis.com/mediapipe-models/image_segmenter/{p}"
 MP_MODELS = {"mp_selfie": "selfie_segmenter/float16/latest/selfie_segmenter.tflite",
              "mp_multiclass": "selfie_multiclass_256x256/float32/latest/selfie_multiclass_256x256.tflite"}
-PACKAGES = ["numpy", "pillow", "opencv-python-headless", "torch", "mediapipe", "rembg", "onnxruntime"]
+PACKAGES = ["numpy", "pillow", "opencv-python-headless", "torch", "mediapipe", "rembg", "onnxruntime", "imageio-ffmpeg"]
 METHODS = ["current", "rvm", "mp_selfie", "mp_multiclass", "rembg_human", "rembg_isnet"]
 LABEL = {"current": "A  current (HyperFrames u2net)", "rvm": "B  Robust Video Matting", "mp_selfie": "C  MediaPipe selfie (OpenReel)", "mp_multiclass": "D  MediaPipe multiclass",
          "rembg_human": "E  rembg u2net_human_seg (OpenMontage)", "rembg_isnet": "F  rembg isnet-general"}
@@ -37,7 +37,11 @@ def find_ffmpeg():
     """ffmpeg is where Reel Factory finds it; a fresh Terminal window may not have that folder on its search path, so look in the usual places too."""
     for c in [shutil.which("ffmpeg"), "/opt/homebrew/bin/ffmpeg", "/usr/local/bin/ffmpeg", "/opt/local/bin/ffmpeg", os.path.expanduser("~/.reelfactory/bin/ffmpeg")]:
         if c and os.path.exists(c): return c
-    return None
+    try:                                                              # none on this computer: use the copy that comes with the imageio-ffmpeg package inside the private environment
+        import imageio_ffmpeg
+        return imageio_ffmpeg.get_ffmpeg_exe()
+    except Exception:                                                  # noqa: BLE001
+        return None
 
 
 FFMPEG = find_ffmpeg() or "ffmpeg"
@@ -202,8 +206,8 @@ def main():
     a = ap.parse_args()
     if a.selftest: selftest(); return
     if not a.clip or not os.path.exists(os.path.expanduser(a.clip)): sys.exit("give the path of your clip, e.g.  python3 scripts/bench_matte.py ~/Downloads/IMG_0124.MOV")
-    if not find_ffmpeg(): sys.exit("I cannot find ffmpeg. Run  which ffmpeg  in Terminal; if it prints nothing, run  brew install ffmpeg  and try again.")
     ensure_env()
+    if not find_ffmpeg(): sys.exit("I cannot find ffmpeg, even the copy that should have been installed. Send Claude a screenshot of this message.")
     clip = os.path.expanduser(a.clip); os.makedirs(HOME, exist_ok=True)
     src, files = make_frames(clip, a.seconds)
     say(f"4/4 running the methods on {len(files)} frames (each prints its speed when done)")
