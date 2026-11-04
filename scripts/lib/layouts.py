@@ -42,8 +42,9 @@ def problems(spec):
     for name, zone in zs.items():
         r = zone.get("rect") or zone.get("clip")
         if not r or len(r) != 4 or r[0] >= r[2] or r[1] >= r[3]: out.append(f"zone {name}: no valid rectangle"); continue
-        if name == "container" and not _inside(r, [0, box[1], W, box[3]]): out.append(f"zone {name} {r} leaves the safe zone (y {box[1]}-{box[3]})")
-        elif name != "container" and not _inside(r, [0, box[1], W, box[3]]): out.append(f"zone {name} {r} leaves the safe zone (y {box[1]}-{box[3]})")
+        if name in ("container", "hero") and zone.get("bleeds_to_bottom", name == "hero" and zs.get("container", {}).get("bleeds_to_bottom")):
+            if not (r[0] >= 0 and r[2] <= W and r[1] >= box[1]): out.append(f"zone {name} {r} is outside the canvas or above y {box[1]}")      # footage may reach the bottom edge, only when the layout says so
+        elif not _inside(r, [0, box[1], W, box[3]]): out.append(f"zone {name} {r} leaves the safe zone (y {box[1]}-{box[3]})")
         if name in ("stage", "caption") and not _inside(r, box): out.append(f"text zone {name} {r} is outside x {box[0]}-{box[2]}, y {box[1]}-{box[3]}")
     for a, b in (("stage", "caption"), ("stage", "container"), ("caption", "container"), ("stage", "hero"), ("caption", "hero")):
         if a in zs and b in zs:
@@ -79,7 +80,8 @@ def plan(spec, scenes, duration, *, theme="dark", registry=None):
     frame = {"id": "stg", "block": "stage_frame", "t_in": 0.0, "t_out": duration, "values": {"theme": theme}}
     cap = zs["caption"]["rect"]
     return {"frame": frame, "stage": keep, "dropped": dropped,
-            "caption_vars": {"cap-top": f"{cap[1]}px", "cap-h": f"{cap[3] - cap[1]}px", "cap-size": f"{spec.get('captions', {}).get('size_px', 58)}px"},
+            "caption_vars": {"cap-top": f"{cap[1]}px", "cap-h": f"{cap[3] - cap[1]}px", "cap-size": f"{spec.get('captions', {}).get('size_px', 58)}px",
+                             **({} if spec.get("captions", {}).get("pill", True) else {"cap-pill-bg": "transparent"})},
             "hero": {"clip": zs["hero"]["clip"], "scale": zs["hero"]["scale"], "face_at": zs["hero"]["face_at"]},
             "container": cx, "stage_rect": zs["stage"]["rect"]}
 

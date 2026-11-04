@@ -10,21 +10,21 @@ class Layouts(unittest.TestCase):
 
     def test_a_layout_that_leaves_the_safe_zone_or_overlaps_is_refused(self):
         s = layouts.load("stage")
-        s["zones"]["stage"]["rect"] = [108, 100, 920, 850]                                   # starts above y 250
+        s["zones"]["stage"]["rect"] = [108, 100, 920, 790]                                   # starts above y 250
         self.assertTrue(any("stage" in p for p in layouts.problems(s)))
-        s = layouts.load("stage"); s["zones"]["caption"]["rect"] = [108, 800, 920, 900]      # overlaps the stage
+        s = layouts.load("stage"); s["zones"]["caption"]["rect"] = [108, 700, 920, 840]      # overlaps the stage
         self.assertTrue(any("overlap" in p for p in layouts.problems(s)))
-        s = layouts.load("stage"); s["zones"]["container"]["rect"] = [190, 1080, 890, 1700]  # below y 1500
+        s = layouts.load("stage"); s["zones"]["container"].pop("bleeds_to_bottom"); s["zones"]["hero"]["clip"] = [108, 900, 972, 1500]   # below y 1500 is refused unless the layout says it bleeds
         self.assertTrue(any("container" in p for p in layouts.problems(s)))
 
     def test_fit_never_enlarges_and_centres_the_block_in_the_zone(self):
-        z = [108, 250, 920, 850]
+        z = [108, 250, 920, 790]
         tx, ty, s = layouts.fit(z, [176, 418, 852, 940])                                      # smaller than the zone: scale 1, centred
         self.assertEqual(s, 1.0)
         tx, ty, s = layouts.fit(z, [0, 286, 1080, 1313])                                      # bigger: scaled down to fit
         self.assertLess(s, 1.0)
         cx = tx + s * 540; cy = ty + s * (286 + 1313) / 2
-        self.assertAlmostEqual(cx, 514, delta=1); self.assertAlmostEqual(cy, 550, delta=1)
+        self.assertAlmostEqual(cx, 514, delta=1); self.assertAlmostEqual(cy, 520, delta=1)
 
     def test_plan_keeps_stage_blocks_fitted_and_drops_the_rest(self):
         spec = layouts.load("stage")
@@ -32,13 +32,13 @@ class Layouts(unittest.TestCase):
               {"id": "c", "block": "captions", "t_in": 0, "t_out": 9, "values": {}}]
         pl = layouts.plan(spec, sc, 9.0)
         self.assertEqual([s["id"] for s in pl["stage"]], ["a"]); self.assertEqual(pl["dropped"], ["b"])
-        self.assertEqual(pl["caption_vars"]["cap-top"], "870px")
-        self.assertEqual(layouts.face_transform(pl["hero"]), {"scale": 0.9, "x": 0, "y": 450.4})
+        self.assertEqual(pl["caption_vars"]["cap-top"], "790px"); self.assertEqual(pl["caption_vars"]["cap-pill-bg"], "transparent")
+        self.assertEqual(layouts.face_transform(pl["hero"]), {"scale": 1.35, "x": 0, "y": 450.4})
 
     def test_the_frame_has_a_hole_exactly_where_the_container_is(self):
         spec = layouts.load("stage"); g = layouts.frame_groups("stg", spec)
-        self.assertIn("M234 1080H846", g)                                                     # x 190 + radius 44 ... x 890 - radius 44, top of the container
-        self.assertIn("left:190px;top:1080px;width:700px;height:420px", g)
+        self.assertIn("M152 1080H928", g)                                                     # x 108 + radius 44 ... x 972 - radius 44, top of the container
+        self.assertIn("left:108px;top:1080px;width:864px;height:884px", g)
 
     def test_natural_boxes_exist_for_every_block_the_stage_allows(self):
         for b in layouts.load("stage")["blocks_in_stage"]:
@@ -57,8 +57,8 @@ class Layouts(unittest.TestCase):
                               scenes=allsc, video_src=src, layout=lay)
         idx = open(os.path.join(out, "index.html"), encoding="utf-8").read()
         self.assertIn('id="stage-clip"', idx); self.assertIn("translate(", idx); self.assertIn('id="hero-clip"', idx)
-        self.assertIn("clip-path:inset(960px 190px 420px 190px)", idx)                        # the hero may rise 120 px above the container, nowhere else
-        self.assertIn("--cap-top: 870px", idx)
+        self.assertIn("clip-path:inset(900px 108px 0px 108px)", idx)                           # the hero may rise 180 px above the container, nowhere else
+        self.assertIn("--cap-top: 790px", idx); self.assertIn("--cap-pill-bg: transparent", idx)
         self.assertEqual(idx.count('tl.set("#hero"'), idx.count('tl.set("#face"'))             # the cut-out follows the footage exactly
         self.assertIn("-scrim{display:none}", open(os.path.join(out, "compositions", "hook.html"), encoding="utf-8").read())
 
