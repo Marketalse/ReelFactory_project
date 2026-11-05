@@ -325,6 +325,7 @@ input[type=password]:focus{border-color:var(--violet)}
           <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin-top:8px">
             <label class="small">Goal<select id="cbGoal" class="btn" style="width:100%;padding:9px 12px"><option value="">Let the editor decide</option><option value="educate">Teach something useful</option><option value="sell">Sell a product or service</option><option value="followers">Win new followers</option><option value="entertain">Entertain and be shared</option></select></label>
             <label class="small">Style<select id="cbStyle" class="btn" style="width:100%;padding:9px 12px"><option value="">Let the editor decide</option><option value="educational">Educational: clear, calmer</option><option value="fast">Fast: energetic, quick cuts</option><option value="storytelling">Storytelling: emotional</option></select></label>
+            <label class="small">Look<select id="cbTheme" class="btn" style="width:100%;padding:9px 12px"><option value="">Project default</option><option value="stage_dark">Stage (dark): animation on top, you big at the bottom</option><option value="stage_violet">Stage (violet)</option><option value="overlay">Overlay: you full-screen, one card over your chest</option><option value="classic">Classic panel</option></select></label>
             <label class="small">Length<select id="cbLength" class="btn" style="width:100%;padding:9px 12px"><option value="">Standard (40–90 s)</option><option value="short">Short (30–45 s)</option><option value="long">Long (60–90 s)</option></select></label>
           </div>
           <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;margin-top:10px">
@@ -524,7 +525,7 @@ $("#makeBtn").onclick=async ()=>{
     if(S.logo){ await backend.upload(S.slug, S.session, S.logo, {kind:"logo"}, onBytes); doneBytes+=S.logo.size; }
     if(S.cph){ await backend.upload(S.slug, S.session, S.cph, {kind:"cover_photo"}, onBytes); doneBytes+=S.cph.size; }
     const notes=$("#notes").value.trim();
-    const brief={goal:$("#cbGoal").value, style:$("#cbStyle").value, length:$("#cbLength").value, audience:$("#cbAudience").value.trim(), action:$("#cbAction").value.trim()};
+    const brief={goal:$("#cbGoal").value, style:$("#cbStyle").value, length:$("#cbLength").value, theme:$("#cbTheme").value, audience:$("#cbAudience").value.trim(), action:$("#cbAction").value.trim()};
     const hasBrief=Object.values(brief).some(v=>v);
     if(notes||hasBrief){ const r=await backend.saveNotes(S.slug, S.session, notes, brief); if(!r.ok) throw new Error(r.message); }
     S.uploadFrac=1; drawUpload();
@@ -579,7 +580,7 @@ function backToCompose(){
 $("#newBtn").onclick=()=>{
   if(S.busy && S.uploadFrac<1){ toast("Upload in progress", "Wait for the upload to finish before starting another reel."); return; }
   S.files.forEach(f=>URL.revokeObjectURL(f.url)); S.files=[]; S.logo=null; S.session=rid(); S.busy=false;
-  $("#notes").value=""; ["#cbGoal","#cbStyle","#cbLength","#cbAudience","#cbAction"].forEach(i=>{ $(i).value=""; }); $("#reelName").value=""; $("#logoClear").click(); $("#cphClear").click(); $("#makeBtn").disabled=false;
+  $("#notes").value=""; ["#cbGoal","#cbStyle","#cbLength","#cbTheme","#cbAudience","#cbAction"].forEach(i=>{ $(i).value=""; }); $("#reelName").value=""; $("#logoClear").click(); $("#cphClear").click(); $("#makeBtn").disabled=false;
   renderFiles(); updateSlug(); backToCompose();
 };
 const UPLOAD_W = 0.08;   // share of the overall bar used by the upload

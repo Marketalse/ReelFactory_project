@@ -47,7 +47,7 @@ def problems(spec):
             if not (r[0] >= 0 and r[2] <= W and r[1] >= box[1]): out.append(f"zone {name} {r} is outside the canvas or above y {box[1]}")      # footage may reach the bottom edge, only when the layout says so
         elif not _inside(r, [0, box[1], W, box[3]]): out.append(f"zone {name} {r} leaves the safe zone (y {box[1]}-{box[3]})")
         if name in ("stage", "caption") and not _inside(r, box): out.append(f"text zone {name} {r} is outside x {box[0]}-{box[2]}, y {box[1]}-{box[3]}")
-    for a, b in (("stage", "caption"), ("stage", "container"), ("caption", "container"), ("stage", "hero"), ("caption", "hero")):          # (zones a layout does not have are skipped)
+    for a, b in (("stage", "caption"), ("stage", "container"), ("caption", "container"), ("stage", "hero")):          # (zones a layout does not have are skipped; the cut-out is transparent, so it may overlap the caption band: captions are drawn above it)
         if a in zs and b in zs:
             ra, rb = zs[a].get("rect") or zs[a].get("clip"), zs[b].get("rect") or zs[b].get("clip")
             if _overlap(ra, rb): out.append(f"zones {a} and {b} overlap")
@@ -69,28 +69,32 @@ FILL_MIN_GAP, FILL_MAX, FILL_MIN = 1.8, 3.0, 1.4
 
 def fill_stage(kept, words, kw_idx, duration, *, limit=36):
     """The stage must not sit empty. Any stretch without a stage card longer than FILL_MIN_GAP gets simple text cards made ONLY from his own words in
-    that stretch (the highlighted keyword and the 1-3 words after it, at most `limit` characters). One card per keyword, 1.4-3 s, never overlapping a
-    real card. -> list of scenes (block text_card), no `fit` yet. Nothing is invented: no keyword said there = no card."""
+    that stretch: windows of up to FILL_MAX s, each showing the highlighted keyword in it (else the longest word) plus up to 3 words after it, at most
+    `limit` characters, 0.4 s apart. Nothing is invented. -> list of scenes (block text_card), no `fit` yet."""
     cov = sorted((s["t_in"], s["t_out"]) for s in kept)
     gaps, cur = [], 0.0
     for a, b in cov + [(duration, duration)]:
         if a - cur > FILL_MIN_GAP: gaps.append((cur, a))
         cur = max(cur, b)
-    out, n = [], 0
-    kws = [words[i] for i in sorted(set(kw_idx)) if 0 <= i < len(words)]
+    kws, out, n = set(kw_idx), [], 0
     for ga, gb in gaps:
-        last_end = ga
-        for k, w in enumerate(words):
-            if k not in set(kw_idx) or not (ga + 0.1 <= w["start"] <= gb - FILL_MIN): continue
-            t_in = max(last_end + 0.1, w["start"] - 0.15)
-            t_out = min(gb - 0.1, t_in + FILL_MAX, w["end"] + 2.0)
-            if t_out - t_in < FILL_MIN: continue
-            run = [w["text"]]
-            for nxt in words[k + 1:k + 4]:
-                if len(" ".join(run + [nxt["text"]])) > limit or nxt["start"] > t_out: break
-                run.append(nxt["text"])
-            n += 1; last_end = t_out
-            out.append({"id": f"fill{n}", "block": "text_card", "t_in": round(t_in, 2), "t_out": round(t_out, 2), "values": {"kicker": "", "headline": " ".join(run), "sub": ""}})
+        t = ga + 0.1
+        while gb - t >= FILL_MIN + 0.1:
+            win = [k for k, w in enumerate(words) if t <= w["start"] < min(t + FILL_MAX, gb - 0.1) and w["text"].strip()]
+            if not win:
+                nxt = [w["start"] for w in words if w["start"] >= t + FILL_MAX and w["start"] < gb - FILL_MIN]
+                if not nxt: break
+                t = nxt[0] - 0.1; continue
+            k = next((i for i in win if i in kws), None)
+            if k is None: k = max(win, key=lambda i: len(words[i]["text"]))
+            t_in = max(t, words[k]["start"] - 0.15); t_out = min(gb - 0.1, t_in + FILL_MAX)
+            run = [words[k]["text"]]
+            for nx in words[k + 1:k + 4]:
+                if len(" ".join(run + [nx["text"]])) > limit or nx["start"] > t_out: break
+                run.append(nx["text"])
+            if t_out - t_in >= FILL_MIN:
+                n += 1; out.append({"id": f"fill{n}", "block": "text_card", "t_in": round(t_in, 2), "t_out": round(t_out, 2), "values": {"kicker": "", "headline": " ".join(run), "sub": ""}})
+            t = t_out + 0.4
     return out
 
 
@@ -143,8 +147,11 @@ def frame_groups(inst, spec, theme="dark"):
 def active_name():
     """Which layout the reels use now: config/project.json -> format_pack.layout ("panel" = the Format Pack frame, or a name in templates/layouts/).
     "panel" and unknown names -> None here (the Format Pack handles its own); format_pack.mode "off" switches every layout off."""
+    from . import themes
     c = cfg.PROJECT.get("format_pack", {})
     n = c.get("layout", "panel")
+    th = themes.current()
+    if th: n = th["layout"]                                           # a theme chosen for this reel wins over the project setting
     return n if c.get("mode", "auto") != "off" and n in names() else None
 
 

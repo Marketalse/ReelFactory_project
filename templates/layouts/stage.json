@@ -22,9 +22,9 @@
     },
     "container": {
       "rect": [
-        108,
-        1080,
-        972,
+        40,
+        930,
+        1040,
         1964
       ],
       "radius": 44,
@@ -34,7 +34,7 @@
     "hero": {
       "clip": [
         0,
-        880,
+        800,
         1080,
         1920
       ],
@@ -44,15 +44,15 @@
         1180
       ],
       "holds": "cut-out of him: sized and placed from the measured head, may rise above the container, free sideways (no walls)",
-      "head_w_px": 440,
-      "head_top": 920,
+      "head_w_px": 580,
+      "head_top": 880,
       "head_x": 540,
-      "min_scale": 0.75,
-      "max_scale": 1.5,
+      "min_scale": 0.8,
+      "max_scale": 1.8,
       "cover_rect": [
-        108,
-        1080,
-        972,
+        40,
+        930,
+        1040,
         1964
       ]
     }

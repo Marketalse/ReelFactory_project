@@ -56,8 +56,8 @@ class Layouts(unittest.TestCase):
 
     def test_the_frame_has_a_hole_exactly_where_the_container_is(self):
         spec = layouts.load("stage"); g = layouts.frame_groups("stg", spec)
-        self.assertIn("M152 1080H928", g)                                                     # x 108 + radius 44 ... x 972 - radius 44, top of the container
-        self.assertIn("left:108px;top:1080px;width:864px;height:884px", g)
+        self.assertIn("M84 930H996", g)                                                     # x 108 + radius 44 ... x 972 - radius 44, top of the container
+        self.assertIn("left:40px;top:930px;width:1000px;height:1034px", g)
 
     def test_natural_boxes_exist_for_every_block_the_stage_allows(self):
         for b in layouts.load("stage")["blocks_in_stage"]:
@@ -76,7 +76,7 @@ class Layouts(unittest.TestCase):
                               scenes=allsc, video_src=src, layout=lay)
         idx = open(os.path.join(out, "index.html"), encoding="utf-8").read()
         self.assertIn('id="stage-clip"', idx); self.assertIn("translate(", idx); self.assertIn('id="hero-clip"', idx)
-        self.assertIn("clip-path:inset(880px 0px 0px 0px)", idx)                             # the hero may rise above the container; no side walls (head free to move), only the caption band above stays clear
+        self.assertIn("clip-path:inset(800px 0px 0px 0px)", idx)                             # the hero may rise above the container; no side walls (head free to move), only the caption band above stays clear
         self.assertIn("--cap-top: 790px", idx); self.assertIn("--cap-pill-bg: transparent", idx)
         self.assertEqual(idx.count('tl.set("#hero"'), idx.count('tl.set("#face"'))             # the cut-out follows the footage exactly
         self.assertIn("-scrim{display:none}", open(os.path.join(out, "compositions", "hook.html"), encoding="utf-8").read())
@@ -104,8 +104,8 @@ class StageFill(unittest.TestCase):
     def test_gap_gets_card_from_his_words_only(self):
         from lib import layouts
         out = layouts.fill_stage([], self.W, [2], 11.0)
-        self.assertTrue(out); c = out[0]
-        self.assertEqual(c["block"], "text_card"); self.assertTrue(c["values"]["headline"].startswith("كلش"))
+        self.assertTrue(out); c = next(o for o in out if o["t_in"] <= 5.0 <= o["t_out"])
+        self.assertEqual(c["block"], "text_card"); self.assertTrue(c["values"]["headline"].startswith("كلش"))      # the highlighted keyword leads its window
         said = {w["text"] for w in self.W}
         self.assertTrue(set(c["values"]["headline"].split()) <= said)
         self.assertTrue(1.4 <= c["t_out"] - c["t_in"] <= 3.0 and len(c["values"]["headline"]) <= 36)
@@ -115,7 +115,10 @@ class StageFill(unittest.TestCase):
         kept = [{"t_in": 4.0, "t_out": 8.0}]
         out = layouts.fill_stage(kept, self.W, [2], 11.0)
         self.assertFalse(any(o["t_in"] < 8.0 and o["t_out"] > 4.0 for o in out))
-        self.assertEqual(layouts.fill_stage([], self.W, [], 11.0), [])
+        out2 = layouts.fill_stage([], self.W, [], 11.0)                                              # no keyword: the longest word of the window leads, still only his words
+        self.assertTrue(out2); said = {w["text"] for w in self.W}
+        self.assertTrue(all(set(o["values"]["headline"].split()) <= said for o in out2))
+        self.assertTrue(all(b["t_in"] >= a["t_out"] for a, b in zip(out2, out2[1:])))
 
     def test_hero_transform_follows_measured_head_and_keeps_footage_covering(self):
         from lib import layouts
@@ -126,3 +129,33 @@ class StageFill(unittest.TestCase):
             self.assertTrue(left <= 108 + 1 and right >= 972 - 1 and top <= 1080 and bottom >= 1964 - 1, (m, ft))
             self.assertTrue(h["min_scale"] <= s or s >= h["min_scale"] - 1e-6)
         self.assertEqual(layouts.hero_transform(h, None), layouts.face_transform(h))
+
+
+class Themes(unittest.TestCase):
+    def test_every_theme_points_at_a_real_layout_and_palette(self):
+        from lib import themes, layouts
+        self.assertTrue({"stage_dark", "stage_violet", "overlay", "classic"} <= set(themes.names()))
+        for n in themes.names():
+            t = themes.load(n)
+            self.assertIn(t["layout"], ["panel"] + layouts.names()); self.assertIn(t["palette"], ("dark", "violet")); self.assertTrue(t["label"])
+
+    def test_dashboard_list_matches_the_theme_files(self):
+        import re
+        from lib import themes
+        html = open(os.path.join(os.path.dirname(__file__), "..", "dashboard", "make.html"), encoding="utf-8").read()
+        sel = re.search(r'id="cbTheme"[^>]*>(.*?)</select>', html, re.S).group(1)
+        self.assertEqual(sorted(re.findall(r'value="([a-z_]+)"', sel)), themes.names())
+
+    def test_brief_theme_is_used_by_the_reel_and_unknown_is_ignored(self):
+        import tempfile
+        from lib import themes, layouts, creative_brief
+        with tempfile.TemporaryDirectory() as d:
+            self.assertIsNone(themes.use_job(d))
+            creative_brief.save(d, {"theme": "overlay"})
+            self.assertEqual(themes.use_job(d), "overlay"); self.assertEqual(layouts.active_name(), "overlay")
+            creative_brief.save(d, {"theme": "stage_violet"})
+            self.assertEqual(themes.palette("dark"), "violet") if themes.use_job(d) else None
+            creative_brief.save(d, {"theme": "../../etc"}); open(os.path.join(d, "brief.json"), "w").write('{"theme": "nonsense"}')
+            self.assertIsNone(themes.use_job(d))
+        self.assertEqual(creative_brief.clean({"theme": "overlay"}), {"theme": "overlay"}); self.assertEqual(creative_brief.clean({"theme": "x"}), {})
+        self.assertEqual(creative_brief.to_text({"theme": "overlay"}), "")
