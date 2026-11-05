@@ -21,7 +21,7 @@ import argparse, base64, glob, json, os, re, shutil, subprocess, sys, threading,
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from lib import config as cfg   # noqa: E402  (all settings live in config/*.json)
-from lib import pipeline, joblock, integrity, outline, critic, icon_tags, asset_check, transcript as tr, edl as edlmod, director, speech_intel, editorial, visual_plan, brand_memory, creative_brief, content_intel, frames_dedup, learning, doctor, sequence, broll_ai, tighten   # noqa: E402
+from lib import themes, pipeline, joblock, integrity, outline, critic, icon_tags, asset_check, transcript as tr, edl as edlmod, director, speech_intel, editorial, visual_plan, brand_memory, creative_brief, content_intel, frames_dedup, learning, doctor, sequence, broll_ai, tighten   # noqa: E402
 from lib.hfbuild import BuildError   # noqa: E402
 
 ROOT = cfg.ROOT
@@ -110,6 +110,7 @@ class Tee:
 class Ctx:
     def __init__(self, job, a):
         self.job, self.a = job, a
+        themes.use_job(job)                  # the look chosen before the reel started (brief.json), used by the director and the compiler
         self.cost_path = os.path.join(job, "cost.json")
         self.cost = jload(self.cost_path, {"calls": []})
         self.timing = jload(os.path.join(job, "timing.json"), {})

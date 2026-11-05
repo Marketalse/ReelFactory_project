@@ -32,6 +32,8 @@ def compile_job(job, platform="instagram", final=False, out=None, layer="full"):
     tl = json.load(open(os.path.join(job, "timeline.json"), encoding="utf-8"))
     edl = json.load(open(os.path.join(job, "edl.json"), encoding="utf-8"))
     out = out or os.path.join(job, ("hyperframes" if not final else f"hyperframes_{platform}") + ("" if layer == "full" else f"_{layer}"))
+    from lib import themes
+    themes.use_job(job)                                       # the look he picked before starting (brief.json), else the project setting
     scenes = [dict(s) for s in tl["scenes"]]
     for s in scenes:
         if s["block"] == "cta_card":
@@ -67,7 +69,7 @@ def compile_job(job, platform="instagram", final=False, out=None, layer="full"):
         spec = layouts.load(lay_name)
         probs = layouts.problems(spec)
         if probs: raise RuntimeError(f"layout {lay_name} breaks the safe zone: " + "; ".join(probs))
-        pl = layouts.plan(spec, [x for x in scenes if x["block"] != "captions"], tl["duration"], theme=cfg.PROJECT.get("format_pack", {}).get("theme", "dark"), words=edl["words"], kw_idx=tl["keyword_ids"])
+        pl = layouts.plan(spec, [x for x in scenes if x["block"] != "captions"], tl["duration"], theme=themes.palette(cfg.PROJECT.get("format_pack", {}).get("theme", "dark")), words=edl["words"], kw_idx=tl["keyword_ids"])
         lay_dropped = list(pl["dropped"])
         scenes = ([dict(pl["frame"], groups_html=layouts.frame_groups("stg", spec, pl["frame"]["values"].get("theme", "dark")))] if pl["frame"] else []) + pl["stage"] + [x for x in scenes if x["block"] == "captions"]
         ft = layouts.face_transform(pl["hero"]) if pl["hero"] else layouts.footage_transform(spec, tl.get("face_cy", 0.38))

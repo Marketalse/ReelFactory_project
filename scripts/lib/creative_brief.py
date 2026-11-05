@@ -28,6 +28,9 @@ def clean(raw):
         out["style"] = raw["style"]
     if raw.get("length") in LENGTHS:
         out["length"] = raw["length"]
+    from . import themes
+    if raw.get("theme") in themes.names():
+        out["theme"] = raw["theme"]
     for k, n in (("audience", 120), ("action", 160)):
         v = re.sub(r"\s+", " ", str(raw.get(k) or "")).strip()[:n]
         if v:
@@ -57,7 +60,7 @@ def to_text(brief):
         L.append(f"- Length: {lo}-{hi} seconds.")
     if "action" in b:
         L.append(f"- Action wanted from viewers: {b['action']}. (Only if he actually says it; never invent words.)")
-    return "\n".join(L)
+    return "\n".join(L) if len(L) > 1 else ""
 
 
 def save(folder, brief, notes=""):
