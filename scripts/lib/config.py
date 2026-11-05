@@ -8,6 +8,17 @@ CONFIG_DIR = os.path.join(ROOT, "config")
 LEDGER = os.path.join(ROOT, "dashboard", "expenses.json")
 
 
+def local_set(path, value):
+    """Write one setting into config/local.json, e.g. local_set(("matte", "engine"), "rvm"). Returns the file path."""
+    p = os.path.join(CONFIG_DIR, "local.json")
+    d = _local()
+    cur = d
+    for k in path[:-1]: cur = cur.setdefault(k, {})
+    cur[path[-1]] = value
+    with open(p, "w", encoding="utf-8") as f: json.dump(d, f, ensure_ascii=False, indent=1)
+    return p
+
+
 def _load(name):
     path = os.path.join(CONFIG_DIR, name)
     try:
@@ -19,7 +30,25 @@ def _load(name):
         raise SystemExit(f"config/{name} is not valid JSON: {e}")
 
 
-PROJECT = _load("project.json")
+def _merge(base, over):
+    for k, v in over.items():
+        if isinstance(v, dict) and isinstance(base.get(k), dict): _merge(base[k], v)
+        else: base[k] = v
+    return base
+
+
+def _local():
+    """config/local.json (NOT in git): this Mac's own choices (layout, cut-out engine...). Written by scripts/set_layout.py and set_matte.py, so the
+    tracked config/project.json is never edited by hand and the dashboard can always update."""
+    try:
+        with open(os.path.join(CONFIG_DIR, "local.json"), encoding="utf-8") as f:
+            d = json.load(f)
+        return d if isinstance(d, dict) else {}
+    except (OSError, ValueError):
+        return {}
+
+
+PROJECT = _merge(_load("project.json"), _local())
 BRAND = _load("brand.json")
 RULES = _load("rules.json")
 GLOSSARY = _load("glossary.json")
