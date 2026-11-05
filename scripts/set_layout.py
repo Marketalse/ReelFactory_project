@@ -7,10 +7,9 @@ Only the setting format_pack.layout in config/project.json changes. Reels alread
 import json, os, re, sys
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(ROOT, "scripts"))
-from lib import layouts   # noqa: E402
+from lib import layouts, config   # noqa: E402
 
-p = os.path.join(ROOT, "config", "project.json")
-txt = open(p, encoding="utf-8").read(); cur = json.loads(txt)["format_pack"].get("layout", "panel")
+cur = config.PROJECT["format_pack"].get("layout", "panel")
 have = ["panel"] + layouts.names()
 if len(sys.argv) < 2:
     print("current:", cur)
@@ -21,6 +20,5 @@ if new not in have: sys.exit(f"unknown layout {new!r}; choose one of: {', '.join
 if new != "panel":
     probs = layouts.problems(layouts.load(new))
     if probs: sys.exit("this layout breaks the safe zone: " + "; ".join(probs))
-out, n = re.subn(r'("format_pack":\s*\{\s*"layout":\s*")[^"]*(")', rf'\g<1>{new}\g<2>', txt, count=1)
-if n != 1: sys.exit("could not find format_pack.layout in config/project.json")
-open(p, "w", encoding="utf-8").write(out); print(f"layout is now: {new} (was {cur})")
+from lib import config   # noqa: E402
+config.local_set(("format_pack", "layout"), new); print(f"layout is now: {new} (was {cur})   [saved in config/local.json, not in git]")

@@ -50,3 +50,6 @@ library/assets/_reports/
 stress_report.md
 stress_server.log
 pre_uat_report/evidence/logs/*.log
+
+# This Mac's own settings (layout, cut-out engine): never in git
+config/local.json
