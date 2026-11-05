@@ -1,20 +1,20 @@
 [
  {
   "group": "regression",
-  "name": "R7 overlay layout reel reaches a draft",
+  "name": "R7 stage layout reel reaches a draft",
   "verdict": "PASS",
-  "detail": "exit 0; 2e-vvd3mtlv/jobs/2026-11-04-stage/review/draft_540p.mp4 |   approve:  python3 scripts/reel.py jobs/2026-11-04-stage --approve |   or fix:   python3 scripts/reel.py jobs/2026-11-04-stage --fix \"what to change\" | TOTAL this job $0.0060 | wall 155s | "
+  "detail": "exit 0; 2e-hcq_ae1i/jobs/2026-11-04-stage/review/draft_540p.mp4 |   approve:  python3 scripts/reel.py jobs/2026-11-04-stage --approve |   or fix:   python3 scripts/reel.py jobs/2026-11-04-stage --fix \"what to change\" | TOTAL this job $0.0060 | wall 534s | "
  },
  {
   "group": "regression",
-  "name": "R8 overlay: compile used the layout",
+  "name": "R8 stage: compile used the layout",
   "verdict": "PASS",
-  "detail": "{\"layout\": \"overlay\", \"layout_notes\": [], \"dropped_scenes\": []}"
+  "detail": "{\"layout\": \"stage\", \"layout_notes\": [\"head measured: width 360px, top 0px; scale 1.2222\"], \"dropped_scenes\": []}"
  },
  {
   "group": "regression",
-  "name": "R9 overlay: QA found no errors",
+  "name": "R9 stage: QA found no errors",
   "verdict": "PASS",
-  "detail": "[] [\"length 27.3s is outside the 40-90s target\"]"
+  "detail": "[] [\"length 27.3s is outside the 40-90s target\", \"1 of 8 sampled captions could not be seen in the video, e.g. '\\u0645\\u0627 \\u064a\\u0639\\u0646\\u064a \\u0628\\u064a\\u062c' at 16.46s\"]"
  }
 ]

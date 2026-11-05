@@ -33,9 +33,9 @@
     },
     "hero": {
       "clip": [
-        108,
-        900,
-        972,
+        0,
+        880,
+        1080,
         1920
       ],
       "scale": 1.35,
@@ -43,7 +43,18 @@
         540,
         1180
       ],
-      "holds": "cut-out of him, may rise above the container"
+      "holds": "cut-out of him: sized and placed from the measured head, may rise above the container, free sideways (no walls)",
+      "head_w_px": 440,
+      "head_top": 920,
+      "head_x": 540,
+      "min_scale": 0.75,
+      "max_scale": 1.5,
+      "cover_rect": [
+        108,
+        1080,
+        972,
+        1964
+      ]
     }
   },
   "blocks_in_stage": [

@@ -67,7 +67,7 @@ def compile_job(job, platform="instagram", final=False, out=None, layer="full"):
         spec = layouts.load(lay_name)
         probs = layouts.problems(spec)
         if probs: raise RuntimeError(f"layout {lay_name} breaks the safe zone: " + "; ".join(probs))
-        pl = layouts.plan(spec, [x for x in scenes if x["block"] != "captions"], tl["duration"], theme=cfg.PROJECT.get("format_pack", {}).get("theme", "dark"))
+        pl = layouts.plan(spec, [x for x in scenes if x["block"] != "captions"], tl["duration"], theme=cfg.PROJECT.get("format_pack", {}).get("theme", "dark"), words=edl["words"], kw_idx=tl["keyword_ids"])
         lay_dropped = list(pl["dropped"])
         scenes = ([dict(pl["frame"], groups_html=layouts.frame_groups("stg", spec, pl["frame"]["values"].get("theme", "dark")))] if pl["frame"] else []) + pl["stage"] + [x for x in scenes if x["block"] == "captions"]
         ft = layouts.face_transform(pl["hero"]) if pl["hero"] else layouts.footage_transform(spec, tl.get("face_cy", 0.38))
@@ -79,6 +79,9 @@ def compile_job(job, platform="instagram", final=False, out=None, layer="full"):
             os.makedirs(os.path.join(out, "assets"), exist_ok=True)
             shutil.copy(src, os.path.join(out, "assets", "hero.webm"))
             lay_args["hero"] = dict(pl["hero"], src="assets/hero.webm")
+            m = layouts.measure_matte(src, (cfg.find_ffmpeg() or ("ffmpeg",))[0])        # size and place him from his real head, not a fixed guess
+            ft = layouts.hero_transform(pl["hero"], m)
+            lay_notes.append("head " + (f"measured: width {m['head_w']:.0f}px, top {m['top']:.0f}px; scale {ft['scale']}" if m else "not measurable: fixed position used"))
         except matte.MatteError as ex:
             if pl["hero"]:
                 lay_notes.append(f"hero cut-out skipped (the footage shows plainly in its container): {ex}")
@@ -109,7 +112,7 @@ def compile_job(job, platform="instagram", final=False, out=None, layer="full"):
         scenes = [s for s in scenes if s["block"] != "text_behind"]
     cuts = director.face_cuts(tl, edl["segments"])
     if lay_args and ft:                                       # the footage sits in the container; the layout has no punch-ins (the hero stays steady)
-        cuts = [dict(c, scale=ft["scale"], cx=0.5, cy=0.38, y=ft["y"]) for c in cuts]
+        cuts = [dict(c, scale=ft["scale"], cx=0.5, cy=0.38, y=ft["y"], x=ft.get("x", 0)) for c in cuts]
     # logos used by this reel
     src_logos = os.path.join(job, "assets")
     if os.path.isdir(src_logos):

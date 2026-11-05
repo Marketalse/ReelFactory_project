@@ -76,7 +76,7 @@ class Layouts(unittest.TestCase):
                               scenes=allsc, video_src=src, layout=lay)
         idx = open(os.path.join(out, "index.html"), encoding="utf-8").read()
         self.assertIn('id="stage-clip"', idx); self.assertIn("translate(", idx); self.assertIn('id="hero-clip"', idx)
-        self.assertIn("clip-path:inset(900px 108px 0px 108px)", idx)                           # the hero may rise 180 px above the container, nowhere else
+        self.assertIn("clip-path:inset(880px 0px 0px 0px)", idx)                             # the hero may rise above the container; no side walls (head free to move), only the caption band above stays clear
         self.assertIn("--cap-top: 790px", idx); self.assertIn("--cap-pill-bg: transparent", idx)
         self.assertEqual(idx.count('tl.set("#hero"'), idx.count('tl.set("#face"'))             # the cut-out follows the footage exactly
         self.assertIn("-scrim{display:none}", open(os.path.join(out, "compositions", "hook.html"), encoding="utf-8").read())
@@ -96,3 +96,33 @@ class DirectorWithLayout(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class StageFill(unittest.TestCase):
+    W = [{"text": t, "start": s, "end": s + 0.4} for t, s in [("ابني", 0.5), ("موقع", 1.0), ("كلش", 5.0), ("مهم", 5.5), ("جدا", 6.0), ("للتسويق", 6.6), ("وبعدين", 9.5)]]
+
+    def test_gap_gets_card_from_his_words_only(self):
+        from lib import layouts
+        out = layouts.fill_stage([], self.W, [2], 11.0)
+        self.assertTrue(out); c = out[0]
+        self.assertEqual(c["block"], "text_card"); self.assertTrue(c["values"]["headline"].startswith("كلش"))
+        said = {w["text"] for w in self.W}
+        self.assertTrue(set(c["values"]["headline"].split()) <= said)
+        self.assertTrue(1.4 <= c["t_out"] - c["t_in"] <= 3.0 and len(c["values"]["headline"]) <= 36)
+
+    def test_no_card_over_real_card_and_none_without_keyword(self):
+        from lib import layouts
+        kept = [{"t_in": 4.0, "t_out": 8.0}]
+        out = layouts.fill_stage(kept, self.W, [2], 11.0)
+        self.assertFalse(any(o["t_in"] < 8.0 and o["t_out"] > 4.0 for o in out))
+        self.assertEqual(layouts.fill_stage([], self.W, [], 11.0), [])
+
+    def test_hero_transform_follows_measured_head_and_keeps_footage_covering(self):
+        from lib import layouts
+        h = layouts.load("stage")["zones"]["hero"]
+        for m in ({"top": 420.0, "head_w": 515.0, "head_cx": 347.0}, {"top": 300.0, "head_w": 400.0, "head_cx": 800.0}, {"top": 900.0, "head_w": 700.0, "head_cx": 540.0}):
+            ft = layouts.hero_transform(h, m); s = ft["scale"]
+            left = 540 - 540 * s + ft["x"]; right = left + 1080 * s; top = 730 - 730 * s + ft["y"]; bottom = top + 1920 * s
+            self.assertTrue(left <= 108 + 1 and right >= 972 - 1 and top <= 1080 and bottom >= 1964 - 1, (m, ft))
+            self.assertTrue(h["min_scale"] <= s or s >= h["min_scale"] - 1e-6)
+        self.assertEqual(layouts.hero_transform(h, None), layouts.face_transform(h))
