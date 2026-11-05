@@ -1,0 +1,25 @@
+{
+  "label": "Media + Hero: media on top, you below",
+  "description": "Upper section: reference screenshots, animated cards and motions. Lower section: you as the hero cut-out talking head.",
+  "sequence": [
+    "media_hero",
+    "media_hero_text"
+  ],
+  "rest": "media_hero_text",
+  "palette": "dark",
+  "blocks": [
+    "hook_two_tone",
+    "pixel_scene",
+    "motion_card",
+    "info_card",
+    "number_graph",
+    "text_card",
+    "logo_card",
+    "name_tag",
+    "doc_card",
+    "ui_card",
+    "line_text"
+  ],
+  "layout": "panel",
+  "order": 2
+}

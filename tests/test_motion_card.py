@@ -28,6 +28,20 @@ class MotionCard(unittest.TestCase):
         src = hfbuild.stamp("motion_card", "m1", 2.5, "", {"motion": "tricky.json"})
         self.assertNotIn("</script><script>alert", src)
 
+    def test_every_block_that_uses_lottie_names_the_lottie_script_itself(self):
+        """HyperFrames' check (rule missing_lottie_script) stops the reel when a scene calls lottie.* without a script tag naming lottie in its own file
+        (Hesham's stopped reel, 2026-11-05); the root page's script does not count for the check."""
+        import re
+        blocks = os.path.join(os.path.dirname(__file__), "..", "templates", "blocks")
+        found = 0
+        for f in sorted(os.listdir(blocks)):
+            if not f.endswith(".html"): continue
+            src = open(os.path.join(blocks, f), encoding="utf-8").read()
+            if re.search(r"lottie\.(loadAnimation|setSpeed|play|stop|destroy)\b", src):
+                found += 1
+                self.assertRegex(src, r'<script[^>]+src="[^"]*lottie[^"]*"', f)
+        self.assertGreaterEqual(found, 1)
+
 
 if __name__ == "__main__":
     unittest.main()

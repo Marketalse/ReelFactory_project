@@ -1,0 +1,26 @@
+{
+  "label": "Sequence 1: quarter, full, quarter animation",
+  "description": "Quarter-screen animation over the frame, then full-screen animation, then quarter again; you in the frame below.",
+  "sequence": [
+    "q_anim_frame",
+    "full_anim",
+    "q_anim_frame"
+  ],
+  "rest": "text_full_clip",
+  "palette": "dark",
+  "blocks": [
+    "hook_two_tone",
+    "pixel_scene",
+    "motion_card",
+    "info_card",
+    "number_graph",
+    "text_card",
+    "logo_card",
+    "name_tag",
+    "doc_card",
+    "ui_card",
+    "line_text"
+  ],
+  "layout": "panel",
+  "order": 4
+}

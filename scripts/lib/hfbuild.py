@@ -195,7 +195,7 @@ def brand_vars():
     return " ".join(f"--{k}: {v};" for k, v in pairs.items())
 
 
-def build_project(out_dir, *, duration, face_cuts, scenes, video_src, audio=None, transparent=False, layout=None):
+def build_project(out_dir, *, duration, face_cuts, scenes, video_src, audio=None, transparent=False, layout=None, extra_tweens=()):
     """Write a complete HyperFrames project.
     face_cuts: [{"id","t_in","t_out","src_in","scale","cx","cy","y"}]  (y = vertical shift in px, e.g. 480 for split)
     scenes:    [{"id","block","t_in","t_out","values", "groups_html"?}]
@@ -240,6 +240,7 @@ def build_project(out_dir, *, duration, face_cuts, scenes, video_src, audio=None
 
     if layout and layout.get("hero"):                           # the cut-out follows the footage exactly (same cuts, same scale and position)
         tweens += [t.replace('"#face"', '"#hero"') for t in tweens if '"#face"' in t]
+    tweens += list(extra_tweens or ())                          # state changes: hero visible or not, caption band position (from states.plan)
     fitted = []
     for s in scenes:
         check_values(s["block"], s.get("values", {}), s["id"])
@@ -247,7 +248,7 @@ def build_project(out_dir, *, duration, face_cuts, scenes, video_src, audio=None
         d = s["t_out"] - s["t_in"]
         text = stamp(s["block"], s["id"], d, s.get("groups_html", ""), s.get("values"))
         if s.get("fit") and layout:                             # inside a stage zone a block's dark full-width backdrop would show as a box: hide it
-            text = text.replace("</style>", f"#{s['id']}-scrim{{display:none}}</style>", 1)
+            text = text.replace("</style>", f"#{s['id']}-scrim{{display:none}} #root{{background:transparent !important}}</style>", 1)      # no dark panel over his footage
         open(os.path.join(out_dir, "compositions", s["id"] + ".html"), "w", encoding="utf-8").write(text)
         full = {k: v.get("default", "") for k, v in spec["inputs"].items() if v.get("type") != "generated"}
         full.update(s.get("values", {}))
@@ -256,17 +257,19 @@ def build_project(out_dir, *, duration, face_cuts, scenes, video_src, audio=None
         style = f"z-index:{spec['layer']}"
         fit = s.get("fit")
         if fit and layout:                                      # fitted into the stage zone: scaled about the top-left, then moved (relative to the clipping box)
-            sr = layout["stage_rect"]
+            sr = s.get("zone") or layout["stage_rect"]          # a state-driven reel gives every card its own zone (quarter / half / full screen)
             style += f";transform-origin:0 0;transform:translate({_num(fit['tx'] - sr[0])}px,{_num(fit['ty'] - sr[1])}px) scale({fit['s']})"
         host = (f'  <div id="{s["id"]}" class="clip" data-composition-id="{s["id"]}" '
                 f'data-composition-src="compositions/{s["id"]}.html" data-start="{_num(s["t_in"])}" '
                 f'data-duration="{_num(d)}" data-width="{W}" data-height="{H}" data-track-kind="{kind}" '
                 f'style="{style}" data-variable-values="{vals}"></div>')
-        (fitted if fit and layout else hosts).append(host)
-    if fitted:
-        sr = layout["stage_rect"]
-        hosts.append(f'  <div id="stage-clip" style="position:absolute;left:{sr[0]}px;top:{sr[1]}px;width:{sr[2] - sr[0]}px;height:{sr[3] - sr[1]}px;overflow:hidden;z-index:20">\n'
-                     + "\n".join(fitted) + "\n  </div>")
+        if fit and layout: fitted.append((tuple(sr), host))
+        else: hosts.append(host)
+    zones = {}
+    for sr, host in fitted: zones.setdefault(sr, []).append(host)
+    for k, (sr, hs) in enumerate(zones.items()):
+        hosts.append(f'  <div id="stage-clip{"" if len(zones) == 1 else k}" style="position:absolute;left:{sr[0]}px;top:{sr[1]}px;width:{sr[2] - sr[0]}px;height:{sr[3] - sr[1]}px;overflow:hidden;z-index:20">\n'
+                     + "\n".join(hs) + "\n  </div>")
     if layout and layout.get("hero") and layout["hero"].get("src"):
         h = layout["hero"]; c = h["clip"]
         hosts.append(f'  <div id="hero-clip" style="position:absolute;inset:0;clip-path:inset({c[1]}px {W - c[2]}px {H - c[3]}px {c[0]}px);z-index:35;pointer-events:none">'

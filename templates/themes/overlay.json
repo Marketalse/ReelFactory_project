@@ -2,5 +2,6 @@
   "label": "Overlay",
   "description": "You full-screen, one animated card low over your chest, caption just above it.",
   "layout": "overlay",
-  "palette": "dark"
+  "palette": "dark",
+  "order": 6
 }

@@ -1,0 +1,40 @@
+{
+  "label": "Half animation over half clip",
+  "source": "Hesham's symbols + sequence 2",
+  "kind": "anim",
+  "frame": {
+    "rect": [
+      40,
+      960,
+      1040,
+      1964
+    ],
+    "radius": 44
+  },
+  "anim": [
+    108,
+    250,
+    920,
+    860
+  ],
+  "caption": {
+    "y": 870,
+    "h": 80,
+    "size": 68
+  },
+  "clip": {
+    "rect": [
+      40,
+      960,
+      1040,
+      1964
+    ],
+    "hero": false,
+    "head_w_px": 460,
+    "head_top": 1010,
+    "head_x": 540,
+    "min_scale": 0.7,
+    "max_scale": 1.6
+  },
+  "anim_max_scale": 1.15
+}

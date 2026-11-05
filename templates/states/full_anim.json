@@ -1,0 +1,19 @@
+{
+  "label": "Full-screen animation",
+  "source": "Hesham's symbols + sequence 1",
+  "kind": "anim",
+  "frame": null,
+  "anim": [
+    108,
+    250,
+    920,
+    1250
+  ],
+  "caption": {
+    "y": 1330,
+    "h": 90,
+    "size": 70
+  },
+  "clip": null,
+  "anim_max_scale": 1.35
+}

@@ -1,0 +1,41 @@
+{
+  "frame": {
+    "rect": [
+      40,
+      1060,
+      1040,
+      1964
+    ],
+    "radius": 44
+  },
+  "caption": {
+    "y": 960,
+    "h": 80,
+    "size": 76
+  },
+  "clip": {
+    "rect": [
+      40,
+      1060,
+      1040,
+      1964
+    ],
+    "hero": true,
+    "hero_clip_top": 940,
+    "head_w_px": 560,
+    "head_top": 1020,
+    "head_x": 540,
+    "min_scale": 0.8,
+    "max_scale": 1.8
+  },
+  "label": "Text on top, you as the hero below",
+  "source": "Hesham 2026-11-05: upper section = reference links, generated videos, animated cards, motions; lower = the hero talking-head cut-out",
+  "kind": "rest",
+  "anim": null,
+  "text": [
+    108,
+    250,
+    920,
+    950
+  ]
+}

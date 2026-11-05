@@ -2,5 +2,6 @@
   "label": "Stage (dark)",
   "description": "Animation and captions on top, you big at the bottom, dark background.",
   "layout": "stage",
-  "palette": "dark"
+  "palette": "dark",
+  "order": 0
 }

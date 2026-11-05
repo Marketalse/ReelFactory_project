@@ -9,7 +9,7 @@ import argparse, json, os, shutil, sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from lib import config as cfg, matte, sfx_mix       # noqa: E402
-from lib import hfbuild, director, pack, broll, layouts   # noqa: E402
+from lib import hfbuild, director, pack, broll, layouts, states   # noqa: E402
 
 
 def handle_for(platform, final):
@@ -41,8 +41,9 @@ def compile_job(job, platform="instagram", final=False, out=None, layer="full"):
     words = edl["words"]
     kw = set(tl["keyword_ids"])
     lay_name = layouts.active_name()                          # a chosen LAYOUT (templates/layouts/): stage = animation on top, caption band, cut-out hero at the bottom
-    pk = None if lay_name else pack.plan(job, tl, edl)        # FORMAT PACK (T129) decided first: no loose cards = no caption gaps; its highlight words shape the captions (T133)
-    gaps = [] if (pk or lay_name) else tl["caption_gaps"]
+    seq_theme = themes.current() if (themes.current() or {}).get("sequence") else None          # a theme that walks through states (templates/states/)
+    pk = None if (lay_name or seq_theme) else pack.plan(job, tl, edl)        # FORMAT PACK (T129) decided first: no loose cards = no caption gaps; its highlight words shape the captions (T133)
+    gaps = [] if (pk or lay_name or seq_theme) else tl["caption_gaps"]
     keep = [i for i, w in enumerate(words) if not any(a - 0.05 <= w["start"] < b for a, b in gaps)]
     cap_words = [words[i] for i in keep]
     cap_kw = [k for k, i in enumerate(keep) if i in kw]
@@ -64,8 +65,42 @@ def compile_job(job, platform="instagram", final=False, out=None, layer="full"):
                 open(os.path.join(out, "assets", "icons", f), "w", encoding="utf-8").write(pack.paint(open(src, encoding="utf-8").read(), accent))
             else:
                 shutil.copy(src, os.path.join(out, "assets", "icons", f))
-    lay_args, lay_dropped, lay_notes = None, [], []
-    if lay_name and layer == "full":
+    lay_args, lay_dropped, lay_notes, seq_plan = None, [], [], None
+    ft = None
+    if seq_theme and layer == "full":
+        bad = states.sequence_problems(seq_theme)
+        if bad: raise RuntimeError(f"theme {seq_theme.get('label')} breaks the safe zone: " + "; ".join(bad))
+        reg = hfbuild.REGISTRY["blocks"]
+        seq_plan = states.plan(seq_theme, [x for x in scenes if x["block"] != "captions"], edl["words"], tl["keyword_ids"], tl["duration"], reg)
+        lay_dropped = list(seq_plan["dropped"])
+        scenes = seq_plan["frames"] + seq_plan["scenes"] + [x for x in scenes if x["block"] == "captions"]
+        tl = dict(tl, scenes=[])
+        bc = seq_plan["base_caption"] or {"y": 790, "h": 80, "size": 76}
+        lay_args = {"stage_rect": [108, 250, 920, 790], "vars": {"cap-top": f"{bc['y']}px", "cap-h": f"{bc['h']}px", "cap-size": f"{bc['size']}px", "cap-pill-bg": "transparent"},
+                    "hero": None, "extra_tweens": seq_plan["tweens"]}
+        try:
+            shots = json.load(open(os.path.join(job, "shot_log.json"), encoding="utf-8"))
+        except (OSError, ValueError):
+            shots = []
+        m = None
+        if seq_plan["needs_hero"]:
+            try:
+                src = matte.cutout(job, edl, 0.0, tl["duration"], final)
+                os.makedirs(os.path.join(out, "assets"), exist_ok=True)
+                shutil.copy(src, os.path.join(out, "assets", "hero.webm"))
+                hs = next(s["spec"]["clip"] for s in seq_plan["segments"] if s["spec"].get("clip") and s["spec"]["clip"].get("hero"))
+                lay_args["hero"] = {"src": "assets/hero.webm", "clip": [0, hs.get("hero_clip_top", 800), 1080, 1920]}
+                m = layouts.measure_matte(src, (cfg.find_ffmpeg() or ("ffmpeg",))[0])
+            except matte.MatteError as ex:
+                lay_notes.append(f"hero cut-out skipped (he shows plainly in the box): {ex}"); print("   ", lay_notes[-1])
+                seq_plan["tweens"] = [x for x in seq_plan["tweens"] if "#hero-clip" not in x]
+                lay_args["extra_tweens"] = seq_plan["tweens"]
+        if m is None: m = layouts.measure_shots(shots)
+        lay_notes.append("states: " + " -> ".join(f"{s['state']}@{s['t_in']:.1f}" for s in seq_plan["segments"][:12]) + (" ..." if len(seq_plan["segments"]) > 12 else ""))
+        lay_notes.append("head " + (f"measured: width {m['head_w']:.0f}px, top {m['top']:.0f}px" if m else "not measurable: default size"))
+        if m is None: m = {"top": 420.0, "head_w": 500.0, "head_cx": 540.0}
+        seq_tfs = states.transforms(seq_plan["segments"], m)
+    elif lay_name and layer == "full":
         spec = layouts.load(lay_name)
         probs = layouts.problems(spec)
         if probs: raise RuntimeError(f"layout {lay_name} breaks the safe zone: " + "; ".join(probs))
@@ -113,7 +148,9 @@ def compile_job(job, platform="instagram", final=False, out=None, layer="full"):
         dropped = [s["id"] for s in behind]
         scenes = [s for s in scenes if s["block"] != "text_behind"]
     cuts = director.face_cuts(tl, edl["segments"])
-    if lay_args and ft:                                       # the footage sits in the container; the layout has no punch-ins (the hero stays steady)
+    if seq_plan:                                              # each state has its own footage box: cut the footage at the state changes, each piece gets its transform
+        cuts = states.split_cuts(cuts, seq_plan["segments"], seq_tfs)
+    elif lay_args and ft:                                       # the footage sits in the container; the layout has no punch-ins (the hero stays steady)
         cuts = [dict(c, scale=ft["scale"], cx=0.5, cy=0.38, y=ft["y"], x=ft.get("x", 0)) for c in cuts]
     # logos used by this reel
     src_logos = os.path.join(job, "assets")
@@ -132,8 +169,9 @@ def compile_job(job, platform="instagram", final=False, out=None, layer="full"):
         except Exception as ex:                               # noqa: BLE001 - no sound effects is better than no reel
             print("   sound effects skipped:", ex)
     hfbuild.build_project(out, duration=tl["duration"], face_cuts=[] if layer == "graphics" else cuts, scenes=scenes,
-                          video_src=os.path.join(job, "proxy.mp4"), transparent=layer == "graphics", audio=audio or None, layout=lay_args)
-    json.dump({"platform": platform, "final": final, "face_cuts": cuts, "caption_words": len(cap_words), "dropped_scenes": dropped + pack_dropped + lay_dropped, "layout": lay_name if lay_args else None, "layout_notes": lay_notes, "sfx": len(audio), "format_pack": bool(pk)},
+                          video_src=os.path.join(job, "proxy.mp4"), transparent=layer == "graphics", audio=audio or None, layout=lay_args,
+                          extra_tweens=(lay_args or {}).get("extra_tweens"))
+    json.dump({"platform": platform, "final": final, "face_cuts": cuts, "caption_words": len(cap_words), "dropped_scenes": dropped + pack_dropped + lay_dropped, "layout": (lay_name or (seq_theme and themes.CURRENT["name"])) if lay_args else None, "layout_notes": lay_notes, "sfx": len(audio), "format_pack": bool(pk)},
               open(os.path.join(out, "compile_info.json"), "w"), indent=1)
     return out
 
