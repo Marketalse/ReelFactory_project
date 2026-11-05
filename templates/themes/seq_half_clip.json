@@ -1,0 +1,25 @@
+{
+  "label": "Sequence 2: text, half animation over half clip",
+  "description": "Full clip with text, then a half-screen animation over a half clip, then text again.",
+  "sequence": [
+    "text_full_clip",
+    "half_anim_half_clip",
+    "text_full_clip"
+  ],
+  "rest": "text_full_clip",
+  "palette": "dark",
+  "blocks": [
+    "hook_two_tone",
+    "pixel_scene",
+    "motion_card",
+    "info_card",
+    "number_graph",
+    "text_card",
+    "logo_card",
+    "name_tag",
+    "doc_card",
+    "ui_card",
+    "line_text"
+  ],
+  "layout": "panel"
+}

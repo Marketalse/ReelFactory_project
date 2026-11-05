@@ -864,6 +864,56 @@
     "max": 120.0
    },
    "sfx": null
+  },
+  "line_text": {
+   "kind": "scene",
+   "label": "Plain text lines (over footage)",
+   "file": "line_text.html",
+   "layer": 20,
+   "purpose": "Plain text over him or in a zone: one or two lines, optionally with a bold headline or a bold number (Hesham's Figma symbols). Words he said only; a number only if he said it.",
+   "inputs": {
+    "headline": {
+     "type": "string",
+     "maxLength": 20,
+     "default": "",
+     "help": "bold headline tag, his words"
+    },
+    "number": {
+     "type": "string",
+     "maxLength": 8,
+     "default": "",
+     "help": "bold number, only if spoken"
+    },
+    "line1": {
+     "type": "string",
+     "required": true,
+     "maxLength": 30,
+     "help": "first line, his words"
+    },
+    "line2": {
+     "type": "string",
+     "maxLength": 30,
+     "default": "",
+     "help": "optional second line"
+    }
+   },
+   "duration_s": {
+    "min": 1.2,
+    "max": 3.5
+   },
+   "rules": [
+    "use headline OR number, not both",
+    "never a number he did not say"
+   ],
+   "sfx": {
+    "in": "whoosh"
+   },
+   "natural_box": [
+    124,
+    600,
+    904,
+    1180
+   ]
   }
  }
 }

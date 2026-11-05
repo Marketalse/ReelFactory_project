@@ -213,6 +213,20 @@ def i4only():
     e2e.start_mock(); work = e2e.make_copy(); i4(work, "integration_i4"); save("integration_i4")
 
 
+def sequence_theme(name="seq_hero_headline"):
+    """A sequence theme (states: quarter/half/full animation, clips, hero) end to end through the real pipeline: states used, a draft exists, QA clean."""
+    work = e2e.make_copy(); srv = e2e.start_mock()
+    jd, r0 = e2e.seed_job(work, "seq", 30, 12)
+    json.dump({"theme": name}, open(os.path.join(jd, "brief.json"), "w"))
+    r = e2e.run(work, [jd, "--budget", "1.5"], 1500, "seq")
+    info = json.load(open(os.path.join(jd, "hyperframes", "compile_info.json"))) if os.path.exists(os.path.join(jd, "hyperframes", "compile_info.json")) else {}
+    qa = json.load(open(os.path.join(jd, "qa.json"))) if os.path.exists(os.path.join(jd, "qa.json")) else {}
+    rec("regression", f"R10 {name} reel reaches a draft", "PASS" if r["code"] == 0 and os.path.exists(os.path.join(jd, "review", "draft_540p.mp4")) else "FAIL", f"exit {r['code']}; {tail(r, 240)}")
+    rec("regression", f"R11 {name}: compile walked the states", "PASS" if info.get("layout") == name and any(str(n).startswith("states:") for n in info.get("layout_notes", [])) else "FAIL", json.dumps({k: info.get(k) for k in ("layout", "layout_notes", "dropped_scenes")}, ensure_ascii=False))
+    rec("regression", f"R12 {name}: QA found no errors", "PASS" if not qa.get("errors") else "FAIL", json.dumps(qa.get("errors")) + " " + json.dumps(qa.get("warnings"))[:200])
+    save("regression"); srv.shutdown(); shutil.rmtree(work, ignore_errors=True)
+
+
 GROUPS = {"functional": functional, "integration": integration, "i4": i4only, "stress": stress, "endurance": endurance}
 if __name__ == "__main__":
     if sys.argv[1:2] == ["nasty"]: nasty(); sys.exit(0)
@@ -220,5 +234,6 @@ if __name__ == "__main__":
     if sys.argv[1:2] == ["regression"]: nasty(); cleancut(); stage_layout(); sys.exit(0)
     if sys.argv[1:2] == ["stage"]: stage_layout(); sys.exit(0)
     if sys.argv[1:2] == ["overlay"]: stage_layout("overlay"); sys.exit(0)
+    if sys.argv[1:2] == ["sequence"]: sequence_theme(*sys.argv[2:3]); sys.exit(0)
     for g in sys.argv[1:]:
         GROUPS[g](); save(g)

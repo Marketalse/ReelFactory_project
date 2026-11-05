@@ -1,0 +1,24 @@
+{
+  "label": "Sequence 3: hero with animation, then headline",
+  "description": "You as the hero over the half clip: animation on top, then a headline with text.",
+  "sequence": [
+    "half_anim_hero",
+    "headline_hero"
+  ],
+  "rest": "headline_hero",
+  "palette": "dark",
+  "blocks": [
+    "hook_two_tone",
+    "pixel_scene",
+    "motion_card",
+    "info_card",
+    "number_graph",
+    "text_card",
+    "logo_card",
+    "name_tag",
+    "doc_card",
+    "ui_card",
+    "line_text"
+  ],
+  "layout": "panel"
+}

@@ -1,0 +1,22 @@
+{
+  "label": "Full clip with text",
+  "source": "Hesham's symbols + sequence 2",
+  "kind": "rest",
+  "frame": "none",
+  "anim": null,
+  "text": [
+    108,
+    260,
+    920,
+    860
+  ],
+  "caption": {
+    "y": 1200,
+    "h": 120,
+    "size": 72
+  },
+  "clip": {
+    "full": true,
+    "hero": false
+  }
+}

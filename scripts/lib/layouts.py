@@ -54,11 +54,11 @@ def problems(spec):
     return out
 
 
-def fit(zone, box):
+def fit(zone, box, max_scale=1.0):
     """Place a block whose content covers `box` inside `zone` (both [x0,y0,x1,y1]): scale = largest that fits, never above 1; centred. -> (tx, ty, s) for
     transform-origin 0 0: translate(tx, ty) scale(s)."""
     zw, zh, bw, bh = zone[2] - zone[0], zone[3] - zone[1], box[2] - box[0], box[3] - box[1]
-    s = min(1.0, zw / bw, zh / bh)
+    s = min(max_scale, zw / bw, zh / bh)
     tx = (zone[0] + zw / 2) - s * (box[0] + bw / 2)
     ty = (zone[1] + zh / 2) - s * (box[1] + bh / 2)
     return round(tx, 1), round(ty, 1), round(s, 4)
@@ -86,8 +86,9 @@ def fill_stage(kept, words, kw_idx, duration, *, limit=36):
                 if not nxt: break
                 t = nxt[0] - 0.1; continue
             k = next((i for i in win if i in kws), None)
-            if k is None: k = max(win, key=lambda i: len(words[i]["text"]))
+            if k is None: k = max(win[:3], key=lambda i: len(words[i]["text"]))            # no keyword: the longest of the first words, so the card starts with the window
             t_in = max(t, words[k]["start"] - 0.15); t_out = min(gb - 0.1, t_in + FILL_MAX)
+            if t_out - t_in < FILL_MIN: t_in = max(t, t_out - FILL_MIN)
             run = [words[k]["text"]]
             for nx in words[k + 1:k + 4]:
                 if len(" ".join(run + [nx["text"]])) > limit or nx["start"] > t_out: break
@@ -130,11 +131,17 @@ def face_transform(hero, face_origin=(540, 0.38 * 1920)):
     return {"scale": hero["scale"], "x": round(fx - face_origin[0], 1), "y": round(fy - face_origin[1], 1)}
 
 
-def frame_groups(inst, spec, theme="dark"):
+def frame_groups(inst, spec, theme="dark", container="spec"):
     """The stage frame's inner HTML: a full-canvas background with a rounded HOLE where the footage container is (the footage shows through it), and the
     glow border around the hole. All numbers come from the layout's container zone."""
     import html as _h
-    x0, y0, x1, y1 = spec["zones"]["container"]["rect"]; r = int(spec["zones"]["container"].get("radius", 44))
+    cz = spec["zones"]["container"] if container == "spec" else container            # container = None: a full-screen plain frame (no hole)
+    if cz is None:
+        from . import pack
+        th = theme if theme in ("dark", "violet") else "dark"
+        return (f'<div id="{inst}-wrap" class="{inst}-{_h.escape(th)}" style="{pack.theme_style()}"><svg id="{inst}-bg" viewBox="0 0 1080 1920">'
+                f'<path fill-rule="evenodd" style="fill:var(--pk-bg)" d="M0 0H1080V1920H0Z"/></svg><div id="{inst}-glow" style="display:none"></div></div>')
+    x0, y0, x1, y1 = cz["rect"]; r = int(cz.get("radius", 44))
     path = (f"M0 0H1080V1920H0Z M{x0 + r} {y0}H{x1 - r}A{r} {r} 0 0 1 {x1} {y0 + r}V{y1 - r}A{r} {r} 0 0 1 {x1 - r} {y1}H{x0 + r}"
             f"A{r} {r} 0 0 1 {x0} {y1 - r}V{y0 + r}A{r} {r} 0 0 1 {x0 + r} {y0}Z")
     th = theme if theme in ("dark", "violet") else "dark"
@@ -209,3 +216,13 @@ def hero_transform(hero, m, *, canvas=(1080, 1920), origin=(540, 730)):
     lo, hi = cont[2] - ox - s * (W - ox), cont[0] - ox + s * ox                              # ... but never so far that the footage leaves a gap in its container
     x = max(lo, min(hi, x))
     return {"scale": round(s, 4), "x": round(x, 1), "y": round(y, 1)}
+
+
+def measure_shots(shots):
+    """A rough head measurement from the AI shot log (when no cut-out is made): median face box -> {"top","head_w","head_cx"} in canvas px, or None."""
+    import statistics
+    fs = [r["face"] for r in (shots or []) if r.get("face") and all(k in r["face"] for k in ("x", "y", "w", "h"))]
+    if not fs: return None
+    med = lambda k: statistics.median(f[k] for f in fs)
+    x, y, w, h = med("x"), med("y"), med("w"), med("h")
+    return {"top": max(0.0, (y - 0.3 * h) * 1920), "head_w": max(60.0, w * 1080 * 1.1), "head_cx": (x + w / 2) * 1080}

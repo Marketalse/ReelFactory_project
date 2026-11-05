@@ -1,0 +1,41 @@
+{
+  "label": "Headline and text, you as the hero over the half clip",
+  "source": "Hesham's symbols + sequence 3",
+  "kind": "rest",
+  "frame": {
+    "rect": [
+      40,
+      930,
+      1040,
+      1964
+    ],
+    "radius": 44
+  },
+  "anim": null,
+  "text": [
+    108,
+    250,
+    920,
+    790
+  ],
+  "caption": {
+    "y": 790,
+    "h": 80,
+    "size": 76
+  },
+  "clip": {
+    "rect": [
+      40,
+      930,
+      1040,
+      1964
+    ],
+    "hero": true,
+    "hero_clip_top": 800,
+    "head_w_px": 580,
+    "head_top": 880,
+    "head_x": 540,
+    "min_scale": 0.8,
+    "max_scale": 1.8
+  }
+}

@@ -16,7 +16,7 @@ from . import config as cfg
 from .hfbuild import REGISTRY, check_values, BuildError
 
 FULL_SCREEN = {"text_card", "flash", "number_graph", "before_after", "tier_list", "pixel_scene"}          # the face is hidden: captions pause
-DIRECTOR_BLOCKS = ["text_card", "split", "flash", "logo_card", "name_tag", "info_card", "number_graph", "before_after", "tier_list", "ui_card", "doc_card", "pixel_scene", "text_behind", "motion_card"]   # what the Director may place as moments (motion_card only once motion files have Arabic tags)
+DIRECTOR_BLOCKS = ["text_card", "line_text", "split", "flash", "logo_card", "name_tag", "info_card", "number_graph", "before_after", "tier_list", "ui_card", "doc_card", "pixel_scene", "text_behind", "motion_card"]   # what the Director may place as moments (motion_card only once motion files have Arabic tags)
 DIGITS = re.compile(r"[0-9][0-9,.]*")
 
 
@@ -25,7 +25,11 @@ def offered_blocks():
     from . import icon_tags, layouts
     ok = [b for b in DIRECTOR_BLOCKS if b != "motion_card" or icon_tags.motion_ready()]
     ln = layouts.active_name()
-    if ln:                                                       # a chosen layout: only blocks that can play inside its stage zone
+    from . import themes
+    th = themes.current()
+    if th and th.get("sequence"):                                # a sequence theme: the blocks its states allow
+        ok = [b for b in ok if b in set(th.get("blocks", []))]
+    elif ln:                                                     # a chosen layout: only blocks that can play inside its stage zone
         allowed = set(layouts.load(ln).get("blocks_in_stage", []))
         ok = [b for b in ok if b in allowed]
     return ok
@@ -153,8 +157,11 @@ def build_prompt(words, dur, brief="", logos=(), feedback="", prefs="", marks=()
         numbers=", ".join(spoken_numbers(words)) or "none", catalogue=catalogue(),
         flash_max=r["moments"]["flash"]["max_per_reel"], tc_gap=r["moments"]["text_card"]["min_gap_s"],
         chapter="-".join(str(x) for x in r["chapter_card_every_s"]), transcript=numbered_transcript(words, marks=marks))
-    from . import layouts
-    if layouts.active_name():
+    from . import layouts, themes
+    if (themes.current() or {}).get("sequence"):
+        p += ("\n\nREEL STRUCTURE: this reel changes its look from beat to beat (animation over the top quarter, half or the full screen; he as a clip, a box or a cut-out hero). "
+              "Cards are shrunk to fit each zone, so keep each one short, simple and readable, and give it its own moment: do not stack cards. Hesham is never hidden except by a full-screen card.")
+    elif layouts.active_name():
         p += ("\n\nREEL LAYOUT: this reel has a STAGE on top (small, about 800x600 px) where the cards play, and Hesham is a cut-out at the bottom: his face is NEVER hidden "
               "and there are no full-screen cards. Use only the blocks listed above; they are shrunk to fit the stage. Keep each one short and change the stage often.")
     if prefs:

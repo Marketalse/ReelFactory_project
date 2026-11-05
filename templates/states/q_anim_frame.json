@@ -1,0 +1,40 @@
+{
+  "label": "Quarter animation over the frame",
+  "source": "Hesham's symbols + sequence 1",
+  "kind": "anim",
+  "frame": {
+    "rect": [
+      40,
+      800,
+      1040,
+      1964
+    ],
+    "radius": 44
+  },
+  "anim": [
+    108,
+    250,
+    920,
+    720
+  ],
+  "caption": {
+    "y": 730,
+    "h": 80,
+    "size": 68
+  },
+  "clip": {
+    "rect": [
+      40,
+      800,
+      1040,
+      1964
+    ],
+    "hero": false,
+    "head_w_px": 430,
+    "head_top": 850,
+    "head_x": 540,
+    "min_scale": 0.7,
+    "max_scale": 1.6
+  },
+  "anim_max_scale": 1.0
+}

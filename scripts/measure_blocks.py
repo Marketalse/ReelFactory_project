@@ -10,7 +10,7 @@ sys.path.insert(0, os.path.join(ROOT, "scripts")); sys.path.insert(0, os.path.jo
 import test_safe_zones as tz                                              # noqa: E402  (its page builder: every block filled with its longest text)
 from lib import hfbuild                                                   # noqa: E402
 
-BLOCKS = ["hook_two_tone", "text_card", "info_card", "number_graph", "pixel_scene", "motion_card", "logo_card", "name_tag", "split", "flash", "doc_card", "ui_card", "before_after", "tier_list"]
+BLOCKS = ["hook_two_tone", "text_card", "info_card", "number_graph", "pixel_scene", "motion_card", "logo_card", "name_tag", "split", "flash", "doc_card", "ui_card", "before_after", "tier_list", "line_text"]
 JS = r"""
 const { chromium } = require('playwright');
 (async () => {
