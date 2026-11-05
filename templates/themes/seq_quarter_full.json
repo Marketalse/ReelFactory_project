@@ -21,5 +21,6 @@
     "ui_card",
     "line_text"
   ],
-  "layout": "panel"
+  "layout": "panel",
+  "order": 4
 }

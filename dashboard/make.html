@@ -322,10 +322,12 @@ input[type=password]:focus{border-color:var(--violet)}
         </div>
         <div class="slot wide">
           <div class="head">Creative brief <span class="badge auto">Optional</span> <button class="tip" type="button" data-tip="Tell the editor what this reel is for before it starts. It picks the story, the pace and the length from this. Leave everything on “Let the editor decide” to work like before.">?</button></div>
+          <div class="small" style="margin-top:10px">Styles <span class="muted">(click one; it sets the “Look” below)</span></div>
+          <div id="styleMenu" style="display:flex;gap:10px;overflow-x:auto;padding:6px 0 10px"></div>
           <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin-top:8px">
             <label class="small">Goal<select id="cbGoal" class="btn" style="width:100%;padding:9px 12px"><option value="">Let the editor decide</option><option value="educate">Teach something useful</option><option value="sell">Sell a product or service</option><option value="followers">Win new followers</option><option value="entertain">Entertain and be shared</option></select></label>
             <label class="small">Style<select id="cbStyle" class="btn" style="width:100%;padding:9px 12px"><option value="">Let the editor decide</option><option value="educational">Educational: clear, calmer</option><option value="fast">Fast: energetic, quick cuts</option><option value="storytelling">Storytelling: emotional</option></select></label>
-            <label class="small">Look<select id="cbTheme" class="btn" style="width:100%;padding:9px 12px"><option value="">Project default</option><option value="stage_dark">Stage (dark): animation on top, you big at the bottom</option><option value="stage_violet">Stage (violet)</option><option value="overlay">Overlay: you full-screen, one card over your chest</option><option value="seq_quarter_full">Sequence 1: quarter, full, quarter animation</option><option value="seq_half_clip">Sequence 2: text, half animation over half clip</option><option value="seq_hero_headline">Sequence 3: hero with animation, then headline</option><option value="classic">Classic panel</option></select></label>
+            <label class="small">Look<select id="cbTheme" class="btn" style="width:100%;padding:9px 12px"><option value="">Project default</option><option value="stage_dark">Stage (dark): animation on top, you big at the bottom</option><option value="stage_violet">Stage (violet)</option><option value="overlay">Overlay: you full-screen, one card over your chest</option><option value="seq_quarter_full">Sequence 1: quarter, full, quarter animation</option><option value="seq_half_clip">Sequence 2: text, half animation over half clip</option><option value="seq_hero_headline">Sequence 3: hero with animation, then headline</option><option value="seq_media_hero">Media + Hero: media on top, you below</option><option value="classic">Classic panel</option></select></label>
             <label class="small">Length<select id="cbLength" class="btn" style="width:100%;padding:9px 12px"><option value="">Standard (40–90 s)</option><option value="short">Short (30–45 s)</option><option value="long">Long (60–90 s)</option></select></label>
           </div>
           <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;margin-top:10px">
@@ -1129,6 +1131,22 @@ async function boot(){
 boot();
 loadIt(); setInterval(loadIt, 60000);
 checkUpdate(); setInterval(checkUpdate, 600000);
+
+(async function styleMenu(){
+  const box=$("#styleMenu"); if(!box) return;
+  const mark=()=>{ [...box.children].forEach(b=>{ const on=b.dataset.name===($("#cbTheme").value||""); b.style.outline=on?"2px solid var(--lime,#b6ff00)":"1px solid rgba(255,255,255,.12)"; }); };
+  try{
+    const d=await (await fetch("/api/themes",{cache:"no-store"})).json();
+    const mk=(name,label,desc,svg)=>{ const b=document.createElement("button"); b.type="button"; b.dataset.name=name; b.title=desc||"";
+      b.style.cssText="flex:0 0 auto;width:150px;background:rgba(255,255,255,.04);border:0;border-radius:14px;padding:8px;color:inherit;cursor:pointer;text-align:center";
+      b.innerHTML='<div style="height:150px;display:flex;align-items:center;justify-content:center">'+(svg||"")+'</div><div class="small" style="margin-top:6px">'+label.replace(/[<>&]/g,"")+'</div>';
+      const s=b.querySelector("svg"); if(s){ s.style.maxWidth="100%"; s.style.maxHeight="150px"; s.style.width="auto"; s.style.height="150px"; }
+      b.onclick=()=>{ $("#cbTheme").value=name; mark(); }; return b; };
+    box.appendChild(mk("","Project default","The look set for this Mac (config)",""));
+    (d.themes||[]).forEach(t=>box.appendChild(mk(t.name,t.label,t.description,t.svg)));
+    $("#cbTheme").addEventListener("change",mark); mark();
+  }catch(e){ box.style.display="none"; }
+})();
 </script>
 </body>
 </html>

@@ -2,5 +2,6 @@
   "label": "Classic panel",
   "description": "Your face in a window with a step panel below (the original Format Pack look).",
   "layout": "panel",
-  "palette": "dark"
+  "palette": "dark",
+  "order": 7
 }

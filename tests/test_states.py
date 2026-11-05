@@ -12,9 +12,9 @@ SEQ = [n for n in themes.names() if themes.load(n).get("sequence")]
 
 class States(unittest.TestCase):
     def test_every_state_and_sequence_is_valid_and_inside_the_safe_zone(self):
-        self.assertTrue({"q_anim_frame", "full_anim", "text_full_clip", "half_anim_half_clip", "half_anim_hero", "headline_hero"} <= set(states.names()))
+        self.assertTrue({"q_anim_frame", "full_anim", "text_full_clip", "half_anim_half_clip", "half_anim_hero", "headline_hero", "media_hero", "media_hero_text"} <= set(states.names()))
         for n in states.names(): self.assertEqual(states.problems(states.load(n)), [], n)
-        self.assertEqual(len(SEQ), 3)
+        self.assertEqual(len(SEQ), 4)
         for n in SEQ: self.assertEqual(states.sequence_problems(themes.load(n)), [], n)
 
     def test_a_state_that_leaves_the_safe_zone_is_caught(self):
@@ -77,6 +77,22 @@ class States(unittest.TestCase):
         pl = states.plan(themes.load("seq_hero_headline"), CARDS, WORDS, [2], 12.0, REG)
         self.assertEqual(sum("#hero-clip" in t for t in pl["tweens"]), len(pl["segments"]))
         self.assertEqual(sum('"#caps"' in t for t in pl["tweens"]), len(pl["segments"]))
+
+    def test_media_hero_style_has_a_big_media_zone_on_top_and_the_hero_below(self):
+        a = states.load("media_hero")
+        self.assertGreaterEqual(a["anim"][3] - a["anim"][1], 650)                 # the upper section is big
+        self.assertTrue(a["clip"]["hero"] and a["clip"]["rect"][1] > a["anim"][3])  # the hero box starts below it
+        pl = states.plan(themes.load("seq_media_hero"), CARDS + [dict(id="c4", block="motion_card", t_in=6.0, t_out=8.5, values={"motion": "x.json", "label": ""})], WORDS, [2], 12.0, REG)
+        self.assertTrue(pl["needs_hero"])
+        self.assertTrue(all(s["spec"]["clip"]["hero"] for s in pl["segments"]))
+
+    def test_styles_menu_lists_every_theme_with_a_picture_in_a_fixed_order(self):
+        from lib import theme_preview
+        menu = theme_preview.themes_menu()
+        self.assertEqual({m["name"] for m in menu}, set(themes.names()))
+        self.assertEqual(menu[0]["name"], "stage_dark")
+        for m in menu:
+            self.assertTrue(m["svg"].startswith("<svg") and m["label"], m["name"])
 
     def test_the_sequence_themes_show_up_in_the_dashboard_list(self):
         self.assertTrue(set(SEQ) <= set(themes.names()))

@@ -153,6 +153,10 @@ class H(SimpleHTTPRequestHandler):
             if q.get("check") == "1":
                 v["update_ready"] = settings_api.update_ready()
             return self.send_json(200, v)
+        if self.path.startswith("/api/themes"):                           # the Styles menu: every style with its little picture
+            sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "scripts"))
+            from lib import theme_preview
+            return self.send_json(200, {"themes": theme_preview.themes_menu()})
         if self.path.startswith("/api/health"):
             return self.send_json(200, settings_api.health())
         if self.path.startswith("/api/timeline"):
