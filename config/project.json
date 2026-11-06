@@ -138,11 +138,7 @@
       "effort": "medium",
       "note": "fixes a plan that breaks rules; also the revision after the critic"
     },
-    "critic": {
-      "model": "anthropic/claude-haiku-5.5",
-      "effort": "low",
-      "note": "(T134) QA: looks at the draft and scores it (Hesham 2026-11-03)"
-    },
+    "critic": {"enabled": true, "repair": true, "repair_rounds": 1, "_note": "T134: a small vision model looks at ~8 stills of the draft and scores it (about $0.002) and names each problem with a kind and a time. repair: problems with a known fix (head cut off, empty zone, text on the face, unreadable captions) are fixed once and the draft is made again; if the new look is worse the repair is switched off. repair_rounds 0 = report only. enabled false switches the whole check off."},
     "cover": {
       "model": "anthropic/claude-sonnet-5.5",
       "effort": "low",

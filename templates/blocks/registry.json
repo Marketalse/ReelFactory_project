@@ -1,919 +1,920 @@
 {
- "_note": "Single authority for every visual block. The Director prompt, the validator and the compiler are all built from this file. To change a block, change it here and in its HTML file together.",
- "version": 1,
- "canvas": {
-  "width": 1080,
-  "height": 1920,
-  "fps": 30
- },
- "safe_band_px": {
-  "top": 168,
-  "bottom": 1330,
-  "_why": "Instagram/TikTok draw their own UI above 168 px and below 1330 px; every word must sit inside this band."
- },
- "placeholders": {
-  "__ID__": "the instance id (host id = scene root id = timeline key; HyperFrames requires all three to match)",
-  "__DUR__": "the instance duration in seconds",
-  "<!--GROUPS-->": "captions only: the timed caption groups written by the compiler"
- },
- "blocks": {
-  "face_cut": {
-   "kind": "media",
-   "label": "Talking head (a cut of the proxy)",
-   "file": null,
-   "layer": 0,
-   "purpose": "The speaker. Every second of the reel has a face_cut under it, except full-screen cards.",
-   "inputs": {
-    "src_in": {
-     "type": "number",
-     "required": true,
-     "help": "start time in proxy.mp4 (seconds)"
-    },
-    "src_out": {
-     "type": "number",
-     "required": true,
-     "help": "end time in proxy.mp4 (seconds)"
-    },
-    "scale": {
-     "type": "number",
-     "min": 1.0,
-     "max": 1.6,
-     "default": 1.0,
-     "help": "punch-in zoom"
-    },
-    "cx": {
-     "type": "number",
-     "min": 0,
-     "max": 1,
-     "default": 0.5,
-     "help": "zoom centre x (0-1)"
-    },
-    "cy": {
-     "type": "number",
-     "min": 0,
-     "max": 1,
-     "default": 0.38,
-     "help": "zoom centre y (0-1); keep the face high"
-    }
-   },
-   "duration_s": {
-    "min": 0.8,
-    "max": 12
-   },
-   "sfx": null
+  "_note": "Single authority for every visual block. The Director prompt, the validator and the compiler are all built from this file. To change a block, change it here and in its HTML file together.",
+  "version": 1,
+  "canvas": {
+    "width": 1080,
+    "height": 1920,
+    "fps": 30
   },
-  "captions": {
-   "kind": "scene",
-   "label": "Word-pop captions (Arabic, 1-3 words)",
-   "file": "captions.html",
-   "layer": 40,
-   "track_kind": "captions",
-   "purpose": "Every spoken word, in groups of up to 3, built from the transcript by the compiler. The Director only chooses keyword word indices.",
-   "inputs": {
-    "groups": {
-     "type": "generated",
-     "help": "compiler writes groups from transcript words; keywords turn lime + heavier + pop"
-    }
-   },
-   "placement": {
-    "center_y_px": 1180,
-    "max_width_px": 900
-   },
-   "duration_s": {
-    "min": 1,
-    "max": 120
-   },
-   "sfx": {
-    "keyword": "pop",
-    "min_gap_s": 3
-   }
+  "safe_band_px": {
+    "top": 168,
+    "bottom": 1330,
+    "_why": "Instagram/TikTok draw their own UI above 168 px and below 1330 px; every word must sit inside this band."
   },
-  "hook_two_tone": {
-   "kind": "scene",
-   "label": "Hook title, two tones (white line + lime line)",
-   "file": "hook_two_tone.html",
-   "layer": 30,
-   "purpose": "Frame 0 must already show the hook. Used once, at the very start.",
-   "inputs": {
-    "line1": {
-     "type": "string",
-     "required": true,
-     "maxLength": 28,
-     "help": "white line, his own words"
-    },
-    "line2": {
-     "type": "string",
-     "required": true,
-     "maxLength": 22,
-     "help": "lime line on the violet bar, the strongest word(s)"
-    }
-   },
-   "duration_s": {
-    "min": 1.5,
-    "max": 3.0
-   },
-   "rules": [
-    "only beat 1",
-    "visible at 0.0 s"
-   ],
-   "sfx": {
-    "in": "hit"
-   },
-   "natural_box": [
-    176,
-    418,
-    852,
-    940
-   ]
+  "placeholders": {
+    "__ID__": "the instance id (host id = scene root id = timeline key; HyperFrames requires all three to match)",
+    "__DUR__": "the instance duration in seconds",
+    "<!--GROUPS-->": "captions only: the timed caption groups written by the compiler"
   },
-  "text_card": {
-   "kind": "scene",
-   "label": "Kinetic text card (full screen)",
-   "file": "text_card.html",
-   "layer": 20,
-   "purpose": "A chapter title or key claim. Hides the face; voice continues underneath.",
-   "inputs": {
-    "kicker": {
-     "type": "string",
-     "maxLength": 24,
-     "default": "",
-     "help": "small line above (e.g. chapter number)"
+  "blocks": {
+    "face_cut": {
+      "kind": "media",
+      "label": "Talking head (a cut of the proxy)",
+      "file": null,
+      "layer": 0,
+      "purpose": "The speaker. Every second of the reel has a face_cut under it, except full-screen cards.",
+      "inputs": {
+        "src_in": {
+          "type": "number",
+          "required": true,
+          "help": "start time in proxy.mp4 (seconds)"
+        },
+        "src_out": {
+          "type": "number",
+          "required": true,
+          "help": "end time in proxy.mp4 (seconds)"
+        },
+        "scale": {
+          "type": "number",
+          "min": 1.0,
+          "max": 1.6,
+          "default": 1.0,
+          "help": "punch-in zoom"
+        },
+        "cx": {
+          "type": "number",
+          "min": 0,
+          "max": 1,
+          "default": 0.5,
+          "help": "zoom centre x (0-1)"
+        },
+        "cy": {
+          "type": "number",
+          "min": 0,
+          "max": 1,
+          "default": 0.38,
+          "help": "zoom centre y (0-1); keep the face high"
+        }
+      },
+      "duration_s": {
+        "min": 0.8,
+        "max": 12
+      },
+      "sfx": null
     },
-    "headline": {
-     "type": "string",
-     "required": true,
-     "maxLength": 36,
-     "help": "the claim, his words"
+    "captions": {
+      "kind": "scene",
+      "label": "Word-pop captions (Arabic, 1-3 words)",
+      "file": "captions.html",
+      "layer": 40,
+      "track_kind": "captions",
+      "purpose": "Every spoken word, in groups of up to 3, built from the transcript by the compiler. The Director only chooses keyword word indices.",
+      "inputs": {
+        "groups": {
+          "type": "generated",
+          "help": "compiler writes groups from transcript words; keywords turn lime + heavier + pop"
+        }
+      },
+      "placement": {
+        "center_y_px": 1180,
+        "max_width_px": 900
+      },
+      "duration_s": {
+        "min": 1,
+        "max": 120
+      },
+      "sfx": {
+        "keyword": "pop",
+        "min_gap_s": 3
+      }
     },
-    "sub": {
-     "type": "string",
-     "maxLength": 48,
-     "default": "",
-     "help": "optional supporting line"
+    "hook_two_tone": {
+      "kind": "scene",
+      "label": "Hook title, two tones (white line + lime line)",
+      "file": "hook_two_tone.html",
+      "layer": 30,
+      "purpose": "Frame 0 must already show the hook. Used once, at the very start.",
+      "inputs": {
+        "line1": {
+          "type": "string",
+          "required": true,
+          "maxLength": 28,
+          "help": "white line, his own words"
+        },
+        "line2": {
+          "type": "string",
+          "required": true,
+          "maxLength": 22,
+          "help": "lime line on the violet bar, the strongest word(s)"
+        }
+      },
+      "duration_s": {
+        "min": 1.5,
+        "max": 3.0
+      },
+      "rules": [
+        "only beat 1",
+        "visible at 0.0 s"
+      ],
+      "sfx": {
+        "in": "hit"
+      },
+      "natural_box": [
+        176,
+        418,
+        852,
+        940
+      ]
+    },
+    "text_card": {
+      "kind": "scene",
+      "label": "Kinetic text card (full screen)",
+      "file": "text_card.html",
+      "layer": 20,
+      "purpose": "A chapter title or key claim. Hides the face; voice continues underneath.",
+      "inputs": {
+        "kicker": {
+          "type": "string",
+          "maxLength": 24,
+          "default": "",
+          "help": "small line above (e.g. chapter number)"
+        },
+        "headline": {
+          "type": "string",
+          "required": true,
+          "maxLength": 36,
+          "help": "the claim, his words"
+        },
+        "sub": {
+          "type": "string",
+          "maxLength": 48,
+          "default": "",
+          "help": "optional supporting line"
+        }
+      },
+      "duration_s": {
+        "min": 1.2,
+        "max": 3.5
+      },
+      "rules": [
+        "chapter card every 15-20 s on long reels",
+        "min 10 s between text cards"
+      ],
+      "sfx": {
+        "in": "whoosh"
+      },
+      "natural_box": [
+        145,
+        560,
+        883,
+        1377
+      ]
+    },
+    "split": {
+      "kind": "scene",
+      "label": "Split: card on top, face below",
+      "file": "split.html",
+      "layer": 20,
+      "purpose": "Shows a number or short point while the face stays visible (face moves to the lower half).",
+      "inputs": {
+        "value": {
+          "type": "string",
+          "maxLength": 12,
+          "default": "",
+          "help": "a number exactly as spoken (Western digits), or empty"
+        },
+        "label": {
+          "type": "string",
+          "required": true,
+          "maxLength": 40,
+          "help": "what the number or point is"
+        }
+      },
+      "duration_s": {
+        "min": 2.0,
+        "max": 6.0
+      },
+      "rules": [
+        "value only if the number is actually spoken"
+      ],
+      "moves_face": "lower_half",
+      "sfx": {
+        "in": "whoosh",
+        "value": "ding"
+      },
+      "natural_box": [
+        0,
+        0,
+        1080,
+        960
+      ]
+    },
+    "flash": {
+      "kind": "scene",
+      "label": "Lime flash + one word/number",
+      "file": "flash.html",
+      "layer": 50,
+      "purpose": "The payoff moment. Full-screen lime, one big dark word or number.",
+      "inputs": {
+        "word": {
+          "type": "string",
+          "required": true,
+          "maxLength": 12,
+          "help": "one word or number, as spoken"
+        }
+      },
+      "duration_s": {
+        "min": 0.6,
+        "max": 1.4
+      },
+      "rules": [
+        "max 2 per reel",
+        "payoff or spoken number only"
+      ],
+      "sfx": {
+        "in": "hit"
+      },
+      "natural_box": [
+        226,
+        707,
+        802,
+        837
+      ]
+    },
+    "logo_card": {
+      "kind": "scene",
+      "label": "Logo card (one logo, or a pair)",
+      "file": "logo_card.html",
+      "layer": 25,
+      "purpose": "Names a tool/brand/platform when he says it. Logos only from the reel's assets/ folder.",
+      "inputs": {
+        "logo_a": {
+          "type": "asset",
+          "required": true,
+          "help": "file in the job's assets/ folder"
+        },
+        "name_a": {
+          "type": "string",
+          "required": true,
+          "maxLength": 18
+        },
+        "joiner": {
+          "type": "enum",
+          "options": [
+            "",
+            "vs",
+            "+"
+          ],
+          "default": "",
+          "help": "empty = one logo"
+        },
+        "logo_b": {
+          "type": "asset",
+          "default": ""
+        },
+        "name_b": {
+          "type": "string",
+          "maxLength": 18,
+          "default": ""
+        }
+      },
+      "duration_s": {
+        "min": 1.5,
+        "max": 4.0
+      },
+      "rules": [
+        "logo must exist in job assets/"
+      ],
+      "sfx": {
+        "in": "pop"
+      },
+      "natural_box": [
+        124,
+        440,
+        904,
+        910
+      ]
+    },
+    "cta_card": {
+      "kind": "scene",
+      "label": "CTA card (last beat; one version per platform)",
+      "file": "cta_card.html",
+      "layer": 30,
+      "purpose": "The ending: follow (default) or comment-a-keyword. Over the face with a dark scrim. Handle appears only here.",
+      "inputs": {
+        "line": {
+          "type": "string",
+          "required": true,
+          "maxLength": 40,
+          "help": "e.g. إذا عجبك المحتوى تابعني"
+        },
+        "promise": {
+          "type": "string",
+          "maxLength": 48,
+          "default": "",
+          "help": "the reason to follow / what they get"
+        },
+        "keyword": {
+          "type": "string",
+          "maxLength": 14,
+          "default": "",
+          "help": "comment keyword, only for comment-CTA reels"
+        },
+        "handle": {
+          "type": "string",
+          "required": true,
+          "maxLength": 30,
+          "help": "from config/brand.json for the platform"
+        }
+      },
+      "duration_s": {
+        "min": 2.5,
+        "max": 5.0
+      },
+      "rules": [
+        "last beat only",
+        "rendered once per platform"
+      ],
+      "sfx": {
+        "in": "whoosh"
+      }
+    },
+    "name_tag": {
+      "kind": "scene",
+      "label": "Name tag (small, face stays visible)",
+      "file": "name_tag.html",
+      "layer": 22,
+      "purpose": "A small name/role tag at the top while he speaks. Use only when he says a name (a person, a brand, a place) out loud. The face stays visible.",
+      "inputs": {
+        "name": {
+          "type": "string",
+          "maxLength": 24,
+          "help": "the name exactly as he said it",
+          "required": true
+        },
+        "role": {
+          "type": "string",
+          "maxLength": 32,
+          "help": "optional: what it is (role or topic), his words",
+          "default": ""
+        }
+      },
+      "duration_s": {
+        "min": 2.0,
+        "max": 4.0
+      },
+      "rules": [
+        "only a name he actually said",
+        "min 6 s between name tags"
+      ],
+      "sfx": {
+        "in": "pop"
+      },
+      "natural_box": [
+        264,
+        300,
+        904,
+        560
+      ]
+    },
+    "info_card": {
+      "kind": "scene",
+      "label": "Info card (lower third, face stays visible)",
+      "file": "info_card.html",
+      "layer": 24,
+      "purpose": "A floating card above the captions with one headline and one short explanation of what he is saying. The face stays visible.",
+      "inputs": {
+        "kicker": {
+          "type": "string",
+          "maxLength": 20,
+          "help": "optional small label",
+          "default": ""
+        },
+        "headline": {
+          "type": "string",
+          "maxLength": 32,
+          "help": "the point, his words",
+          "required": true
+        },
+        "caption": {
+          "type": "string",
+          "maxLength": 60,
+          "help": "optional one-line explanation, his words",
+          "default": ""
+        }
+      },
+      "duration_s": {
+        "min": 2.0,
+        "max": 4.5
+      },
+      "rules": [
+        "min 6 s between info cards"
+      ],
+      "sfx": {
+        "in": "whoosh"
+      },
+      "natural_box": [
+        124,
+        790,
+        904,
+        1214
+      ]
+    },
+    "number_graph": {
+      "kind": "scene",
+      "label": "Number with a bar (full screen)",
+      "file": "number_graph.html",
+      "layer": 20,
+      "purpose": "A spoken number or percentage shown big with a filling bar. Hides the face; voice continues.",
+      "inputs": {
+        "value": {
+          "type": "string",
+          "maxLength": 12,
+          "help": "the number exactly as he said it, Western digits",
+          "required": true
+        },
+        "label": {
+          "type": "string",
+          "maxLength": 40,
+          "help": "what the number is, his words",
+          "required": true
+        },
+        "percent": {
+          "type": "string",
+          "maxLength": 3,
+          "help": "0-100: ONLY if he said a percentage, else leave empty",
+          "default": ""
+        }
+      },
+      "duration_s": {
+        "min": 2.0,
+        "max": 5.0
+      },
+      "rules": [
+        "number must be one he said",
+        "min 8 s between number graphs"
+      ],
+      "sfx": {
+        "in": "whoosh"
+      },
+      "natural_box": [
+        124,
+        504,
+        904,
+        936
+      ]
+    },
+    "before_after": {
+      "kind": "scene",
+      "label": "Before / after (full screen)",
+      "file": "before_after.html",
+      "layer": 20,
+      "purpose": "Two cards: how it was and how it became. Hides the face; voice continues.",
+      "inputs": {
+        "before_label": {
+          "type": "string",
+          "maxLength": 14,
+          "help": "label, default قبل",
+          "default": "قبل"
+        },
+        "before": {
+          "type": "string",
+          "maxLength": 40,
+          "help": "how it was, his words",
+          "required": true
+        },
+        "after_label": {
+          "type": "string",
+          "maxLength": 14,
+          "help": "label, default بعد",
+          "default": "بعد"
+        },
+        "after": {
+          "type": "string",
+          "maxLength": 40,
+          "help": "how it became, his words",
+          "required": true
+        }
+      },
+      "duration_s": {
+        "min": 2.5,
+        "max": 5.0
+      },
+      "rules": [
+        "both sides come from what he said",
+        "min 8 s between before/after cards"
+      ],
+      "sfx": {
+        "in": "whoosh"
+      },
+      "natural_box": [
+        124,
+        420,
+        904,
+        1374
+      ]
+    },
+    "tier_list": {
+      "kind": "scene",
+      "label": "Tier list S/A/B/C (full screen)",
+      "file": "tier_list.html",
+      "layer": 20,
+      "purpose": "A ranking he spoke out loud: up to four items in tiers S, A, B, C. Hides the face; voice continues.",
+      "inputs": {
+        "title": {
+          "type": "string",
+          "maxLength": 28,
+          "help": "what is being ranked, his words",
+          "required": true
+        },
+        "tier_s": {
+          "type": "string",
+          "maxLength": 24,
+          "help": "best item",
+          "required": true
+        },
+        "tier_a": {
+          "type": "string",
+          "maxLength": 24,
+          "help": "next item",
+          "default": ""
+        },
+        "tier_b": {
+          "type": "string",
+          "maxLength": 24,
+          "help": "optional",
+          "default": ""
+        },
+        "tier_c": {
+          "type": "string",
+          "maxLength": 24,
+          "help": "optional",
+          "default": ""
+        }
+      },
+      "duration_s": {
+        "min": 3.0,
+        "max": 6.0
+      },
+      "rules": [
+        "only items and order he actually said",
+        "min 10 s between tier lists"
+      ],
+      "sfx": {
+        "in": "whoosh"
+      },
+      "natural_box": [
+        124,
+        376,
+        904,
+        1409
+      ]
+    },
+    "ui_card": {
+      "kind": "scene",
+      "label": "Floating app window (screenshot, face stays visible)",
+      "file": "ui_card.html",
+      "layer": 24,
+      "purpose": "A floating app/browser window above the captions that shows a screenshot from the reel's assets (or a simple dashboard drawing) with one short label. Use when he talks about a screen, a tool, a dashboard or an app. The face stays visible.",
+      "inputs": {
+        "title": {
+          "type": "string",
+          "maxLength": 24,
+          "help": "window title: the tool or page he names, his words",
+          "required": true
+        },
+        "headline": {
+          "type": "string",
+          "maxLength": 32,
+          "help": "what it shows, his words",
+          "required": true
+        },
+        "image": {
+          "type": "asset",
+          "default": "",
+          "help": "optional screenshot file from the reel's assets/ (no file = a simple dashboard drawing)"
+        }
+      },
+      "duration_s": {
+        "min": 2.0,
+        "max": 4.5
+      },
+      "rules": [
+        "min 6 s between ui cards",
+        "image must be a file in the reel's assets/"
+      ],
+      "sfx": {
+        "in": "whoosh"
+      },
+      "natural_box": [
+        150,
+        777,
+        878,
+        1099
+      ]
+    },
+    "doc_card": {
+      "kind": "scene",
+      "label": "Document card (paper sheet with a highlighted phrase)",
+      "file": "doc_card.html",
+      "layer": 24,
+      "purpose": "A floating paper document above the captions with a title and ONE highlighted phrase from what he says. Use for a rule, a plan, a contract, a checklist or any 'written down' idea. The face stays visible.",
+      "inputs": {
+        "title": {
+          "type": "string",
+          "maxLength": 24,
+          "help": "the document's name, his words",
+          "required": true
+        },
+        "highlight": {
+          "type": "string",
+          "maxLength": 32,
+          "help": "the phrase to highlight, his exact words",
+          "required": true
+        },
+        "note": {
+          "type": "string",
+          "maxLength": 50,
+          "default": "",
+          "help": "optional small line, his words"
+        }
+      },
+      "duration_s": {
+        "min": 2.0,
+        "max": 4.5
+      },
+      "rules": [
+        "min 6 s between document cards"
+      ],
+      "sfx": {
+        "in": "whoosh"
+      },
+      "natural_box": [
+        171,
+        783,
+        857,
+        1170
+      ]
+    },
+    "pixel_scene": {
+      "kind": "scene",
+      "label": "Pixel-art scene (full screen)",
+      "file": "pixel_scene.html",
+      "layer": 20,
+      "purpose": "A full-screen pixel-art picture that illustrates who or what he is talking about: a marketing department, a social media manager at work, or a team meeting. Use it to make a topic visual when there is no screenshot or number. The face is hidden and captions pause.",
+      "inputs": {
+        "scene": {
+          "type": "enum",
+          "options": [
+            "marketing_department",
+            "social_manager",
+            "meeting"
+          ],
+          "default": "marketing_department",
+          "help": "marketing_department = a team with charts; social_manager = one person with phone, calendar and likes; meeting = people talking around a table"
+        },
+        "headline": {
+          "type": "string",
+          "maxLength": 32,
+          "help": "what it is about, his words",
+          "required": true
+        },
+        "caption": {
+          "type": "string",
+          "maxLength": 60,
+          "default": "",
+          "help": "optional one line, his words"
+        }
+      },
+      "duration_s": {
+        "min": 3.0,
+        "max": 6.0
+      },
+      "rules": [
+        "min 10 s between pixel scenes",
+        "two full-screen moments need face time between them"
+      ],
+      "sfx": {
+        "in": "pop"
+      },
+      "natural_box": [
+        0,
+        286,
+        1080,
+        1313
+      ]
+    },
+    "text_behind": {
+      "kind": "scene",
+      "label": "Text behind the head (big word, the head covers part of it)",
+      "file": "text_behind.html",
+      "layer": 26,
+      "purpose": "ONE big punchy word he says, shown huge BEHIND his head: his head and shoulders stay in front of the letters (made with an automatic person cutout). Use for the single most important keyword. Maximum 2 per reel. It needs a clear face in the middle of the frame and no zoom during it (the editor removes the zoom by itself).",
+      "inputs": {
+        "text": {
+          "type": "string",
+          "maxLength": 14,
+          "help": "one short word (or two), exactly as he says it",
+          "required": true
+        },
+        "matte": {
+          "type": "generated",
+          "help": "the person cutout video, made by the compile step",
+          "default": ""
+        },
+        "top": {
+          "type": "generated",
+          "help": "text height in px, set from the face position",
+          "default": 520
+        }
+      },
+      "duration_s": {
+        "min": 2.0,
+        "max": 3.5
+      },
+      "rules": [
+        "max 2 per reel",
+        "min 10 s between",
+        "needs the face in the middle of the frame"
+      ],
+      "sfx": {
+        "in": "hit"
+      }
+    },
+    "pack_frame": {
+      "kind": "scene",
+      "label": "Format Pack frame (header, face window, step panel)",
+      "file": "pack_frame.html",
+      "layer": 12,
+      "purpose": "Format Pack only (made by the compiler, never chosen by the director): the persistent frame of an explainer reel.",
+      "inputs": {
+        "theme": {
+          "type": "enum",
+          "options": [
+            "dark",
+            "violet"
+          ],
+          "default": "dark",
+          "help": "colour theme"
+        },
+        "series": {
+          "type": "string",
+          "maxLength": 18,
+          "default": ""
+        },
+        "presenter": {
+          "type": "string",
+          "maxLength": 22,
+          "default": ""
+        },
+        "groups": {
+          "type": "generated",
+          "help": "the step strip, written by the compiler from the outline"
+        }
+      },
+      "duration_s": {
+        "min": 3,
+        "max": 120
+      }
+    },
+    "recap_chain": {
+      "kind": "scene",
+      "label": "Format Pack recap (the steps as a chain)",
+      "file": "recap_chain.html",
+      "layer": 30,
+      "purpose": "Format Pack only: the outline's section titles as a numbered chain near the end.",
+      "inputs": {
+        "theme": {
+          "type": "enum",
+          "options": [
+            "dark",
+            "violet"
+          ],
+          "default": "dark",
+          "help": "colour theme"
+        },
+        "groups": {
+          "type": "generated",
+          "help": "rows written by the compiler"
+        }
+      },
+      "duration_s": {
+        "min": 2,
+        "max": 6
+      }
+    },
+    "motion_card": {
+      "kind": "scene",
+      "label": "Motion card (one checked Lottie animation)",
+      "file": "motion_card.html",
+      "layer": 25,
+      "purpose": "A short animated icon (check mark, bell, cart...) when he says the thing it shows. Only files that passed the motion check (library/assets/motion/).",
+      "inputs": {
+        "motion": {
+          "type": "string",
+          "required": true,
+          "maxLength": 80,
+          "help": "file name in library/assets/motion/ (must have passed the motion check)"
+        },
+        "label": {
+          "type": "string",
+          "maxLength": 24,
+          "default": "",
+          "help": "optional short label, his own words"
+        }
+      },
+      "duration_s": {
+        "min": 1.5,
+        "max": 4.0
+      },
+      "rules": [
+        "motion must be a checked file in library/assets/motion/"
+      ],
+      "sfx": {
+        "in": "pop"
+      },
+      "natural_box": [
+        124,
+        440,
+        904,
+        960
+      ]
+    },
+    "stage_frame": {
+      "kind": "scene",
+      "label": "Stage layout frame (dark stage, footage container, glow)",
+      "file": "stage_frame.html",
+      "layer": 12,
+      "purpose": "Made by the compiler for the 'stage' layout only (layouts.py); never placed by the director.",
+      "inputs": {
+        "theme": {
+          "type": "enum",
+          "options": [
+            "dark",
+            "violet"
+          ],
+          "default": "dark"
+        },
+        "groups": {
+          "type": "generated"
+        }
+      },
+      "duration_s": {
+        "min": 1.0,
+        "max": 120.0
+      },
+      "sfx": null
+    },
+    "line_text": {
+      "kind": "scene",
+      "label": "Plain text lines (over footage)",
+      "file": "line_text.html",
+      "layer": 20,
+      "purpose": "Plain text over him or in a zone: one or two lines, optionally with a bold headline or a bold number (Hesham's Figma symbols). Words he said only; a number only if he said it.",
+      "inputs": {
+        "headline": {
+          "type": "string",
+          "maxLength": 20,
+          "default": "",
+          "help": "bold headline tag, his words"
+        },
+        "number": {
+          "type": "string",
+          "maxLength": 8,
+          "default": "",
+          "help": "bold number, only if spoken"
+        },
+        "line1": {
+          "type": "string",
+          "required": true,
+          "maxLength": 30,
+          "help": "first line, his words"
+        },
+        "line2": {
+          "type": "string",
+          "maxLength": 30,
+          "default": "",
+          "help": "optional second line"
+        }
+      },
+      "duration_s": {
+        "min": 1.2,
+        "max": 3.5
+      },
+      "rules": [
+        "use headline OR number, not both",
+        "never a number he did not say"
+      ],
+      "sfx": {
+        "in": "whoosh"
+      },
+      "natural_box": [
+        124,
+        600,
+        904,
+        1180
+      ],
+      "fit_height": 360
     }
-   },
-   "duration_s": {
-    "min": 1.2,
-    "max": 3.5
-   },
-   "rules": [
-    "chapter card every 15-20 s on long reels",
-    "min 10 s between text cards"
-   ],
-   "sfx": {
-    "in": "whoosh"
-   },
-   "natural_box": [
-    145,
-    560,
-    883,
-    1377
-   ]
-  },
-  "split": {
-   "kind": "scene",
-   "label": "Split: card on top, face below",
-   "file": "split.html",
-   "layer": 20,
-   "purpose": "Shows a number or short point while the face stays visible (face moves to the lower half).",
-   "inputs": {
-    "value": {
-     "type": "string",
-     "maxLength": 12,
-     "default": "",
-     "help": "a number exactly as spoken (Western digits), or empty"
-    },
-    "label": {
-     "type": "string",
-     "required": true,
-     "maxLength": 40,
-     "help": "what the number or point is"
-    }
-   },
-   "duration_s": {
-    "min": 2.0,
-    "max": 6.0
-   },
-   "rules": [
-    "value only if the number is actually spoken"
-   ],
-   "moves_face": "lower_half",
-   "sfx": {
-    "in": "whoosh",
-    "value": "ding"
-   },
-   "natural_box": [
-    0,
-    0,
-    1080,
-    960
-   ]
-  },
-  "flash": {
-   "kind": "scene",
-   "label": "Lime flash + one word/number",
-   "file": "flash.html",
-   "layer": 50,
-   "purpose": "The payoff moment. Full-screen lime, one big dark word or number.",
-   "inputs": {
-    "word": {
-     "type": "string",
-     "required": true,
-     "maxLength": 12,
-     "help": "one word or number, as spoken"
-    }
-   },
-   "duration_s": {
-    "min": 0.6,
-    "max": 1.4
-   },
-   "rules": [
-    "max 2 per reel",
-    "payoff or spoken number only"
-   ],
-   "sfx": {
-    "in": "hit"
-   },
-   "natural_box": [
-    226,
-    707,
-    802,
-    837
-   ]
-  },
-  "logo_card": {
-   "kind": "scene",
-   "label": "Logo card (one logo, or a pair)",
-   "file": "logo_card.html",
-   "layer": 25,
-   "purpose": "Names a tool/brand/platform when he says it. Logos only from the reel's assets/ folder.",
-   "inputs": {
-    "logo_a": {
-     "type": "asset",
-     "required": true,
-     "help": "file in the job's assets/ folder"
-    },
-    "name_a": {
-     "type": "string",
-     "required": true,
-     "maxLength": 18
-    },
-    "joiner": {
-     "type": "enum",
-     "options": [
-      "",
-      "vs",
-      "+"
-     ],
-     "default": "",
-     "help": "empty = one logo"
-    },
-    "logo_b": {
-     "type": "asset",
-     "default": ""
-    },
-    "name_b": {
-     "type": "string",
-     "maxLength": 18,
-     "default": ""
-    }
-   },
-   "duration_s": {
-    "min": 1.5,
-    "max": 4.0
-   },
-   "rules": [
-    "logo must exist in job assets/"
-   ],
-   "sfx": {
-    "in": "pop"
-   },
-   "natural_box": [
-    124,
-    440,
-    904,
-    910
-   ]
-  },
-  "cta_card": {
-   "kind": "scene",
-   "label": "CTA card (last beat; one version per platform)",
-   "file": "cta_card.html",
-   "layer": 30,
-   "purpose": "The ending: follow (default) or comment-a-keyword. Over the face with a dark scrim. Handle appears only here.",
-   "inputs": {
-    "line": {
-     "type": "string",
-     "required": true,
-     "maxLength": 40,
-     "help": "e.g. إذا عجبك المحتوى تابعني"
-    },
-    "promise": {
-     "type": "string",
-     "maxLength": 48,
-     "default": "",
-     "help": "the reason to follow / what they get"
-    },
-    "keyword": {
-     "type": "string",
-     "maxLength": 14,
-     "default": "",
-     "help": "comment keyword, only for comment-CTA reels"
-    },
-    "handle": {
-     "type": "string",
-     "required": true,
-     "maxLength": 30,
-     "help": "from config/brand.json for the platform"
-    }
-   },
-   "duration_s": {
-    "min": 2.5,
-    "max": 5.0
-   },
-   "rules": [
-    "last beat only",
-    "rendered once per platform"
-   ],
-   "sfx": {
-    "in": "whoosh"
-   }
-  },
-  "name_tag": {
-   "kind": "scene",
-   "label": "Name tag (small, face stays visible)",
-   "file": "name_tag.html",
-   "layer": 22,
-   "purpose": "A small name/role tag at the top while he speaks. Use only when he says a name (a person, a brand, a place) out loud. The face stays visible.",
-   "inputs": {
-    "name": {
-     "type": "string",
-     "maxLength": 24,
-     "help": "the name exactly as he said it",
-     "required": true
-    },
-    "role": {
-     "type": "string",
-     "maxLength": 32,
-     "help": "optional: what it is (role or topic), his words",
-     "default": ""
-    }
-   },
-   "duration_s": {
-    "min": 2.0,
-    "max": 4.0
-   },
-   "rules": [
-    "only a name he actually said",
-    "min 6 s between name tags"
-   ],
-   "sfx": {
-    "in": "pop"
-   },
-   "natural_box": [
-    264,
-    300,
-    904,
-    560
-   ]
-  },
-  "info_card": {
-   "kind": "scene",
-   "label": "Info card (lower third, face stays visible)",
-   "file": "info_card.html",
-   "layer": 24,
-   "purpose": "A floating card above the captions with one headline and one short explanation of what he is saying. The face stays visible.",
-   "inputs": {
-    "kicker": {
-     "type": "string",
-     "maxLength": 20,
-     "help": "optional small label",
-     "default": ""
-    },
-    "headline": {
-     "type": "string",
-     "maxLength": 32,
-     "help": "the point, his words",
-     "required": true
-    },
-    "caption": {
-     "type": "string",
-     "maxLength": 60,
-     "help": "optional one-line explanation, his words",
-     "default": ""
-    }
-   },
-   "duration_s": {
-    "min": 2.0,
-    "max": 4.5
-   },
-   "rules": [
-    "min 6 s between info cards"
-   ],
-   "sfx": {
-    "in": "whoosh"
-   },
-   "natural_box": [
-    124,
-    790,
-    904,
-    1214
-   ]
-  },
-  "number_graph": {
-   "kind": "scene",
-   "label": "Number with a bar (full screen)",
-   "file": "number_graph.html",
-   "layer": 20,
-   "purpose": "A spoken number or percentage shown big with a filling bar. Hides the face; voice continues.",
-   "inputs": {
-    "value": {
-     "type": "string",
-     "maxLength": 12,
-     "help": "the number exactly as he said it, Western digits",
-     "required": true
-    },
-    "label": {
-     "type": "string",
-     "maxLength": 40,
-     "help": "what the number is, his words",
-     "required": true
-    },
-    "percent": {
-     "type": "string",
-     "maxLength": 3,
-     "help": "0-100: ONLY if he said a percentage, else leave empty",
-     "default": ""
-    }
-   },
-   "duration_s": {
-    "min": 2.0,
-    "max": 5.0
-   },
-   "rules": [
-    "number must be one he said",
-    "min 8 s between number graphs"
-   ],
-   "sfx": {
-    "in": "whoosh"
-   },
-   "natural_box": [
-    124,
-    504,
-    904,
-    936
-   ]
-  },
-  "before_after": {
-   "kind": "scene",
-   "label": "Before / after (full screen)",
-   "file": "before_after.html",
-   "layer": 20,
-   "purpose": "Two cards: how it was and how it became. Hides the face; voice continues.",
-   "inputs": {
-    "before_label": {
-     "type": "string",
-     "maxLength": 14,
-     "help": "label, default قبل",
-     "default": "قبل"
-    },
-    "before": {
-     "type": "string",
-     "maxLength": 40,
-     "help": "how it was, his words",
-     "required": true
-    },
-    "after_label": {
-     "type": "string",
-     "maxLength": 14,
-     "help": "label, default بعد",
-     "default": "بعد"
-    },
-    "after": {
-     "type": "string",
-     "maxLength": 40,
-     "help": "how it became, his words",
-     "required": true
-    }
-   },
-   "duration_s": {
-    "min": 2.5,
-    "max": 5.0
-   },
-   "rules": [
-    "both sides come from what he said",
-    "min 8 s between before/after cards"
-   ],
-   "sfx": {
-    "in": "whoosh"
-   },
-   "natural_box": [
-    124,
-    420,
-    904,
-    1374
-   ]
-  },
-  "tier_list": {
-   "kind": "scene",
-   "label": "Tier list S/A/B/C (full screen)",
-   "file": "tier_list.html",
-   "layer": 20,
-   "purpose": "A ranking he spoke out loud: up to four items in tiers S, A, B, C. Hides the face; voice continues.",
-   "inputs": {
-    "title": {
-     "type": "string",
-     "maxLength": 28,
-     "help": "what is being ranked, his words",
-     "required": true
-    },
-    "tier_s": {
-     "type": "string",
-     "maxLength": 24,
-     "help": "best item",
-     "required": true
-    },
-    "tier_a": {
-     "type": "string",
-     "maxLength": 24,
-     "help": "next item",
-     "default": ""
-    },
-    "tier_b": {
-     "type": "string",
-     "maxLength": 24,
-     "help": "optional",
-     "default": ""
-    },
-    "tier_c": {
-     "type": "string",
-     "maxLength": 24,
-     "help": "optional",
-     "default": ""
-    }
-   },
-   "duration_s": {
-    "min": 3.0,
-    "max": 6.0
-   },
-   "rules": [
-    "only items and order he actually said",
-    "min 10 s between tier lists"
-   ],
-   "sfx": {
-    "in": "whoosh"
-   },
-   "natural_box": [
-    124,
-    376,
-    904,
-    1409
-   ]
-  },
-  "ui_card": {
-   "kind": "scene",
-   "label": "Floating app window (screenshot, face stays visible)",
-   "file": "ui_card.html",
-   "layer": 24,
-   "purpose": "A floating app/browser window above the captions that shows a screenshot from the reel's assets (or a simple dashboard drawing) with one short label. Use when he talks about a screen, a tool, a dashboard or an app. The face stays visible.",
-   "inputs": {
-    "title": {
-     "type": "string",
-     "maxLength": 24,
-     "help": "window title: the tool or page he names, his words",
-     "required": true
-    },
-    "headline": {
-     "type": "string",
-     "maxLength": 32,
-     "help": "what it shows, his words",
-     "required": true
-    },
-    "image": {
-     "type": "asset",
-     "default": "",
-     "help": "optional screenshot file from the reel's assets/ (no file = a simple dashboard drawing)"
-    }
-   },
-   "duration_s": {
-    "min": 2.0,
-    "max": 4.5
-   },
-   "rules": [
-    "min 6 s between ui cards",
-    "image must be a file in the reel's assets/"
-   ],
-   "sfx": {
-    "in": "whoosh"
-   },
-   "natural_box": [
-    150,
-    777,
-    878,
-    1099
-   ]
-  },
-  "doc_card": {
-   "kind": "scene",
-   "label": "Document card (paper sheet with a highlighted phrase)",
-   "file": "doc_card.html",
-   "layer": 24,
-   "purpose": "A floating paper document above the captions with a title and ONE highlighted phrase from what he says. Use for a rule, a plan, a contract, a checklist or any 'written down' idea. The face stays visible.",
-   "inputs": {
-    "title": {
-     "type": "string",
-     "maxLength": 24,
-     "help": "the document's name, his words",
-     "required": true
-    },
-    "highlight": {
-     "type": "string",
-     "maxLength": 32,
-     "help": "the phrase to highlight, his exact words",
-     "required": true
-    },
-    "note": {
-     "type": "string",
-     "maxLength": 50,
-     "default": "",
-     "help": "optional small line, his words"
-    }
-   },
-   "duration_s": {
-    "min": 2.0,
-    "max": 4.5
-   },
-   "rules": [
-    "min 6 s between document cards"
-   ],
-   "sfx": {
-    "in": "whoosh"
-   },
-   "natural_box": [
-    171,
-    783,
-    857,
-    1170
-   ]
-  },
-  "pixel_scene": {
-   "kind": "scene",
-   "label": "Pixel-art scene (full screen)",
-   "file": "pixel_scene.html",
-   "layer": 20,
-   "purpose": "A full-screen pixel-art picture that illustrates who or what he is talking about: a marketing department, a social media manager at work, or a team meeting. Use it to make a topic visual when there is no screenshot or number. The face is hidden and captions pause.",
-   "inputs": {
-    "scene": {
-     "type": "enum",
-     "options": [
-      "marketing_department",
-      "social_manager",
-      "meeting"
-     ],
-     "default": "marketing_department",
-     "help": "marketing_department = a team with charts; social_manager = one person with phone, calendar and likes; meeting = people talking around a table"
-    },
-    "headline": {
-     "type": "string",
-     "maxLength": 32,
-     "help": "what it is about, his words",
-     "required": true
-    },
-    "caption": {
-     "type": "string",
-     "maxLength": 60,
-     "default": "",
-     "help": "optional one line, his words"
-    }
-   },
-   "duration_s": {
-    "min": 3.0,
-    "max": 6.0
-   },
-   "rules": [
-    "min 10 s between pixel scenes",
-    "two full-screen moments need face time between them"
-   ],
-   "sfx": {
-    "in": "pop"
-   },
-   "natural_box": [
-    0,
-    286,
-    1080,
-    1313
-   ]
-  },
-  "text_behind": {
-   "kind": "scene",
-   "label": "Text behind the head (big word, the head covers part of it)",
-   "file": "text_behind.html",
-   "layer": 26,
-   "purpose": "ONE big punchy word he says, shown huge BEHIND his head: his head and shoulders stay in front of the letters (made with an automatic person cutout). Use for the single most important keyword. Maximum 2 per reel. It needs a clear face in the middle of the frame and no zoom during it (the editor removes the zoom by itself).",
-   "inputs": {
-    "text": {
-     "type": "string",
-     "maxLength": 14,
-     "help": "one short word (or two), exactly as he says it",
-     "required": true
-    },
-    "matte": {
-     "type": "generated",
-     "help": "the person cutout video, made by the compile step",
-     "default": ""
-    },
-    "top": {
-     "type": "generated",
-     "help": "text height in px, set from the face position",
-     "default": 520
-    }
-   },
-   "duration_s": {
-    "min": 2.0,
-    "max": 3.5
-   },
-   "rules": [
-    "max 2 per reel",
-    "min 10 s between",
-    "needs the face in the middle of the frame"
-   ],
-   "sfx": {
-    "in": "hit"
-   }
-  },
-  "pack_frame": {
-   "kind": "scene",
-   "label": "Format Pack frame (header, face window, step panel)",
-   "file": "pack_frame.html",
-   "layer": 12,
-   "purpose": "Format Pack only (made by the compiler, never chosen by the director): the persistent frame of an explainer reel.",
-   "inputs": {
-    "theme": {
-     "type": "enum",
-     "options": [
-      "dark",
-      "violet"
-     ],
-     "default": "dark",
-     "help": "colour theme"
-    },
-    "series": {
-     "type": "string",
-     "maxLength": 18,
-     "default": ""
-    },
-    "presenter": {
-     "type": "string",
-     "maxLength": 22,
-     "default": ""
-    },
-    "groups": {
-     "type": "generated",
-     "help": "the step strip, written by the compiler from the outline"
-    }
-   },
-   "duration_s": {
-    "min": 3,
-    "max": 120
-   }
-  },
-  "recap_chain": {
-   "kind": "scene",
-   "label": "Format Pack recap (the steps as a chain)",
-   "file": "recap_chain.html",
-   "layer": 30,
-   "purpose": "Format Pack only: the outline's section titles as a numbered chain near the end.",
-   "inputs": {
-    "theme": {
-     "type": "enum",
-     "options": [
-      "dark",
-      "violet"
-     ],
-     "default": "dark",
-     "help": "colour theme"
-    },
-    "groups": {
-     "type": "generated",
-     "help": "rows written by the compiler"
-    }
-   },
-   "duration_s": {
-    "min": 2,
-    "max": 6
-   }
-  },
-  "motion_card": {
-   "kind": "scene",
-   "label": "Motion card (one checked Lottie animation)",
-   "file": "motion_card.html",
-   "layer": 25,
-   "purpose": "A short animated icon (check mark, bell, cart...) when he says the thing it shows. Only files that passed the motion check (library/assets/motion/).",
-   "inputs": {
-    "motion": {
-     "type": "string",
-     "required": true,
-     "maxLength": 80,
-     "help": "file name in library/assets/motion/ (must have passed the motion check)"
-    },
-    "label": {
-     "type": "string",
-     "maxLength": 24,
-     "default": "",
-     "help": "optional short label, his own words"
-    }
-   },
-   "duration_s": {
-    "min": 1.5,
-    "max": 4.0
-   },
-   "rules": [
-    "motion must be a checked file in library/assets/motion/"
-   ],
-   "sfx": {
-    "in": "pop"
-   },
-   "natural_box": [
-    124,
-    440,
-    904,
-    960
-   ]
-  },
-  "stage_frame": {
-   "kind": "scene",
-   "label": "Stage layout frame (dark stage, footage container, glow)",
-   "file": "stage_frame.html",
-   "layer": 12,
-   "purpose": "Made by the compiler for the 'stage' layout only (layouts.py); never placed by the director.",
-   "inputs": {
-    "theme": {
-     "type": "enum",
-     "options": [
-      "dark",
-      "violet"
-     ],
-     "default": "dark"
-    },
-    "groups": {
-     "type": "generated"
-    }
-   },
-   "duration_s": {
-    "min": 1.0,
-    "max": 120.0
-   },
-   "sfx": null
-  },
-  "line_text": {
-   "kind": "scene",
-   "label": "Plain text lines (over footage)",
-   "file": "line_text.html",
-   "layer": 20,
-   "purpose": "Plain text over him or in a zone: one or two lines, optionally with a bold headline or a bold number (Hesham's Figma symbols). Words he said only; a number only if he said it.",
-   "inputs": {
-    "headline": {
-     "type": "string",
-     "maxLength": 20,
-     "default": "",
-     "help": "bold headline tag, his words"
-    },
-    "number": {
-     "type": "string",
-     "maxLength": 8,
-     "default": "",
-     "help": "bold number, only if spoken"
-    },
-    "line1": {
-     "type": "string",
-     "required": true,
-     "maxLength": 30,
-     "help": "first line, his words"
-    },
-    "line2": {
-     "type": "string",
-     "maxLength": 30,
-     "default": "",
-     "help": "optional second line"
-    }
-   },
-   "duration_s": {
-    "min": 1.2,
-    "max": 3.5
-   },
-   "rules": [
-    "use headline OR number, not both",
-    "never a number he did not say"
-   ],
-   "sfx": {
-    "in": "whoosh"
-   },
-   "natural_box": [
-    124,
-    600,
-    904,
-    1180
-   ]
   }
- }
 }

@@ -57,7 +57,7 @@ def answer(text, nimg):
                            "moments": [], "punch_ins": [{"at_word": min(n - 1, k), "scale": 1.2} for k in (10, 45, 80)],
                            "cover": {"tag": "", "sticker": "", "card_label": "", "card_value": ""}})
     if "quality reviewer" in text:
-        return json.dumps({"scores": {"readable": 8, "layout": 7, "consistency": 8, "variety": 5}, "issues": [{"t": 3.0, "what": "mock: plain frame"}], "verdict": "mock verdict"})
+        return json.dumps({"scores": {"readable": 8, "layout": 7, "consistency": 8, "variety": 5}, "issues": [{"t": 3.0, "kind": "empty_zone", "what": "mock: plain frame"}], "verdict": "mock verdict"})
     if "PROOFREADER" in text or "correct an automatic Arabic" in text:
         return json.dumps({"fixes": [], "notes": "mock"})
     if "tag icons" in text or "tags icons" in text:

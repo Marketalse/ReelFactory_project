@@ -5,10 +5,19 @@ import base64, subprocess
 N_STILLS = 8
 RUBRIC = ("readable", "layout", "consistency", "variety")
 
+KINDS = ("head_clipped", "empty_zone", "text_over_face", "caption_unreadable", "overlap", "other")
+
 PROMPT = """You are the quality reviewer of a vertical (1080x1920) Arabic short video made by an automatic editor. Below are {n} still frames of the DRAFT, each preceded by its time.
-Judge ONLY what you see. Return ONLY JSON:
-{{"scores":{{"readable":<1-10: text is large, sharp, not clipped, not over the face>,"layout":<1-10: things sit inside the safe area, clear hierarchy, nothing overlapping badly>,"consistency":<1-10: same fonts, colours and style across frames>,"variety":<1-10: the frames show a real change of visuals, not the same plain talking head>}},
- "issues":[{{"t":<time in seconds of the frame>,"what":"<=18 words: a concrete visible problem"}}],
+Judge ONLY what you see. Look specifically for these visible defects and name each with its kind:
+- head_clipped: his head or hair is cut off by the screen edge or by a hard edge/box, or the face is not fully visible when it should be
+- empty_zone: a large area meant for an animation, card or text is empty (a big blank band) while it should show something
+- text_over_face: text or a card sits on his face or covers his eyes/mouth
+- caption_unreadable: captions are too small, too faint, cut off, or lost against the picture
+- overlap: two layers collide badly (text on text, a card on the captions)
+- other: any other concrete visible problem
+Return ONLY JSON:
+{{"scores":{{"readable":<1-10: text is large, sharp, not clipped, not over the face>,"layout":<1-10: things sit inside the safe area, clear hierarchy, nothing overlapping badly>,"consistency":<1-10: same fonts, colours and style across frames>,"variety":<1-10: the look changes enough to stay interesting without looking random>}},
+ "issues":[{{"t":<time in seconds of the frame>,"kind":"<one of the kinds above>","what":"<=18 words: a concrete visible problem"}}],
  "verdict":"<=20 words overall"}}
 Be strict and honest. No issues = empty list."""
 
@@ -51,7 +60,7 @@ def clean(ans):
         sc[k] = round(min(10.0, max(1.0, v)), 1)
     issues = []
     for i in (ans.get("issues") or [])[:8]:
-        try: issues.append({"t": round(float(i["t"]), 1), "what": str(i["what"]).strip()[:140]})
+        try: issues.append({"t": round(float(i["t"]), 1), "kind": (i.get("kind") if i.get("kind") in KINDS else "other"), "what": str(i["what"]).strip()[:140]})
         except (KeyError, TypeError, ValueError): continue
     return {"scores": sc, "average": round(sum(sc.values()) / len(sc), 1), "issues": issues, "verdict": str(ans.get("verdict") or "")[:160]}
 
@@ -60,5 +69,7 @@ def summary_lines(o):
     s = o["scores"]
     L = [f"Quality check (AI looked at {o.get('stills', '?')} stills): {o['average']}/10 - readable {s['readable']}, layout {s['layout']}, consistency {s['consistency']}, variety {s['variety']}"]
     if o.get("verdict"): L.append("  " + o["verdict"])
-    L += [f"  {i['t']}s: {i['what']}" for i in o["issues"]]
+    L += [f"  {i['t']}s: {i['what']}" + (f" [{i['kind']}]" if i.get("kind") not in (None, "other") else "") for i in o["issues"]]
+    r = o.get("repair")
+    if r: L.append(f"  Repair: {r.get('summary', '')}")
     return L

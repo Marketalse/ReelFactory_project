@@ -9,7 +9,7 @@ import argparse, json, os, shutil, sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from lib import config as cfg, matte, sfx_mix       # noqa: E402
-from lib import hfbuild, director, pack, broll, layouts, states   # noqa: E402
+from lib import hfbuild, director, pack, broll, layouts, states, reviewer   # noqa: E402
 
 
 def handle_for(platform, final):
@@ -66,6 +66,8 @@ def compile_job(job, platform="instagram", final=False, out=None, layer="full"):
             else:
                 shutil.copy(src, os.path.join(out, "assets", "icons", f))
     lay_args, lay_dropped, lay_notes, seq_plan = None, [], [], None
+    rep = reviewer.active(job)                                # repairs the AI reviewer asked for after looking at the last draft (repairs.json), if any
+    review_notes = []
     ft = None
     if seq_theme and layer == "full":
         bad = states.sequence_problems(seq_theme)
@@ -73,10 +75,11 @@ def compile_job(job, platform="instagram", final=False, out=None, layer="full"):
         reg = hfbuild.REGISTRY["blocks"]
         seq_plan = states.plan(seq_theme, [x for x in scenes if x["block"] != "captions"], edl["words"], tl["keyword_ids"], tl["duration"], reg)
         lay_dropped = list(seq_plan["dropped"])
-        scenes = seq_plan["frames"] + seq_plan["scenes"] + [x for x in scenes if x["block"] == "captions"]
+        caption_scenes = [x for x in scenes if x["block"] == "captions"]
         tl = dict(tl, scenes=[])
         bc = seq_plan["base_caption"] or {"y": 790, "h": 80, "size": 76}
-        lay_args = {"stage_rect": [108, 250, 920, 790], "vars": {"cap-top": f"{bc['y']}px", "cap-h": f"{bc['h']}px", "cap-size": f"{bc['size']}px", "cap-pill-bg": "transparent"},
+        plate = any(i.get("kind") == "caption_unreadable" for i in rep.get("items", []))          # the reviewer found the captions hard to read: a plate behind them
+        lay_args = {"stage_rect": [108, 250, 920, 790], "vars": {"cap-top": f"{bc['y']}px", "cap-h": f"{bc['h']}px", "cap-size": f"{bc['size']}px", "cap-pill-bg": "rgba(36,40,52,.78)" if plate else "transparent"},
                     "hero": None, "extra_tweens": seq_plan["tweens"]}
         try:
             shots = json.load(open(os.path.join(job, "shot_log.json"), encoding="utf-8"))
@@ -99,7 +102,12 @@ def compile_job(job, platform="instagram", final=False, out=None, layer="full"):
         lay_notes.append("states: " + " -> ".join(f"{s['state']}@{s['t_in']:.1f}" for s in seq_plan["segments"][:12]) + (" ..." if len(seq_plan["segments"]) > 12 else ""))
         lay_notes.append("head " + (f"measured: width {m['head_w']:.0f}px, top {m['top']:.0f}px" if m else "not measurable: default size"))
         if m is None: m = {"top": 420.0, "head_w": 500.0, "head_cx": 540.0}
-        seq_tfs = states.transforms(seq_plan["segments"], m)
+        seq_tfs, rv = states.transforms_checked(seq_plan["segments"], m, rep)             # REVIEWER (free): heads cut by an edge are made smaller
+        rv += states.avoid_face(seq_plan, m, reg)                                           # text off his face
+        rv += states.fill_idle(seq_plan, edl["words"], tl["keyword_ids"], reg, rep)         # empty zones get a card from his own words
+        scenes = seq_plan["frames"] + seq_plan["scenes"] + caption_scenes
+        review_notes += rv
+        lay_notes += [f"reviewer: {x}" for x in rv]
     elif lay_name and layer == "full":
         spec = layouts.load(lay_name)
         probs = layouts.problems(spec)
@@ -109,7 +117,7 @@ def compile_job(job, platform="instagram", final=False, out=None, layer="full"):
         scenes = ([dict(pl["frame"], groups_html=layouts.frame_groups("stg", spec, pl["frame"]["values"].get("theme", "dark")))] if pl["frame"] else []) + pl["stage"] + [x for x in scenes if x["block"] == "captions"]
         ft = layouts.face_transform(pl["hero"]) if pl["hero"] else layouts.footage_transform(spec, tl.get("face_cy", 0.38))
         tl = dict(tl, scenes=[])
-        lay_args = {"stage_rect": pl["stage_rect"], "vars": pl["caption_vars"], "hero": None}
+        lay_args = {"stage_rect": pl["stage_rect"], "vars": dict(pl["caption_vars"], **({"cap-pill-bg": "rgba(36,40,52,.78)"} if any(i.get("kind") == "caption_unreadable" for i in rep.get("items", [])) else {})), "hero": None}
         try:
             if not pl["hero"]: raise matte.MatteError("")        # this layout keeps him full-screen: no cut-out needed
             src = matte.cutout(job, edl, 0.0, tl["duration"], final)
@@ -117,7 +125,13 @@ def compile_job(job, platform="instagram", final=False, out=None, layer="full"):
             shutil.copy(src, os.path.join(out, "assets", "hero.webm"))
             lay_args["hero"] = dict(pl["hero"], src="assets/hero.webm")
             m = layouts.measure_matte(src, (cfg.find_ffmpeg() or ("ffmpeg",))[0])        # size and place him from his real head, not a fixed guess
-            ft = layouts.hero_transform(pl["hero"], m)
+            hp = dict(pl["hero"]); hp["head_w_px"] = hp.get("head_w_px", 500) * float(rep.get("head_scale", 1.0))
+            ft = layouts.hero_transform(hp, m)
+            for _k in range(6 if m else 0):                      # REVIEWER (free): a head cut by an edge is made smaller
+                probs = reviewer.head_problems(reviewer.head_box(m, ft), clip_top=hp["clip"][1])
+                if not probs: break
+                hp["head_w_px"] *= 0.9; hp["min_scale"] = min(hp.get("min_scale", 0.8), 0.6); ft = layouts.hero_transform(hp, m)
+                if _k == 0: review_notes.append(f"{probs[0]}; head made smaller"); lay_notes.append("reviewer: " + review_notes[-1])
             lay_notes.append("head " + (f"measured: width {m['head_w']:.0f}px, top {m['top']:.0f}px; scale {ft['scale']}" if m else "not measurable: fixed position used"))
         except matte.MatteError as ex:
             if pl["hero"]:
@@ -171,7 +185,7 @@ def compile_job(job, platform="instagram", final=False, out=None, layer="full"):
     hfbuild.build_project(out, duration=tl["duration"], face_cuts=[] if layer == "graphics" else cuts, scenes=scenes,
                           video_src=os.path.join(job, "proxy.mp4"), transparent=layer == "graphics", audio=audio or None, layout=lay_args,
                           extra_tweens=(lay_args or {}).get("extra_tweens"))
-    json.dump({"platform": platform, "final": final, "face_cuts": cuts, "caption_words": len(cap_words), "dropped_scenes": dropped + pack_dropped + lay_dropped, "layout": (lay_name or (seq_theme and themes.CURRENT["name"])) if lay_args else None, "layout_notes": lay_notes, "sfx": len(audio), "format_pack": bool(pk)},
+    json.dump({"platform": platform, "final": final, "face_cuts": cuts, "caption_words": len(cap_words), "dropped_scenes": dropped + pack_dropped + lay_dropped, "layout": (lay_name or (seq_theme and themes.CURRENT["name"])) if lay_args else None, "layout_notes": lay_notes, "review": review_notes, "repairs": rep.get("items", []), "sfx": len(audio), "format_pack": bool(pk)},
               open(os.path.join(out, "compile_info.json"), "w"), indent=1)
     return out
 
