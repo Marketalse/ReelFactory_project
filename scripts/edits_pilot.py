@@ -8,7 +8,7 @@ SAFETY: only the tool names in ALLOWED can be called (nothing that deletes, clos
 asked hidden and never printed or saved. When done, you can delete the "RF pilot" project by hand in Edits."""
 import getpass, json, os, sys, time, urllib.error, urllib.request
 
-ALLOWED = ("newProject", "setTitle", "setCanvas", "getCanvas", "addMedia", "importToMediaBin", "addLibraryMedia", "mediaBin", "elements", "clips", "probeMedia",
+ALLOWED = ("newProject", "setTitle", "setCanvas", "getCanvas", "importMedia", "importToMediaBin", "addLibraryMedia", "mediaBin", "elements", "clips", "probeMedia",
            "transcribeClip", "findPauses", "detectSubjects", "trackObject", "generateCaptions", "captions", "saveProject", "jobStatus", "state", "appState")
 URL = os.environ.get("EDITS_URL", "http://127.0.0.1:19501/mcp")
 OUT = os.path.expanduser("~/.reelfactory/edits")
@@ -64,17 +64,29 @@ def main():
     if len(sys.argv) < 2: sys.exit(__doc__)
     clip = sys.argv[1].strip().strip("'\"").replace("\\ ", " ")
     if not os.path.exists(clip): sys.exit(f"I can't find the clip: {clip}")
+    movies = os.path.expanduser("~/Movies")
+    if not os.path.abspath(clip).startswith(movies + os.sep):          # Edits is not allowed to read Downloads/Desktop/Documents: work on a COPY in ~/Movies (the original is never touched)
+        import shutil
+        copy = os.path.join(movies, "RF_pilot_" + os.path.basename(clip))
+        if not os.path.exists(copy):
+            print("copying the clip to", copy, "so Edits is allowed to read it (your original stays where it is)..."); shutil.copy2(clip, copy)
+        clip = copy
     token = os.environ.get("EDITS_TOKEN", "").strip() or getpass.getpass("Paste the Edits access token (nothing shows while you paste), then press Enter: ").strip()
     ed = Edits(token)
     try: ed.start()
     except urllib.error.HTTPError as e: sys.exit(f"Edits answered HTTP {e.code} (401 = wrong token). Is Edits open with the Automation Server on?")
     except OSError as e: sys.exit(f"Could not reach Edits: {e}")
-    print("1. new project"); ed.call("newProject", {}, "new project"); ed.call("setTitle", {"title": "RF pilot " + time.strftime("%H:%M")}, "title")
+    print("1. new project"); ed.call("newProject", {}, "new project"); ed.call("setTitle", {"name": "RF pilot " + time.strftime("%H:%M")}, "title")
     ed.call("setCanvas", {"aspect": "9:16", "frameRate": 30}, "canvas")
     print("2. add the clip")
-    ok, _ = ed.call("addMedia", {"path": clip, "audioKind": "main"}, "add clip")
-    if not ok: ok, _ = ed.call("importToMediaBin", {"path": clip}, "import (fallback)"); ok and ed.call("mediaBin", {}, "media bin")
+    ok, _ = ed.call("importMedia", {"path": clip}, "add clip")
     ok, els = ed.call("elements", {}, "elements")
+    if not (first(els, "elements", "items") or []):                       # not on the timeline yet: take it from the media bin
+        ok, mb = ed.call("mediaBin", {}, "media bin")
+        ids = [first(a, "aliasId", "id") for a in (first(mb, "assets", "items", "media") or []) if isinstance(a, dict)]
+        ids = [i for i in ids if i]
+        if ids: ed.call("addLibraryMedia", {"ids": ids[:1]}, "put it on the timeline")
+        ok, els = ed.call("elements", {}, "elements")
     items = first(els, "elements", "items") or []
     vid = next((e for e in items if isinstance(e, dict) and "video" in json.dumps(e).lower()), (items[0] if items else {}))
     cid = first(vid, "id", "uuid"); dur = first(vid, "duration") or 18.0
