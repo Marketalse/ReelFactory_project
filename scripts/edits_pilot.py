@@ -18,7 +18,8 @@ LOG = []
 
 
 class Edits:
-    def __init__(self, token):
+    def __init__(self, token, allowed=None):
+        self.allowed = tuple(allowed or ALLOWED)
         self.h = {"Authorization": "Bearer " + token, "Content-Type": "application/json", "Accept": "application/json, text/event-stream"}; self.sid = None; self.n = 0
 
     def rpc(self, method, params=None, note=False):
@@ -41,7 +42,7 @@ class Edits:
 
     def call(self, name, args=None, label=""):
         """-> (ok, data). data = parsed JSON from the tool's text when possible, else the text. Only ALLOWED tools can be called."""
-        if name not in ALLOWED: raise SystemExit(f"refused: {name} is not an allowed pilot tool")
+        if name not in self.allowed: raise SystemExit(f"refused: {name} is not an allowed pilot tool")
         t0 = time.time()
         try: res = self.rpc("tools/call", {"name": name, "arguments": args or {}})
         except (urllib.error.HTTPError, OSError) as e: ok, data = False, f"{type(e).__name__}: {e}"
