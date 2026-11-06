@@ -3,13 +3,19 @@
   "group": "regression",
   "name": "R10 seq_hero_headline reel reaches a draft",
   "verdict": "PASS",
-  "detail": "exit 0; p/rf-e2e-e5tm88gd/jobs/2026-11-05-seq/review/draft_540p.mp4 |   approve:  python3 scripts/reel.py jobs/2026-11-05-seq --approve |   or fix:   python3 scripts/reel.py jobs/2026-11-05-seq --fix \"what to change\" | TOTAL this job $0.0060 | wall 844s | "
+  "detail": "exit 0; p/rf-e2e-892f8mw4/jobs/2026-11-06-seq/review/draft_540p.mp4 |   approve:  python3 scripts/reel.py jobs/2026-11-06-seq --approve |   or fix:   python3 scripts/reel.py jobs/2026-11-06-seq --fix \"what to change\" | TOTAL this job $0.0060 | wall 552s | "
  },
  {
   "group": "regression",
   "name": "R11 seq_hero_headline: compile walked the states",
   "verdict": "PASS",
-  "detail": "{\"layout\": \"seq_hero_headline\", \"layout_notes\": [\"states: half_anim_hero@0.0 -> headline_hero@2.6\", \"head measured: width 360px, top 0px\"], \"dropped_scenes\": []}"
+  "detail": "{\"layout\": \"seq_hero_headline\", \"layout_notes\": [\"states: half_anim_hero@0.0 -> headline_hero@2.6\", \"head measured: width 360px, top 0px\", \"reviewer: empty zone at 14.1-16.4s: a card from his own words added\"], \"dropped_scenes\": []}"
+ },
+ {
+  "group": "regression",
+  "name": "R13 seq_hero_headline: the reviewer's repair step ran and reported",
+  "verdict": "PASS",
+  "detail": "{\"rounds\": 1, \"before\": 7.0, \"after\": null, \"summary\": \"tried: card made from his words near 3.0s; it did not improve the picture, so it was switched off\", \"applied\": []}"
  },
  {
   "group": "regression",
