@@ -160,7 +160,9 @@
   },
   "critic": {
     "enabled": true,
-    "_note": "T134: Haiku looks at ~8 stills of the draft and scores it (about $0.002). Report only for now. Set enabled false to switch off."
+    "repair": true,
+    "repair_rounds": 1,
+    "_note": "T134: Haiku looks at ~8 stills of the draft and scores it (about $0.002) and names each problem with a kind and a time. repair: problems with a known fix (head cut off, empty zone, text on the face, unreadable captions) are fixed once and the draft is made again; if the new look is worse the repair is switched off. repair_rounds 0 = report only. enabled false switches the whole check off."
   },
   "matte": {"engine": "hyperframes", "auto_install": true, "_note": "Cut-out engine: hyperframes (original), rvm, mp_selfie, auto. Extra engines install themselves once (scripts/setup_matte.py). Change with scripts/set_matte.py."},
   "format_pack": {

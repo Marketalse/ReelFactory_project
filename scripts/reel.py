@@ -21,7 +21,7 @@ import argparse, base64, glob, json, os, re, shutil, subprocess, sys, threading,
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from lib import config as cfg   # noqa: E402  (all settings live in config/*.json)
-from lib import themes, pipeline, joblock, integrity, outline, critic, icon_tags, asset_check, transcript as tr, edl as edlmod, director, speech_intel, editorial, visual_plan, brand_memory, creative_brief, content_intel, frames_dedup, learning, doctor, sequence, broll_ai, tighten   # noqa: E402
+from lib import reviewer, themes, pipeline, joblock, integrity, outline, critic, icon_tags, asset_check, transcript as tr, edl as edlmod, director, speech_intel, editorial, visual_plan, brand_memory, creative_brief, content_intel, frames_dedup, learning, doctor, sequence, broll_ai, tighten   # noqa: E402
 from lib.hfbuild import BuildError   # noqa: E402
 
 ROOT = cfg.ROOT
@@ -727,20 +727,81 @@ def st_draft(c):
     return f"draft ready: QA passed ({len(qa.get('warnings', []))} QA warnings, {len(res.get('check_warnings', []))} check warnings)"
 
 
-@pipeline.step("critic", after="draft", role="critic", needs=["review/draft_540p.mp4", "timeline.json"], makes=["review/critic.json"], label="AI looks at the draft and scores it")
+def _look(c, video, tl, dur, effort):
+    """One look: ~8 stills of the draft -> a clean critic answer (raises Stop for the money guards, ValueError/KeyError/OSError for a bad answer)."""
+    parts, sent = critic.content(video, critic.pick_times(tl, dur))
+    if not sent: return None
+    model, effort0 = cfg.role("critic")
+    o = critic.clean(parse_json(c.llm("critic", model, parts, 1500, effort or effort0)))
+    o["stills"] = len(sent); o["model"] = model
+    return o
+
+
+def _repair_round(c, o, video, tl, dur):
+    """THE REPAIR STEP. Issues with a known fix (critic.KINDS -> reviewer.FIXABLE) become repairs.json; the reel is compiled and drafted again (only changed
+    6-second pieces render again), then looked at once more. At most config critic.repair_rounds (default 1). If the new look scores worse, the repair is
+    switched off (repairs.json 'disabled') and the reel is made again as it was, so the draft he sees is never worse than the first one. Free except the second look."""
+    cc = cfg.PROJECT.get("critic", {})
+    rounds = int(cc.get("repair_rounds", 1))
+    if rounds < 1 or not cc.get("repair", True): return o
+    fixable = [i for i in o["issues"] if i.get("kind") in reviewer.FIXABLE]
+    if not fixable: return o
+    rep, applied = reviewer.from_issues(fixable, reviewer.load(c.job), 1)
+    if not applied: return o
+    reviewer.save(c.job, rep)
+    print("   repair step: " + "; ".join(applied))
+    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+    import render
+    from compile import compile_job
+    keep = os.path.join(c.job, "review", "_draft_before_repair.mp4")
+    try:
+        shutil.copy(video, keep)
+        compile_job(c.job)
+        res = render.draft(c.job)
+        jsave(os.path.join(c.job, "review", "draft.json"), res)
+        c.gate2 = res
+        if (res.get("qa") or {}).get("errors"): raise render.RenderError("QA errors after repair: " + "; ".join(res["qa"]["errors"][:3]))
+        o2 = _look(c, video, tl, dur, c.a.effort)
+    except Stop as ex:
+        if str(ex).startswith(("BUDGET GUARD", "MONTHLY CAP")): raise
+        o2 = None
+    except (render.RenderError, BuildError, ValueError, KeyError, OSError) as ex:
+        print(f"   repair step failed ({str(ex)[:120]}); going back to the first draft")
+        o2 = None
+    summary = "; ".join(applied)
+    if o2 is not None and o2["average"] >= o["average"] - 0.1:
+        o2["repair"] = {"rounds": 1, "before": o["average"], "after": o2["average"], "summary": f"{summary} (score {o['average']} -> {o2['average']})", "applied": applied}
+        o2["first_look_issues"] = o["issues"]
+        try: os.remove(keep)
+        except OSError: pass
+        return o2
+    rep["disabled"] = True; reviewer.save(c.job, rep)                       # worse or failed: switch the repair off, make the reel as it was
+    try:
+        compile_job(c.job)
+        res = render.draft(c.job); jsave(os.path.join(c.job, "review", "draft.json"), res); c.gate2 = res
+    except Exception as ex:                                                  # noqa: BLE001 - the first draft file is restored below either way
+        print(f"   could not remake the first draft ({str(ex)[:100]}); the first draft file was put back")
+        try: shutil.copy(keep, video)
+        except OSError: pass
+    try: os.remove(keep)
+    except OSError: pass
+    o["repair"] = {"rounds": 1, "before": o["average"], "after": None if o2 is None else o2["average"], "summary": f"tried: {summary}; it did not improve the picture, so it was switched off", "applied": []}
+    return o
+
+
+@pipeline.step("critic", after="draft", role="critic", needs=["review/draft_540p.mp4", "timeline.json"], makes=["review/critic.json"], label="AI looks at the draft, scores it, and repairs what it can")
 def st_critic(c):
-    """T134: a small vision model looks at ~8 stills of the draft and scores it. Report only; never stops a reel (except the money guard)."""
+    """T134 + repair: a small vision model looks at ~8 stills of the draft and scores it, naming each problem with a kind and a time. Problems with a known
+    fix are repaired once (see _repair_round). Never stops a reel (except the money guard)."""
     out = os.path.join(c.job, "review", "critic.json")
     if os.path.exists(out) and not c.a.replan: return "cached"
     if not cfg.PROJECT.get("critic", {}).get("enabled", True): return "off"
     video = os.path.join(c.job, "review", "draft_540p.mp4")
     try:
         tl = jload(os.path.join(c.job, "timeline.json"), {}); dur = (jload(os.path.join(c.job, "edl.json"), {}) or {}).get("duration") or tl.get("duration") or 60
-        parts, sent = critic.content(video, critic.pick_times(tl, dur))
-        if not sent: return "skipped (no stills)"
-        model, effort = cfg.role("critic")
-        o = critic.clean(parse_json(c.llm("critic", model, parts, 1500, c.a.effort or effort)))
-        o["stills"] = len(sent); o["model"] = model
+        o = _look(c, video, tl, dur, c.a.effort)
+        if o is None: return "skipped (no stills)"
+        o = _repair_round(c, o, video, tl, dur)
     except Stop as ex:
         if str(ex).startswith(("BUDGET GUARD", "MONTHLY CAP")): raise
         print("   quality check skipped:", ex); return "skipped"
@@ -748,7 +809,7 @@ def st_critic(c):
         print("   quality check skipped (answer not usable):", ex); return "skipped"
     jsave(out, o)
     for l in critic.summary_lines(o): print("   " + l)
-    return f"{o['average']}/10, {len(o['issues'])} issues"
+    return f"{o['average']}/10, {len(o['issues'])} issues" + (", repaired" if o.get("repair", {}).get("applied") else "")
 
 
 @pipeline.step("report")

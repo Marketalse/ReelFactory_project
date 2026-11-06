@@ -223,6 +223,8 @@ def sequence_theme(name="seq_hero_headline"):
     qa = json.load(open(os.path.join(jd, "qa.json"))) if os.path.exists(os.path.join(jd, "qa.json")) else {}
     rec("regression", f"R10 {name} reel reaches a draft", "PASS" if r["code"] == 0 and os.path.exists(os.path.join(jd, "review", "draft_540p.mp4")) else "FAIL", f"exit {r['code']}; {tail(r, 240)}")
     rec("regression", f"R11 {name}: compile walked the states", "PASS" if info.get("layout") == name and any(str(n).startswith("states:") for n in info.get("layout_notes", [])) else "FAIL", json.dumps({k: info.get(k) for k in ("layout", "layout_notes", "dropped_scenes")}, ensure_ascii=False))
+    cr = json.load(open(os.path.join(jd, "review", "critic.json"))) if os.path.exists(os.path.join(jd, "review", "critic.json")) else {}
+    rec("regression", f"R13 {name}: the reviewer's repair step ran and reported", "PASS" if (cr.get("repair") or {}).get("summary") else "FAIL", json.dumps(cr.get("repair"), ensure_ascii=False)[:300])
     rec("regression", f"R12 {name}: QA found no errors", "PASS" if not qa.get("errors") else "FAIL", json.dumps(qa.get("errors")) + " " + json.dumps(qa.get("warnings"))[:200])
     save("regression"); srv.shutdown(); shutil.rmtree(work, ignore_errors=True)
 

@@ -10,7 +10,7 @@ states (templates/states/<name>.json), and a SEQUENCE (a theme's ordered list of
   states.plan(...) -> segments + frame scenes + fitted card scenes + the small tweens the page needs (hero visible, caption band position)."""
 import json, os
 
-from . import config as cfg, layouts
+from . import config as cfg, layouts, reviewer
 
 DIR = os.path.join(cfg.ROOT, "templates", "states")
 MIN_REST = 1.2
@@ -91,11 +91,11 @@ def plan(theme, cards, words, kw_idx, duration, registry):
     for n, s in enumerate(segs):                                           # cards fitted into their state's animation zone
         st = s["spec"]
         if s["card"] and st.get("anim"):
-            c = s["card"]; tx, ty, sc = layouts.fit(st["anim"], registry[c["block"]]["natural_box"], st.get("anim_max_scale", 1.0))
+            c = s["card"]; tx, ty, sc = layouts.fit(st["anim"], layouts.block_box(registry[c["block"]]), st.get("anim_max_scale", 1.0))
             scenes.append(dict(c, t_in=max(s["t_in"], c["t_in"]), t_out=min(s["t_out"], c["t_out"]), zone=st["anim"], fit={"tx": tx, "ty": ty, "s": sc}))
         elif not s["card"] and st.get("text") and words and "line_text" in allowed and registry.get("line_text", {}).get("natural_box"):
             for f in _text_cards(words, kw_idx, s["t_in"], s["t_out"], registry):          # text only from his own words, number only if spoken
-                tx, ty, sc = layouts.fit(st["text"], registry[f["block"]]["natural_box"])
+                tx, ty, sc = layouts.fit(st["text"], layouts.block_box(registry[f["block"]]))
                 scenes.append(dict(f, zone=st["text"], fit={"tx": tx, "ty": ty, "s": sc}, id=f"{f['id']}_{n}"))
     runs = []                                                              # frames: one scene per run of equal frame
     for s in segs:
@@ -131,14 +131,102 @@ def _text_cards(words, kw_idx, a, b, registry):
     return out
 
 
-def transforms(segs, m):
-    """Per segment: the footage (and hero) transform {"scale","x","y"} from the measured head m (layouts.measure_matte). Full clip = untouched."""
-    out = []
-    for s in segs:
+def transforms(segs, m, repairs=None):
+    """Per segment: the footage (and hero) transform {"scale","x","y"} from the measured head m (layouts.measure_matte). Full clip = untouched. -> list."""
+    return transforms_checked(segs, m, repairs)[0]
+
+
+def transforms_checked(segs, m, repairs=None):
+    """Like transforms, but each head is CHECKED (reviewer.head_box / head_problems) and made smaller until the screen edge or its box no longer cuts it.
+    A repair item head_scale from the critic shrinks it further. -> (list of transforms, [plain-words notes of what was fixed])."""
+    out, notes = [], []
+    hs = float((repairs or {}).get("head_scale", 1.0))
+    for n, s in enumerate(segs):
         cl = s["spec"].get("clip")
         if not cl or cl.get("full") or not cl.get("rect"): out.append({"scale": 1.0, "x": 0, "y": 0}); continue
-        out.append(layouts.hero_transform(dict(cl, cover_rect=cl["rect"]), m))
+        par = dict(cl, cover_rect=cl["rect"]); par["head_w_px"] = par.get("head_w_px", 500) * hs
+        tf = layouts.hero_transform(par, m)
+        for k in range(6):
+            probs = reviewer.head_problems(reviewer.head_box(m, tf), clip_top=cl.get("hero_clip_top") if cl.get("hero") else None, box=None if cl.get("hero") else cl["rect"])
+            if not probs: break
+            par["head_w_px"] *= 0.9; par["min_scale"] = min(par.get("min_scale", 0.8), 0.6)
+            tf = layouts.hero_transform(par, m)
+            if k == 0: notes.append(f"beat {n + 1} ({s['state']}): {probs[0]}; head made smaller")
+        out.append(tf)
+    return out, notes
+
+
+def _rendered_rect(fit, box):
+    return [fit["tx"] + fit["s"] * box[0], fit["ty"] + fit["s"] * box[1], fit["tx"] + fit["s"] * box[2], fit["ty"] + fit["s"] * box[3]]
+
+
+def avoid_face(pl, m, registry):
+    """Text must not sit on his face. For beats where he is full-screen (no box), any card/text whose drawn rectangle covers more than 12% of his head box is moved
+    above the head (or below the chin) when there is room, else dropped. -> [notes]. Edits pl["scenes"] in place."""
+    notes, keep = [], []
+    hb = reviewer.head_box(m, {"scale": 1.0, "x": 0, "y": 0})
+    for sc in pl["scenes"]:
+        seg = next((s for s in pl["segments"] if s["t_in"] - 1e-6 <= sc["t_in"] < s["t_out"] - 1e-6), None)
+        cl = seg["spec"].get("clip") if seg else None
+        box = layouts.block_box(registry[sc["block"]]) if registry.get(sc["block"], {}).get("natural_box") else None
+        if not (seg and cl and cl.get("full") and sc.get("zone") and box): keep.append(sc); continue
+        if reviewer.overlap_ratio(_rendered_rect(sc["fit"], box), hb) <= 0.12: keep.append(sc); continue
+        cands = [[108, 250, 920, int(hb[1]) - 30], [108, int(hb[3]) + 20, 920, 1180]]
+        z = next((c for c in cands if c[3] - c[1] >= 0.6 * (box[3] - box[1])), None)             # room for the text at 60% of its size or more
+        if z is None:
+            notes.append(f"{sc['block']} at {sc['t_in']:.1f}s would cover his face and there is no room: dropped"); continue
+        tx, ty, s = layouts.fit(z, box)
+        sc = dict(sc, zone=z, fit={"tx": tx, "ty": ty, "s": s}); keep.append(sc)
+        notes.append(f"{sc['block']} at {sc['t_in']:.1f}s moved off his face")
+    pl["scenes"] = keep
+    return notes
+
+
+def idle_stretches(pl, min_idle=2.0):
+    """[(t_in, t_out)] stretches of a beat whose state has a card/text zone but nothing plays there for min_idle seconds or more."""
+    out = []
+    for s in pl["segments"]:
+        if not (s["spec"].get("anim") or s["spec"].get("text")): continue
+        cov = sorted((max(s["t_in"], x["t_in"]), min(s["t_out"], x["t_out"])) for x in pl["scenes"] if x["t_out"] > s["t_in"] and x["t_in"] < s["t_out"])
+        cur = s["t_in"]
+        for a, b in cov + [(s["t_out"], s["t_out"])]:
+            if a - cur >= min_idle: out.append((round(cur, 2), round(a, 2)))
+            cur = max(cur, b)
     return out
+
+
+def fill_idle(pl, words, kw_idx, registry, repairs=None, min_idle=2.0):
+    """The reviewer's empty-zone repair: every idle stretch (and every time the critic named as empty) gets a plain-text card from his own words. -> [notes]."""
+    notes = []
+    allowed = {"line_text"}
+    if not (words and registry.get("line_text", {}).get("natural_box")): return notes
+    spots = list(idle_stretches(pl, min_idle))
+    for it in (repairs or {}).get("items", []):
+        if it.get("kind") == "empty_zone":
+            seg = next((s for s in pl["segments"] if s["t_in"] <= it["t"] < s["t_out"]), None)
+            if seg and (seg["spec"].get("anim") or seg["spec"].get("text")) and not any(x["t_in"] <= it["t"] <= x["t_out"] for x in pl["scenes"]):
+                spots.append((round(max(seg["t_in"], it["t"] - 0.3), 2), round(min(seg["t_out"], it["t"] + 2.7), 2)))
+    n = 0
+    for a, b in spots:
+        seg = next((s for s in pl["segments"] if s["t_in"] - 1e-6 <= a < s["t_out"]), None)
+        zone = seg["spec"].get("text") or seg["spec"].get("anim") if seg else None
+        if not zone: continue
+        win = [w for w in words if a - 0.1 <= w["start"] < b - 0.4 and str(w["text"]).strip()]
+        if not win: continue
+        kws = {words.index(w) for w in win} & set(kw_idx)
+        k0 = win[0] if not kws else words[min(kws)]
+        i0 = words.index(k0); run = [k0["text"]]
+        for nx in words[i0 + 1:i0 + 4]:
+            if len(" ".join(run + [nx["text"]])) > 30 or nx["start"] > b: break
+            run.append(nx["text"])
+        t_in = max(a, k0["start"] - 0.15); t_out = min(b - 0.05, t_in + 3.0)
+        if t_out - t_in < 1.2: continue
+        vals = {"headline": run[0][:20] if len(run) > 1 else "", "number": "", "line1": (" ".join(run[1:]) if len(run) > 1 else run[0])[:30], "line2": ""}
+        tx, ty, s = layouts.fit(zone, layouts.block_box(registry["line_text"]))
+        n += 1
+        pl["scenes"].append({"id": f"idle{n}", "block": "line_text", "t_in": round(t_in, 2), "t_out": round(t_out, 2), "values": vals, "zone": zone, "fit": {"tx": tx, "ty": ty, "s": s}})
+        notes.append(f"empty zone at {a:.1f}-{b:.1f}s: a card from his own words added")
+    return notes
 
 
 def split_cuts(cuts, segs, tfs):

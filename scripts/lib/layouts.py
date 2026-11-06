@@ -54,6 +54,13 @@ def problems(spec):
     return out
 
 
+def block_box(entry):
+    """The rectangle a block's real content covers (registry natural_box, measured with its LONGEST text), capped to `fit_height` when the registry says typical
+    content is shorter: a line of his words is far shorter than the longest allowed text, and fitting to the longest made it tiny."""
+    b = entry["natural_box"]; cap = entry.get("fit_height")
+    return [b[0], b[1], b[2], min(b[3], b[1] + cap)] if cap else list(b)
+
+
 def fit(zone, box, max_scale=1.0):
     """Place a block whose content covers `box` inside `zone` (both [x0,y0,x1,y1]): scale = largest that fits, never above 1; centred. -> (tx, ty, s) for
     transform-origin 0 0: translate(tx, ty) scale(s)."""
