@@ -751,7 +751,13 @@ def spend(month=None):
     days = calendar.monthrange(int(month[:4]), int(month[5:7]))[1]
     elapsed = today.day if month == today.isoformat()[:7] else days
     rnd = lambda d: [{"name": k, "amount": round(v, 4)} for k, v in sorted(d.items(), key=lambda x: -x[1])]
-    return {"month": month, "total": round(total, 4), "reels": len(reels),
+    try:
+        sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "scripts"))
+        from lib import config as _cfg
+        cap = float((_cfg.PROJECT.get("budget_usd") or {}).get("monthly_stop") or 0)
+    except Exception:                                  # noqa: BLE001 - the cap is only for the meter on the home page
+        cap = 0.0
+    return {"month": month, "total": round(total, 4), "reels": len(reels), "cap": cap,
             "per_reel": round(total / len(reels), 4) if reels else 0.0,
             "projection": round(total / max(1, elapsed) * days, 2), "by_step": rnd(by_step), "by_model": rnd(by_model)}
 

@@ -185,3 +185,28 @@ class SpendTests(ApiTest):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class HomeAndDropApi(unittest.TestCase):
+    """The Iraqi home page: its data comes from files the pipeline already wrote."""
+    def test_live_reads_the_plan_and_the_cuts(self):
+        import json, tempfile, importlib
+        root = tempfile.mkdtemp()
+        job = os.path.join(root, "jobs", "2026-11-06-tips-one"); os.makedirs(os.path.join(job, "review"))
+        json.dump({"duration": 20, "scenes": [{"id": "a", "block": "info_card", "t_in": 2, "t_out": 5}, {"id": "b", "block": "number_graph", "t_in": 8, "t_out": 11},
+                                              {"id": "c", "block": "captions", "t_in": 0, "t_out": 20}]}, open(os.path.join(job, "timeline.json"), "w"))
+        json.dump({"segments": [{"t_in": 0, "t_out": 9}, {"t_in": 9, "t_out": 20}], "cut_log": [{"kind": "retake", "reel_t": 9, "src_from": 9, "src_to": 11}]}, open(os.path.join(job, "edl.json"), "w"))
+        old = os.environ.get("RF_ROOT"); os.environ["RF_ROOT"] = root
+        self.addCleanup(lambda: os.environ.__setitem__("RF_ROOT", old) if old else os.environ.pop("RF_ROOT", None))
+        import reels_api, live_api
+        importlib.reload(reels_api); importlib.reload(live_api)
+        d = live_api.live()
+        self.assertEqual(d["job"], "2026-11-06-tips-one")
+        self.assertEqual(len(d["tracks"]["card"]), 1); self.assertEqual(len(d["tracks"]["motion"]), 1); self.assertEqual(len(d["tracks"]["caption"]), 1)
+        self.assertEqual(d["cut_kinds"], {"retake": 1}); self.assertEqual(d["removed_s"], 2.0)
+        self.assertEqual(live_api.live("../../etc")["job"], None)
+
+    def test_drop_status_when_off(self):
+        import drop_api
+        s = drop_api.status()
+        self.assertFalse(s["watching"]); self.assertTrue(s["path"].endswith("Reel Factory Drop"))

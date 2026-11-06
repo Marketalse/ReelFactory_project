@@ -1,0 +1,16 @@
+/* Reel Factory Iraqi skin for the working pages (Make, Control, Edit, Timeline): Readex Pro everywhere + navy and gold.
+   Loaded AFTER each page's own styles, so it only swaps colours and the font. Layout is untouched. */
+@import url("fonts/readex.css");
+:root{
+  --bg:#0b1a28; --panel:#12283b; --panel2:#19344b; --panel3:#204159; --line:#2d4a63;
+  --text:#f4efe4; --muted:#aebccb; --dim:#7f93a6;
+  --lime:#e6b566; --violet:#1f7a76; --violet-t:#7fd1cb; --coral:#e07a52; --amber:#e6b566;
+  --blue:#6fb0e8; --teal:#46b7ae;
+  --prog:#1f7a76; --review:#e6b566; --blocked:#e07a52; --done:#e6b566;
+  --font:"Readex Pro",system-ui,-apple-system,"Segoe UI",sans-serif;
+}
+body{font-family:var(--font)!important;font-weight:400;letter-spacing:0}
+h1,h2,h3,h4{font-weight:700}
+button,input,select,textarea{font-family:inherit}
+.btn.lime,.lime{color:#0b1a28!important}
+header{border-bottom:3px solid var(--lime)}

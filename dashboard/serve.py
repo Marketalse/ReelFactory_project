@@ -17,6 +17,7 @@ import reels_api  # noqa: E402
 import settings_api  # noqa: E402
 import backup_api  # noqa: E402
 import it_agent  # noqa: E402
+import drop_api, live_api  # noqa: E402
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 TASKS = os.path.join(HERE, "tasks.json")
@@ -63,7 +64,8 @@ def save(d):
     os.replace(tmp, TASKS)
 
 
-PAGES = {"/make.html", "/index.html", "/edit.html", "/timeline.html"}      # the only static files served: no source code, ledger or backups
+PAGES = {"/home.html", "/make.html", "/index.html", "/edit.html", "/timeline.html", "/iraqi.css", "/fonts/readex.css",
+         "/fonts/readex-arabic.woff2", "/fonts/readex-latin.woff2", "/fonts/readex-latin-ext.woff2"}      # the only static files served: no source code, ledger or backups
 _board_lock = threading.Lock()                                                 # one board save at a time (check version, then write)
 
 
@@ -171,6 +173,10 @@ class H(SimpleHTTPRequestHandler):
             return self.send_json(200, it_agent.status())
         if self.path.startswith("/api/root"):
             return self.send_json(200, {"root": os.path.realpath(reels_api.ROOT)})
+        if self.path.startswith("/api/drop"):
+            return self.send_json(200, drop_api.status())
+        if self.path.startswith("/api/live"):
+            return self.send_json(200, live_api.live(q.get("job") or None))
         if self.path.startswith("/api/reels"):
             return self.send_json(200, reels_api.list_reels())
         if self.path.startswith("/media/"):
@@ -193,7 +199,7 @@ class H(SimpleHTTPRequestHandler):
         if self.path.startswith("/api/expenses"):
             return self.send_json(200, load(EXPENSES, {"rows": []}))
         if self.path in ("/", ""):
-            self.path = "/make.html"
+            self.path = "/home.html"
         if urlparse(self.path).path not in PAGES:
             return self.send_json(404, {"error": "not found"})
         return super().do_GET()
@@ -226,6 +232,15 @@ class H(SimpleHTTPRequestHandler):
         if not self.same_origin():
             self.close_connection = True
             return self.send_json(403, {"ok": False, "message": "not allowed"})
+        if self.path.startswith("/api/drop/"):
+            act = self.path.split("/")[3].split("?")[0]
+            if act in ("on", "off"):
+                ok, msg = drop_api.set_on(act == "on")
+            elif act == "open":
+                ok, msg = drop_api.open_folder()
+            else:
+                return self.send_json(404, {"ok": False, "message": "unknown action"})
+            return self.send_json(200 if ok else 400, {"ok": ok, "message": msg})
         if self.path.startswith("/api/settings/"):
             try:
                 n = int(self.headers.get("Content-Length", 0))
@@ -401,4 +416,6 @@ if __name__ == "__main__":
     SERVER = Server(("127.0.0.1", PORT), H)
     threading.Thread(target=daily_backup, daemon=True).start()
     threading.Thread(target=it_agent.watch, daemon=True).start()
+    if drop_api.enabled():
+        drop_api.start()
     SERVER.serve_forever()
